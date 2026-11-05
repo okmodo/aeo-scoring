@@ -1,27 +1,33 @@
 {
   "version": 1,
   "changeId": "phase-2-closure",
-  "sourceCommit": "3dd8127baf1e5ebe11f10e3c4ec135c6cd9668e3",
-  "sourceDigest": "e27a50e104614de3bcc657524e957bc66ff6c2fa488e71911459820850b3a044",
+  "sourceCommit": "f89360753e7f1e4fde93879727f048b6be09f6e4",
+  "sourceDigest": "e176338670185456c2a57e687190de951feb81515d23003edfe0634f017aecfe",
   "kind": "fresh-agent",
   "priorConversationProvided": false,
   "dispatch": {
-    "task": "/root/closure_corrected_fresh_exit",
+    "task": "/root/closure_final_fresh_exit",
     "forkTurns": "none",
     "model": "gpt-6.1-terra"
   },
-  "agentId": "/root/closure_corrected_fresh_exit",
+  "agentId": "/root/closure_final_fresh_exit",
   "status": "passed",
-  "exportSha256": "4b28eaaab5639808608ca1a504be90474d3055ab292b73c011e0d58bfe6e440d",
-  "bundleSha256": "5c58610780d5b80636e50ac4394d487f11cb4d0ea2e9f66eb5c9d7b761c74714",
-  "interruptionPoint": "Initial live request stopped with 404 before admission; corrected runtime and 29-request remainder protocol committed, corrected benchmark CI/deployment still pending.",
-  "observedContinuation": "Fresh Terra session from only the new export installed offline, executed both plan evaluations, validated source/history/records/handoffs and matched digest; stale prior exit evidence rejected as expected. Its actual run and trace records were retained by the coordinator.",
-  "limitations": "Local Node25 does not replace hosted Node24. This continuation did not make cloud calls or prove the runtime diagnosis, new deployment, measured CPU or full calibration. First failed request remains part of the original total cap.",
-  "observedReport": "# Corrected fresh continuation observation\n\nThe only task-state inputs were `/private/tmp/aeo-closure-corrected-export/export-state.json` and `repository.bundle`; I had no substantive prior task history. I cloned the bundle to `/private/tmp/aeo-closure-corrected-fresh`, checked out `codex/phase-2-closure`, and read AGENTS.md, both plans and handoffs, and the CPU runtime correction protocol. No other checkout, chat, agent, network or cloud service was used.\n\nHEAD was `3dd8127baf1e5ebe11f10e3c4ec135c6cd9668e3`. Export-state SHA-256 was `a81412d4e041125bb30a75fa32227937a9fc288113dfaa72e711e49ce0c90827`; bundle SHA-256 was `5c58610780d5b80636e50ac4394d487f11cb4d0ea2e9f66eb5c9d7b761c74714`. The calculated digest of 39 changed files was `e27a50e104614de3bcc657524e957bc66ff6c2fa488e71911459820850b3a044`, matching the export. Both plans passed plan and history validation, and both handoffs passed validation.\n\n`npm ci --offline --ignore-scripts --no-audit --no-fund` succeeded with 119 packages. npm warned that Node v25.9.0 and npm 11.12.1 do not satisfy the project's Node >=24 <25 requirement. The phase-2-closure evaluation passed all nine planned commands, and care-guidance-clarification passed all five. Both generated runs and their nine and five trace entries passed validateRun against the digest. Trace coverage is evaluation commands only, not the whole session. The actual generated files are under `/private/tmp/aeo-closure-corrected-fresh/evals/changes/phase-2-closure/` and `/private/tmp/aeo-closure-corrected-fresh/evals/changes/care-guidance-clarification/`, named `run.json` and `trace.jsonl`.\n\n`npm run ci:gate -- origin/main` exited 1 with `Missing or stale exit-test record`, as expected for the earlier record against changed source. No exit record was fabricated. Evaluation produced local derived evidence and reports; no source edits, external calls, deployment or merge were performed. The first live 404 is a failed request, not a CPU measurement. This continuation did not run the CPU experiment, independently review the substantive findings, or verify hosted Node 24 CI.\n",
+  "exportSha256": "11b2414da4ca1738a553efef740ac1708109513db8332384bdbaa91eaaffd038",
+  "bundleSha256": "2fbbe6b5727c697cb38014ab333eb66b216c666412897c4b8d5db6b440e9a108",
+  "interruptionPoint": "Live bounded pilot and cleanup complete; final decision and evidence committed, latest source-bound record retention and hosted CI unfinished.",
+  "observedContinuation": "A new Terra session used only the final export, installed offline, ran both plans successfully, validated history, current run/trace/handoffs and source digest, and observed expected stale-exit gate rejection. Its actual generated command records were retained.",
+  "limitations": "Node25 local cannot certify hosted Node24. Fresh session did not independently repeat live calls, verify cloud or human observations, or claim full protocol passage. Prior preflights and their source-specific evidence remain in Git history.",
+  "observedReport": "# Fresh continuation observation\n\nI received only the exported state and repository bundle for this continuation, with no prior substantive task history. I cloned the bundle into `/private/tmp/aeo-closure-final-fresh`, checked out `codex/phase-2-closure` at `f89360753e7f1e4fde93879727f048b6be09f6e4`, and read AGENTS, both plans and handoffs, the decision, and retained CPU, AI, browser and human evidence. Those external observations are retained records, not independently verified live here. The decision records no production or autonomous scoring go.\n\n`npm ci --offline --ignore-scripts --no-audit --no-fund` succeeded. It warned that Node v25.9.0 does not meet the project's >=24 <25 requirement; npm was 11.12.1. This is not hosted Node 24 CI.\n\nThe actual `npm run evaluate -- --change phase-2-closure --base origin/main` passed all nine plan commands. The actual `npm run evaluate -- --change care-guidance-clarification --base origin/main` passed all five plan commands. Logs are `/private/tmp/aeo-closure-final-fresh-phase-eval.log` and `/private/tmp/aeo-closure-final-fresh-care-eval.log`. The generated run and trace records are in their respective `evals/changes/<id>/run.json` and `trace.jsonl` directories in the fresh checkout. These traces cover evaluation commands only, not prior development or independent review.\n\nUsing repository validators, both plans, plan history, runs, traces and handoffs validated. The calculated source digest was `e176338670185456c2a57e687190de951feb81515d23003edfe0634f017aecfe`, matching the export. The full `npm run ci:gate -- origin/main` failed with `Missing or stale exit-test record`, as expected; it validated the care plan and reached the closure exit check. No exit record was fabricated or changed. Independent review, a current genuine exit record and hosted CI remain necessary. No source edits, network calls, cloud operations, deployment or merge were performed.\n",
   "preflightIndependentReview": {
     "agentId": "/root/phase2_gap_review",
     "sourceCommit": "3dd8127baf1e5ebe11f10e3c4ec135c6cd9668e3",
     "note": "Corrected empty-stream handler and 29-request protocol reviewed after the first failure. 29 feasibility tests passed; corrected bundle SHA256 eb7968d0474a1e84edfbf96cb91b000d650aa201d7ad7f8bba290da8c423169e. Conditional on exact-source hosted CI, no expiry/permit reset, no pre-existing resource changes and truthful telemetry limits."
   },
-  "priorPreflightRecordCommit": "652fc09f9ee709d4ff95b1343a50ebd5669f2970"
+  "priorPreflightRecordCommit": "652fc09f9ee709d4ff95b1343a50ebd5669f2970",
+  "priorCorrectedPreflightRecordCommit": "85e046f747f58825724e8839d52cc377cd10695f",
+  "finalIndependentReview": {
+    "agentId": "/root/phase2_gap_review",
+    "sourceCommit": "f89360753e7f1e4fde93879727f048b6be09f6e4",
+    "observation": "Final CPU evidence/decision reconciles 26 requests, 25 admissions, 5 remaining permits, 11 matched CPU samples, 503 unknown resource type, unavailable attributable aggregate and unknown headroom. No unsupported p95, maximum or production-pass claim. Cleanup and inventory reviewed from retained observations only; independent live repetition not asserted. No blocking issue."
+  }
 }
