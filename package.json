@@ -14,7 +14,7 @@
     "ci:gate": "node scripts/pr-gate.mjs",
     "ci:checks": "node scripts/ci-checks.mjs",
     "test:foundations": "node --test test/scoring-foundations.test.mjs",
-    "test:feasibility": "node --test test/feasibility.test.mjs",
+    "test:feasibility": "node --test test/feasibility.test.mjs test/phase2-calibration.test.mjs",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
