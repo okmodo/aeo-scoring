@@ -18,4 +18,4 @@ The versioned [rubric](config/rubric.v1.json), [initial category checklists](doc
 
 ## Sample preview
 
-The [hosted preview documentation](docs/hosted-preview.md) explains the fictional 84.5-point report, local setup, deployment boundaries, and remaining feasibility gaps. Entered URLs are not fetched or assessed.
+The [live sample preview](https://aeo-scoring-preview-20261105-kk7.pages.dev/) and [hosted preview documentation](docs/hosted-preview.md) show and explain the fictional 84.5-point report, local setup, deployment boundaries, and remaining feasibility gaps. Entered URLs are not fetched or assessed.
