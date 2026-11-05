@@ -35,10 +35,11 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
   if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Valid HTTP(S) source URL required');
   if (!['raw', 'rendered'].includes(method) || typeof observedAt !== 'string' || !Number.isFinite(Date.parse(observedAt))) throw new Error('Method and observation time required');
   const document = parse(html, { sourceCodeLocationInfo: true });
-  const mainFindings = [], otherFindings = [], productFields = [], stack = [{ node: document, hidden: false, blockedJsonLd: false, inMain: false }];
-  let visited = 0, truncated = false, mainPresent = false, mainTextTruncated = false;
+  const mainFindings = [], otherFindings = [], productFields = [], stack = [{ node: document, hidden: false, blockedJsonLd: false, inMain: false, inBody: false }];
+  let visited = 0, truncated = false, mainPresent = false, mainTextTruncated = false, bodyHasVisibleText = false;
   while (stack.length) {
-    const { node, hidden, blockedJsonLd, inMain } = stack.pop();
+    const { node, hidden, blockedJsonLd, inMain, inBody } = stack.pop();
+    const withinBody = inBody || node.tagName === 'body';
     const withinMain = inMain || node.tagName === 'main';
     if (node.tagName === 'main') mainPresent = true;
     if (++visited > 30000) { truncated = true; break; }
@@ -61,16 +62,16 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
             else productFields.push({ field, value: String(value), origin: 'json-ld', location, ...(context ? { context } : {}) });
           }
         };
-        for (const record of records.slice(0, 50)) {
+        for (const [groupIndex, record] of records.slice(0, 50).entries()) {
           if (!record || typeof record !== 'object') continue;
           const types = [record['@type']].flat();
           if (types.includes('Product')) addFields(record, null);
           else if (types.includes('ProductGroup')) {
-            addFields(record, { entity: 'product-group' });
+            addFields(record, { entity: 'product-group', groupIndex });
             const variants = Array.isArray(record.hasVariant) ? record.hasVariant : record.hasVariant ? [record.hasVariant] : [];
             if (variants.length > 20) truncated = true;
             variants.slice(0, 20).forEach((variant, index) => {
-              if (variant && typeof variant === 'object' && [variant['@type']].flat().includes('Product')) addFields(variant, { entity: 'variant', variantIndex: index, selected: 'unknown' });
+              if (variant && typeof variant === 'object' && [variant['@type']].flat().includes('Product')) addFields(variant, { entity: 'variant', groupIndex, variantIndex: index, selected: 'unknown' });
             });
           }
         }
@@ -89,6 +90,7 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
     if (!suppressed && node.nodeName === '#text' && node.sourceCodeLocation) {
       const value = node.value.replace(/\s+/g, ' ').trim();
       if (value) {
+        if (withinBody) bodyHasVisibleText = true;
         const target = withinMain ? mainFindings : otherFindings;
         if (target.length === MAX_FINDINGS) { truncated = true; if (withinMain) mainTextTruncated = true; }
         else {
@@ -97,13 +99,13 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
         }
       }
     }
-    for (const child of (node.childNodes || []).slice().reverse()) stack.push({ node: child, inMain: withinMain, hidden: suppressed, blockedJsonLd: blockedJsonLd || node.tagName === 'template' || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '') });
+    for (const child of (node.childNodes || []).slice().reverse()) stack.push({ node: child, inMain: withinMain, inBody: withinBody, hidden: suppressed, blockedJsonLd: blockedJsonLd || node.tagName === 'template' || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '') });
   }
   if (mainFindings.length + otherFindings.length > MAX_FINDINGS) truncated = true;
   const findings = [...mainFindings, ...otherFindings].slice(0, MAX_FINDINGS);
   const root = document.childNodes.find(n => n.tagName === 'html');
   const body = root?.childNodes?.find(n => n.tagName === 'body');
-  const structuralStatus = !root?.sourceCodeLocation ? 'fragment' : !body?.sourceCodeLocation ? 'missing-body' : findings.length === 0 ? 'body-no-visible-text' : 'body-text-present';
+  const structuralStatus = !root?.sourceCodeLocation ? 'fragment' : !body?.sourceCodeLocation ? 'missing-body' : !bodyHasVisibleText ? 'body-no-visible-text' : 'body-text-present';
   const structurallyUsable = !['missing-body', 'body-no-visible-text'].includes(structuralStatus);
   return { source: { url: parsedUrl.href, method, observedAt }, findings, productFields, coverage: { scope: 'Visible text nodes and inline JSON-LD Product and ProductGroup fields; hidden nodes and external resources excluded', complete: !truncated && structurallyUsable, structuralStatus, mainPresent, mainTextRetained: mainFindings.length, mainTextTruncated, textOrder: 'main-first', visitedNodes: visited }, limitations: ['Snapshot is untrusted and may not reflect current or complete page content.', 'CSS, shadow DOM, images and external resources are not evaluated.', 'JSON-LD supports bounded Product and ProductGroup observations only; variants are not selected or resolved and locations cover the entire script.', 'Structural status does not prove the page is fully rendered or that its content is usable.', 'Unobserved text is not proof of absence.'] };
 }

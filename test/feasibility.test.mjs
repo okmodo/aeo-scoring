@@ -142,3 +142,15 @@ test('main content is retained before navigation while whole-page truncation sta
   assert.equal(r.findings[0].scope, 'main');
   assert.equal(html.slice(r.findings[0].location.startOffset,r.findings[0].location.endOffset), 'Product care instructions');
 });
+
+test('variant contexts distinguish groups within one script', () => {
+  const groups = ['Alpha','Beta'].map(name => ({ '@type': 'ProductGroup', name, hasVariant: [{ '@type': 'Product', name: 'Shared' }] }));
+  const r = inspectSnapshot({ ...context, html: `<script type="application/ld+json">${JSON.stringify(groups)}</script>` });
+  const variants = r.productFields.filter(f => f.context?.entity === 'variant');
+  assert.deepEqual(variants.map(f => [f.context.groupIndex, f.context.variantIndex]), [[0,0],[1,0]]);
+});
+test('text outside the body cannot make an empty body usable', () => {
+  const r = inspectSnapshot({ ...context, html: '<html><head><title>Product</title></head><body><script>1</script></body></html>' });
+  assert.equal(r.coverage.structuralStatus, 'body-no-visible-text');
+  assert.equal(r.coverage.complete, false);
+});
