@@ -1,6 +1,6 @@
 # Cloudflare CPU benchmark: preparation and evidence
 
-This is a preparation guide, not deployment authorization or a completed experiment. The frozen [closure protocol](phase-2-closure-protocol.md) governs launch eligibility and decisions. The separate [architecture pilot](phase-2-architecture-pilot.md) permits at most 30 requests total, which cannot pass the closure protocol's 30-successes-per-class gate. The measured outcome would be exploratory and the closure gate remains inconclusive. It also requires actual account-wide headroom and maximum CPU, neither of which this analytics query establishes.
+This preparation guide does not itself authorize deployment. The completed bounded experiment and limitations are recorded in [CPU pilot results](phase-2-cpu-pilot-results.md). The frozen [closure protocol](phase-2-closure-protocol.md) governs launch eligibility and decisions. The separate [architecture pilot](phase-2-architecture-pilot.md) permits at most 30 requests total, which cannot pass the closure protocol's 30-successes-per-class gate. The measured outcome would be exploratory and the closure gate remains inconclusive. It also requires actual account-wide headroom and maximum CPU, neither of which this analytics query establishes.
 
 ## Read-only checks made
 

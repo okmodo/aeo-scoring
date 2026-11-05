@@ -1,15 +1,17 @@
 {
   "version": 1,
   "task": "Close phase 2 feasibility gaps through bounded evidence and an honest architecture decision without building a production scorer.",
-  "state": "Plan, frozen protocols, portable extraction and calibration harness, human pilot, 12-call synthetic model pilot, and one unusable head-only browser response are committed. CPU pilot, final source-bound evaluation, independent final review, fresh-agent exit and hosted CI remain unfinished.",
+  "state": "Plan, protocols, extraction fixes, human and model pilots, failed rendered capture and isolated CPU pilot are recorded. Final source-bound evaluation, independent review, fresh-agent continuation and hosted CI for this final source remain unfinished.",
   "repository": "https://github.com/okmodo/aeo-scoring.git",
   "branch": "codex/phase-2-closure",
   "baseCommit": "b2ebbe0",
   "planCommit": "5196c5a",
   "decisions": [
-    "Production or autonomous scoring remains no-go against the full evidence protocol; constrained proposal-only architecture research can continue without authority to score or act and with independent human semantic review.",
+    "Production or autonomous scoring remains no-go against the full evidence protocol; constrained proposal-only design can continue without authority to score or act and with independent human semantic review.",
     "Treat incomplete extraction and missing measurements as unknown; distinguish synthetic cases, permitted merchant evidence, human judgment and Cloudflare measurements.",
-    "Preserve the human care disagreement and the stricter pilot-prompt ambiguity rather than editing the category rule or revising the human answer."
+    "Preserve the human care disagreement and the stricter pilot-prompt ambiguity rather than editing the category rule or revising the human answer.",
+    "Do not assume the tested full-document parser and benchmark handling are viable as a Workers Free default; investigate bounded streaming and remeasure under a reviewed protocol.",
+    "The user clarified specific applicable care is sufficient; opt-in categories v1.1 reflects this while v1 and original human pilot remain unchanged."
   ],
   "constraints": [
     "Cloudflare Free only; never alter Cloudflare resources predating this project, enable a Workers subdomain, or place network/model/cloud calls in CI.",
@@ -21,12 +23,13 @@
     "Validated and committed immutable plan alone before implementation; froze full and constrained-pilot protocols before relevant results.",
     "Made extraction portable and bounded at 1 MiB, fixed text-cap early stop and nested visible fields, and added exact-snapshot calibration tests to offline CI.",
     "Recorded one permitted raw page, one-rater three-item human pilot with unadjudicated disagreement, and 12 synthetic model proposals with exact calls, 7 expected state matches and 11 structurally accepted unverified proposals.",
-    "Implemented and locally tested an isolated fixed-input CPU benchmark, protected by token and expiring atomic D1 permits; independent review and runtime/cloud verification remain necessary.",
-    "One bounded browser call returned head-only HTML; metadata and limitations are retained without publishing full page content."
+    "Ran the isolated CPU pilot within its corrected cap, retained 11 matched CPU values and one large-workload resource-limit failure, and deleted only the new temporary resources.",
+    "One bounded browser call returned head-only HTML; metadata and limitations are retained without publishing full page content.",
+    "Retained preflight hosted CI successes, initial 404, corrected run and before/after resource inventory; account-wide headroom remains unknown."
   ],
   "remaining": [
-    "After reviewed preflight and authorization, record the bounded CPU pilot and resource cleanup if obtainable; report failures, actual request counts and missing usage honestly.",
-    "Finish evidence-based decision, independent review and source-bound evaluation; rerun after any implementation or handoff change.",
+    "Preserve and independently review the CPU evidence and no-go; account-wide quota headroom, representative labeled pages and reliable rendering remain unmeasured.",
+    "Run final source-bound evaluations for both plans and obtain independent final review after all final evidence is committed.",
     "Conduct genuine fresh-agent continuation from an export without prior chat, record exact observation, then publish PR and confirm hosted Node 24 CI under project policy."
   ],
   "resumeCommands": [
