@@ -1,0 +1,5 @@
+# Planning deviation
+
+The original preview plan was committed alone as `9ddb885` on the preserved `codex/hosted-preview` branch before prototype work. It included `tsconfig.*.json`, which the repository plan validator rejects because scope entries must be exact files or directory patterns. The prototype was created uncommitted before this failure was discovered. A subsequent attempted replacement plan was committed as `342f664` on that branch, but would not satisfy the history gate. Neither commit is in the integration branch history. The original invalid plan is archived here as `original-plan-invalid.json` for review; it does not authorize implementation.
+
+The valid integration plan `1bbd83d` was committed alone on `codex/hosted-preview-integration` from main before further integration, validation and review. The prototype was an existing uncommitted input to that plan. This is a process deviation, not evidence that a valid plan preceded prototype development. Independent review must assess the deviation alongside the resulting implementation.

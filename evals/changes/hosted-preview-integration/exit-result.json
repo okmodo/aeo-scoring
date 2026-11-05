@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "changeId": "hosted-preview-integration",
+  "sourceCommit": "49a5164334f182d5b9bb38f98b5c38be3800bff4",
+  "sourceDigest": "15a31c24d0603ee38c476136ea50cf4275f40d0b7b7962ec0a368186b54d4e20",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "dispatch": {
+    "task": "/root/preview_deployed_fresh_exit",
+    "forkTurns": "none",
+    "model": "gpt-6.1-terra"
+  },
+  "agentId": "/root/preview_deployed_fresh_exit",
+  "status": "passed",
+  "exportSha256": "d912f04d8def8508132362a1e8f33d511e6bd43778e475ea5e4cce5ec22cb374",
+  "bundleSha256": "88c88e99a196162cc60e37a45ce19a40fe9afe5a1b07e249cf1f4eda431f0f5d",
+  "interruptionPoint": "Live preview deployed and verified; final deployment documentation committed, current source-bound continuation retention and hosted CI unfinished.",
+  "observedContinuation": "A new fresh Terra session used only the final exported bundle/state, installed dependencies offline, passed all nine plan commands, matched the source digest and observed the expected stale-exit gate rejection after preceding scope/history/run/trace/handoff checks.",
+  "limitations": "Local Node25 does not certify hosted Node24. The fresh agent did not inspect live services or independently verify deployment/browser/inventory claims. The original prototype-planning exception and limited development-tool override risk remain disclosed. Earlier pre-deployment fresh observation remains in Git record 02016e6.",
+  "observedReport": "# Fresh continuation observation\n\nThe only task inputs were `/private/tmp/aeo-preview-deployed-export/export-state.json` and its `repository.bundle`; this continuation had no prior substantive chat history. I cloned the bundle into a new `/private/tmp/aeo-preview-deployed-fresh-checkout`, checked out `codex/hosted-preview-integration`, and read the repository instructions, plan, handoff, deployment, deviation and independent review. HEAD was `49a5164334f182d5b9bb38f98b5c38be3800bff4`, with base `origin/main` at `1d8e07a2971fae0dd371616bb1033f88143c540a`.\n\nOffline `npm ci --offline --ignore-scripts --no-audit --no-fund` succeeded, with an engine warning: local Node was v25.9.0 while the project requires Node 24. I ran `npm run evaluate -- --change hosted-preview-integration --base origin/main` once. All nine plan commands passed: check, test, test:exit, test:foundations, test:feasibility, lint, typecheck, build, and test:preview. The generated run and nine trace entries record exit code zero for each. The run identifies HEAD above and source digest `15a31c24d0603ee38c476136ea50cf4275f40d0b7b7962ec0a368186b54d4e20`, matching the export. Its trace covers evaluation commands only, not earlier work.\n\n`npm run ci:gate -- origin/main` exited 1 with `Missing or stale exit-test record`. Because this gate validates scope, plan history, run, trace and handoff before the exit record, reaching that error shows those preceding validations passed for this checkout. The existing exit record identifies source commit `9a2aa9799538241ba8272a53e842e60d51f2ee44` and digest `b3eda17847497d47d632840fe19f2d372840c79b1a21bbe6feb9edd77e3bbfbc`; it is stale for the current digest. No replacement exit record was fabricated. Evaluation changed only the derived run and trace records among tracked files; the gate produced local reports.\n\nThe deployment and Cloudflare isolation claims were read from the retained deployment record, not independently verified in this continuation. The planning deviation and review limitations remain as documented. No network, live service, Cloudflare, deployment, merge, or source edits were performed. Local results on Node 25 do not replace current hosted Node 24 CI or independent review.\n",
+  "finalIndependentReview": {
+    "agentId": "/root/preview_review",
+    "sourceCommit": "49a5164334f182d5b9bb38f98b5c38be3800bff4",
+    "observation": "Read-only final review found 02016e6..49a5164 changed documentation/handoff only and no app or helper code; no blocking documentation issue. Manifest correction, initial 400, live deployment and scoped inventory claims are retained with their provenance limits. Source approval at9a2 remains; final docs approved conditional on refreshed evaluation, fresh continuation and hosted CI. Reviewer did not independently observe cloud/live browser activity; process exception and dev override limitations remain."
+  },
+  "coordinatorBrowserObservation": {
+    "scope": "Local development interface at 98807ba before later documentation and text-contrast-only commits; no claim of complete WCAG audit.",
+    "observed": "390px mobile and 1440px desktop inspected; zero mobile horizontal overflow, cancellation stayed cancelled, entered example URL generated no merchant request and was absent from report, report heading focused, three actions initially and five after expansion, 40 subchecks displayed. Logo and favicon issues fixed before final pass."
+  },
+  "priorDeploymentPreflight": {
+    "recordCommit": "02016e638a22d4fad8fb0970ed7ea4cb5480df4a",
+    "sourceCommit": "9a2aa9799538241ba8272a53e842e60d51f2ee44",
+    "sourceDigest": "b3eda17847497d47d632840fe19f2d372840c79b1a21bbe6feb9edd77e3bbfbc",
+    "freshAgentId": "/root/preview_fresh_exit",
+    "note": "The earlier fresh continuation and CI passed before initial deployment; this record refreshes documentation-only changes after live verification."
+  }
+}

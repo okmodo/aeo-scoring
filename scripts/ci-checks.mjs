@@ -12,6 +12,10 @@ export function collectCommands(plans, scripts, appPresent, foundationsPresent =
     assert(typeof scripts[name] === 'string', `App needs ${name}`);
     required.push(`npm run ${name}`);
   }
+  if (appPresent) {
+    assert(typeof scripts['test:preview'] === 'string' && scripts['test:preview'].trim() && !/^(echo|true|exit 0)\b/.test(scripts['test:preview'].trim()), 'App needs real test:preview');
+    required.push('npm run test:preview');
+  }
   if (foundationsPresent) {
     assert(typeof scripts['test:foundations'] === 'string' && scripts['test:foundations'].trim() && !/^(echo|true|exit 0)\b/.test(scripts['test:foundations'].trim()), 'Foundations need a real test:foundations script');
     required.push('npm run test:foundations');

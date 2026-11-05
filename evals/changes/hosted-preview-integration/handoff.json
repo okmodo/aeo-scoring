@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "task": "Validate and publish the isolated free-tier hosted sample preview after review and hosted CI.",
+  "state": "The isolated Free Pages preview is live from source 02016e638a22d4fad8fb0970ed7ea4cb5480df4a after hosted CI and review. Live browser, four-asset byte comparison and scoped before/after inventory checks passed; deployment.md records actual outcomes and the corrected manifest instruction. Current documentation/evidence evaluation, fresh continuation and hosted CI remain unfinished; application files are unchanged since deployment.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/hosted-preview-integration",
+  "baseCommit": "1d8e07a",
+  "planCommit": "1bbd83d",
+  "decisions": [
+    "The preview uses one fictional running-shoe report: 84.5/100, Structure 36.5/40, Content 48/60. An entered URL is never fetched or assessed.",
+    "Use a new isolated Cloudflare Pages Direct Upload project on the free tier only, after hosted CI and independent review; CI never deploys.",
+    "The original separately committed plan was invalid and prototype work preceded a valid plan. Preserve and disclose this exception; see process-deviation.md and the archived original plan."
+  ],
+  "constraints": [
+    "Do not modify any Cloudflare configuration or service that existed before this project; do not use paid resources, change billing, merge the PR, or assess merchant sites.",
+    "The preview is synthetic; production extraction, scoring, model calibration and Cloudflare feasibility are not established.",
+    "Do not edit the immutable integration plan or fabricate review, fresh-agent, command, cost, or deployment evidence.",
+    "Hosted Node 24 CI passed for the deployed source. The minimatch 11 development override is outside upstream consumers' declared 10 ranges and has only limited compatibility validation."
+  ],
+  "completed": [
+    "Valid integration plan committed separately before further integration; the earlier prototype-planning exception is disclosed.",
+    "Sample UI, reference-score regression, runtime component check, lint, typecheck, build, and permanent CI command registration implemented.",
+    "Initial independent source review is retained with its limited status. Coordinator observed mobile cancellation, privacy, focus, action expansion, subcheck display and responsive behavior.",
+    "Hosted CI run 42108143664 succeeded; fresh continuation and independent review preceded deployment.",
+    "A new isolated Pages project and deployment were created; the live index HTML hash matched the reviewed build. See deployment.md.",
+    "Live public flow, all four asset hashes and scoped Cloudflare before/after inventory verified; only the new Pages project and deployment were added."
+  ],
+  "remaining": [
+    "Inspect the actual deployment record and disclosed process exception; do not make further cloud calls or source changes in a clean continuation.",
+    "Refresh source-bound evaluation and genuine fresh-agent evidence for the final documentation; update PR #4 and verify current hosted Node 24 CI.",
+    "Report the live preview and remaining real-audit limitations to the user. Do not merge the PR or modify any pre-existing Cloudflare service."
+  ],
+  "resumeCommands": [
+    "git log --oneline -5",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change hosted-preview-integration --base origin/main"
+  ],
+  "expectedOutcome": "The deployed synthetic preview is verified live, existing-resource boundaries are checked, and current documentation changes have refreshed evidence and hosted CI."
+}

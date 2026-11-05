@@ -7,3 +7,7 @@ AEO Scoring Vault/.obsidian/plugins/
 # Local evaluation output
 node_modules/
 reports/
+
+.playwright-cli/
+output/playwright/
+dist/
