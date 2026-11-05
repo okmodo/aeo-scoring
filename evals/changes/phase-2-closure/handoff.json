@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Close phase 2 feasibility gaps through bounded evidence and an honest architecture decision without building a production scorer.",
-  "state": "Plan, frozen protocols, portable extraction and calibration harness, human pilot, 12-call synthetic model pilot, and fixed-input benchmark implementation are committed. Live browser and CPU experiments, final source-bound evaluation, independent final review, fresh-agent exit and hosted CI remain in progress or unrecorded.",
+  "state": "Plan, frozen protocols, portable extraction and calibration harness, human pilot, 12-call synthetic model pilot, and one unusable head-only browser response are committed. CPU pilot, final source-bound evaluation, independent final review, fresh-agent exit and hosted CI remain unfinished.",
   "repository": "https://github.com/okmodo/aeo-scoring.git",
   "branch": "codex/phase-2-closure",
   "baseCommit": "b2ebbe0",
@@ -21,13 +21,18 @@
     "Validated and committed immutable plan alone before implementation; froze full and constrained-pilot protocols before relevant results.",
     "Made extraction portable and bounded at 1 MiB, fixed text-cap early stop and nested visible fields, and added exact-snapshot calibration tests to offline CI.",
     "Recorded one permitted raw page, one-rater three-item human pilot with unadjudicated disagreement, and 12 synthetic model proposals with exact calls, 7 expected state matches and 11 structurally accepted unverified proposals.",
-    "Implemented and locally tested an isolated fixed-input CPU benchmark, protected by token and expiring atomic D1 permits; independent review and runtime/cloud verification remain necessary."
+    "Implemented and locally tested an isolated fixed-input CPU benchmark, protected by token and expiring atomic D1 permits; independent review and runtime/cloud verification remain necessary.",
+    "One bounded browser call returned head-only HTML; metadata and limitations are retained without publishing full page content."
   ],
   "remaining": [
-    "Record approved bounded browser and Cloudflare CPU observations if obtainable, including failures, usage and resource cleanup; do not infer missing data or broaden claims.",
+    "After reviewed preflight and authorization, record the bounded CPU pilot and resource cleanup if obtainable; report failures, actual request counts and missing usage honestly.",
     "Finish evidence-based decision, independent review and source-bound evaluation; rerun after any implementation or handoff change.",
     "Conduct genuine fresh-agent continuation from an export without prior chat, record exact observation, then publish PR and confirm hosted Node 24 CI under project policy."
   ],
-  "resumeCommands": ["git log --oneline -12", "npm ci --ignore-scripts --no-audit --no-fund", "npm run evaluate -- --change phase-2-closure --base origin/main"],
+  "resumeCommands": [
+    "git log --oneline -12",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change phase-2-closure --base origin/main"
+  ],
   "expectedOutcome": "A source-bound, reviewed result honestly distinguishes measured pilot observations, unresolved feasibility gates and a constrained next design step."
 }
