@@ -135,6 +135,8 @@ test('main content is retained before navigation while whole-page truncation sta
   const r = inspectSnapshot({ ...context, html });
   assert.equal(r.coverage.mainPresent, true);
   assert.equal(r.coverage.textOrder, 'main-first');
+  assert.equal(r.coverage.mainTextRetained, 1);
+  assert.equal(r.coverage.mainTextTruncated, false);
   assert.equal(r.coverage.complete, false);
   assert.equal(r.findings[0].text, 'Product care instructions');
   assert.equal(r.findings[0].scope, 'main');

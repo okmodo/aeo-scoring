@@ -36,7 +36,7 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
   if (!['raw', 'rendered'].includes(method) || typeof observedAt !== 'string' || !Number.isFinite(Date.parse(observedAt))) throw new Error('Method and observation time required');
   const document = parse(html, { sourceCodeLocationInfo: true });
   const mainFindings = [], otherFindings = [], productFields = [], stack = [{ node: document, hidden: false, blockedJsonLd: false, inMain: false }];
-  let visited = 0, truncated = false, mainPresent = false;
+  let visited = 0, truncated = false, mainPresent = false, mainTextTruncated = false;
   while (stack.length) {
     const { node, hidden, blockedJsonLd, inMain } = stack.pop();
     const withinMain = inMain || node.tagName === 'main';
@@ -90,9 +90,9 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
       const value = node.value.replace(/\s+/g, ' ').trim();
       if (value) {
         const target = withinMain ? mainFindings : otherFindings;
-        if (target.length === MAX_FINDINGS) truncated = true;
+        if (target.length === MAX_FINDINGS) { truncated = true; if (withinMain) mainTextTruncated = true; }
         else {
-          if (value.length > 500) truncated = true;
+          if (value.length > 500) { truncated = true; if (withinMain) mainTextTruncated = true; }
           target.push({ text: value.slice(0, 500), location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset }, truncated: value.length > 500, scope: withinMain ? 'main' : 'other' });
         }
       }
@@ -105,7 +105,7 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
   const body = root?.childNodes?.find(n => n.tagName === 'body');
   const structuralStatus = !root?.sourceCodeLocation ? 'fragment' : !body?.sourceCodeLocation ? 'missing-body' : findings.length === 0 ? 'body-no-visible-text' : 'body-text-present';
   const structurallyUsable = !['missing-body', 'body-no-visible-text'].includes(structuralStatus);
-  return { source: { url: parsedUrl.href, method, observedAt }, findings, productFields, coverage: { scope: 'Visible text nodes and inline JSON-LD Product and ProductGroup fields; hidden nodes and external resources excluded', complete: !truncated && structurallyUsable, structuralStatus, mainPresent, textOrder: 'main-first', visitedNodes: visited }, limitations: ['Snapshot is untrusted and may not reflect current or complete page content.', 'CSS, shadow DOM, images and external resources are not evaluated.', 'JSON-LD supports bounded Product and ProductGroup observations only; variants are not selected or resolved and locations cover the entire script.', 'Structural status does not prove the page is fully rendered or that its content is usable.', 'Unobserved text is not proof of absence.'] };
+  return { source: { url: parsedUrl.href, method, observedAt }, findings, productFields, coverage: { scope: 'Visible text nodes and inline JSON-LD Product and ProductGroup fields; hidden nodes and external resources excluded', complete: !truncated && structurallyUsable, structuralStatus, mainPresent, mainTextRetained: mainFindings.length, mainTextTruncated, textOrder: 'main-first', visitedNodes: visited }, limitations: ['Snapshot is untrusted and may not reflect current or complete page content.', 'CSS, shadow DOM, images and external resources are not evaluated.', 'JSON-LD supports bounded Product and ProductGroup observations only; variants are not selected or resolved and locations cover the entire script.', 'Structural status does not prove the page is fully rendered or that its content is usable.', 'Unobserved text is not proof of absence.'] };
 }
 
 // Exact, case-insensitive string lookup is an experiment, not a semantic or rubric score.
