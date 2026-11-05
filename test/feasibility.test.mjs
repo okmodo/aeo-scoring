@@ -28,6 +28,9 @@ test('input and output bounds fail closed and disclose truncation', () => {
   assert.throws(() => inspectSnapshot({ ...context, observedAt: 'unknown', html: '' }));
   const result = inspectSnapshot({ ...context, html: '<p>x</p>'.repeat(101) });
   assert.equal(result.findings.length, 100); assert.equal(result.coverage.complete, false);
+  const later = inspectSnapshot({ ...context, html: '<p>x</p>'.repeat(101) + '<h1>Later product</h1>' });
+  assert.equal(later.coverage.complete, false);
+  assert.ok(later.productFields.some(f => f.field === 'name' && f.value === 'Later product'));
   assert.throws(() => observePhrase(result, ''));
   const tail = inspectSnapshot({ ...context, html: '<p>' + 'x'.repeat(500) + ' needle</p>' });
   assert.equal(tail.coverage.complete, false);
@@ -91,4 +94,13 @@ test('retained live model failure shows valid citation is not semantic correctne
   const raw = inspectSnapshot({ ...context, html: observed.browser.request.html });
   assert.equal(observePhrase(raw, 'Dishwasher safe').state, 'not_observed');
   assert.match(observed.browser.response.result, /Dishwasher safe/);
+});
+
+
+test('nested visible field text is retained while hidden descendants are excluded', () => {
+  const r = inspectSnapshot({ ...context, html: '<h1>Wordmark <span>Short Sleeve</span><span hidden>secret</span></h1>' });
+  assert.equal(r.productFields[0].value, 'Wordmark Short Sleeve');
+  const large = inspectSnapshot({ ...context, html: '<h1><span>' + 'x'.repeat(501) + '</span></h1>' });
+  assert.equal(large.coverage.complete, false);
+  assert.equal(large.productFields.length, 0);
 });

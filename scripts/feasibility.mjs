@@ -6,6 +6,26 @@ const utf8Bytes = value => new TextEncoder().encode(value).byteLength;
 const MAX_FINDINGS = 100;
 const SKIP = new Set(['script', 'style', 'template', 'noscript', 'svg', 'head']);
 
+// Collect bounded descendant text for a field, excluding the same obvious hidden content.
+function fieldText(node) {
+  const stack = [...(node.childNodes || [])].reverse();
+  const parts = [];
+  let visited = 0, size = 0;
+  while (stack.length) {
+    if (++visited > 1000) return { text: '', truncated: true };
+    const child = stack.pop();
+    const attrs = Object.fromEntries((child.attrs || []).map(a => [a.name, a.value]));
+    if (SKIP.has(child.tagName) || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '')) continue;
+    if (child.nodeName === '#text') {
+      size += child.value.length;
+      if (size > 500) return { text: '', truncated: true };
+      parts.push(child.value);
+    }
+    for (const nested of (child.childNodes || []).slice().reverse()) stack.push(nested);
+  }
+  return { text: parts.join(' ').replace(/\s+/g, ' ').trim(), truncated: false };
+}
+
 export function inspectSnapshot({ html, url, method, observedAt }) {
   if (typeof html !== 'string' || html.length > MAX_BYTES || utf8Bytes(html) > MAX_BYTES) throw new Error('Snapshot missing or exceeds 1 MiB');
   let parsedUrl;
@@ -41,7 +61,9 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
     }
     if (!suppressed && ['h1', 'p', 'span'].includes(node.tagName) && node.sourceCodeLocation) {
       const field = node.tagName === 'h1' ? 'name' : ({ description: 'description', price: 'price', priceCurrency: 'currency' })[attrs.itemprop];
-      const text = (node.childNodes || []).filter(n => n.nodeName === '#text').map(n => n.value).join(' ').replace(/\s+/g, ' ').trim();
+      const extracted = field ? fieldText(node) : { text: '', truncated: false };
+      const text = extracted.text;
+      if (extracted.truncated) truncated = true;
       if (field && text) {
         if (text.length > 500 || productFields.length >= 100) truncated = true;
         else productFields.push({ field, value: text, origin: 'visible-html', location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset } });
@@ -50,9 +72,11 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
     if (!suppressed && node.nodeName === '#text' && node.sourceCodeLocation) {
       const value = node.value.replace(/\s+/g, ' ').trim();
       if (value) {
-        if (findings.length === MAX_FINDINGS) { truncated = true; break; }
-        if (value.length > 500) truncated = true;
-        findings.push({ text: value.slice(0, 500), location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset }, truncated: value.length > 500 });
+        if (findings.length === MAX_FINDINGS) truncated = true;
+        else {
+          if (value.length > 500) truncated = true;
+          findings.push({ text: value.slice(0, 500), location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset }, truncated: value.length > 500 });
+        }
       }
     }
     for (const child of (node.childNodes || []).slice().reverse()) stack.push({ node: child, hidden: suppressed, blockedJsonLd: blockedJsonLd || node.tagName === 'template' || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '') });
