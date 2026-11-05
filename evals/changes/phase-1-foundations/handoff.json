@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "task": "Complete and publish the reviewed Phase 1 scoring foundations after PR #1 was merged; do not start Phase 2 or build the app.",
+  "state": "Versioned rubric, three editorial category templates, ten-role crawler registry, six synthetic scoring cases and offline reference tests are implemented. Independent Terra review found four issues, fixes were rechecked, and no remaining blocking issue was reported. Current source-bound run/exit evidence, PR publication and hosted CI are unfinished.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/phase-1-scoring-foundations",
+  "baseCommit": "605b7a9403f14260408b9b300380e7b7a87e906b",
+  "planCommit": "185c8d7",
+  "decisions": [
+    "Preserve Structure40/Content60 and all agreed subchecks; numerical weights and category lists remain editorial.",
+    "Launch templates: running shoes, casual daypacks, basic T-shirts, with explicit exclusions and category questions.",
+    "Score Googlebot/Bingbot and three documented retrieval bots; training/user-triggered roles remain unscored, undocumented behavior stays unknown.",
+    "Unknown category withholds both C2 and C4; conditional C4 exclusions require exact versioned conditions and evidence.",
+    "Use a pure illustrative calculator on assessed inputs; no live extraction, model judge, or claims of human/live calibration.",
+    "The user removed GitHub separate-account approvals; required CI and independent technical review remain project policy."
+  ],
+  "constraints": [
+    "No paid calls, Cloudflare resources, live merchant crawling, deployment, merge, or Phase 2 work in this offline continuation.",
+    "Use only the exported Git bundle and state, not prior chat or another checkout.",
+    "Do not modify source, acceptance plans, or synthesize missing exit evidence. Derived run/trace/reports are permitted.",
+    "Node24 is the declared runtime; available local Node25 results do not certify hosted runtime."
+  ],
+  "completed": [
+    "PR #1 merged successfully before work began.",
+    "Immutable Phase1 plan committed before implementation.",
+    "Three Terra authoring workstreams produced category, crawler, and rubric/reference foundations.",
+    "Independent Terra review and fixes verified on committed implementation; report is in this directory."
+  ],
+  "remaining": [
+    "Recover the exported branch and main refs and check plan-before-implementation chronology.",
+    "Run the active plan from the clean export and validate source-bound run/handoff records.",
+    "Retain genuine fresh-session observation, open Phase1 PR and verify Node24 hosted CI.",
+    "Obtain user authorization before merging this Phase1 PR or proceeding to Phase2."
+  ],
+  "resumeCommands": [
+    "git log --oneline -4",
+    "npm ci --ignore-scripts --no-audit --no-fund --offline",
+    "npm run evaluate -- --change phase-1-foundations --base main"
+  ],
+  "expectedOutcome": "Both old CI tests and new foundations tests pass from the clean export, the current source digest matches the generated evidence, and the full gate still rejects missing current exit evidence until coordinator retention. Hosted CI, actual website scoring and calibration are not inferred."
+}
