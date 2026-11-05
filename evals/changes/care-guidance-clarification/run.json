@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "care-guidance-clarification",
-  "recordedAt": "2026-11-05T21:44:02.472Z",
-  "sourceCommit": "84400962c6fcd13579c48974c4ba4c46f047d262",
-  "sourceDigest": "a8c3701eedc2242fa7331ac0218a6a094a5a528399580965008ee5de3883b9d9",
+  "recordedAt": "2026-11-05T21:55:37.562Z",
+  "sourceCommit": "3dd8127baf1e5ebe11f10e3c4ec135c6cd9668e3",
+  "sourceDigest": "e27a50e104614de3bcc657524e957bc66ff6c2fa488e71911459820850b3a044",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,32 +15,32 @@
     {
       "command": "npm run check",
       "exitCode": 0,
-      "durationMs": 1171,
-      "outputSha256": "2fbef1fc04c058077ec15b5af83c424a6bfe01c53aa946a51a49a43a0592caa4"
+      "durationMs": 1165,
+      "outputSha256": "bf2aa0dcb2d2961952939d0454cbedfdffecab7de818c2495dfcb39621ce1f75"
     },
     {
       "command": "npm test",
       "exitCode": 0,
-      "durationMs": 8606,
-      "outputSha256": "51a2755c0aeb918da15c440301c09ef7147b1ddf6a33709ee32b32f49f1e4fab"
+      "durationMs": 8435,
+      "outputSha256": "7431811b7141b604a19578789905843978a5f2dd7f696707ce3dfd7a18422a1f"
     },
     {
       "command": "npm run test:exit",
       "exitCode": 0,
-      "durationMs": 407,
-      "outputSha256": "fae06580d13b78c8ee52553d2b287fa91f2efeb2e1d10a0b9940cf8536342b0c"
+      "durationMs": 403,
+      "outputSha256": "c5175a4a1d90d4d27b362cf0d8344adeb88ced9b5175539197a2ed14bacfc4a2"
     },
     {
       "command": "npm run test:foundations",
       "exitCode": 0,
-      "durationMs": 232,
-      "outputSha256": "f275b6b547a0af1a4acb3f457c6d5d55fb2d8731587f98b5442a8353e167d163"
+      "durationMs": 227,
+      "outputSha256": "b52472ab36e55615b421ffc1ebd913cbe2aa9658461d79c514df9c08f4e14b73"
     },
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 276,
-      "outputSha256": "9cc8a8431f9c7f4c7d4e6432b5cf685d4f97dcab15e0df0d5afcdee3414fafbf"
+      "durationMs": 274,
+      "outputSha256": "4b3a9a600eb9d0b1fc5cc143c7c89b2551e76e0570f1b9a9a9c7776bcfdd79e8"
     }
   ]
 }
