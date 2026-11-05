@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "error": {
+    "code": "service_unavailable",
+    "message": "The audit service is temporarily unavailable.",
+    "retryAfterSeconds": null
+  }
+}

@@ -1,0 +1,547 @@
+{
+  "version": "1",
+  "id": "bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "status": "incomplete",
+  "statusUrl": "/api/v1/audits/bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "submittedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "assessedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "createdAt": "2026-11-05T12:00:00.000Z",
+  "completedAt": "2026-11-05T12:00:02.000Z",
+  "expiresAt": "2026-11-06T12:00:00.000Z",
+  "cache": {
+    "hit": true,
+    "validUntil": "2026-11-05T13:00:02.000Z"
+  },
+  "report": {
+    "status": "incomplete",
+    "score": null,
+    "earnedPoints": 4,
+    "rubricVersion": "1.0.0",
+    "category": null,
+    "productName": "Example Road Shoe",
+    "variant": null,
+    "market": null,
+    "currency": null,
+    "criteria": [
+      {
+        "id": "S1",
+        "pillar": "structure",
+        "maxPoints": 13,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S1.identity",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S1.description",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S1.specifications",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S1.price",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S1.availability",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S2",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 4,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S2.entity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e1"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.core-properties",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e2"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.offer",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S2.identifiers",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S2.variants",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S3",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S3.identity",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S3.price",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S3.availability",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S3.optional-claims",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S4",
+        "pillar": "structure",
+        "maxPoints": 3,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S4.title",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S4.organization",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S4.image-alternatives",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S5",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S5.search",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S5.ai-retrieval",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S6",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S6.usable",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S6.inclusion",
+            "maxPoints": 1,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S7",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S7.identity",
+            "maxPoints": 0.5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S7.links",
+            "maxPoints": 0.5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "S8",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "S8.context",
+            "maxPoints": 0.5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "S8.guidance",
+            "maxPoints": 0.5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "C1.identity",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C1.explanation",
+            "maxPoints": 4,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C1.configuration",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "pillar": "content",
+        "maxPoints": 20,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "C2.essential",
+            "maxPoints": 14,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C2.supporting",
+            "maxPoints": 6,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "C3.price",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C3.availability",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C3.shipping",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C3.returns",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "C4",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "C4.intended-use",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C4.compatibility",
+            "maxPoints": 3,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C4.limitations",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C4.selection",
+            "maxPoints": 2,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      },
+      {
+        "id": "C5",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 0,
+        "complete": false,
+        "subchecks": [
+          {
+            "id": "C5.consistency",
+            "maxPoints": 5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          },
+          {
+            "id": "C5.claim-support",
+            "maxPoints": 5,
+            "status": "not_measured",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [],
+            "reason": "Available evidence does not establish this check."
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "e1",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "script[type=\"application/ld+json\"] at extracted index 0",
+        "excerpt": "One schema.org Product explicitly identifies the audited URL."
+      },
+      {
+        "id": "e2",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "script[type=\"application/ld+json\"] at extracted index 0",
+        "excerpt": "Product properties present: name, description, image."
+      }
+    ],
+    "fixes": [],
+    "coverage": {
+      "measured": 2,
+      "notMeasured": 38,
+      "total": 40,
+      "category": null,
+      "extraction": {
+        "html": true,
+        "bodyText": false,
+        "usable": true,
+        "visibility": "unknown",
+        "jsonLdTruncated": false
+      },
+      "limitations": [
+        "Semantic assessment, rendering, and unobserved evidence are not scored."
+      ]
+    }
+  },
+  "error": null
+}
