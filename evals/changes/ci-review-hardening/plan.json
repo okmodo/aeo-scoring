@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "id": "ci-review-hardening",
+  "task": "Address independently reproduced PR #1 review findings without weakening mandatory evaluation or starting application development.",
+  "scope": ["scripts/**", "test/**", "evals/**", ".github/**", "AGENTS.md", "README.md", "package.json", "package-lock.json", "AEO Scoring Vault/**"],
+  "nonGoals": ["Merge PR #1", "Start Phase 1", "Deploy or use paid services", "Treat an agent review as a GitHub approval from another account", "Alter frozen gold expectations without a reason"],
+  "outcomes": [
+    {"id": "O1", "description": "Legitimate follow-up plans and base-branch updates pass while genuinely unplanned or retroactively planned implementation fails.", "verification": "automated", "evidence": "test/evaluation.test.mjs lifecycle regressions"},
+    {"id": "O2", "description": "Source fingerprints represent relevant file state and reject stale evidence for independently reproduced changes.", "verification": "automated", "evidence": "test/evaluation.test.mjs fingerprint regressions"},
+    {"id": "O3", "description": "Each independent finding has a recorded disposition and final patch receives independent re-review and hosted CI.", "verification": "human", "evidence": "evals/changes/ci-review-hardening/review-summary.md and PR #1"}
+  ],
+  "process": [
+    {"id": "P1", "description": "Commit this immutable remediation plan before any fixes and use agents for review, implementation, and fresh-session continuation.", "verification": "human", "evidence": "Git history and reviewer/exit evidence"},
+    {"id": "P2", "description": "Refresh all active plans' evidence against final source and preserve real metrics, permissions, and known limitations.", "verification": "automated", "evidence": "scripts/pr-gate.mjs and source-bound run records"}
+  ],
+  "styleEfficiency": [
+    {"id": "E1", "description": "Keep changes focused on confirmed findings and use targeted regression tests before the final suite.", "verification": "human", "evidence": "Independent review report and real command traces"}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit"],
+  "exitTest": {"required": true, "reason": "Remediation changes the agent evaluation workflow and source-bound handoff verification; repeat a genuine fresh-session exercise on the final export."}
+}
