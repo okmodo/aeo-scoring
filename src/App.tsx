@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { actions, checks, total } from "./sample";
 import "./style.css";
 export function App() {
-  const [screen, setScreen] = useState<"entry" | "progress" | "report">(
+  const [screen, setScreen] = useState<"entry" | "report">(
       "entry",
     ),
     [url, setUrl] = useState(""),
@@ -16,14 +16,10 @@ export function App() {
     if (screen === "entry" && hasNavigated.current)
       entryHeading.current?.focus();
     if (screen !== "entry") hasNavigated.current = true;
-    if (screen === "progress") {
-      const timer = window.setTimeout(() => setScreen("report"), 1000);
-      return () => window.clearTimeout(timer);
-    }
   }, [screen]);
   function preview(e: React.FormEvent) {
     e.preventDefault();
-    setScreen("progress");
+    setScreen("report");
   }
   return (
     <>
@@ -42,91 +38,163 @@ export function App() {
         </span>
       </header>
       {screen === "entry" && (
-        <main className="entry" id="home">
-          <div className="entry-copy">
-            <div className="eyebrow">
-              <span className="status-dot" /> A CLEARER VIEW OF YOUR PRODUCT
-              CONTENT
+        <main id="home">
+          <nav className="section-nav" aria-label="Page sections">
+            <strong>AEO report preview</strong>
+            <a href="#how">How it works</a>
+            <a href="#preview">Sample score</a>
+            <a href="#scope">Scope</a>
+            <a href="#faq">FAQ</a>
+          </nav>
+          <section className="hero">
+            <div className="landing-wrap hero-grid">
+              <div className="hero-copy">
+                <div className="eyebrow">PRODUCT CONTENT READINESS</div>
+                <h1 tabIndex={-1} ref={entryHeading}>Make your products easier to answer for.</h1>
+                <p>See how a clear, actionable AEO report can help your team understand product page signals and decide what to improve.</p>
+                <a className="hero-link" href="#how">See how it works <span>↓</span>
+                </a>
+                <ul className="hero-points">
+                  <li>A practical score and evidence</li>
+                  <li>Prioritized actions for your team</li>
+                  <li>A fictional example, ready to explore</li>
+                </ul>
+              </div>
+              <form className="audit-card" onSubmit={preview}>
+                <div className="audit-bar">SAMPLE REPORT <span>✳</span>
+                </div>
+                <div className="audit-body">
+                  <h2>Explore the report</h2>
+                  <p>See what an AEO assessment can look like.</p>
+                  <label htmlFor="url">Product page URL <span>Optional</span>
+                  </label>
+                  <input id="url" type="url" placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
+                  <p className="form-note">Your URL stays in this browser and is not fetched or assessed. The report always shows the same fictional product.</p>
+                  <button type="submit">Explore sample report <span>↗</span>
+                  </button>
+                </div>
+              </form>
             </div>
-            <h1 tabIndex={-1} ref={entryHeading}>
-              Make your products <em>easier to answer for.</em>
-            </h1>
-            <p className="lead">
-              See how an AEO report can turn product page signals into a clear,
-              actionable plan.
-            </p>
-            <form onSubmit={preview}>
-              <label htmlFor="url">
-                PRODUCT PAGE URL <span>OPTIONAL</span>
-              </label>
-              <div className="input-row">
-                <input
-                  id="url"
-                  type="url"
-                  placeholder="https://example.com/products/your-product"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-                <button type="submit">
-                  Explore sample report <span>↗</span>
-                </button>
+          </section>
+          <section className="landing-section beige" id="how">
+            <div className="landing-wrap">
+              <div className="landing-head">
+                <div className="eyebrow">HOW IT WORKS</div>
+                <h2>From product signals to a practical plan.</h2>
+                <p>Explore the fictional example to see how a report brings the pieces together.</p>
               </div>
-              <p className="form-note">
-                This is a demonstration. Your URL stays in this browser and is
-                not fetched or assessed. The report always shows the same
-                fictional product.
-              </p>
-            </form>
-            <div className="entry-foot">
-              <span>01 &nbsp; Understand the score</span>
-              <span>02 &nbsp; Find your next move</span>
-              <span>03 &nbsp; Share with your team</span>
-            </div>
-          </div>
-          <div className="entry-art" aria-hidden="true">
-            <div className="art-orbit orbit-one" />
-            <div className="art-orbit orbit-two" />
-            <div className="art-card">
-              <div className="art-head">
-                SAMPLE REPORT <span>✳</span>
-              </div>
-              <div className="art-score">
-                {total("structure") + total("content")}
-                <span>/ 100</span>
-              </div>
-              <div className="art-rule" />
-              <div className="art-line">
-                <span>STRUCTURE</span>
-                <b>{total("structure")} / 40</b>
-              </div>
-              <div className="bar">
-                <i style={{ width: `${(total("structure") / 40) * 100}%` }} />
-              </div>
-              <div className="art-line">
-                <span>CONTENT</span>
-                <b>{total("content")} / 60</b>
-              </div>
-              <div className="bar">
-                <i style={{ width: `${(total("content") / 60) * 100}%` }} />
-              </div>
-              <div className="art-bottom">
-                A little clarity goes a long way. <span>↗</span>
+              <div className="steps-grid">
+                <article>
+                  <span>01</span>
+                  <h3>Review the page</h3>
+                  <p>The example illustrates product information and technical signals an assessment can consider.</p>
+                </article>
+                <article>
+                  <span>02</span>
+                  <h3>Understand the score</h3>
+                  <p>Structure accounts for 40 points and content accounts for 60 points.</p>
+                </article>
+                <article>
+                  <span>03</span>
+                  <h3>Find the gaps</h3>
+                  <p>Evidence and a detailed breakdown explain the fictional findings.</p>
+                </article>
+                <article>
+                  <span>04</span>
+                  <h3>Take action</h3>
+                  <p>Prioritized recommendations identify possible owners and dependencies.</p>
+                </article>
               </div>
             </div>
-            <div className="art-caption">
-              A MORE USEFUL KIND OF AUDIT <span>✳</span>
+          </section>
+          <section className="landing-section lavender" id="preview">
+            <div className="landing-wrap">
+              <div className="landing-head">
+                <div className="eyebrow">WHAT YOU GET</div>
+                <h2>A score, the evidence, and your next moves.</h2>
+                <p>See how the fictional running shoe example is assessed.</p>
+              </div>
+              <div className="preview-card">
+                <div className="preview-heading">
+                  <h3>Northstar Road Runner</h3>
+                  <span>ILLUSTRATIVE EXAMPLE</span>
+                </div>
+                <div className="preview-tiles">
+                  <div>
+                    <span>Overall score</span>
+                    <strong>{total("structure")+total("content")}<small> / 100</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Structure</span>
+                    <strong>{total("structure")}<small> / 40</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Content</span>
+                    <strong>{total("content")}<small> / 60</small>
+                    </strong>
+                  </div>
+                </div>
+                <p>Open the sample for the full breakdown, supporting evidence, and prioritized recommendations. Scores describe readiness; they do not predict traffic or citations.</p>
+                <button className="blue-button" onClick={() => setScreen("report")}>Explore sample report ↗</button>
+              </div>
             </div>
-          </div>
-        </main>
-      )}
-      {screen === "progress" && (
-        <main className="progress" aria-live="polite">
-          <div className="spinner" />
-          <div className="eyebrow">PREPARING YOUR PREVIEW</div>
-          <h1>
-            Putting the sample together<span className="brand-dot">.</span>
-          </h1>
-          <p>Loading a fictional report. No website is being fetched.</p>
+          </section>
+          <section className="landing-section scope-section" id="scope">
+            <div className="landing-wrap">
+              <div className="landing-head">
+                <div className="eyebrow">THE COMPLETE PICTURE</div>
+                <h2>Understand what the report covers.</h2>
+                <p>The example separates page structure from product content, with recommendations your team can use.</p>
+              </div>
+              <div className="scope-grid">
+                <article>
+                  <h3>Structure · 40 points</h3>
+                  <p>Signals such as access, rendering, and structured data that can affect how product information is understood.</p>
+                </article>
+                <article>
+                  <h3>Content · 60 points</h3>
+                  <p>Product details, useful answers, claims, and other information that can help people understand a product.</p>
+                </article>
+              </div>
+            </div>
+          </section>
+          <section className="landing-section beige" id="faq">
+            <div className="landing-wrap">
+              <div className="landing-head">
+                <div className="eyebrow">FAQ</div>
+                <h2>Questions about the preview</h2>
+              </div>
+              <div className="faq-list">
+                <details>
+                  <summary>Does this assess my website?</summary>
+                  <p>No. This preview shows a fictional product and invented findings. No website is fetched or assessed.</p>
+                </details>
+                <details>
+                  <summary>What happens to the URL I enter?</summary>
+                  <p>It stays in your browser and does not change the sample report.</p>
+                </details>
+                <details>
+                  <summary>What does the score measure?</summary>
+                  <p>The sample illustrates product content readiness. It does not predict traffic, recommendations, or citations.</p>
+                </details>
+                <details>
+                  <summary>Will anything on my website change?</summary>
+                  <p>No. The sample is illustrative and makes no changes to your site.</p>
+                </details>
+              </div>
+              <div className="final-cta">
+                <h2>See what a useful AEO report looks like.</h2>
+                <button onClick={() => setScreen("report")}>Explore sample report ↗</button>
+              </div>
+            </div>
+          </section>
+          <footer>
+            <span className="brand">answerable<span className="brand-dot">.</span>
+            </span>
+            <span>SAMPLE PREVIEW · NO LIVE ASSESSMENT</span>
+          </footer>
         </main>
       )}
       {screen === "report" && (

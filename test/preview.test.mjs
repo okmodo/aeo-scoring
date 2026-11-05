@@ -106,3 +106,23 @@ test("preview component renders at runtime", async () => {
     await vite.close();
   }
 });
+
+test("landing presents navigable sample sections without simulated assessment", async () => {
+  const { createServer } = await import("vite");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { App } = await vite.ssrLoadModule("/src/App.tsx");
+    const React = await import("react");
+    const html = renderToStaticMarkup(React.createElement(App));
+    for (const id of ["how", "preview", "scope", "faq"]) {
+      assert.match(html, new RegExp(`href="#${id}"`));
+      assert.match(html, new RegExp(`id="${id}"`));
+    }
+    assert.match(html, /Structure accounts for 40 points and content accounts for 60 points/);
+    assert.match(html, /84\.5/);
+    assert.doesNotMatch(html, /type="email"|type="tel"|Preparing your preview/i);
+  } finally {
+    await vite.close();
+  }
+});

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "task": "Refresh the synthetic AEO customer journey using the approved landing page reference.",
+  "state": "The UI is isolated on codex/aeo-customer-ui from origin/main at b2ebbe0. This handoff describes the offline UI milestone before hosted PR checks. A live assessment service is outside this change.",
+  "decisions": [
+    "Use the reference layout and navy, peach, beige and lavender palette with the existing Answerable identity.",
+    "Show the same fictional report with the rubric-backed 84.5 overall, 36.5 Structure and 48 Content scores. Keep sample access ungated and explain that the optional URL remains local."
+  ],
+  "constraints": [
+    "No contact intake, enrichment, merchant fetches, score bands, Cloudflare changes, paid calls, merge or deployment.",
+    "The evaluator records its npm invocations. It does not capture the full development session, Terra work, permission decisions, visual review or agent metrics."
+  ],
+  "completed": [
+    "The UI evaluation plan was committed separately at 497de33 before the implementation agent began edits.",
+    "The separate metadata scope was committed before these handoffs. The original plan is immutable.",
+    "The Terra implementer rebuilt the landing and restyled the report, extended offline preview regression coverage, and observed the direct report transition and heading focus in a local browser."
+  ],
+  "remaining": [
+    "Run the source-bound evaluations and the local PR gate, and verify hosted CI and independent review before any merge.",
+    "Integrate live audit progress and responses through the service contract in a separately planned change."
+  ],
+  "resumeCommands": [
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change aeo-customer-ui --base origin/main",
+    "npm run evaluate -- --change aeo-customer-ui-handoff --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "npm exec vite -- --host 127.0.0.1"
+  ]
+}
