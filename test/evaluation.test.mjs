@@ -122,6 +122,11 @@ test('CI executes mandatory plus task-specific checks once, including app checks
   const { collectCommands } = await import('../scripts/ci-checks.mjs');
   const p=clone(template);p.commands.push('npm run regression');
   assert.deepEqual(collectCommands([p],{},false),['npm run check','npm test','npm run test:exit','npm run regression']);
+  const scripts={'test:foundations':'node --test test/scoring-foundations.test.mjs'};
+  assert.deepEqual(collectCommands([],scripts,false,true),['npm run check','npm test','npm run test:exit','npm run test:foundations']);
+  assert.equal(collectCommands([{...p,commands:['npm run test:foundations']}],scripts,false,true).filter(c=>c==='npm run test:foundations').length,1);
+  assert.throws(()=>collectCommands([],{},false,true),/real test:foundations/);
+  assert.throws(()=>collectCommands([],{ 'test:foundations':'echo skipped' },false,true),/real test:foundations/);
   assert.throws(()=>collectCommands([p],{},true),/App needs/);
   assert.ok(collectCommands([p],{lint:'real-lint',typecheck:'real-tsc',build:'real-build'},true).includes('npm run typecheck'));
   p.commands=['npm run ci:checks'];assert.throws(()=>collectCommands([p],{},false),/recursively/);

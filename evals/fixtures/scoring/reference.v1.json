@@ -1,0 +1,1081 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "full",
+      "input": {
+        "category": "running-shoes",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "complete",
+        "finalScore": 100,
+        "earnedPoints": 100
+      }
+    },
+    {
+      "id": "partial-missing",
+      "input": {
+        "category": "running-shoes",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 0.5,
+            "evidence": "Identity lacks variant"
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 0,
+            "evidence": "Shipping policy inspected and absent"
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "complete",
+        "finalScore": 96,
+        "earnedPoints": 96,
+        "criterionPoints": {
+          "S1": 12,
+          "C3": 7
+        }
+      }
+    },
+    {
+      "id": "unmeasured",
+      "input": {
+        "category": "running-shoes",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "not_measured"
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "incomplete",
+        "finalScore": null,
+        "earnedPoints": 99,
+        "criterionPoints": {
+          "S4": 2
+        }
+      }
+    },
+    {
+      "id": "conditional-na",
+      "input": {
+        "category": "running-shoes",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "not_applicable",
+            "rule": "single_configuration",
+            "justification": "Synthetic product has only one configuration"
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "complete",
+        "finalScore": 100,
+        "earnedPoints": 100,
+        "criterionPoints": {
+          "S2": 9
+        },
+        "denominator": {
+          "S2": 8
+        }
+      }
+    },
+    {
+      "id": "raw-rendered",
+      "input": {
+        "category": "running-shoes",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 0.5,
+            "evidence": "Price present only after rendering"
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 0.5,
+            "evidence": "Entity present only after rendering"
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "complete",
+        "finalScore": 97.5,
+        "earnedPoints": 97.5,
+        "criterionPoints": {
+          "S1": 11.5,
+          "S2": 8
+        }
+      }
+    },
+    {
+      "id": "conditional-c4-partial",
+      "input": {
+        "category": "basic-tshirts",
+        "checks": {
+          "S1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.description": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.specifications": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S1.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.entity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.core-properties": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.offer": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.identifiers": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S2.variants": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S3.optional-claims": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.title": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.organization": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S4.image-alternatives": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.search": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S5.ai-retrieval": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.usable": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S6.inclusion": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S7.links": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.context": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "S8.guidance": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.identity": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.explanation": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C1.configuration": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.essential": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C2.supporting": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.price": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.availability": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.shipping": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C3.returns": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.intended-use": {
+            "status": "measured",
+            "fraction": 0.5,
+            "evidence": "Synthetic audience incomplete"
+          },
+          "C4.compatibility": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C4.limitations": {
+            "status": "not_applicable",
+            "rule": "category_conditions_absent",
+            "conditions": [
+              {
+                "questionId": "shirt-limits",
+                "condition": "Product content explicitly claims a special fabric treatment or makes a restricted-care claim.",
+                "status": "absent",
+                "evidence": "Synthetic product content inspection found neither claim",
+                "location": "product description and care section",
+                "method": "complete content inspection"
+              }
+            ]
+          },
+          "C4.selection": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.consistency": {
+            "status": "measured",
+            "fraction": 1
+          },
+          "C5.claim-support": {
+            "status": "measured",
+            "fraction": 1
+          }
+        }
+      },
+      "expected": {
+        "status": "complete",
+        "finalScore": 98.125,
+        "earnedPoints": 98.125,
+        "criterionPoints": {
+          "C4": 8.125
+        },
+        "denominator": {
+          "C4": 8
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,431 @@
+{
+  "version": "1.0.0",
+  "verifiedOn": "2026-11-04",
+  "sources": [
+    {
+      "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
+      "title": "Google common crawlers",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+      "title": "Google robots.txt specification",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+      "title": "Google JavaScript SEO basics",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://www.bing.com/webmasters/help/how-to-report-an-issue-with-bingbot-25c19802",
+      "title": "Bingbot and robots directives",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://www.bing.com/webmasters/help/how-to-create-a-robots-txt-file-cb7c31ec",
+      "title": "Bing robots.txt guidance",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/bots",
+      "title": "Overview of OpenAI Crawlers",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "title": "Anthropic crawler controls",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "url": "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+      "title": "Perplexity Crawlers",
+      "verifiedOn": "2026-11-04"
+    }
+  ],
+  "bots": [
+    {
+      "id": "googlebot",
+      "name": "Googlebot",
+      "userAgentToken": "Googlebot",
+      "purpose": "search",
+      "scoredIn": "S5.search",
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "allow",
+        "errorPolicy": "defer",
+        "notes": "Google treats 4xx except 429 as no file; on server/network errors initially stops crawling, then cached rules or other time-dependent behavior may apply.",
+        "sourceUrls": [
+          "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec"
+        ]
+      },
+      "rendering": "documented_js",
+      "sourceUrls": [
+        "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
+        "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+        "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+      ]
+    },
+    {
+      "id": "bingbot",
+      "name": "Bingbot",
+      "userAgentToken": "bingbot",
+      "purpose": "search",
+      "scoredIn": "S5.search",
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Bing honors robots directives and crawl-delay; bot-specific groups supersede generic groups. Missing-file and error handling not established by these sources.",
+        "sourceUrls": [
+          "https://www.bing.com/webmasters/help/how-to-report-an-issue-with-bingbot-25c19802",
+          "https://www.bing.com/webmasters/help/how-to-create-a-robots-txt-file-cb7c31ec"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://www.bing.com/webmasters/help/how-to-report-an-issue-with-bingbot-25c19802",
+        "https://www.bing.com/webmasters/help/how-to-create-a-robots-txt-file-cb7c31ec"
+      ]
+    },
+    {
+      "id": "oai-searchbot",
+      "name": "OAI-SearchBot",
+      "userAgentToken": "OAI-SearchBot",
+      "purpose": "retrieval",
+      "scoredIn": "S5.ai-retrieval",
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "OpenAI documents robots opt-outs for search; missing and error handling not established.",
+        "sourceUrls": [
+          "https://developers.openai.com/api/docs/bots"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://developers.openai.com/api/docs/bots"
+      ]
+    },
+    {
+      "id": "claude-searchbot",
+      "name": "Claude-SearchBot",
+      "userAgentToken": "Claude-SearchBot",
+      "purpose": "retrieval",
+      "scoredIn": "S5.ai-retrieval",
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Anthropic says its bots honor robots do-not-crawl directives; missing and error handling not established.",
+        "sourceUrls": [
+          "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+      ]
+    },
+    {
+      "id": "perplexitybot",
+      "name": "PerplexityBot",
+      "userAgentToken": "PerplexityBot",
+      "purpose": "retrieval",
+      "scoredIn": "S5.ai-retrieval",
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Perplexity documents independent robots controls for its search crawler; missing and error handling not established.",
+        "sourceUrls": [
+          "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+      ]
+    },
+    {
+      "id": "chatgpt-user",
+      "name": "ChatGPT-User",
+      "userAgentToken": "ChatGPT-User",
+      "purpose": "user_triggered",
+      "scoredIn": null,
+      "robots": {
+        "respectsRules": null,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "OpenAI says robots rules may not apply to user-initiated actions.",
+        "sourceUrls": [
+          "https://developers.openai.com/api/docs/bots"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://developers.openai.com/api/docs/bots"
+      ]
+    },
+    {
+      "id": "claude-user",
+      "name": "Claude-User",
+      "userAgentToken": "Claude-User",
+      "purpose": "user_triggered",
+      "scoredIn": null,
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Anthropic says its bots honor robots directives and blocking Claude-User prevents retrieval in response to user queries.",
+        "sourceUrls": [
+          "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+      ]
+    },
+    {
+      "id": "perplexity-user",
+      "name": "Perplexity-User",
+      "userAgentToken": "Perplexity-User",
+      "purpose": "user_triggered",
+      "scoredIn": null,
+      "robots": {
+        "respectsRules": false,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Perplexity says this user-requested fetcher generally ignores robots rules.",
+        "sourceUrls": [
+          "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://docs.perplexity.ai/docs/resources/perplexity-crawlers"
+      ]
+    },
+    {
+      "id": "gptbot",
+      "name": "GPTBot",
+      "userAgentToken": "GPTBot",
+      "purpose": "training",
+      "scoredIn": null,
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Disallow signals content should not be used for training. OpenAI notes a single crawl can serve both search and training when both are allowed.",
+        "sourceUrls": [
+          "https://developers.openai.com/api/docs/bots"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://developers.openai.com/api/docs/bots"
+      ]
+    },
+    {
+      "id": "claudebot",
+      "name": "ClaudeBot",
+      "userAgentToken": "ClaudeBot",
+      "purpose": "training",
+      "scoredIn": null,
+      "robots": {
+        "respectsRules": true,
+        "missingFilePolicy": "unknown",
+        "errorPolicy": "unknown",
+        "notes": "Anthropic documents a training-related crawler and robots opt-out.",
+        "sourceUrls": [
+          "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+        ]
+      },
+      "rendering": "unknown",
+      "sourceUrls": [
+        "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler"
+      ]
+    }
+  ],
+  "scoring": {
+    "search": {
+      "points": 1,
+      "botIds": [
+        "googlebot",
+        "bingbot"
+      ]
+    },
+    "aiRetrieval": {
+      "points": 1,
+      "botIds": [
+        "oai-searchbot",
+        "claude-searchbot",
+        "perplexitybot"
+      ]
+    }
+  },
+  "policyExamples": [
+    {
+      "id": "all-allowed",
+      "description": "All scored crawler policies allow the product path.",
+      "observations": [
+        {
+          "botId": "googlebot",
+          "status": "allowed"
+        },
+        {
+          "botId": "bingbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "oai-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "claude-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "perplexitybot",
+          "status": "allowed"
+        }
+      ],
+      "expectedPoints": 2,
+      "expectedComplete": true
+    },
+    {
+      "id": "retrieval-block",
+      "description": "One of three retrieval crawlers is disallowed.",
+      "observations": [
+        {
+          "botId": "googlebot",
+          "status": "allowed"
+        },
+        {
+          "botId": "bingbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "oai-searchbot",
+          "status": "disallowed"
+        },
+        {
+          "botId": "claude-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "perplexitybot",
+          "status": "allowed"
+        }
+      ],
+      "expectedPoints": 1.6666666666666667,
+      "expectedComplete": true
+    },
+    {
+      "id": "training-block",
+      "description": "Training-only blocks do not reduce S5.",
+      "observations": [
+        {
+          "botId": "googlebot",
+          "status": "allowed"
+        },
+        {
+          "botId": "bingbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "oai-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "claude-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "perplexitybot",
+          "status": "allowed"
+        },
+        {
+          "botId": "gptbot",
+          "status": "disallowed"
+        },
+        {
+          "botId": "claudebot",
+          "status": "disallowed"
+        }
+      ],
+      "expectedPoints": 2,
+      "expectedComplete": true
+    },
+    {
+      "id": "unmeasured-error",
+      "description": "A retrieval robots response is unavailable and its outcome is unresolved.",
+      "observations": [
+        {
+          "botId": "googlebot",
+          "status": "allowed"
+        },
+        {
+          "botId": "bingbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "oai-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "claude-searchbot",
+          "status": "not_measured"
+        },
+        {
+          "botId": "perplexitybot",
+          "status": "allowed"
+        }
+      ],
+      "expectedPoints": null,
+      "expectedComplete": false
+    },
+    {
+      "id": "user-triggered-distinction",
+      "description": "User-triggered results are reported separately and do not alter points.",
+      "observations": [
+        {
+          "botId": "googlebot",
+          "status": "allowed"
+        },
+        {
+          "botId": "bingbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "oai-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "claude-searchbot",
+          "status": "allowed"
+        },
+        {
+          "botId": "perplexitybot",
+          "status": "allowed"
+        },
+        {
+          "botId": "claude-user",
+          "status": "disallowed"
+        },
+        {
+          "botId": "chatgpt-user",
+          "status": "not_measured"
+        },
+        {
+          "botId": "perplexity-user",
+          "status": "not_measured"
+        }
+      ],
+      "expectedPoints": 2,
+      "expectedComplete": true
+    }
+  ]
+}

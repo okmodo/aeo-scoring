@@ -1,6 +1,6 @@
 # Standard evaluation for every PR
 
-Open or update a PR to run `.github/workflows/pr-evaluation.yml`. No path exemptions apply, including docs-only changes. CI executes the three mandatory commands and every additional task-plan command once, captures their actual outputs/durations, and validates task-specific, source-bound evaluation evidence. Protected main requires the named `PR evaluation` check and independent approval. CI never automatically merges or deploys.
+Open or update a PR to run `.github/workflows/pr-evaluation.yml`. No path exemptions apply, including docs-only changes. CI executes the three mandatory commands and every additional task-plan command once, captures their actual outputs/durations, and validates task-specific, source-bound evaluation evidence. Protected main requires the named `PR evaluation` check. Project policy also requires independent technical review by an agent or human before merge; GitHub approval is not required. CI never automatically merges or deploys.
 
 ## Before implementation
 

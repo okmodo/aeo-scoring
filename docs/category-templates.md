@@ -1,0 +1,30 @@
+# Category templates v1
+
+`config/categories.v1.json` contains initial editorial templates, pending Phase 2 calibration. Their questions, pools, anchors and weights are project choices; the cited sources describe general product data or textile labeling, and do not prescribe this checklist or scoring system. These templates are not legal-compliance assessments and do not assert product facts. Apply the [scoring contract](../AEO%20Scoring%20Vault/01%20Specification/AEO%20Scoring%20Contract.md) and [rubric](../config/rubric.v1.json).
+
+## Classification and scope
+
+Select a template only when shopper-visible product identity and description explicitly establish its scope and do not establish an exclusion. Record the quoted evidence and classification as high confidence. If the identity, intended category, or exclusion status cannot be established from accessible evidence, classification is insufficient: C2 is `not_measured`, and do not invent a category-specific C4 checklist. An excluded product also has no matching template here. A model's unsupported inference or a category label alone that conflicts with the product description is insufficient. Running shoes exclude protective and medical footwear; casual daypacks exclude safety equipment, medical products, technical climbing packs and child carriers; basic T-shirts exclude protective, medical, and specialized performance or safety garments.
+
+## C2 attributes
+
+Divide the 14 essential points equally among applicable essential attributes and the 6 supporting points equally among applicable supporting attributes. Full, half, and zero anchors are specified per attribute; partial credit is 0.5. A value must refer to the audited product and selected variant, with the specified units and measurement scope where required. An unambiguous product-wide value applies to the selected variant; do not assume a value from a different variant. Measurements such as size require their stated system, units, or reference context; ordinary categorical values do not need invented units. Do not infer a missing numeric value from an image or marketing language. A confirmed material contradiction belongs to C5: do not lower C2 solely because two otherwise complete values conflict. Assess C2 on the presence and completeness of the reported attribute information and its stated variant association, without choosing which conflicting value is true. A genuinely missing unit, missing variant association, or otherwise independently unusable value can still reduce C2 under its own anchor; document that separate deficiency rather than treating the contradiction itself as missing data. If inspection cannot establish what was actually reported or whether the required context is present, use `not_measured`. Record evidence and its location, including a documented absence check for zero.
+
+A conditional attribute applies when its explicit condition is established by observable product content. If inspection confirms the trigger is absent, mark it `not_applicable` and redistribute its pool among the remaining applicable attributes. If inspection cannot establish whether the trigger exists, mark it `not_measured`, not excluded. Once triggered, an unanswered question is zero after a complete absence check, not `not_applicable`. If a pool has no applicable attributes, withhold the overall score until a versioned rule defines treatment; never transfer its points to another criterion. Inspection failure is `not_measured`, never zero.
+
+## C4 decision support and scoring homes
+
+Each question belongs only to its specified C4 subcheck. Within each subcheck divide its points equally among its applicable fixed questions; apply the question's full, half, or zero anchor. The same conditional and incomplete-inspection rules apply; if all questions in a subcheck are excluded, redistribute its weight among the remaining applicable C4 subchecks and disclose the denominator. If all C4 subchecks are excluded, withhold the overall score under the contract.
+
+C2 scores the presence and completeness of an attribute value; C4 scores the distinct explanatory guidance requested by its question. `attributeRefs` show context, not extra scoring homes. For example, a numerical pack capacity satisfies the C2 capacity question, but alone does not answer how to choose capacity for a carrying need. A size value alone does not answer size-selection guidance. A single passage may contain both a value and distinct guidance, but a missing or inadequate value must not be deducted again as if it were missing guidance: judge the C4 answer on its own guidance anchor. C1 scores identity, explanation, and included configuration, not these C2 or C4 questions. No FAQ section, fixed FAQ count, competitor comparison, or irrelevant limitation is required.
+
+Identifier handling is specified for compatibility with the broader rubric: GTIN and MPN are considered when assigned, and SKU-only evidence earns the configured 0.5 fraction where that rubric check applies. Do not assume an identifier was assigned or require an unassigned GTIN or MPN; inability to establish assignment is unmeasured. Identifier scoring is not an extra C2 category attribute.
+
+## Source context
+
+- [Google Merchant Center product data specification](https://support.google.com/merchants/answer/7052112) describes general product and variant fields and identifiers.
+- [Google product dimensions and weight](https://support.google.com/merchants/answer/11018531) illustrates quantitative values and units.
+- [FTC textile labeling guidance](https://www.ftc.gov/business-guidance/resources/threading-your-way-through-labeling-requirements-under-textile-wool-acts) discusses textile fiber and origin labeling in its jurisdiction.
+- [FTC care labeling guidance](https://www.ftc.gov/business-guidance/resources/clothes-captioning-complying-care-labeling-rule) discusses care instructions for covered apparel in its jurisdiction.
+
+Sources are context for useful field types, not proof that any particular product has a property, that every template field is legally required, or that our weights are validated.

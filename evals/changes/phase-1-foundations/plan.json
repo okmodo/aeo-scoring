@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "phase-1-foundations",
+  "task": "Complete Phase 1 scoring foundations after PR #1: versioned rubric anchors, initial category checklists, verified crawler policy, frozen scoring examples, and executable validation before building the audit app.",
+  "scope": ["config/**", "docs/**", "scripts/**", "test/**", "evals/**", "package.json", "package-lock.json", "AGENTS.md", "README.md", "AEO Scoring Vault/**"],
+  "nonGoals": ["Build or deploy the product app", "Start the Phase 2 live feasibility prototype", "Use paid services or model calls", "Change merchant sites", "Change rubric weights without explicit approval", "Merge the Phase 1 PR automatically", "Re-enable the GitHub approval requirement the user removed"],
+  "outcomes": [
+    {"id": "O1", "description": "All 13 criteria and agreed subchecks have versioned weights, evidence requirements, full/partial/zero anchors, applicability and incomplete-result rules totaling Structure 40 and Content 60.", "verification": "automated", "evidence": "config/rubric.v1.json and test/scoring-foundations.test.mjs"},
+    {"id": "O2", "description": "Running shoes, casual daypacks, and basic T-shirts have explicit essential/supporting attributes and category questions mapped to the approved content criteria without invented product facts or duplicate scoring homes.", "verification": "human", "evidence": "config/categories.v1.json and docs/category-templates.md"},
+    {"id": "O3", "description": "Versioned bot registry distinguishes search, AI retrieval, user-triggered, and training agents using official evidence and explicit unknowns; training policy never loses S5 points.", "verification": "human", "evidence": "config/crawlers.v1.json and docs/crawler-policy.md"},
+    {"id": "O4", "description": "At least five frozen synthetic reference scenarios cover full credit, partial/missing content, not-measured, conditional non-applicability, and delivery/policy distinctions with exact expected arithmetic and no claim of human/live calibration.", "verification": "automated", "evidence": "evals/fixtures/scoring/ and test/scoring-foundations.test.mjs"},
+    {"id": "O5", "description": "The Phase 1 branch opens a PR with current evidence, independent Terra technical review, and hosted CI before any merge.", "verification": "human", "evidence": "PR and evals/changes/phase-1-foundations/"}
+  ],
+  "process": [
+    {"id": "P1", "description": "Acceptance plan is committed first; Terra agents own separate category, crawler and rubric-validation work, with official sources cited and no paid resources.", "verification": "human", "evidence": "Git history, source references, and agent review report"},
+    {"id": "P2", "description": "Written process reflects user-removed GitHub approval requirement while preserving mandatory CI and independent technical review; no repository settings are changed.", "verification": "human", "evidence": "AGENTS.md, evals/PROCESS.md, and vault process note"}
+  ],
+  "styleEfficiency": [
+    {"id": "E1", "description": "Keep data versioned and readable, tests offline, unknown measurements explicit, and atomic notes linked to canonical technical files.", "verification": "human", "evidence": "Independent Terra review and real run/trace records"}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations"],
+  "exitTest": {"required": true, "reason": "This change establishes the phase handoff and aligns agent review/process policy with the user's GitHub setting change; verify continuation from a clean export."}
+}
