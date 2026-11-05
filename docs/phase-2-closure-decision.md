@@ -1,0 +1,13 @@
+# Phase 2 closure decision
+
+This decision distinguishes a constrained architecture pilot from the separate [full closure evidence target](phase-2-closure-protocol.md). **Production or autonomous scoring is no-go**: the required independent multi-page calibration, measured per-request Worker CPU and usage headroom, and independently labeled broad model corpus have not been demonstrated. This is not a claim that those experiments passed or that their absence was fixed. A proposal-only architecture can be explored in Phase 3 only as a constrained design, with no authority for model output to take actions or assign final scores, and with independent human semantic review of exact evidence. It is not authorization to launch a scorer.
+
+| Evidence area | Current finding | Interpretation |
+| --- | --- | --- |
+| Extraction | One permitted raw merchant capture exceeded the old input cap, exposed early termination and nested-heading omissions, and remained incomplete after fixes. | Useful defect discovery, not a representative accuracy measurement or a complete absence check. |
+| Human review | One respondent matched two of three hidden agent expectations; the care item disagreed and its prompt may be stricter than the configured anchor. | A small, unadjudicated pilot; no inter-rater reliability or generalized agreement. |
+| Model safety | In 12 frozen synthetic cases, model states matched 7 expectations; the original injection again failed and 11 structurally valid responses included semantic errors. | Structure and citations are insufficient to trust semantic conclusions. Proposal-only use remains unverified and requires human review. |
+| Cloud CPU and budget | Fixed synthetic workloads and an isolated benchmark are prepared; actual measurements and account-wide headroom are not recorded here. | Local CPU is not Cloudflare CPU. Full feasibility remains inconclusive without the prescribed measurement and budget evidence. |
+| Rendering | A real raw/rendered pair and its comparison have not been recorded here. | A synthetic browser result does not establish typical merchant rendering needs. |
+
+See [model pilot results](phase-2-ai-pilot-results.md), [raw pilot observations](phase-2-pilot-observations.md), [human judgments](phase-2-human-pilot.md), [architecture pilot](phase-2-architecture-pilot.md), and [aggregate CPU supplement](phase-2-cpu-aggregate-pilot.md). Any subsequent experiment results must be added with source, dates, counts, failures and scope. No unsupported conclusion should be inferred from pending work.

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "task": "Close phase 2 feasibility gaps through bounded evidence and an honest architecture decision without building a production scorer.",
+  "state": "Plan, frozen protocols, portable extraction and calibration harness, human pilot, 12-call synthetic model pilot, and fixed-input benchmark implementation are committed. Live browser and CPU experiments, final source-bound evaluation, independent final review, fresh-agent exit and hosted CI remain in progress or unrecorded.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/phase-2-closure",
+  "baseCommit": "b2ebbe0",
+  "planCommit": "5196c5a",
+  "decisions": [
+    "Production or autonomous scoring remains no-go against the full evidence protocol; constrained proposal-only architecture research can continue without authority to score or act and with independent human semantic review.",
+    "Treat incomplete extraction and missing measurements as unknown; distinguish synthetic cases, permitted merchant evidence, human judgment and Cloudflare measurements.",
+    "Preserve the human care disagreement and the stricter pilot-prompt ambiguity rather than editing the category rule or revising the human answer."
+  ],
+  "constraints": [
+    "Cloudflare Free only; never alter Cloudflare resources predating this project, enable a Workers subdomain, or place network/model/cloud calls in CI.",
+    "No cloud mutations, browser or model calls except as explicitly coordinated within frozen reviewed budgets; no bypass of robots, access controls or challenges.",
+    "Do not commit full copyrighted merchant HTML, secrets or private content; do not invent metrics, labels, fresh-agent evidence, costs or account headroom.",
+    "The aggregate CPU pilot is separate from and does not pass the full per-request/max/no-secrets protocol. A D1 admission cap limits admitted work, not unsolicited HTTP requests or account-wide spending."
+  ],
+  "completed": [
+    "Validated and committed immutable plan alone before implementation; froze full and constrained-pilot protocols before relevant results.",
+    "Made extraction portable and bounded at 1 MiB, fixed text-cap early stop and nested visible fields, and added exact-snapshot calibration tests to offline CI.",
+    "Recorded one permitted raw page, one-rater three-item human pilot with unadjudicated disagreement, and 12 synthetic model proposals with exact calls, 7 expected state matches and 11 structurally accepted unverified proposals.",
+    "Implemented and locally tested an isolated fixed-input CPU benchmark, protected by token and expiring atomic D1 permits; independent review and runtime/cloud verification remain necessary."
+  ],
+  "remaining": [
+    "Record approved bounded browser and Cloudflare CPU observations if obtainable, including failures, usage and resource cleanup; do not infer missing data or broaden claims.",
+    "Finish evidence-based decision, independent review and source-bound evaluation; rerun after any implementation or handoff change.",
+    "Conduct genuine fresh-agent continuation from an export without prior chat, record exact observation, then publish PR and confirm hosted Node 24 CI under project policy."
+  ],
+  "resumeCommands": ["git log --oneline -12", "npm ci --ignore-scripts --no-audit --no-fund", "npm run evaluate -- --change phase-2-closure --base origin/main"],
+  "expectedOutcome": "A source-bound, reviewed result honestly distinguishes measured pilot observations, unresolved feasibility gates and a constrained next design step."
+}
