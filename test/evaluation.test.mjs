@@ -127,6 +127,9 @@ test('CI executes mandatory plus task-specific checks once, including app checks
   assert.equal(collectCommands([{...p,commands:['npm run test:foundations']}],scripts,false,true).filter(c=>c==='npm run test:foundations').length,1);
   assert.throws(()=>collectCommands([],{},false,true),/real test:foundations/);
   assert.throws(()=>collectCommands([],{ 'test:foundations':'echo skipped' },false,true),/real test:foundations/);
+  assert.throws(()=>collectCommands([],{},false,false,true),/real test:feasibility/);
+  assert.ok(collectCommands([],{ 'test:feasibility':'node --test test/feasibility.test.mjs' },false,false,true).includes('npm run test:feasibility'));
+  assert.throws(()=>collectCommands([],{ 'test:feasibility':'echo skipped' },false,false,true),/real test:feasibility/);
   assert.throws(()=>collectCommands([p],{},true),/App needs/);
   assert.ok(collectCommands([p],{lint:'real-lint',typecheck:'real-tsc',build:'real-build'},true).includes('npm run typecheck'));
   p.commands=['npm run ci:checks'];assert.throws(()=>collectCommands([p],{},false),/recursively/);
