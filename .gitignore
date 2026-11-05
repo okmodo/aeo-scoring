@@ -1,0 +1,5 @@
+# Local Obsidian state
+AEO Scoring Vault/.obsidian/workspace*.json
+AEO Scoring Vault/.obsidian/cache/
+AEO Scoring Vault/.obsidian/plugins/
+.DS_Store
