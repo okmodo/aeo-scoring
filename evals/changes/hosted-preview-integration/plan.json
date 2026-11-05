@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "id": "hosted-preview-integration",
+  "task": "Review, validate and integrate an existing uncommitted hosted preview prototype and host an isolated free-tier sample preview. The prototype was created after an invalid plan; preserve and disclose that process deviation.",
+  "scope": [
+    "src/**",
+    "public/**",
+    "config/**",
+    "scripts/**",
+    "test/**",
+    "docs/**",
+    "evals/**",
+    "AEO Scoring Vault/**",
+    ".github/workflows/**",
+    "index.html",
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "tsconfig.json",
+    "eslint.config.js",
+    "cloudflare.config.ts",
+    ".gitignore",
+    "README.md"
+  ],
+  "nonGoals": [
+    "Live crawling, production scoring, merchant data, or model calls",
+    "Paid Cloudflare resources or modifying any pre-existing Cloudflare configuration or service",
+    "Deploying from PR CI, merging the PR, or changing repository protections",
+    "Changing existing rubric weights, fixtures, or evaluation gates"
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "A responsive accessible preview presents URL entry, progress, and a report while making synthetic sample status and the lack of live retrieval unmistakable.",
+      "verification": "human",
+      "evidence": "UI smoke checks and independent review"
+    },
+    {
+      "id": "O2",
+      "description": "The sample report follows the scoring and report contract, including plain scores, 40/60 weighting, evidence, assignable prioritized actions, subchecks, and conditional recovery.",
+      "verification": "automated",
+      "evidence": "Sample data and rubric regression tests"
+    },
+    {
+      "id": "O3",
+      "description": "A new isolated free-tier-only Cloudflare static deployment is prepared and may be deployed only after CI and independent review, separately from PR checks.",
+      "verification": "human",
+      "evidence": "Deployment documentation and actual deployment observation"
+    },
+    {
+      "id": "O4",
+      "description": "Existing offline checks remain intact and application lint, typecheck, build, runtime and meaningful regression checks are permanently registered in CI.",
+      "verification": "automated",
+      "evidence": "CI scripts and command trace"
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this valid integration plan before further implementation, preserve existing evaluator, fixture and security gates, and disclose the invalid original plan and pre-existing prototype to independent review.",
+      "verification": "human",
+      "evidence": "Git history and independent review"
+    },
+    {
+      "id": "P2",
+      "description": "Record actual validation, limitations, decisions and a resumable handoff; perform a genuine fresh-agent continuation at a meaningful boundary.",
+      "verification": "human",
+      "evidence": "Evaluation trace, handoff and fresh-agent observation"
+    },
+    {
+      "id": "P3",
+      "description": "Use only a newly created isolated Cloudflare resource within the free tier, and deploy only after hosted CI and independent review.",
+      "verification": "human",
+      "evidence": "Deployment record and review"
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep the interface concise, approachable, responsive, and evidence-first without implying sample findings assess the entered URL.",
+      "verification": "human",
+      "evidence": "UI review"
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "The hosted preview introduces a new application and deployment handoff requiring genuine fresh-agent continuation."
+  }
+}
