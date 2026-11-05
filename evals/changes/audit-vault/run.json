@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "changeId": "audit-vault",
+  "recordedAt": "2026-11-05T22:54:49.834Z",
+  "sourceCommit": "190d7a7960a91dbf0b5d270ac03c0c2168417ad2",
+  "sourceDigest": "c925768b9f88624ca528949d5a6706f42be569768dc4e6d781b9d2b0759c1427",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1539,
+      "outputSha256": "12cd02205ad6c6d29918b5525098a71a7fd110482b1c3a92ccc55e50284f410b"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8700,
+      "outputSha256": "6e1d85c07d9f48ea58d4c57b49981500b08bfde7a4ad1afc037fd73cef4061e8"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 410,
+      "outputSha256": "6af19db5c66d3070505416573e42629aa3cadcececd121fd47e67e1389f82c6f"
+    }
+  ]
+}
