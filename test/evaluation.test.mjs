@@ -251,3 +251,20 @@ test('retargeting a symlink to equal contents invalidates source evidence', () =
   commitFiles(ctx, 'add planned symlink'); refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
   unlinkSync(file); symlinkSync('.git/target-b', file); rejectsGate(ctx, /Stale evidence/);
 }));
+test('source evidence supports file-to-directory and directory-to-file replacements', () => sandbox(ctx => {
+  ctx.write('feature.txt', 'baseline file'); commitFiles(ctx, 'file baseline');
+  ctx.base = ctx.git('rev-parse', 'HEAD');
+  const p = addPlan(ctx, 'reshape', ['feature.txt', 'feature.txt/**', 'evals/**']);
+  unlinkSync(path.join(ctx.cwd, 'feature.txt'));
+  ctx.write('feature.txt/child.txt', 'directory replacement'); commitFiles(ctx, 'file becomes directory');
+  assert.deepEqual(changedFiles(ctx.base, ctx.cwd).filter(file => file.startsWith('feature.txt')), ['feature.txt', 'feature.txt/child.txt']);
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  ctx.write('feature.txt/child.txt', 'updated child'); rejectsGate(ctx, /Stale evidence/);
+  refreshFixtureRecords(ctx, [p]); commitFiles(ctx, 'first PR records');
+  ctx.base = ctx.git('rev-parse', 'HEAD');
+  const next = addPlan(ctx, 'reshape-back', ['feature.txt', 'feature.txt/**', 'evals/**']);
+  rmSync(path.join(ctx.cwd, 'feature.txt'), { recursive: true });
+  ctx.write('feature.txt', 'file replacement'); commitFiles(ctx, 'directory becomes file');
+  refreshFixtureRecords(ctx, [next]); acceptsGate(ctx);
+  ctx.write('feature.txt', 'updated replacement'); rejectsGate(ctx, /Stale evidence/);
+}));

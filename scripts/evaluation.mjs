@@ -89,6 +89,10 @@ export function digestFiles(files, cwd = process.cwd()) {
       kind = 'symlink'; content = readlinkSync(full, { encoding: 'buffer' });
     } else if (stat?.isFile()) {
       kind = 'file'; mode = stat.mode & 0o111 ? '100755' : '100644'; content = readFileSync(full);
+    } else if (stat?.isDirectory()) {
+      // A deleted Git leaf can now be a directory; changed descendants have their
+      // own entries, while this marker binds the former leaf's current state.
+      kind = 'directory';
     } else assert(!stat, `Unsupported source file type: ${file}`);
     // Typed, length-framed entries distinguish deletion, mode and link target without
     // following links or colliding with literal tombstone bytes in real source files.
