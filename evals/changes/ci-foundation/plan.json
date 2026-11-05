@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "ci-foundation",
+  "task": "Establish the standard PR evaluation and merge gate before application development.",
+  "scope": [".github/**", "AGENTS.md", "README.md", ".gitignore", ".node-version", "package.json", "package-lock.json", "scripts/**", "test/**", "evals/**", "AEO Scoring Vault/**"],
+  "nonGoals": ["Build the product application", "Deploy to Cloudflare", "Run paid LLM evaluations", "Merge this PR"],
+  "outcomes": [
+    {"id": "O1", "description": "Every opened or updated PR runs named, required checks without path exemptions.", "verification": "automated", "evidence": "test/evaluation.test.mjs"},
+    {"id": "O2", "description": "Frozen happy, edge, and failure scenarios exercise the evaluator, including rejected unsafe traces and stale evidence.", "verification": "automated", "evidence": "test/evaluation.test.mjs"},
+    {"id": "O3", "description": "Main requires a PR, green CI, resolved conversations, and independent approval.", "verification": "human", "evidence": "PR repository-settings evidence"}
+  ],
+  "process": [
+    {"id": "P1", "description": "Acceptance plan is committed before implementation and evidence is tied to the changed source contents.", "verification": "automated", "evidence": "scripts/pr-gate.mjs"},
+    {"id": "P2", "description": "Workflows use read-only permissions, pinned actions, no deployment secrets, and no privileged PR triggers.", "verification": "automated", "evidence": "scripts/repository-checks.mjs"},
+    {"id": "P3", "description": "Permission judgment, real-evidence use, and unrecorded agent activity receive human review, not an invented automated pass.", "verification": "human", "evidence": "evals/PROCESS.md"}
+  ],
+  "styleEfficiency": [
+    {"id": "E1", "description": "Artifacts record test commands, durations, and explicit unavailable agent cost/token measurements.", "verification": "automated", "evidence": "scripts/evaluate.mjs"},
+    {"id": "E2", "description": "Changes follow atomic vault conventions and are reviewed for unnecessary work and command repetition.", "verification": "human", "evidence": "AGENTS.md"}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit"],
+  "exitTest": {"required": true, "reason": "This change establishes agent process and portable handoff contracts; a genuine clean-session agent exercise is required before merge."}
+}

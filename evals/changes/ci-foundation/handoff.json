@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "task": "Establish mandatory evaluation for every AEO Scoring PR before application development.",
+  "state": "PR #1 contains the CI foundation plus independently requested review hardening on codex/ci-evaluation. The remediation source is undergoing validation. Current source-bound run/exit evidence and final hosted CI must be refreshed before merging. No application is built.",
+  "decisions": [
+    "Every PR triggers CI; green checks and independent approval required before merge.",
+    "Keep deterministic checks offline and free; subjective process/style review remains human.",
+    "Use real command traces and honest unknown cost/token metrics."
+  ],
+  "constraints": [
+    "Do not deploy, merge, use paid services, or change merchant sites.",
+    "Only supplied export state is available to the fresh-agent exercise; do not read prior chat.",
+    "No fresh-agent success may be claimed from a subprocess smoke test alone.",
+    "The export includes repository.bundle and export-state.json; clone the bundle into a new directory to recover the branch and planning history before replaying commands. Do not read another repository or prior chat."
+  ],
+  "completed": [
+    "Rubric and report specification committed.",
+    "Original CI plan and separate review-hardening plan committed before their implementation.",
+    "Independent reviewers reproduced chronology and fingerprint defects; implementation and regression verification are in progress."
+  ],
+  "remaining": [
+    "Inspect review-hardening dispositions and independent re-review.",
+    "Resume both active plans from the exported repository and record current run/exit evidence.",
+    "Verify hosted CI and preserve independent GitHub-account approval before merge."
+  ],
+  "resumeCommands": [
+    "git log --oneline -3",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change ci-foundation --base main"
+  ],
+  "expectedOutcome": "A fresh session recovers both active plans and their history from the bundle, executes each plan evaluation, and identifies pending exit records, hosted CI, and independent review without reading private chat.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/ci-evaluation",
+  "baseCommit": "4cd8b0f260789c87595ba8c1acfa52942b83119d",
+  "planCommit": "56e6bec"
+}

@@ -1,0 +1,43 @@
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { assert, changedFiles, json, validatePlan, git } from './evaluation.mjs';
+
+export function collectCommands(plans, scripts, appPresent) {
+  const required = ['npm run check', 'npm test', 'npm run test:exit'];
+  if (appPresent) for (const name of ['lint', 'typecheck', 'build']) {
+    assert(typeof scripts[name] === 'string', `App needs ${name}`);
+    required.push(`npm run ${name}`);
+  }
+  for (const plan of plans) required.push(...validatePlan(plan).commands);
+  assert(!required.some(command => /npm run (?:ci:checks|ci:gate|evaluate)$/.test(command)), 'Evaluation plans cannot recursively invoke the evaluator');
+  return [...new Set(required)];
+}
+function main() {
+  const base = process.env.EVALUATION_BASE || process.argv[2];
+  assert(base, 'Set EVALUATION_BASE or pass a base ref');
+  const files = changedFiles(base);
+  const plans = files.filter(file => /^evals\/changes\/[a-z0-9-]+\/plan\.json$/.test(file) && existsSync(file)).map(file => json(file));
+  const commands = collectCommands(plans, json('package.json').scripts, ['src','web','app'].some(dir => existsSync(dir)));
+  mkdirSync('reports/ci', { recursive: true });
+  const trace = [];
+  let failed = false;
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i], timestamp = new Date().toISOString(), start = performance.now();
+    const result = spawnSync('npm', command.split(' ').slice(1), { encoding: 'utf8', timeout: 120000, maxBuffer: 4 * 1024 * 1024, env: process.env });
+    const durationMs = Math.round(performance.now() - start);
+    const output = (result.stdout ?? '') + (result.stderr ?? '') + (result.error?.message ?? '');
+    const exitCode = result.status ?? 1;
+    writeFileSync(`reports/ci/command-${i + 1}.log`, output);
+    trace.push({ timestamp, tool: 'npm', command, durationMs, exitCode, outputSha256: createHash('sha256').update(output).digest('hex') });
+    console.log(`${exitCode === 0 ? 'PASS' : 'FAIL'} ${command} (${durationMs}ms)\n${output}`);
+    if (exitCode !== 0) failed = true;
+  }
+  writeFileSync('reports/ci/trace.jsonl', trace.map(event => JSON.stringify(event)).join('\n') + '\n');
+  writeFileSync('reports/ci/run.json', JSON.stringify({ sourceCommit: git(['rev-parse','HEAD']), base, commands: trace, agentMetrics: { tokens: null, costUSD: null, note: 'Not supplied by agent host; offline checks use no model API.' }, status: failed ? 'failed' : 'passed' }, null, 2) + '\n');
+  process.exitCode = failed ? 1 : 0;
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

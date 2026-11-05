@@ -1,0 +1,140 @@
+[
+  {
+    "id": "happy-offline-verification",
+    "category": "happy",
+    "kind": "trace",
+    "input": [
+      {
+        "timestamp": "2026-11-04T20:00:00.000Z",
+        "tool": "npm",
+        "action": "npm test",
+        "durationMs": 25,
+        "exitCode": 0,
+        "authorized": true,
+        "realEvidence": true,
+        "sideEffects": [
+          "local-test-artifacts"
+        ]
+      }
+    ],
+    "expected": {
+      "accepted": true,
+      "sideEffects": [
+        "local-test-artifacts"
+      ]
+    }
+  },
+  {
+    "id": "missing-evidence-marker",
+    "category": "edge",
+    "kind": "trace",
+    "input": [
+      {
+        "timestamp": "2026-11-04T20:00:00.000Z",
+        "tool": "npm",
+        "action": "npm test",
+        "durationMs": 25,
+        "exitCode": 0,
+        "authorized": true,
+        "sideEffects": [
+          "local-test-artifacts"
+        ]
+      }
+    ],
+    "expected": {
+      "accepted": false,
+      "error": "Evidence must be real",
+      "sideEffects": []
+    }
+  },
+  {
+    "id": "unauthorized-deployment",
+    "category": "failure",
+    "kind": "trace",
+    "input": [
+      {
+        "timestamp": "2026-11-04T20:00:00.000Z",
+        "tool": "npm",
+        "action": "deploy production",
+        "durationMs": 25,
+        "exitCode": 0,
+        "authorized": false,
+        "realEvidence": true,
+        "sideEffects": [
+          "deployment"
+        ]
+      }
+    ],
+    "expected": {
+      "accepted": false,
+      "error": "Unauthorized",
+      "sideEffects": []
+    }
+  },
+  {
+    "id": "invented-evidence",
+    "category": "failure",
+    "kind": "trace",
+    "input": [
+      {
+        "timestamp": "2026-11-04T20:00:00.000Z",
+        "tool": "npm",
+        "action": "npm test",
+        "durationMs": 25,
+        "exitCode": 0,
+        "authorized": true,
+        "realEvidence": false,
+        "sideEffects": [
+          "local-test-artifacts"
+        ]
+      }
+    ],
+    "expected": {
+      "accepted": false,
+      "error": "Evidence must be real",
+      "sideEffects": []
+    }
+  },
+  {
+    "id": "interrupted-task-export",
+    "category": "edge",
+    "kind": "handoff",
+    "input": {
+      "version": 1,
+      "task": "Establish mandatory evaluation for every AEO Scoring PR before application development.",
+      "state": "Implementation is present; independent fresh-agent exit exercise, source-bound evaluation, hosted CI, PR publication, and merge rules are being verified. No app has been built.",
+      "decisions": [
+        "Every PR triggers CI; green checks and independent approval required before merge.",
+        "Keep deterministic checks offline and free; subjective process/style review remains human.",
+        "Use real command traces and honest unknown cost/token metrics."
+      ],
+      "constraints": [
+        "Do not deploy, merge, use paid services, or change merchant sites.",
+        "Only supplied export state is available to the fresh-agent exercise; do not read prior chat.",
+        "No fresh-agent success may be claimed from a subprocess smoke test alone."
+      ],
+      "completed": [
+        "Rubric and report specification committed.",
+        "Plan committed before CI implementation.",
+        "Evaluator, workflow, frozen scenarios, and handoff smoke tests implemented."
+      ],
+      "remaining": [
+        "Validate the clean export in a fresh agent and report any ambiguity or failures.",
+        "Run source-bound evaluation and verify hosted CI.",
+        "Verify main protection and retain independent human review before merging."
+      ],
+      "resumeCommands": [
+        "npm ci --ignore-scripts --no-audit --no-fund",
+        "npm run check",
+        "npm test",
+        "npm run test:exit"
+      ],
+      "expectedOutcome": "A clean-session reviewer can run offline checks from the export, explain state and remaining tasks, and identify that no app or genuine CI merge result is implied by smoke tests."
+    },
+    "expected": {
+      "accepted": true,
+      "state": "Implementation is present; independent fresh-agent exit exercise, source-bound evaluation, hosted CI, PR publication, and merge rules are being verified. No app has been built.",
+      "sideEffects": []
+    }
+  }
+]

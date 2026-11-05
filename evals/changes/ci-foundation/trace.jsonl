@@ -1,0 +1,3 @@
+{"timestamp":"2026-11-05T01:34:17.982Z","tool":"npm","action":"npm run check","durationMs":579,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T01:34:18.562Z","tool":"npm","action":"npm test","durationMs":8482,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T01:34:27.044Z","tool":"npm","action":"npm run test:exit","durationMs":468,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "changeId": "ci-review-hardening",
+  "recordedAt": "2026-11-05T01:34:37.583Z",
+  "sourceCommit": "a1de07e111d4b495a4ea6efdce50ea76a3584cb0",
+  "sourceDigest": "ef21817650e4e3cc926a7705b96fb89ff47dc094243a8cfaff7dc269083c6b7f",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 578,
+      "outputSha256": "7070adb74a3bb13543b6e445ac53896d3eef3920464eb92f3216a61d80e40198"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8744,
+      "outputSha256": "6ba4412065c7db647c5b1858682b5811a2fc551a5dc2c54495a1597bb23ce543"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 469,
+      "outputSha256": "203eb52aa08438513de892c0b3e4dbf9d51ad11d02ba50aad243d3b1ed948187"
+    }
+  ]
+}

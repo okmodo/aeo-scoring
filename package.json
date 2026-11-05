@@ -1,0 +1,17 @@
+{
+  "name": "aeo-scoring",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "check": "node scripts/repository-checks.mjs",
+    "test": "node --test test/evaluation.test.mjs",
+    "test:exit": "node --test test/exit.test.mjs",
+    "evaluate": "node scripts/evaluate.mjs",
+    "ci:gate": "node scripts/pr-gate.mjs",
+    "ci:checks": "node scripts/ci-checks.mjs"
+  }
+}

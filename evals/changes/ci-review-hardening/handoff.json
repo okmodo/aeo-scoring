@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "task": "Address the independent PR #1 reviews and prove CI remains enforceable before merging or starting Phase 1.",
+  "state": "Review-hardening plan was committed before fixes. Confirmed findings and their dispositions are in this directory. Updated source is undergoing validation; new run/exit evidence and final hosted CI remain pending.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/ci-evaluation",
+  "baseCommit": "4cd8b0f260789c87595ba8c1acfa52942b83119d",
+  "planCommit": "1f418c9",
+  "decisions": [
+    "Use commit ancestry to distinguish pre-plan work, valid overlapping plans, and inherited upstream changes.",
+    "Fingerprint file type, content, and executable/symlink state without ambiguous deletion serialization.",
+    "Keep independent technical agent review separate from the independent-account GitHub approval requirement."
+  ],
+  "constraints": [
+    "Do not merge, deploy, start Phase 1, contact GitHub, or use paid services during offline continuation.",
+    "Use only the exported Git bundle and export-state.json, not prior chat or another checkout.",
+    "Do not modify source or acceptance plans. Derived local run/trace/report artifacts are permitted.",
+    "Do not fabricate fresh-session evidence or treat subprocess smoke tests as independent-agent proof."
+  ],
+  "completed": [
+    "Two independent agents reviewed the original PR and reproduced concrete findings.",
+    "The immutable remediation plan was committed separately before source fixes."
+  ],
+  "remaining": [
+    "Check the final review-summary and verify the source/plan history from the bundle.",
+    "Run both active plans and compare source fingerprints.",
+    "Record the observed fresh-session continuation separately; verify hosted CI and independent approval outside this offline exercise."
+  ],
+  "resumeCommands": [
+    "git log --oneline -8",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change ci-review-hardening --base main"
+  ],
+  "expectedOutcome": "Offline checks and source-bound evaluation run from a clean bundled checkout. Full gate correctly withholds success until genuine current exit records exist. No hosted success or independent GitHub approval is inferred."
+}

@@ -1,0 +1,22 @@
+# Working on AEO Scoring
+
+This policy applies to every PR, including docs, dependency changes, human-authored changes, and agent work. The project specification is in `AEO Scoring Vault/AEO Scoring Project Specification.md`.
+
+## Standard change process
+
+1. Inspect the task and current state. Create `evals/changes/<id>/plan.json` from the template. Define outcome, process, style/efficiency goals, scope, non-goals, commands, and exit-test applicability **before implementation**. Commit the plan separately; do not modify it after implementation starts. A changed requirement uses a new plan. Prove prior planning through Git history, not timestamps supplied by an agent.
+2. Work on a `codex/` feature branch. Use frozen, version-controlled inputs and expected outcomes; include happy, edge, and failure behavior. Add scenarios when behavior changes. Changes to gold expectations require an explicit rationale and independent review.
+3. Run the plan's real commands with `npm run evaluate -- --change <id> --base origin/main`. This writes a source-bound evaluation record and command trace. Do not invent tool calls, token counts, costs, test outcomes, or fresh-agent evidence. Summarize unrecorded work honestly and identify trace gaps. Keep secrets, raw user content, and private transcripts out of committed/public artifacts.
+4. Include `handoff.json` with decisions, constraints, exact state, remaining work, and replay commands. When portability, memory, workflow, handoff, or resumability changes, perform the genuine exit test: interrupt at a meaningful boundary, export state, give only the export plus clean task files to a fresh agent without prior chat, and record observed continuation. A subprocess smoke test alone is not a fresh-agent test. For unrelated changes, record a specific applicability reason.
+5. Commit implementation, then current evaluation evidence. Open a PR to trigger CI; local evaluation is useful but does not replace hosted CI. Never merge your own agent work or deploy as part of a PR check. Fix failures on the same branch; every update reruns CI.
+6. An independent reviewer assesses process, permissions, evidence quality, style, and efficiency, and confirms any subjective/exit-test findings. Required CI and independent approval gate merging. Green CI validates deterministic checks and supplied records, not an entire unobserved agent session.
+
+## Verification
+
+Run `npm run check`, `npm test`, and `npm run test:exit`. CI has no path exemptions. When application code is introduced, add meaningful lint, TypeScript, build, runtime, and rubric regression checks; the repository checker rejects app code without registered lint/typecheck/build scripts. Placeholder success commands are unacceptable. Live model/browser calibration stays separate from ordinary offline PR checks and needs a measured Cloudflare budget.
+
+## Boundaries
+
+Cloudflare free-tier-only. No paid model calls or deployments in CI. Use primary sources and evidence. Respect permissions and task scope. Prefer targeted tests and batched reads; avoid needless reruns and speculative refactors. Record genuine limitations. Do not add tickets, send third-party messages, alter merchant sites, or merge/deploy without authorization.
+
+Do not weaken the workflow, evaluator, fixtures, plan-history check, review policy, or branch protections to make a change pass. These changes need explicit explanation and independent scrutiny. Keep code and workflow files out of atomic knowledge notes; link the vault to canonical implementation documentation.
