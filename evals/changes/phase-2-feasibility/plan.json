@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "phase-2-feasibility",
+  "task": "Investigate bounded page extraction and content-assessment feasibility before building the combined scorer, using offline reproducible inputs and honest measurements within Cloudflare free-tier constraints.",
+  "scope": ["scripts/**", "test/**", "evals/**", "docs/**", "AEO Scoring Vault/**", "package.json", "package-lock.json", ".github/workflows/**"],
+  "nonGoals": ["Build a production audit, complete scorer, user interface, or deployment", "Make paid calls or use paid Cloudflare resources", "Execute untrusted page scripts or fetch arbitrary user URLs in the offline harness", "Treat synthetic fixtures or local CPU as live Cloudflare or human calibration", "Change rubric weights or alter merchant sites", "Merge the PR or change repository settings"],
+  "outcomes": [
+    {"id":"O1","description":"A bounded offline extraction prototype reports independently expected observable facts, source locations, retrieval context, coverage, limitations and uncertainty for frozen happy, edge, adversarial and failure cases without inventing absent information.","verification":"automated","evidence":"Version-controlled feasibility fixtures and offline regression tests"},
+    {"id":"O2","description":"A reproducible raw-versus-rendered input comparison identifies what changed and what remains unknown without executing untrusted scripts or asserting all pages need rendering.","verification":"automated","evidence":"Frozen paired fixtures and regression tests"},
+    {"id":"O3","description":"The content-assessment experiment separates source evidence from interpretation, tests hostile instructions as data, and reports measured agreement only where actual independent judgments and model results exist.","verification":"human","evidence":"Feasibility documentation, fixtures, tests and recorded experiment limitations"},
+    {"id":"O4","description":"Local CPU and latency observations use an explicit repeatable method and do not imply Cloudflare performance or free-tier viability; cloud and human calibration gaps remain explicit.","verification":"human","evidence":"Feasibility measurements and documented constraints"},
+    {"id":"O5","description":"Default offline PR checks continue existing gates and permanently include meaningful feasibility regressions, with no network, model, browser or paid dependencies.","verification":"automated","evidence":"CI check registration and test execution"},
+    {"id":"O6","description":"A bounded representative real-page calibration set documents provenance, independent expected observations, accessible evidence, and uncertainty without claiming full human scoring or broad generalization.","verification":"human","evidence":"Calibration fixtures and independent review"}
+  ],
+  "process": [
+    {"id":"P1","description":"Commit this immutable plan before implementation and preserve existing evaluator, fixtures and security gates; subject CI changes and expectations to independent review.","verification":"human","evidence":"Git history and independent technical review"},
+    {"id":"P2","description":"Treat pages, rendered content, structured data and model output as untrusted; document safe fetching requirements and prompt-injection boundaries without enabling unsafe network access.","verification":"human","evidence":"Security design and adversarial offline tests"},
+    {"id":"P3","description":"Record actual commands and observations, free-tier constraints, trace gaps, remaining work and a resumable handoff; no invented model calls, costs or calibration.","verification":"human","evidence":"Evaluation run, trace, handoff and review"}
+  ],
+  "styleEfficiency": [
+    {"id":"E1","description":"Keep prototype small, bounded, evidence-first and offline by default; separate versioned synthetic inputs from real-page calibration and avoid unsupported certainty.","verification":"human","evidence":"Independent review and recorded run"}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility"],
+  "exitTest": {"required": true, "reason": "Phase handoff and resumability are material deliverables; a fresh agent must continue from a clean export without prior chat."}
+}

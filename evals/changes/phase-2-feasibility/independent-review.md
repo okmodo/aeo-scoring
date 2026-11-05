@@ -1,0 +1,19 @@
+# Independent technical review — Phase 2 prototype
+
+Reviewed the Phase 2 plan at commit 9c3ba9e and the prototype, tests, CI registration, fixtures and documentation as present on 2026-11-05. Review was independent of implementation, but the implementation was still being finalized; this is not approval of later unreviewed changes or of hosted CI.
+
+## Findings and disposition
+
+- The first implementation failed to mark coverage incomplete when a text node exceeded 500 characters, permitting a content request after loss of its tail. The lead fixed this and added a regression. Rechecked.
+- The first structured-data revision silently omitted records, offers and values at bounds and accepted JSON-LD in hidden ancestors. The lead changed those limits to mark coverage incomplete, suppresses hidden/template ancestors and added regressions. Rechecked. JSON-LD offsets identify the full script, not a specific property; the documentation explicitly states this limitation.
+- O6 remains incomplete: indexed-source observations are not retained page snapshots and have not been compared to extractor output or independent human judgments. Robots access attempts failed to establish permission, so the missing calibration is accurately described as a gap, not an extraction result. This prevents a broad product-feasibility or accuracy claim.
+- No measured human scoring agreement, representative rendering comparison, Worker CPU or end-to-end free-tier budget has been established. Offline examples and local timing do not prove those outcomes. The documentation appropriately sets a no-go for production/free-tier commitment; any subsequent live experiment must be reviewed against its retained results and account evidence.
+- Request/response validation verifies structure and known evidence IDs only. It does not prevent prompt injection or establish entailment. The helper is an offline experiment, and its byte limit is not an API token budget. It must not be treated as an automatically safe judge.
+
+## Checks and scope
+
+The current CI diff adds feasibility regression execution when the prototype is present and preserves existing mandatory and foundations checks. No weakening of existing gates was observed. `npm run test:feasibility` passed 10 tests in this review. The test fixtures are synthetic; green tests establish those cases only. The extractor deliberately handles a small subset of product fields, cannot establish visual visibility with CSS or associate variants, and is not a rubric scorer. The parse5 dependency is locked with integrity; this review did not conduct a supply-chain audit. The genuine exit test, evaluation, hosted CI, and any later live-model records are outside this snapshot and require separate verification.
+
+## Live experiment follow-up
+
+Reviewed `docs/cloudflare-live-experiment.md`, the retained two synthetic model responses, and the added validator regression. The positive example returned the expected state; the negation/injection example returned the wrong state while citing a valid ID and explicitly following the hostile instruction. This supports the stated no-go for an automatic judge, not an estimate of general model reliability. One inline synthetic browser example demonstrates only that basic integration; billed browser duration, account-wide remaining capacity, real-page behavior, and Worker CPU remain unmeasured. I reran `npm run test:feasibility`: 11 passed. The test verifies that structural validation accepts the retained wrong response; it does not reproduce the remote calls or independently verify response provenance. I flagged a contradictory historical claim in `docs/cloudflare-feasibility.md` that the POST calls were never invoked; the lead was asked to correct it. This review does not independently verify user account plan confirmation or hosted CI.

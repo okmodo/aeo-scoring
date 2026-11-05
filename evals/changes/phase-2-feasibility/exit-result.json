@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "changeId": "phase-2-feasibility",
+  "sourceCommit": "e2f2ca5048828499166ab4c88c3f06792da4075c",
+  "sourceDigest": "adf6c02e8bc46088ff0c5ed8843fe00f50a8ae797a1943e145717b9c23414781",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "dispatch": {
+    "task": "/root/phase2_fresh_exit",
+    "forkTurns": "none",
+    "model": "gpt-6.1-terra"
+  },
+  "agentId": "/root/phase2_fresh_exit",
+  "status": "passed",
+  "exportSha256": "4058cf7d3dad9fced093f29289b1c1c9022a12765742729cdfc80042e14f2daf",
+  "bundleSha256": "41881d67a3538840836e0d1e7608cd58cca90fcb89980dbff65de6f9110d2ac1",
+  "interruptionPoint": "Reviewed prototype and live synthetic measurements committed; current evaluation, exit retention, PR and hosted CI unfinished.",
+  "observedContinuation": "A fresh Terra session used only the export, recovered the feature branch after an initial main-branch handoff lookup failed, installed locked dependencies offline, ran all five plan commands (71 tests total), validated history/run/trace/handoff, matched the source digest, and observed the expected missing-exit rejection.",
+  "limitations": "Local Node25 does not certify hosted Node24. No independent reproduction of cloud experiments or code review was performed by this fresh agent. O6 real-page calibration, human agreement, representative rendering, Cloudflare CPU and end-to-end budget remain incomplete. Continuation does not establish production feasibility or automatic-judge safety.",
+  "observedReport": "# Fresh Phase 2 continuation observation\n\nThis agent received standard instructions and environment metadata plus the delegated instruction identifying the export and required procedure. No substantive prior parent/user task history was provided. The only task-state inputs were `/private/tmp/aeo-phase2-final-export/export-state.json` and its `repository.bundle`. The environment identified the original workspace but I did not read it. I did not access other checkouts or live services, change source or plan, deploy, merge, or create exit evidence.\n\nActual actions: listed and read export state; cloned its bundle to `/private/tmp/aeo-phase2-fresh-checkout`; initial clone checked out main, so the first attempt to read the handoff there failed with ENOENT. Switched to tracking `origin/codex/phase-2-feasibility`; read committed AGENTS.md, handoff, plan, review, package and validation helpers; inspected history. HEAD is `e2f2ca5048828499166ab4c88c3f06792da4075c`, base `c35c91b77123da20a441911cc49c6cb014f1f59a`. The separate plan commit `9c3ba9e` precedes implementation `f750f01`; history validation passed.\n\n`npm ci --ignore-scripts --no-audit --no-fund --offline` succeeded. Local Node v25.9.0/npm 11.12.1 is outside the declared Node >=24 <25 range. `npm run evaluate -- --change phase-2-feasibility --base origin/main` succeeded: repository check inspected 96 files; evaluator tests 43 passed, exit smoke tests 3 passed, foundations 14 passed, feasibility 11 passed. The evaluation created local run/trace and ignored reports. The recorded evaluation-command durations were 711, 8488, 392, 221 and 238 ms, respectively. Trace covers evaluation commands only; unavailable token/cost data are null.\n\nUsing exported validation helpers, I validated plan, plan history, generated run and trace, and handoff. Recomputed source digest and run digest both equal `adf6c02e8bc46088ff0c5ed8843fe00f50a8ae797a1943e145717b9c23414781`, matching export state. `npm run ci:gate -- origin/main` failed as expected because `evals/changes/phase-2-feasibility/exit-result.json` is absent. The gate failure is not an evaluation-command failure; it does not authenticate the continuation. Git status showed only generated untracked run.json and trace.jsonl; reports are ignored.\n\nBundle SHA-256: `41881d67a3538840836e0d1e7608cd58cca90fcb89980dbff65de6f9110d2ac1`. Export-state SHA-256: `6849ac893d1a3eee383ed14920aa95e68790ac8639ffca74a88ebfbd7f7b54bb`.\n\nThe retained independent review reports addressed extraction-limit issues, and identifies O6 as incomplete: indexed evidence is not retained representative page snapshots compared with extractor output or independent human judgments. Human scoring agreement, representative rendering, Worker CPU, and end-to-end budget remain unmeasured. The retained synthetic injection/negation result was wrong despite a valid evidence ID; it supports the documented no-go for automated judging, not a general reliability estimate. I did not independently review implementation or reproduce live experiments. The coordinator must inspect and retain this actual observation as exit evidence, retain current evaluation records, and arrange independent review and hosted Node 24 CI; any source or handoff change requires re-evaluation. Local success does not establish hosted CI, production feasibility, or calibration.\n",
+  "finalIndependentReview": {
+    "agentId": "/root/phase2_review",
+    "sourceCommit": "e2f2ca5048828499166ab4c88c3f06792da4075c",
+    "observation": "Read-only final review confirmed the documentation contradiction was resolved, no remaining blocking code issues within the reviewed prototype scope, and explicit O6/CPU/human calibration gaps. Earlier independent review ran all 11 feasibility tests; final read did not rerun them or authenticate remote calls."
+  }
+}

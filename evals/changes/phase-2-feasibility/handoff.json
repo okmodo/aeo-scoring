@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "task": "Complete and independently review Phase 2 extraction and content-assessment feasibility; retain real measurement and fresh-agent continuation evidence before PR.",
+  "state": "Implementation and independent technical review are committed. The prototype, 11 offline feasibility tests, live two-call AI and one-call browser experiment, indexed-source calibration limits, and no-go decisions are retained. Current source-bound evaluation, genuine fresh continuation evidence, PR publication and hosted Node 24 CI remain unfinished.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/phase-2-feasibility",
+  "baseCommit": "c35c91b77123da20a441911cc49c6cb014f1f59a",
+  "planCommit": "9c3ba9e",
+  "decisions": [
+    "Treat unobserved information as unknown, preserve extraction source and context, and separate observations from interpretation.",
+    "Do not use an automated model judge for consequential scoring: a measured injection/negation case failed despite valid JSON and a valid evidence ID.",
+    "No production feasibility claim until permitted representative raw/rendered pages, independent human calibration and Cloudflare CPU/budget measurements support it."
+  ],
+  "constraints": [
+    "Cloudflare Free only; no paid calls, deployment, merge, merchant-site modifications or repository settings changes.",
+    "No model/browser/network calls in offline CI; page and model content are untrusted.",
+    "Current local machine runs Node 25; hosted Node 24 CI remains an independent check.",
+    "Do not edit the committed plan or fabricate fresh-agent, reviewer, token, cost or execution evidence."
+  ],
+  "completed": [
+    "Plan committed separately before implementation.",
+    "Bounded extraction, fixture regressions, capped offline model contract and local measurements are documented.",
+    "Independent real-page indexed evidence and access-policy limitations are documented.",
+    "Independent Terra review findings were fixed and regression-tested; review and live experiment records are retained.",
+    "User confirmed Workers Free; two capped synthetic AI calls and one inline synthetic browser call ran with no retries or deployment. One model judgment failed by following injected evidence."
+  ],
+  "remaining": [
+    "Recover this exported branch and verify the immutable plan precedes implementation; inspect the retained independent review and limitations.",
+    "Run source-bound evaluation from the clean export and validate records; report genuine continuation and expected missing exit evidence without inventing it.",
+    "Coordinator must retain fresh-agent evidence, publish the PR and verify hosted Node 24 CI. Do not merge, deploy, or make additional live calls."
+  ],
+  "resumeCommands": [
+    "git log --oneline -5",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change phase-2-feasibility --base origin/main"
+  ],
+  "expectedOutcome": "Offline checks pass with current source-bound evidence; the fresh-agent record accurately describes the continuation and remaining live and human calibration gaps. A green check does not prove production feasibility."
+}
