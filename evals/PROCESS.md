@@ -4,7 +4,7 @@ Open or update a PR to run `.github/workflows/pr-evaluation.yml`. No path exempt
 
 ## Before implementation
 
-Copy `evals/templates/plan.json` to `evals/changes/<id>/plan.json`. Define outcomes, process, style/efficiency, scope, non-goals, verification commands, and exit-test applicability. Commit plans alone before implementing. Plans are immutable after introduction; new requirements use another plan. For a new independent PR use a new plan; old run evidence cannot satisfy it.
+Copy `evals/templates/plan.json` to `evals/changes/<id>/plan.json`. Define outcomes, process, style/efficiency, scope, non-goals, verification commands, and exit-test applicability. Commit plans alone before implementing. Plans are immutable after introduction; new requirements use another plan. For a new independent PR use a new plan; old run evidence cannot satisfy it. The gate inspects every commit reachable from the feature head but not the current base. Each implementation commit must have an ancestor plan from this PR whose scope covers its files; an overlapping follow-up plan does not invalidate earlier planned work. Reverting unplanned work does not erase its history. Plans on another branch authorize work only after they are ancestors of that work. Pure upstream merge content is excluded; changes introduced by a merge resolution still need prior planning. Intermediate plan edits are rejected even if later reverted.
 
 ## Evidence produced by real commands
 
@@ -12,7 +12,7 @@ Run `npm run evaluate -- --change <id> --base origin/main`. It executes named np
 
 Do not claim the wrapper observed prior planning conversations, permissions, all tool calls, token use, costs, or subjective judgment. Null token/cost data means unavailable, never free or zero. Offline CI performs no paid API calls. Future agent-host trace imports must preserve provenance and redact sensitive material before publication. Record external side effects rather than assume a test's exit code proves none occurred.
 
-CI fingerprints changed source, plans, and handoffs relative to the PR base. Only run/trace/exit-result files are excluded to avoid self-referential hashes. A source change, base update affecting the changed set, or handoff change needs current evidence. Results are assertions supplied by a contributor; CI re-executes its own required commands and human review checks evidence authenticity. A changed CI script can weaken CI, so workflow/evaluator/fixture modifications require particular independent review.
+CI fingerprints changed source, plans, and handoffs relative to the PR base, including explicit missing/file/symlink state, file executable mode, and symlink target bytes. It hashes symlink identities without reading their targets. Only run/trace/exit-result files are excluded to avoid self-referential hashes. A source change, base update affecting the changed set, or handoff change needs current evidence. Results are assertions supplied by a contributor; CI re-executes its own required commands and human review checks evidence authenticity. A changed CI script can weaken CI, so workflow/evaluator/fixture modifications require particular independent review.
 
 ## Five frozen scenarios
 

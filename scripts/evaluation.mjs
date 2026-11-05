@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, lstatSync, readlinkSync } from 'node:fs';
 import path from 'node:path';
 
 export function assert(condition, message) { if (!condition) throw new Error(message); }
@@ -44,13 +44,56 @@ export function changedFiles(base, cwd = process.cwd()) {
   const untracked = git(['ls-files', '--others', '--exclude-standard', '-z'], cwd).split('\0').filter(Boolean);
   return [...new Set([...tracked, ...untracked])].sort();
 }
+// Check actual PR commits: endpoint trees lose reverted work and include newer base changes.
+export function validatePlanHistory(base, plans, cwd = process.cwd()) {
+  const planPattern = /^evals\/changes\/[a-z0-9-]+\/plan\.json$/;
+  const byPath = new Map(plans.map(plan => [`evals/changes/${plan.id}/plan.json`, plan]));
+  const introduced = new Map();
+  const availableAt = new Map();
+  const commits = git(['rev-list', '--reverse', '--topo-order', '--parents', `${base}..HEAD`], cwd).split('\n').filter(Boolean);
+  for (const line of commits) {
+    const [commit, ...parents] = line.split(' ');
+    const available = new Set(parents.flatMap(parent => [...(availableAt.get(parent) ?? [])]));
+    // Combined diffs include merge resolutions, but not work merely inherited from upstream.
+    const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '--cc', '-z', commit], cwd).split('\0').filter(Boolean);
+    const planning = files.filter(file => planPattern.test(file));
+    for (const file of planning) {
+      assert(byPath.has(file) && !introduced.has(file), 'Acceptance plan changed after its first commit');
+      // An existing base plan cannot be reused or edited for a new PR.
+      const basePlans = git(['ls-tree', '--name-only', base, '--', file], cwd);
+      assert(!basePlans, 'Every PR needs a new task-specific evaluation plan');
+      const original = git(['show', `${commit}:${file}`], cwd);
+      assert(original === readFileSync(path.join(cwd, file), 'utf8').trim(), 'Acceptance plan changed after its first commit');
+      introduced.set(file, commit);
+    }
+    if (planning.length) assert(files.every(file => planPattern.test(file)), 'The plan commit must contain plans only, before implementation');
+    for (const file of files.filter(file => !evidenceFile(file) && !planPattern.test(file))) {
+      assert([...available].some(planPath => inScope(file, byPath.get(planPath).scope)), `Implementation in this scope predates its plan: ${file} (${commit})`);
+    }
+    planning.forEach(file => available.add(file));
+    availableAt.set(commit, available);
+  }
+  for (const file of byPath.keys()) assert(introduced.has(file), 'Commit the new plan before implementation');
+}
 export function digestFiles(files, cwd = process.cwd()) {
   const hash = createHash('sha256');
   for (const file of [...files].filter(file => !evidenceFile(file)).sort()) {
     assert(!path.isAbsolute(file) && !file.split('/').includes('..'), 'Unsafe digest path');
-    hash.update(file + '\0');
     const full = path.join(cwd, file);
-    hash.update(existsSync(full) ? readFileSync(full) : '<deleted>'); hash.update('\0');
+    let stat;
+    try { stat = lstatSync(full); } catch (error) {
+      if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error;
+    }
+    let kind = 'missing', mode = null, content = Buffer.alloc(0);
+    if (stat?.isSymbolicLink()) {
+      kind = 'symlink'; content = readlinkSync(full, { encoding: 'buffer' });
+    } else if (stat?.isFile()) {
+      kind = 'file'; mode = stat.mode & 0o111 ? '100755' : '100644'; content = readFileSync(full);
+    } else assert(!stat, `Unsupported source file type: ${file}`);
+    // Typed, length-framed entries distinguish deletion, mode and link target without
+    // following links or colliding with literal tombstone bytes in real source files.
+    hash.update(JSON.stringify([file, kind, mode, content.length]) + '\0');
+    hash.update(content); hash.update('\0');
   }
   return hash.digest('hex');
 }

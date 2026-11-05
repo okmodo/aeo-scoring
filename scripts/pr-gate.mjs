@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { appendFileSync } from 'node:fs';
-import { assert, json, git, changedFiles, digestFiles, evidenceFile, inScope, validatePlan, validateRun, validateHandoff, validateExit } from './evaluation.mjs';
+import { assert, json, git, changedFiles, digestFiles, evidenceFile, inScope, validatePlan, validatePlanHistory, validateRun, validateHandoff, validateExit } from './evaluation.mjs';
 const base = process.env.EVALUATION_BASE || process.argv[2];
 assert(base, 'Set EVALUATION_BASE to the PR base commit or pass a base ref');
 git(['rev-parse', '--verify', base]);
@@ -13,19 +13,10 @@ try {
   const plans = planPaths.map(file => validatePlan(json(file)));
   const digest = digestFiles(files);
   for (const file of files.filter(file => !evidenceFile(file))) assert(plans.some(plan => inScope(file, plan.scope)), `Out-of-scope changed file: ${file}`);
+  validatePlanHistory(base, plans);
   for (let i = 0; i < plans.length; i++) {
     const plan = plans[i], planPath = planPaths[i], dir = `evals/changes/${plan.id}`;
     assert(planPath === `${dir}/plan.json`, 'Plan path/ID mismatch');
-    const introductions = git(['log', '--reverse', '--diff-filter=A', '--format=%H', `${base}..HEAD`, '--', planPath]).split('\n').filter(Boolean);
-    assert(introductions.length === 1, 'Commit the new plan before implementation');
-    const introduced = introductions[0];
-    const original = git(['show', `${introduced}:${planPath}`]);
-    assert(original === readFileSync(planPath, 'utf8').trim(), 'Acceptance plan changed after its first commit');
-    const firstFiles = git(['diff-tree', '--no-commit-id', '--name-only', '-r', introduced]).split('\n').filter(Boolean);
-    assert(firstFiles.every(file => /^evals\/changes\/[a-z0-9-]+\/plan\.json$/.test(file)), 'The plan commit must contain plans only, before implementation');
-    const beforePlan = git(['rev-parse', `${introduced}^`]);
-    const earlierFiles = git(['diff', '--name-only', base, beforePlan, '--']).split('\n').filter(Boolean);
-    assert(!earlierFiles.some(file => inScope(file, plan.scope) && !evidenceFile(file)), 'Implementation in this scope predates its plan');
     const run = json(`${dir}/run.json`);
     const trace = readFileSync(`${dir}/trace.jsonl`, 'utf8').trim().split('\n').map(line => JSON.parse(line));
     validateRun(plan, run, trace, digest);

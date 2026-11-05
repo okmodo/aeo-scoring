@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, chmodSync, symlinkSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -79,7 +79,7 @@ function sandbox(callback) {
   const cwd=mkdtempSync(path.join(tmpdir(),'aeo-gate-'));
   const git=(...args)=>execFileSync('git',args,{cwd,encoding:'utf8',env:{...process.env,GIT_AUTHOR_NAME:'Fixture',GIT_AUTHOR_EMAIL:'fixture@example.invalid',GIT_COMMITTER_NAME:'Fixture',GIT_COMMITTER_EMAIL:'fixture@example.invalid'}}).trim();
   const write=(file,body)=>{mkdirSync(path.dirname(path.join(cwd,file)),{recursive:true});writeFileSync(path.join(cwd,file),body);};
-  try {git('init','-q');git('commit','--allow-empty','-qm','baseline');const base=git('rev-parse','HEAD');callback({cwd,git,write,base});}
+  try {git('init','-q');write('.git/info/exclude','reports/\n');git('commit','--allow-empty','-qm','baseline');const base=git('rev-parse','HEAD');callback({cwd,git,write,base});}
   finally {rmSync(cwd,{recursive:true,force:true});}
 }
 function gateFixture(ctx,{sameCommit=false}={}) {
@@ -129,4 +129,125 @@ test('CI executes mandatory plus task-specific checks once, including app checks
 test('PR gate rejects implementation committed before its plan',()=>sandbox(ctx=>{
   ctx.write('feature.txt','earlier work');ctx.git('add','.');ctx.git('commit','-qm','implementation before plan');
   gateFixture(ctx);const result=runGate(ctx);assert.notEqual(result.status,0);assert.match(result.stdout,/predates its plan/);
+}));
+
+// Lifecycle fixtures contain synthetic validator records only, never real command evidence.
+function addPlan(ctx, id, scope = ['feature.txt', 'evals/**']) {
+  const p = clone(template); p.id = id; p.scope = scope;
+  ctx.write(`evals/changes/${id}/plan.json`, JSON.stringify(p));
+  ctx.git('add', '.'); ctx.git('commit', '-qm', `plan ${id}`);
+  return p;
+}
+function refreshFixtureRecords(ctx, plans) {
+  for (const p of plans) ctx.write(`evals/changes/${p.id}/handoff.json`, JSON.stringify(scenarios[4].input));
+  const digest = digestFiles(changedFiles(ctx.base, ctx.cwd), ctx.cwd);
+  for (const p of plans) {
+    const {run, trace} = validRun(p, digest);
+    run.traceLimitations = 'Synthetic validator fixture only; these records do not claim command execution.';
+    ctx.write(`evals/changes/${p.id}/run.json`, JSON.stringify(run));
+    ctx.write(`evals/changes/${p.id}/trace.jsonl`, trace.map(e => JSON.stringify(e)).join('\n') + '\n');
+  }
+}
+function commitFiles(ctx, message) { ctx.git('add', '.'); ctx.git('commit', '-qm', message); }
+function acceptsGate(ctx) { const result = runGate(ctx); assert.equal(result.status, 0, result.stdout + result.stderr); }
+function rejectsGate(ctx, message) { const result = runGate(ctx); assert.notEqual(result.status, 0); assert.match(result.stdout, message); }
+
+test('PR gate accepts overlapping follow-up plans with refreshed evidence for all active plans', () => sandbox(ctx => {
+  gateFixture(ctx);
+  const first = JSON.parse(readFileSync(path.join(ctx.cwd, 'evals/changes/example/plan.json')));
+  // Evidence is normally a separate commit, so the follow-up plan remains plans-only.
+  commitFiles(ctx, 'first evaluation fixture');
+  const second = addPlan(ctx, 'follow-up');
+  ctx.write('feature.txt', 'follow-up implementation'); commitFiles(ctx, 'implement follow-up');
+  refreshFixtureRecords(ctx, [first, second]); acceptsGate(ctx);
+  ctx.write('feature.txt', 'stale follow-up'); rejectsGate(ctx, /Stale evidence/);
+}));
+test('PR gate accepts the next independent PR without refreshing earlier PR evidence', () => sandbox(ctx => {
+  gateFixture(ctx); commitFiles(ctx, 'first PR records'); ctx.base = ctx.git('rev-parse', 'HEAD');
+  const second = addPlan(ctx, 'next-pr');
+  ctx.write('feature.txt', 'next PR implementation'); commitFiles(ctx, 'next implementation');
+  refreshFixtureRecords(ctx, [second]); acceptsGate(ctx);
+}));
+test('plans already present in the base cannot authorize new PR implementation', () => sandbox(ctx => {
+  gateFixture(ctx); commitFiles(ctx, 'first PR records'); ctx.base = ctx.git('rev-parse', 'HEAD');
+  const p = addPlan(ctx, 'unrelated-next-pr', ['evals/**', 'unrelated.txt']);
+  ctx.write('feature.txt', 'new implementation covered only by the previous PR plan');
+  commitFiles(ctx, 'unplanned new implementation'); refreshFixtureRecords(ctx, [p]);
+  rejectsGate(ctx, /Out-of-scope|predates its plan/);
+}));
+test('PR gate ignores newer upstream work both before and after merging the base', () => sandbox(ctx => {
+  ctx.git('branch', 'upstream');
+  const p = addPlan(ctx, 'upstream-safe', ['feature.txt', 'common.txt', 'evals/**']);
+  ctx.write('feature.txt', 'planned feature'); commitFiles(ctx, 'feature work');
+  ctx.git('checkout', '-q', 'upstream');
+  ctx.write('common.txt', 'new upstream work'); commitFiles(ctx, 'upstream work');
+  ctx.base = ctx.git('rev-parse', 'HEAD'); ctx.git('checkout', '-q', '-');
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  commitFiles(ctx, 'feature fixture evidence');
+  ctx.git('merge', '--no-ff', '-qm', 'merge upstream', 'upstream');
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+}));
+test('PR gate rejects implementation and revert before the plan, including paths absent from the final diff', () => sandbox(ctx => {
+  ctx.write('feature.txt', 'early implementation'); commitFiles(ctx, 'early work');
+  ctx.git('revert', '--no-edit', 'HEAD');
+  const p = addPlan(ctx, 'late'); refreshFixtureRecords(ctx, [p]);
+  rejectsGate(ctx, /predates its plan/);
+  ctx.write('feature.txt', 'restored after plan'); commitFiles(ctx, 'restore early work');
+  refreshFixtureRecords(ctx, [p]); rejectsGate(ctx, /predates its plan/);
+}));
+test('a plan on another branch cannot retroactively authorize an implementation commit', () => sandbox(ctx => {
+  ctx.git('branch', 'planning');
+  ctx.write('feature.txt', 'unplanned branch work'); commitFiles(ctx, 'early work');
+  ctx.git('checkout', '-q', 'planning'); const p = addPlan(ctx, 'side-plan');
+  ctx.git('checkout', '-q', '-'); ctx.git('merge', '--no-ff', '-qm', 'merge plan later', 'planning');
+  refreshFixtureRecords(ctx, [p]); rejectsGate(ctx, /predates its plan/);
+}));
+test('merge resolutions that introduce scoped work still require an ancestor plan', () => sandbox(ctx => {
+  ctx.git('branch', 'upstream');
+  ctx.git('commit', '--allow-empty', '-qm', 'feature branch');
+  ctx.git('checkout', '-q', 'upstream'); ctx.git('commit', '--allow-empty', '-qm', 'upstream branch');
+  ctx.git('checkout', '-q', '-'); ctx.git('merge', '--no-ff', '--no-commit', 'upstream');
+  ctx.write('feature.txt', 'work introduced by merge'); commitFiles(ctx, 'merge with unplanned work');
+  const p = addPlan(ctx, 'late-resolution'); refreshFixtureRecords(ctx, [p]);
+  rejectsGate(ctx, /predates its plan/);
+}));
+test('PR gate rejects intermediate plan edits even when reverted before evaluation', () => sandbox(ctx => {
+  gateFixture(ctx); commitFiles(ctx, 'fixture evidence');
+  const file = 'evals/changes/example/plan.json'; const original = readFileSync(path.join(ctx.cwd, file));
+  const p = JSON.parse(original); p.task = 'temporary changed contract';
+  ctx.write(file, JSON.stringify(p)); commitFiles(ctx, 'edit immutable plan');
+  ctx.write(file, original); commitFiles(ctx, 'restore plan');
+  refreshFixtureRecords(ctx, [JSON.parse(original)]); rejectsGate(ctx, /changed after/);
+}));
+test('deletion and a real file containing the old tombstone have different fingerprints and stale evidence', () => sandbox(ctx => {
+  ctx.write('feature.txt', 'baseline'); commitFiles(ctx, 'source baseline'); ctx.base = ctx.git('rev-parse', 'HEAD');
+  const p = addPlan(ctx, 'delete-file'); ctx.git('rm', 'feature.txt'); commitFiles(ctx, 'planned deletion');
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  const deleted = digestFiles(['feature.txt'], ctx.cwd);
+  ctx.write('feature.txt', '<deleted>'); assert.notEqual(digestFiles(['feature.txt'], ctx.cwd), deleted);
+  rejectsGate(ctx, /Stale evidence/);
+}));
+test('executable mode changes invalidate source evidence', () => sandbox(ctx => {
+  gateFixture(ctx); chmodSync(path.join(ctx.cwd, 'feature.txt'), 0o644);
+  const p = JSON.parse(readFileSync(path.join(ctx.cwd, 'evals/changes/example/plan.json')));
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  chmodSync(path.join(ctx.cwd, 'feature.txt'), 0o755); rejectsGate(ctx, /Stale evidence/);
+}));
+test('symlink fingerprints bind link identity and target rather than dereferenced contents', () => sandbox(ctx => {
+  const file = path.join(ctx.cwd, 'feature.txt');
+  ctx.write('.git/target-a', 'same content'); ctx.write('.git/target-b', 'same content');
+  symlinkSync('.git/target-a', file); const first = digestFiles(['feature.txt'], ctx.cwd);
+  unlinkSync(file); symlinkSync('.git/target-b', file);
+  assert.notEqual(digestFiles(['feature.txt'], ctx.cwd), first);
+  unlinkSync(file); ctx.write('feature.txt', 'same content');
+  assert.notEqual(digestFiles(['feature.txt'], ctx.cwd), first);
+  unlinkSync(file); const missing = digestFiles(['feature.txt'], ctx.cwd);
+  symlinkSync('missing-target', file); assert.notEqual(digestFiles(['feature.txt'], ctx.cwd), missing);
+}));
+test('retargeting a symlink to equal contents invalidates source evidence', () => sandbox(ctx => {
+  const p = addPlan(ctx, 'symlink');
+  ctx.write('.git/target-a', 'same content'); ctx.write('.git/target-b', 'same content');
+  const file = path.join(ctx.cwd, 'feature.txt'); symlinkSync('.git/target-a', file);
+  commitFiles(ctx, 'add planned symlink'); refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  unlinkSync(file); symlinkSync('.git/target-b', file); rejectsGate(ctx, /Stale evidence/);
 }));

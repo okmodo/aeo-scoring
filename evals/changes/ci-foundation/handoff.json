@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Establish mandatory evaluation for every AEO Scoring PR before application development.",
-  "state": "CI implementation is committed on codex/ci-evaluation; local checks pass. Source-bound run/exit records, hosted CI and the PR still need completion. Main exists on GitHub with required checks and independent review configured, but the fresh agent must not infer that external state is verified by an offline export. No app is built.",
+  "state": "PR #1 contains the CI foundation plus independently requested review hardening on codex/ci-evaluation. The remediation source is undergoing validation. Current source-bound run/exit evidence and final hosted CI must be refreshed before merging. No application is built.",
   "decisions": [
     "Every PR triggers CI; green checks and independent approval required before merge.",
     "Keep deterministic checks offline and free; subjective process/style review remains human.",
@@ -15,20 +15,20 @@
   ],
   "completed": [
     "Rubric and report specification committed.",
-    "Plan committed before CI implementation.",
-    "Evaluator, workflow, frozen scenarios, and handoff smoke tests implemented."
+    "Original CI plan and separate review-hardening plan committed before their implementation.",
+    "Independent reviewers reproduced chronology and fingerprint defects; implementation and regression verification are in progress."
   ],
   "remaining": [
-    "Validate the clean export in a fresh agent and report any ambiguity or failures.",
-    "Run source-bound evaluation and verify hosted CI.",
-    "Verify main protection and retain independent human review before merging."
+    "Inspect review-hardening dispositions and independent re-review.",
+    "Resume both active plans from the exported repository and record current run/exit evidence.",
+    "Verify hosted CI and preserve independent GitHub-account approval before merge."
   ],
   "resumeCommands": [
     "git log --oneline -3",
     "npm ci --ignore-scripts --no-audit --no-fund",
     "npm run evaluate -- --change ci-foundation --base main"
   ],
-  "expectedOutcome": "A fresh agent reconstructs source and planning chronology from the bundle, runs source-bound offline evaluation, and identifies that hosted CI and independent review remain separate external steps.",
+  "expectedOutcome": "A fresh session recovers both active plans and their history from the bundle, executes each plan evaluation, and identifies pending exit records, hosted CI, and independent review without reading private chat.",
   "repository": "https://github.com/okmodo/aeo-scoring.git",
   "branch": "codex/ci-evaluation",
   "baseCommit": "4cd8b0f260789c87595ba8c1acfa52942b83119d",
