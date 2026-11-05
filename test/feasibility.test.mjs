@@ -11,7 +11,7 @@ for (const c of fixture.cases) test(`frozen snapshot: ${c.id}`, () => {
     assert.equal(actual.state, expected);
     for (const e of actual.evidence) assert.ok(c.html.slice(e.location.startOffset, e.location.endOffset).length > 0);
   }
-  assert.equal(result.coverage.complete, true);
+  assert.equal(result.coverage.complete, c.id !== 'empty');
 });
 test('raw and rendered comparison exposes observed change without assuming absence', () => {
   const raw = inspectSnapshot({ ...context, html: fixture.cases[0].html });
@@ -103,4 +103,40 @@ test('nested visible field text is retained while hidden descendants are exclude
   const large = inspectSnapshot({ ...context, html: '<h1><span>' + 'x'.repeat(501) + '</span></h1>' });
   assert.equal(large.coverage.complete, false);
   assert.equal(large.productFields.length, 0);
+});
+
+test('ProductGroup and bounded variants retain context without inventing a selected variant', () => {
+  const group = { '@type': 'ProductGroup', name: 'Shirt', material: 'Cotton', hasVariant: [
+    { '@type': 'Product', name: 'Blue', offers: { price: '26.97', priceCurrency: 'USD' } },
+    { '@type': 'Product', name: 'Red', offers: { price: '30', priceCurrency: 'USD' } }
+  ] };
+  const html = `<script type="application/ld+json">${JSON.stringify(group)}</script><h1>Shirt</h1>`;
+  const r = inspectSnapshot({ ...context, html });
+  assert.ok(r.productFields.some(f => f.field === 'material' && f.value === 'Cotton' && f.context?.entity === 'product-group'));
+  assert.ok(r.productFields.some(f => f.field === 'price' && f.value === '26.97' && f.context?.variantIndex === 0 && f.context.selected === 'unknown'));
+  assert.ok(r.productFields.some(f => f.field === 'price' && f.value === '30' && f.context?.variantIndex === 1 && f.context.selected === 'unknown'));
+  const oversized = { ...group, hasVariant: Array.from({ length: 21 }, () => ({ '@type': 'Product', name: 'x' })) };
+  assert.equal(inspectSnapshot({ ...context, html: `<script type="application/ld+json">${JSON.stringify(oversized)}</script>` }).coverage.complete, false);
+});
+test('an explicit document missing a usable body cannot claim complete coverage', () => {
+  const headOnly = inspectSnapshot({ ...context, html: '<html><head><script>1</script></head></html>' });
+  assert.equal(headOnly.coverage.structuralStatus, 'missing-body');
+  assert.equal(headOnly.coverage.complete, false);
+  const emptyBody = inspectSnapshot({ ...context, html: '<html><head></head><body><script>1</script></body></html>' });
+  assert.equal(emptyBody.coverage.structuralStatus, 'body-no-visible-text');
+  assert.equal(emptyBody.coverage.complete, false);
+  const body = inspectSnapshot({ ...context, html: '<html><body><h1>Item</h1></body></html>' });
+  assert.equal(body.coverage.structuralStatus, 'body-text-present');
+  assert.equal(body.coverage.complete, true);
+});
+
+test('main content is retained before navigation while whole-page truncation stays explicit', () => {
+  const html = '<nav>' + '<p>Navigation</p>'.repeat(100) + '</nav><main><p>Product care instructions</p></main>';
+  const r = inspectSnapshot({ ...context, html });
+  assert.equal(r.coverage.mainPresent, true);
+  assert.equal(r.coverage.textOrder, 'main-first');
+  assert.equal(r.coverage.complete, false);
+  assert.equal(r.findings[0].text, 'Product care instructions');
+  assert.equal(r.findings[0].scope, 'main');
+  assert.equal(html.slice(r.findings[0].location.startOffset,r.findings[0].location.endOffset), 'Product care instructions');
 });

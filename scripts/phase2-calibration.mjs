@@ -10,14 +10,14 @@ export function snapshotHash(html) {
 
 export function compareLabeledSnapshot(snapshot, gold) {
   if (!snapshot || !gold || snapshotHash(snapshot.html) !== gold.sha256 || snapshot.url !== gold.url || snapshot.method !== gold.method) throw new Error('Labels must match exact snapshot, URL and method');
-  if (gold.exhaustiveWithinScope !== true || !Array.isArray(gold.fields) || !gold.fields.every(f => f && ['name', 'description', 'price', 'currency'].includes(f.field) && typeof f.value === 'string' && f.value.length > 0 && ['visible-html', 'json-ld'].includes(f.origin) && Number.isInteger(f.startOffset) && Number.isInteger(f.endOffset) && f.startOffset >= 0 && f.endOffset > f.startOffset && f.endOffset <= snapshot.html.length)) throw new Error('Exhaustive scoped gold fields with valid source locations required');
+  if (gold.exhaustiveWithinScope !== true || !Array.isArray(gold.fields) || !gold.fields.every(f => f && ['name', 'description', 'material', 'price', 'currency'].includes(f.field) && typeof f.value === 'string' && f.value.length > 0 && ['visible-html', 'json-ld'].includes(f.origin) && Number.isInteger(f.startOffset) && Number.isInteger(f.endOffset) && f.startOffset >= 0 && f.endOffset > f.startOffset && f.endOffset <= snapshot.html.length)) throw new Error('Exhaustive scoped gold fields with valid source locations required');
   const result = inspectSnapshot(snapshot);
   if (!result.coverage.complete) return { status: 'incomplete', counts: null, observations: result.productFields, reason: 'Truncated extraction cannot be evaluated as complete.' };
   // Treat duplicate identical observations as a multiset; one output cannot satisfy two labels.
   const remaining = gold.fields.map(f => ({ ...f }));
   const matches = [], unmatched = [];
   for (const observation of result.productFields) {
-    const index = remaining.findIndex(f => f.field === observation.field && f.value === observation.value && f.origin === observation.origin && f.startOffset < observation.location.endOffset && observation.location.startOffset < f.endOffset);
+    const index = remaining.findIndex(f => f.field === observation.field && f.value === observation.value && f.origin === observation.origin && JSON.stringify(f.context ?? null) === JSON.stringify(observation.context ?? null) && f.startOffset < observation.location.endOffset && observation.location.startOffset < f.endOffset);
     if (index < 0) unmatched.push(observation);
     else matches.push({ observation, label: remaining.splice(index, 1)[0] });
   }

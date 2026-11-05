@@ -35,10 +35,12 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
   if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Valid HTTP(S) source URL required');
   if (!['raw', 'rendered'].includes(method) || typeof observedAt !== 'string' || !Number.isFinite(Date.parse(observedAt))) throw new Error('Method and observation time required');
   const document = parse(html, { sourceCodeLocationInfo: true });
-  const findings = [], productFields = [], stack = [{ node: document, hidden: false, blockedJsonLd: false }];
-  let visited = 0, truncated = false;
+  const mainFindings = [], otherFindings = [], productFields = [], stack = [{ node: document, hidden: false, blockedJsonLd: false, inMain: false }];
+  let visited = 0, truncated = false, mainPresent = false;
   while (stack.length) {
-    const { node, hidden, blockedJsonLd } = stack.pop();
+    const { node, hidden, blockedJsonLd, inMain } = stack.pop();
+    const withinMain = inMain || node.tagName === 'main';
+    if (node.tagName === 'main') mainPresent = true;
     if (++visited > 30000) { truncated = true; break; }
     const attrs = Object.fromEntries((node.attrs || []).map(a => [a.name, a.value]));
     const suppressed = hidden || SKIP.has(node.tagName) || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '');
@@ -49,14 +51,27 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
         const json = JSON.parse(content?.value || '');
         const records = Array.isArray(json) ? json : [json, ...(Array.isArray(json['@graph']) ? json['@graph'] : [])];
         if (records.length > 50) truncated = true;
-        for (const record of records.slice(0, 50)) {
-          if (!record || typeof record !== 'object' || ![record['@type']].flat().includes('Product')) continue;
+        const location = { startOffset: content.sourceCodeLocation.startOffset, endOffset: content.sourceCodeLocation.endOffset };
+        const addFields = (record, context) => {
           const offers = Array.isArray(record.offers) ? record.offers : [record.offers];
           if (offers.length > 10) truncated = true;
-          const candidates = [['name', record.name], ['description', record.description], ...offers.slice(0, 10).flatMap(o => [['price', o?.price], ['currency', o?.priceCurrency]])];
+          const candidates = [['name', record.name], ['description', record.description], ['material', record.material], ...offers.slice(0, 10).flatMap(o => [['price', o?.price], ['currency', o?.priceCurrency]])];
           for (const [field, value] of candidates) if (typeof value === 'string' || typeof value === 'number') {
             if (String(value).length > 500 || productFields.length >= 100) truncated = true;
-            else productFields.push({ field, value: String(value), origin: 'json-ld', location: { startOffset: content.sourceCodeLocation.startOffset, endOffset: content.sourceCodeLocation.endOffset } });
+            else productFields.push({ field, value: String(value), origin: 'json-ld', location, ...(context ? { context } : {}) });
+          }
+        };
+        for (const record of records.slice(0, 50)) {
+          if (!record || typeof record !== 'object') continue;
+          const types = [record['@type']].flat();
+          if (types.includes('Product')) addFields(record, null);
+          else if (types.includes('ProductGroup')) {
+            addFields(record, { entity: 'product-group' });
+            const variants = Array.isArray(record.hasVariant) ? record.hasVariant : record.hasVariant ? [record.hasVariant] : [];
+            if (variants.length > 20) truncated = true;
+            variants.slice(0, 20).forEach((variant, index) => {
+              if (variant && typeof variant === 'object' && [variant['@type']].flat().includes('Product')) addFields(variant, { entity: 'variant', variantIndex: index, selected: 'unknown' });
+            });
           }
         }
       } catch { /* Invalid JSON-LD is unmeasured, never absent. */ }
@@ -74,16 +89,23 @@ export function inspectSnapshot({ html, url, method, observedAt }) {
     if (!suppressed && node.nodeName === '#text' && node.sourceCodeLocation) {
       const value = node.value.replace(/\s+/g, ' ').trim();
       if (value) {
-        if (findings.length === MAX_FINDINGS) truncated = true;
+        const target = withinMain ? mainFindings : otherFindings;
+        if (target.length === MAX_FINDINGS) truncated = true;
         else {
           if (value.length > 500) truncated = true;
-          findings.push({ text: value.slice(0, 500), location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset }, truncated: value.length > 500 });
+          target.push({ text: value.slice(0, 500), location: { startOffset: node.sourceCodeLocation.startOffset, endOffset: node.sourceCodeLocation.endOffset }, truncated: value.length > 500, scope: withinMain ? 'main' : 'other' });
         }
       }
     }
-    for (const child of (node.childNodes || []).slice().reverse()) stack.push({ node: child, hidden: suppressed, blockedJsonLd: blockedJsonLd || node.tagName === 'template' || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '') });
+    for (const child of (node.childNodes || []).slice().reverse()) stack.push({ node: child, inMain: withinMain, hidden: suppressed, blockedJsonLd: blockedJsonLd || node.tagName === 'template' || 'hidden' in attrs || attrs['aria-hidden'] === 'true' || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:;|$)/i.test(attrs.style || '') });
   }
-  return { source: { url: parsedUrl.href, method, observedAt }, findings, productFields, coverage: { scope: 'Visible text nodes and inline JSON-LD Product fields; hidden nodes and external resources excluded', complete: !truncated, visitedNodes: visited }, limitations: ['Snapshot is untrusted and may not reflect current or complete page content.', 'CSS, shadow DOM, images, variants and external resources are not evaluated.', 'JSON-LD coverage is limited to inline Product name, description, offer price and currency; no schema validation or entity resolution.', 'Unobserved text is not proof of absence.'] };
+  if (mainFindings.length + otherFindings.length > MAX_FINDINGS) truncated = true;
+  const findings = [...mainFindings, ...otherFindings].slice(0, MAX_FINDINGS);
+  const root = document.childNodes.find(n => n.tagName === 'html');
+  const body = root?.childNodes?.find(n => n.tagName === 'body');
+  const structuralStatus = !root?.sourceCodeLocation ? 'fragment' : !body?.sourceCodeLocation ? 'missing-body' : findings.length === 0 ? 'body-no-visible-text' : 'body-text-present';
+  const structurallyUsable = !['missing-body', 'body-no-visible-text'].includes(structuralStatus);
+  return { source: { url: parsedUrl.href, method, observedAt }, findings, productFields, coverage: { scope: 'Visible text nodes and inline JSON-LD Product and ProductGroup fields; hidden nodes and external resources excluded', complete: !truncated && structurallyUsable, structuralStatus, mainPresent, textOrder: 'main-first', visitedNodes: visited }, limitations: ['Snapshot is untrusted and may not reflect current or complete page content.', 'CSS, shadow DOM, images and external resources are not evaluated.', 'JSON-LD supports bounded Product and ProductGroup observations only; variants are not selected or resolved and locations cover the entire script.', 'Structural status does not prove the page is fully rendered or that its content is usable.', 'Unobserved text is not proof of absence.'] };
 }
 
 // Exact, case-insensitive string lookup is an experiment, not a semantic or rubric score.
