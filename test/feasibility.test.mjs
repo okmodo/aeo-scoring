@@ -22,7 +22,8 @@ test('raw and rendered comparison exposes observed change without assuming absen
   assert.throws(() => compareSnapshots(raw, { ...rendered, source: { ...rendered.source, url: 'https://other.test/' } }, 'x'));
 });
 test('input and output bounds fail closed and disclose truncation', () => {
-  assert.throws(() => inspectSnapshot({ ...context, html: 'x'.repeat(256 * 1024 + 1) }));
+  assert.throws(() => inspectSnapshot({ ...context, html: 'x'.repeat(1024 * 1024 + 1) }));
+  assert.throws(() => inspectSnapshot({ ...context, html: 'é'.repeat(512 * 1024 + 1) }));
   assert.throws(() => inspectSnapshot({ ...context, url: 'file:///etc/passwd', html: '' }));
   assert.throws(() => inspectSnapshot({ ...context, observedAt: 'unknown', html: '' }));
   const result = inspectSnapshot({ ...context, html: '<p>x</p>'.repeat(101) });
