@@ -268,3 +268,32 @@ test('source evidence supports file-to-directory and directory-to-file replaceme
   refreshFixtureRecords(ctx, [next]); acceptsGate(ctx);
   ctx.write('feature.txt', 'updated replacement'); rejectsGate(ctx, /Stale evidence/);
 }));
+test('ordinary rename evidence becomes stale when restoring the original turns it into a copy', () => sandbox(ctx => {
+  ctx.write('feature.txt', 'baseline'); commitFiles(ctx, 'source baseline');
+  ctx.base = ctx.git('rev-parse', 'HEAD');
+  const p = addPlan(ctx, 'rename-feature', ['feature.txt', 'renamed.txt', 'evals/**']);
+  ctx.git('mv', 'feature.txt', 'renamed.txt'); commitFiles(ctx, 'planned rename');
+  assert.deepEqual(changedFiles(ctx.base, ctx.cwd).filter(file => file.endsWith('.txt')), ['feature.txt', 'renamed.txt']);
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  const before = digestFiles(changedFiles(ctx.base, ctx.cwd), ctx.cwd);
+  ctx.write('feature.txt', 'baseline'); commitFiles(ctx, 'restore original converts rename to copy');
+  rejectsGate(ctx, /Stale evidence/);
+  assert.notEqual(digestFiles(changedFiles(ctx.base, ctx.cwd), ctx.cwd), before);
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+}));
+test('leading whitespace filenames bind evidence to the actual file contents', () => sandbox(ctx => {
+  const p = addPlan(ctx, 'space-name', [' leading.txt', 'leading.txt', 'evals/**']);
+  ctx.write(' leading.txt', 'version one'); commitFiles(ctx, 'add leading space filename');
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+  ctx.write(' leading.txt', 'version two'); commitFiles(ctx, 'change leading space filename');
+  rejectsGate(ctx, /Stale evidence/);
+}));
+test('tracked, untracked and historical filename lists preserve leading and trailing whitespace', () => sandbox(ctx => {
+  const names = [' leading.txt', '\tleading.txt', 'trailing.txt '];
+  const p = addPlan(ctx, 'exact-names', [...names, 'evals/**']);
+  for (const name of names) ctx.write(name, 'planned content');
+  assert.deepEqual(changedFiles(ctx.base, ctx.cwd).filter(file => !file.startsWith('evals/')), [...names].sort());
+  commitFiles(ctx, 'commit exact filenames');
+  assert.deepEqual(changedFiles(ctx.base, ctx.cwd).filter(file => !file.startsWith('evals/')), [...names].sort());
+  refreshFixtureRecords(ctx, [p]); acceptsGate(ctx);
+}));

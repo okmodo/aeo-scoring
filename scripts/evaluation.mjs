@@ -5,7 +5,8 @@ import path from 'node:path';
 
 export function assert(condition, message) { if (!condition) throw new Error(message); }
 export function text(value) { return typeof value === 'string' && value.trim().length > 0; }
-export function git(args, cwd = process.cwd()) { return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim(); }
+function gitRaw(args, cwd) { return execFileSync('git', args, { cwd, encoding: 'utf8' }); }
+export function git(args, cwd = process.cwd()) { return gitRaw(args, cwd).trim(); }
 export function json(file) { return JSON.parse(readFileSync(file, 'utf8')); }
 export function validatePlan(plan) {
   assert(plan.version === 1, 'Unsupported plan version');
@@ -40,8 +41,8 @@ export function evidenceFile(file) {
   return /^evals\/changes\/[a-z0-9-]+\/(run\.json|trace\.jsonl|exit-result\.json)$/.test(file);
 }
 export function changedFiles(base, cwd = process.cwd()) {
-  const tracked = git(['diff', '--name-only', '-z', base, '--'], cwd).split('\0').filter(Boolean);
-  const untracked = git(['ls-files', '--others', '--exclude-standard', '-z'], cwd).split('\0').filter(Boolean);
+  const tracked = gitRaw(['diff', '--no-renames', '--name-only', '-z', base, '--'], cwd).split('\0').filter(Boolean);
+  const untracked = gitRaw(['ls-files', '--others', '--exclude-standard', '-z'], cwd).split('\0').filter(Boolean);
   return [...new Set([...tracked, ...untracked])].sort();
 }
 // Check actual PR commits: endpoint trees lose reverted work and include newer base changes.
@@ -55,7 +56,7 @@ export function validatePlanHistory(base, plans, cwd = process.cwd()) {
     const [commit, ...parents] = line.split(' ');
     const available = new Set(parents.flatMap(parent => [...(availableAt.get(parent) ?? [])]));
     // Combined diffs include merge resolutions, but not work merely inherited from upstream.
-    const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '--cc', '-z', commit], cwd).split('\0').filter(Boolean);
+    const files = gitRaw(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '--cc', '-z', commit], cwd).split('\0').filter(Boolean);
     const planning = files.filter(file => planPattern.test(file));
     for (const file of planning) {
       assert(byPath.has(file) && !introduced.has(file), 'Acceptance plan changed after its first commit');
