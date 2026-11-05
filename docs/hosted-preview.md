@@ -1,0 +1,11 @@
+# Hosted sample preview
+
+The Vite, React and TypeScript application demonstrates the report experience with one fictional running shoe. The optional URL stays in the browser and is never fetched or assessed. Progress, findings, evidence and recovery are illustrative; this is not a merchant audit. The sample scores 84.5/100: Structure 36.5/40 and Content 48/60. Its sample attributes and deductions are checked against the versioned rubric and reference arithmetic. The report presents conditional actions and the complete subcheck breakdown.
+
+Use Node 24, install with `npm ci --ignore-scripts --no-audit --no-fund`, and run `npm run dev` locally. `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:preview` validate the application; the existing repository checks remain required. Browser testing is separate from the offline checks.
+
+The intended hosted preview is a new, isolated Cloudflare Pages Direct Upload project using only the Free plan. It must be deployed manually only after hosted CI and independent review; pre-existing Cloudflare configurations and services must remain untouched. See [deployment procedure](hosted-preview-deployment.md). A deployment is not established until its actual result is recorded.
+
+The minimatch 11 override applies only to development tooling and lies outside the consumers' declared minimatch 10 ranges. The latest available 10 release checked was 10.2.6, without a compatible patched 10 release. Lint and local checks passed with the override; that is limited compatibility evidence, not a guarantee for every tool path. Revisit when a compatible patched dependency is available.
+
+The original prototype began after an invalid plan and before the valid integration plan; [the process record](../evals/changes/hosted-preview-integration/process-deviation.md) discloses that exception. Phase 2's production extraction, representative calibration, model reliability, and Cloudflare resource feasibility gaps remain open. The preview does not resolve them; see [Phase 2 feasibility](phase-2-feasibility.md).

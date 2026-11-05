@@ -1,6 +1,6 @@
 # AEO Scoring
 
-Public product-page AEO readiness assessment. Scoring foundations and CI; no product application has been built.
+Public product-page AEO readiness assessment. A synthetic sample preview demonstrates the report experience; production assessment is not yet built.
 
 Open **AEO Scoring Vault** as a folder vault in Obsidian, then start with [AEO Scoring Project Specification](AEO%20Scoring%20Vault/AEO%20Scoring%20Project%20Specification.md).
 
@@ -15,3 +15,7 @@ Every PR runs offline evaluation and requires green CI plus independent review b
 ## Phase 1 foundations
 
 The versioned [rubric](config/rubric.v1.json), [initial category checklists](docs/category-templates.md), and [crawler registry](docs/crawler-policy.md) define scoring inputs. Run `npm run test:foundations` for frozen synthetic arithmetic and configuration checks. These examples are not live audits or human calibration; extraction, model evaluation and Cloudflare resource feasibility come next. See [scoring boundaries](docs/scoring-foundations.md).
+
+## Sample preview
+
+The [hosted preview documentation](docs/hosted-preview.md) explains the fictional 84.5-point report, local setup, deployment boundaries, and remaining feasibility gaps. Entered URLs are not fetched or assessed.

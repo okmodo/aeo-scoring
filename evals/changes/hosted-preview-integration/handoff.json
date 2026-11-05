@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "task": "Validate and publish the isolated free-tier hosted sample preview after review and hosted CI.",
+  "state": "Preview implementation and initial source review are complete; source commit 98807ba precedes this documentation handoff. Local checks passed. The coordinator observed the mobile browser flow, but exact-source evaluation, fresh-agent continuation, hosted CI, final review, and deployment remain unfinished.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/hosted-preview-integration",
+  "baseCommit": "1d8e07a",
+  "planCommit": "1bbd83d",
+  "decisions": [
+    "The preview uses one fictional running-shoe report: 84.5/100, Structure 36.5/40, Content 48/60. An entered URL is never fetched or assessed.",
+    "Use a new isolated Cloudflare Pages Direct Upload project on the free tier only, after hosted CI and independent review; CI never deploys.",
+    "The original separately committed plan was invalid and prototype work preceded a valid plan. Preserve and disclose this exception; see process-deviation.md and the archived original plan."
+  ],
+  "constraints": [
+    "Do not modify any Cloudflare configuration or service that existed before this project; do not use paid resources, change billing, merge the PR, or assess merchant sites.",
+    "The preview is synthetic; production extraction, scoring, model calibration and Cloudflare feasibility are not established.",
+    "Do not edit the immutable integration plan or fabricate review, fresh-agent, command, cost, or deployment evidence.",
+    "The local environment used Node 25; hosted Node 24 CI is still required. The minimatch 11 development override is outside upstream consumers' declared 10 ranges and has only limited compatibility validation."
+  ],
+  "completed": [
+    "Valid integration plan committed separately before further integration; the earlier prototype-planning exception is disclosed.",
+    "Sample UI, reference-score regression, runtime component check, lint, typecheck, build, and permanent CI command registration implemented.",
+    "Initial independent source review is retained with its limited status. Coordinator observed mobile cancellation, privacy, focus, action expansion, subcheck display and responsive behavior."
+  ],
+  "remaining": [
+    "Inspect the process deviation and interim review, validate the committed source and documentation, and perform a genuine fresh-agent continuation from a clean export.",
+    "Record current source-bound evaluation and actual fresh-agent observation; publish the PR and verify hosted Node 24 CI and final independent review.",
+    "Only after CI and review pass, follow docs/hosted-preview-deployment.md for a newly created isolated Free Pages project; verify live behavior and existing-resource boundaries. Do not merge."
+  ],
+  "resumeCommands": [
+    "git log --oneline -5",
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change hosted-preview-integration --base origin/main"
+  ],
+  "expectedOutcome": "The synthetic preview is independently reviewed, validated in hosted CI and, if deployment succeeds, available from a new isolated free Pages project with actual evidence and limitations retained."
+}
