@@ -26,8 +26,10 @@ function fieldText(node) {
   return { text: parts.join(' ').replace(/\s+/g, ' ').trim(), truncated: false };
 }
 
+export class SnapshotInputLimitError extends Error {}
+
 export function inspectSnapshot({ html, url, method, observedAt }) {
-  if (typeof html !== 'string' || html.length > MAX_BYTES || utf8Bytes(html) > MAX_BYTES) throw new Error('Snapshot missing or exceeds 1 MiB');
+  if (typeof html !== 'string' || html.length > MAX_BYTES || utf8Bytes(html) > MAX_BYTES) throw new SnapshotInputLimitError('Snapshot missing or exceeds 1 MiB');
   let parsedUrl;
   try { parsedUrl = new URL(url); } catch { throw new Error('Valid HTTP(S) source URL required'); }
   if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Valid HTTP(S) source URL required');

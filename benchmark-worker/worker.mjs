@@ -1,4 +1,4 @@
-import { inspectSnapshot } from '../scripts/feasibility.mjs';
+import { inspectSnapshot, SnapshotInputLimitError } from '../scripts/feasibility.mjs';
 
 const sizes = Object.freeze({ small: 2048, medium: 131072, large: 1048576 });
 const prefix = '<!doctype html><html><body><h1>Example product</h1><p itemprop="description">Synthetic description</p>';
@@ -35,8 +35,8 @@ export async function handle(request, env) {
     const html = match[1] === 'error' ? 'x'.repeat(1048577) : snapshot(match[1]);
     const result = inspectSnapshot({ html, url: 'https://example.invalid/product', method: 'raw', observedAt: '2026-01-01T00:00:00Z' });
     return Response.json({ workload: match[1], bytes: html.length, fields: result.productFields.length, complete: result.coverage.complete });
-  } catch {
-    if (match[1] === 'error') return Response.json({ workload: 'error', rejected: true });
+  } catch (error) {
+    if (match[1] === 'error' && error instanceof SnapshotInputLimitError) return Response.json({ workload: 'error', rejected: true });
     return new Response('Extraction failed', { status: 500 });
   }
 }
