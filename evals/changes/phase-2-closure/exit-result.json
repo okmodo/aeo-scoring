@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "changeId": "phase-2-closure",
+  "sourceCommit": "84400962c6fcd13579c48974c4ba4c46f047d262",
+  "sourceDigest": "a8c3701eedc2242fa7331ac0218a6a094a5a528399580965008ee5de3883b9d9",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "dispatch": {
+    "task": "/root/closure_ready_fresh_exit",
+    "forkTurns": "none",
+    "model": "gpt-6.1-terra"
+  },
+  "agentId": "/root/closure_ready_fresh_exit",
+  "status": "passed",
+  "exportSha256": "a9372773f95d0ef9e6a3ed5ed2c30f4c719ff7470f785317229a10070e48e73c",
+  "bundleSha256": "968080504824b66406ccf75b145cb30b53c6b3309cfa8f52ca507b7a426f9628",
+  "interruptionPoint": "Both reviewed plans and source are committed; current preflight run/exit retention, hosted CI and new isolated CPU experiment unfinished.",
+  "observedContinuation": "Fresh Terra session used only the export, installed dependencies offline, passed nine phase-2 and five care-plan commands, validated both histories/runs/traces/handoffs and matched source digest, then observed expected missing exit rejection.",
+  "limitations": "Local Node25 does not certify hosted Node24; no cloud experiment, independent substantive review or production feasibility claim was made. An earlier export failed formatting checks and was corrected in 8440096; only this current-source continuation qualifies. Full protocol calibration and usage evidence remain incomplete.",
+  "observedReport": "# Fresh continuation observation\n\nThe task-state inputs were only `/private/tmp/aeo-closure-ready-export/export-state.json` and `repository.bundle`; I had no substantive prior task history. I cloned the bundle into `/private/tmp/aeo-closure-ready-fresh`, checked out `codex/phase-2-closure`, and read AGENTS.md and both plans and handoffs. No other checkout, prior agent output, network or cloud service was used.\n\nHEAD was `84400962c6fcd13579c48974c4ba4c46f047d262`, base `origin/main` was `b2ebbe01c6129faca1e3565ee6fe6ad96a8c9427`. The Git history shows the phase-2 plan commit `5196c5a` preceding implementation, and the separate care plan commit `5b0386b` preceding its policy implementation `db2df10`. The repository's `validatePlanHistory` passed for both plans. The calculated digest of 36 changed files was `a8c3701eedc2242fa7331ac0218a6a094a5a528399580965008ee5de3883b9d9`, matching the export. Export-state SHA-256 was `0b24d09a8e100fbcbc99f6a2ee42358b738394b3d76e927be1208e89b365e13e`; bundle SHA-256 was `968080504824b66406ccf75b145cb30b53c6b3309cfa8f52ca507b7a426f9628`.\n\n`npm ci --offline --ignore-scripts --no-audit --no-fund` succeeded (119 packages). npm warned that Node v25.9.0 and npm 11.12.1 do not satisfy the project's Node >=24 <25 requirement. `npm run evaluate -- --change phase-2-closure --base origin/main` passed all nine planned commands; `npm run evaluate -- --change care-guidance-clarification --base origin/main` passed all five. The generated runs and their respective nine and five trace entries passed `validateRun` against the calculated digest, and both plans and handoffs passed their validators. Trace coverage is evaluation commands only; it does not attest to all work in a session.\n\n`npm run ci:gate -- origin/main` exited 1 because `evals/changes/phase-2-closure/exit-result.json` is missing. The gate checks scope and plan history and then validates each plan's run and handoff before its exit result; separate validation above covered both runs and handoffs. No exit record was fabricated. Evaluation generated only local derived run/trace files; the gate generated local reports. No source edits, merge, deployment, or external calls were performed.\n\nThe handoff identifies the CPU pilot and final independent review as pending. This continuation did not perform that experiment or assess full protocol success, verify hosted Node 24 CI, or independently review the substantive findings. Local passing commands do not establish those outcomes.\n",
+  "preflightIndependentReview": {
+    "agentId": "/root/phase2_gap_review",
+    "sourceCommit": "11259c4dd8b8dca191d746e4865c293dbf0d3d5c",
+    "note": "Conditional approval for separately authorized aggregate-only benchmark after CI/fresh/evaluation; four frozen workload hashes and 30-total allocation checked. Later8440096 only normalizes Markdown whitespace; no benchmark code change. Live resource identity, freeCPUlimit, bindings/expiry and actual metrics still require coordinator verification. Full-protocol passage is not asserted."
+  }
+}
