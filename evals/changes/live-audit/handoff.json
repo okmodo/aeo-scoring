@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Verify the narrow live audit preview backend.",
+  "state": "The dedicated Worker wraps the v1 service with exact HTTPS destination rules.",
+  "decisions": ["Use a fixed public demo product and its robots.txt for the hosted proof.", "Keep Cloudflare packaging and dependencies inside the backend directory."],
+  "constraints": ["Cloudflare Free only. Existing services and frontend remain outside the deployment.", "Allowlisted fetch is for trusted destinations and does not provide IP pinning."],
+  "completed": ["Added the preview adapter, regression scenarios, Worker config and deployment runbook."],
+  "remaining": ["Keep arbitrary targets blocked until a trusted pinned egress path is available.", "Expand scoring beyond the current deterministic checks."],
+  "resumeCommands": ["npm run evaluate -- --change live-audit --base origin/main", "npm run ci:gate -- origin/main", "See docs/live-audit-preview.md for the separate deployment and live validation."]
+}
