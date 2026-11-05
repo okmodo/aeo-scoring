@@ -1,29 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { timingSafeEqual } from 'node:crypto';
 import { handle, snapshot } from './worker.mjs';
 
-const req = path => new Request(`https://example.invalid/${path}`, { method: 'POST' });
+crypto.subtle.timingSafeEqual = timingSafeEqual;
+const token = 'a'.repeat(64);
+const req = (path, auth = token) => new Request(`https://example.invalid/${path}`, { method: 'POST', headers: { authorization: `Bearer ${auth}` } });
+function database({ remaining = 30, expired = false, fail = false } = {}) {
+  return { get remaining() { return remaining; }, prepare(sql) {
+    assert.match(sql, /UPDATE budget SET remaining = remaining - 1 WHERE id = 1 AND remaining > 0 AND expires_at > unixepoch\(\) RETURNING remaining/);
+    return { async first() { if (fail) throw Error('unavailable'); if (expired || remaining <= 0) return null; return { remaining: --remaining }; } };
+  } };
+}
 test('fixed snapshots have exact bounded ASCII sizes', () => {
-  for (const [size, bytes] of [['small', 2048], ['medium', 131072], ['large', 1048576]]) {
-    assert.equal(new TextEncoder().encode(snapshot(size)).length, bytes);
-  }
+  for (const [size, bytes] of [['small', 2048], ['medium', 131072], ['large', 1048576]]) assert.equal(new TextEncoder().encode(snapshot(size)).length, bytes);
 });
-test('handler fails closed without independently provided admission', async () => {
+test('admission fails closed on missing, invalid, expired and failing configuration', async () => {
   assert.equal((await handle(req('small'), {})).status, 503);
-  assert.equal((await handle(req('small'), { BENCH_ADMISSION: { fetch: async () => new Response(null, { status: 403 }) } })).status, 503);
-  assert.equal((await handle(req('small'), { BENCH_ADMISSION: { fetch: async () => { throw Error('unavailable'); } } })).status, 503);
+  const db = database();
+  assert.equal((await handle(req('small', 'b'.repeat(64)), { BENCH_DB: db, BENCH_TOKEN: token })).status, 503);
+  assert.equal(db.remaining, 30);
+  for (const options of [{ expired: true }, { fail: true }]) assert.equal((await handle(req('small'), { BENCH_DB: database(options), BENCH_TOKEN: token })).status, 503);
 });
-test('only built-in POST workloads reach admission and error input is rejected', async () => {
-  let attempts = 0;
-  const env = { BENCH_ADMISSION: { fetch: async () => { attempts++; return new Response(null, { status: 204 }); } } };
+test('only built-in POST workloads reach database', async () => {
+  const db = database(), env = { BENCH_DB: db, BENCH_TOKEN: token };
   assert.equal((await handle(req('small?url=https://example.com'), env)).status, 404);
   assert.equal((await handle(new Request('https://example.invalid/small'), env)).status, 404);
   assert.equal((await handle(new Request('https://example.invalid/small', { method: 'POST', body: 'html' }), env)).status, 404);
-  assert.equal(attempts, 0);
-  const good = await handle(req('small'), env);
-  assert.equal(good.status, 200);
-  assert.equal((await good.json()).bytes, 2048);
+  assert.equal(db.remaining, 30);
   const error = await handle(req('error'), env);
   assert.deepEqual(await error.json(), { workload: 'error', rejected: true });
-  assert.equal(attempts, 2);
+});
+test('30 admitted requests consume permits and all later requests fail closed', async () => {
+  const db = database(), env = { BENCH_DB: db, BENCH_TOKEN: token };
+  const responses = await Promise.all(Array.from({ length: 35 }, () => handle(req('small'), env)));
+  assert.equal(responses.filter(response => response.status === 200).length, 30);
+  assert.equal(responses.filter(response => response.status === 503).length, 5);
+  assert.equal(db.remaining, 0);
 });
