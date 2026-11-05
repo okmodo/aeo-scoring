@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Establish mandatory evaluation for every AEO Scoring PR before application development.",
-  "state": "Implementation is present; independent fresh-agent exit exercise, source-bound evaluation, hosted CI, PR publication, and merge rules are being verified. No app has been built.",
+  "state": "CI implementation is committed on codex/ci-evaluation; local checks pass. Source-bound run/exit records, hosted CI and the PR still need completion. Main exists on GitHub with required checks and independent review configured, but the fresh agent must not infer that external state is verified by an offline export. No app is built.",
   "decisions": [
     "Every PR triggers CI; green checks and independent approval required before merge.",
     "Keep deterministic checks offline and free; subjective process/style review remains human.",
@@ -10,7 +10,8 @@
   "constraints": [
     "Do not deploy, merge, use paid services, or change merchant sites.",
     "Only supplied export state is available to the fresh-agent exercise; do not read prior chat.",
-    "No fresh-agent success may be claimed from a subprocess smoke test alone."
+    "No fresh-agent success may be claimed from a subprocess smoke test alone.",
+    "The export includes repository.bundle and export-state.json; clone the bundle into a new directory to recover the branch and planning history before replaying commands. Do not read another repository or prior chat."
   ],
   "completed": [
     "Rubric and report specification committed.",
@@ -23,10 +24,13 @@
     "Verify main protection and retain independent human review before merging."
   ],
   "resumeCommands": [
+    "git log --oneline -3",
     "npm ci --ignore-scripts --no-audit --no-fund",
-    "npm run check",
-    "npm test",
-    "npm run test:exit"
+    "npm run evaluate -- --change ci-foundation --base main"
   ],
-  "expectedOutcome": "A clean-session reviewer can run offline checks from the export, explain state and remaining tasks, and identify that no app or genuine CI merge result is implied by smoke tests."
+  "expectedOutcome": "A fresh agent reconstructs source and planning chronology from the bundle, runs source-bound offline evaluation, and identifies that hosted CI and independent review remain separate external steps.",
+  "repository": "https://github.com/okmodo/aeo-scoring.git",
+  "branch": "codex/ci-evaluation",
+  "baseCommit": "4cd8b0f260789c87595ba8c1acfa52942b83119d",
+  "planCommit": "56e6bec"
 }
