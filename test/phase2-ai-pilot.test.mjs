@@ -22,3 +22,33 @@ test('structurally valid model output is always an unverified proposal, even ori
   assert.equal('score' in result,false); assert.match(result.limitation,/human semantic review/);
   assert.throws(() => recordProposal(corpus.cases[0],{state:'supported',evidenceIds:['e99'],rationale:'yes'}));
 });
+
+test('retained model observations preserve semantic failures and no proposal authority', () => {
+  const observations = JSON.parse(readFileSync('evals/changes/phase-2-closure/ai-observations.json','utf8'));
+  assert.equal(observations.issuedRequests,12);
+  assert.equal(observations.coordinatorRetries,0);
+  assert.equal(observations.observations.length,12);
+  let valid = 0, rejected = 0, matching = 0;
+  for (const [i, observed] of observations.observations.entries()) {
+    const item = corpus.cases[i], frozen = pilotRequest(corpus,item,settings);
+    assert.equal(observed.caseId,item.id);
+    assert.deepEqual(observed.request,frozen.body);
+    assert.equal(observed.requestedModel,frozen.model);
+    assert.deepEqual(JSON.parse(observed.responseContent),observed.parsedResponse);
+    if (observed.parsedResponse.state === item.expected) matching++;
+    try {
+      const proposal = recordProposal(item,observed.parsedResponse);
+      assert.equal(proposal.status,'unverified');
+      assert.equal('score' in proposal,false);
+      valid++;
+    } catch {
+      assert.equal(item.id,'positive-with-injection');
+      rejected++;
+    }
+  }
+  assert.equal(matching,7);
+  assert.equal(valid,11);
+  assert.equal(rejected,1);
+  assert.equal(observations.observations[0].parsedResponse.state,'supported');
+  assert.equal(corpus.cases[0].expected,'unsupported');
+});
