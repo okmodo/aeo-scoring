@@ -1,0 +1,990 @@
+{
+  "version": "1",
+  "id": "bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "status": "complete",
+  "statusUrl": "/api/v1/audits/bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "submittedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "assessedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "createdAt": "2026-11-05T12:00:00.000Z",
+  "completedAt": "2026-11-05T12:00:02.000Z",
+  "expiresAt": "2026-11-06T12:00:00.000Z",
+  "cache": {
+    "hit": false,
+    "validUntil": "2026-11-05T13:00:02.000Z"
+  },
+  "report": {
+    "status": "complete",
+    "rubricVersion": "1.0.0",
+    "category": "running-shoes",
+    "productName": "Example Road Shoe",
+    "variant": "Blue / US 9",
+    "market": "US",
+    "currency": "USD",
+    "score": {
+      "total": 98,
+      "structure": 39.5,
+      "content": 58.5
+    },
+    "earnedPoints": 98,
+    "criteria": [
+      {
+        "id": "S1",
+        "pillar": "structure",
+        "maxPoints": 13,
+        "complete": true,
+        "points": 13,
+        "subchecks": [
+          {
+            "id": "S1.identity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S1.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.description",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-S1.description"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.specifications",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-S1.specifications"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-S1.price"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S1.availability"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S2",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "complete": true,
+        "points": 9,
+        "subchecks": [
+          {
+            "id": "S2.entity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S2.entity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.core-properties",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S2.core-properties"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.offer",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S2.offer"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.identifiers",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S2.identifiers"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.variants",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S2.variants"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S3",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "complete": true,
+        "points": 9,
+        "subchecks": [
+          {
+            "id": "S3.identity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S3.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-S3.price"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S3.availability"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.optional-claims",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-S3.optional-claims"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S4",
+        "pillar": "structure",
+        "maxPoints": 3,
+        "complete": true,
+        "points": 2.5,
+        "subchecks": [
+          {
+            "id": "S4.title",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 0.5,
+            "points": 0.5,
+            "evidenceIds": [
+              "sample-S4.title"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.organization",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S4.organization"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.image-alternatives",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S4.image-alternatives"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S5",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "complete": true,
+        "points": 2,
+        "subchecks": [
+          {
+            "id": "S5.search",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S5.search"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S5.ai-retrieval",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S5.ai-retrieval"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S6",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "complete": true,
+        "points": 2,
+        "subchecks": [
+          {
+            "id": "S6.usable",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S6.usable"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S6.inclusion",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "sample-S6.inclusion"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S7",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "complete": true,
+        "points": 1,
+        "subchecks": [
+          {
+            "id": "S7.identity",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "sample-S7.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S7.links",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "sample-S7.links"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S8",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "complete": true,
+        "points": 1,
+        "subchecks": [
+          {
+            "id": "S8.context",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "sample-S8.context"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S8.guidance",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "sample-S8.guidance"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "pillar": "content",
+        "maxPoints": 10,
+        "complete": true,
+        "points": 10,
+        "subchecks": [
+          {
+            "id": "C1.identity",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-C1.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.explanation",
+            "maxPoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "sample-C1.explanation"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.configuration",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-C1.configuration"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "pillar": "content",
+        "maxPoints": 20,
+        "complete": true,
+        "points": 20,
+        "subchecks": [
+          {
+            "id": "C2.essential",
+            "maxPoints": 14,
+            "status": "measured",
+            "fraction": 1,
+            "points": 14,
+            "evidenceIds": [
+              "sample-C2.essential"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C2.supporting",
+            "maxPoints": 6,
+            "status": "measured",
+            "fraction": 1,
+            "points": 6,
+            "evidenceIds": [
+              "sample-C2.supporting"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "pillar": "content",
+        "maxPoints": 10,
+        "complete": true,
+        "points": 8.5,
+        "subchecks": [
+          {
+            "id": "C3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-C3.price"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-C3.availability"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.shipping",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 0.5,
+            "points": 1.5,
+            "evidenceIds": [
+              "sample-C3.shipping"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.returns",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-C3.returns"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C4",
+        "pillar": "content",
+        "maxPoints": 10,
+        "complete": true,
+        "points": 10,
+        "subchecks": [
+          {
+            "id": "C4.intended-use",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-C4.intended-use"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.compatibility",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "sample-C4.compatibility"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.limitations",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-C4.limitations"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.selection",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "sample-C4.selection"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C5",
+        "pillar": "content",
+        "maxPoints": 10,
+        "complete": true,
+        "points": 10,
+        "subchecks": [
+          {
+            "id": "C5.consistency",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "sample-C5.consistency"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C5.claim-support",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "sample-C5.claim-support"
+            ],
+            "reason": null
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "sample-S1.identity",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S1.identity",
+        "excerpt": "Fictional observation. Readable name, model and selected variant",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S1.description",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S1.description",
+        "excerpt": "Fictional observation. Meaningful readable description",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S1.specifications",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S1.specifications",
+        "excerpt": "Fictional observation. All applicable attributes readable",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S1.price",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S1.price",
+        "excerpt": "Fictional observation. Readable price and currency",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S1.availability",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S1.availability",
+        "excerpt": "Fictional observation. Readable selected-variant availability",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S2.entity",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S2.entity",
+        "excerpt": "Fictional observation. Parseable product associated with page",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S2.core-properties",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S2.core-properties",
+        "excerpt": "Fictional observation. Name, description and image present",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S2.offer",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S2.offer",
+        "excerpt": "Fictional observation. Price and currency plus availability",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S2.identifiers",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S2.identifiers",
+        "excerpt": "Fictional observation. Brand and valid applicable identifier",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S2.variants",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S2.variants",
+        "excerpt": "Fictional observation. Variants and offers correctly associated",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S3.identity",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S3.identity",
+        "excerpt": "Fictional observation. Same product and variant agree",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S3.price",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S3.price",
+        "excerpt": "Fictional observation. Price and currency agree in same context",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S3.availability",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S3.availability",
+        "excerpt": "Fictional observation. Availability agrees in same context",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S3.optional-claims",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S3.optional-claims",
+        "excerpt": "Fictional observation. Supplied claim groups agree",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S4.title",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S4.title",
+        "excerpt": "Fictional observation. Generic or incomplete labels",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S4.organization",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S4.organization",
+        "excerpt": "Fictional observation. Clearly labeled sections and readable specifications",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S4.image-alternatives",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S4.image-alternatives",
+        "excerpt": "Fictional observation. Useful alternatives for informative images",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S5.search",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S5.search",
+        "excerpt": "Fictional observation. Both search crawlers allowed at product URL",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S5.ai-retrieval",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S5.ai-retrieval",
+        "excerpt": "Fictional observation. All listed retrieval crawlers allowed",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S6.usable",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S6.usable",
+        "excerpt": "Fictional observation. Retrievable parseable sitemap or index with relevant children",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S6.inclusion",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S6.inclusion",
+        "excerpt": "Fictional observation. Audited or legitimate canonical URL listed",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S7.identity",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S7.identity",
+        "excerpt": "Fictional observation. Meaningful llms.txt identifies site and purpose",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S7.links",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S7.links",
+        "excerpt": "Fictional observation. Useful working catalog and policy or help links",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S8.context",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S8.context",
+        "excerpt": "Fictional observation. Meaningful site-specific agent guide",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-S8.guidance",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "S8.guidance",
+        "excerpt": "Fictional observation. Practical authoritative references",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C1.identity",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C1.identity",
+        "excerpt": "Fictional observation. Specific product identity and applicable brand and model",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C1.explanation",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C1.explanation",
+        "excerpt": "Fictional observation. Clear complete explanation of product and function",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C1.configuration",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C1.configuration",
+        "excerpt": "Fictional observation. Clear selected configuration and included items",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C2.essential",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C2.essential",
+        "excerpt": "Fictional observation. Every applicable essential attribute explicit with required units and scope",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C2.supporting",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C2.supporting",
+        "excerpt": "Fictional observation. Every applicable supporting attribute explicit with required units and scope",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C3.price",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C3.price",
+        "excerpt": "Fictional observation. Price, currency and material conditions clear",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C3.availability",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C3.availability",
+        "excerpt": "Fictional observation. Availability for selected configuration clear",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C3.shipping",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C3.shipping",
+        "excerpt": "Fictional observation. Useful but material condition omitted",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C3.returns",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C3.returns",
+        "excerpt": "Fictional observation. Eligibility, window and material conditions clear",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C4.intended-use",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C4.intended-use",
+        "excerpt": "Fictional observation. Applicable category questions answered specifically",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C4.compatibility",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C4.compatibility",
+        "excerpt": "Fictional observation. Applicable category questions answered specifically",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C4.limitations",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C4.limitations",
+        "excerpt": "Fictional observation. Applicable category questions answered specifically",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C4.selection",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C4.selection",
+        "excerpt": "Fictional observation. Applicable category questions answered specifically",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C5.consistency",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C5.consistency",
+        "excerpt": "Fictional observation. No detected contradiction with sufficient comparable evidence",
+        "kind": "derived_observation"
+      },
+      {
+        "id": "sample-C5.claim-support",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "synthetic",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "C5.claim-support",
+        "excerpt": "Fictional observation. Material claims have relevant support or qualification",
+        "kind": "derived_observation"
+      }
+    ],
+    "fixes": [
+      {
+        "id": "shipping-details",
+        "title": "Publish delivery costs and timing",
+        "owner": "Ecommerce operations",
+        "checkIds": [
+          "C3.shipping"
+        ],
+        "evidenceIds": [
+          "sample-C3.shipping"
+        ],
+        "recoverablePoints": 1.5,
+        "condition": "If the audited market can find its delivery cost and timing."
+      },
+      {
+        "id": "product-title",
+        "title": "Use the product name in the page title",
+        "owner": "Web developer",
+        "checkIds": [
+          "S4.title"
+        ],
+        "evidenceIds": [
+          "sample-S4.title"
+        ],
+        "recoverablePoints": 0.5,
+        "condition": "If both the page title and main heading identify the product."
+      }
+    ],
+    "coverage": {
+      "measured": 40,
+      "notMeasured": 0,
+      "total": 40,
+      "category": "running-shoes",
+      "extraction": null,
+      "limitations": [
+        "Synthetic report for frontend development."
+      ]
+    }
+  },
+  "error": null
+}

@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "error": {
+    "code": "invalid_input",
+    "message": "Enter a valid public HTTP or HTTPS product-page URL.",
+    "retryAfterSeconds": null
+  }
+}

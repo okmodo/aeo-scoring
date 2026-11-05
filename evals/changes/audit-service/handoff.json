@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "task": "Validate the backend audit foundation and proposed frontend contract",
+  "state": "Backend and contract files are ready for offline verification, independent review and CI.",
+  "decisions": [
+    "Stack this branch on Phase 2 PR 5 while it is open. Evaluate against origin/codex/phase-2-closure so Phase 2 evidence remains outside this PR.",
+    "Expose opaque public report links, polling, complete and partial report shapes, and stable errors.",
+    "Use D1 admission, hourly keyed client digests, and a trusted public-IP-pinning egress dependency."
+  ],
+  "constraints": [
+    "Backend files and contract only. The frontend chat owns presentation and its adapter.",
+    "Cloudflare Free only. No merge or deployment.",
+    "The complete fixture is synthetic. Supported runtime checks remain limited and can produce partial results."
+  ],
+  "completed": [
+    "Committed the validated plan separately.",
+    "Added retrieval, extraction, deterministic scoring, storage, and service contract with frozen responses."
+  ],
+  "remaining": [
+    "Run source-bound evaluation and fresh continuation, retain independent review, and confirm hosted CI.",
+    "Coordinate frontend integration and implement or supply a trusted egress transport before any deployment.",
+    "Validate runtime, broaden measured checks and resolve rendering and merchant calibration before live scoring."
+  ],
+  "resumeCommands": [
+    "npm ci --offline --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change audit-service --base origin/codex/phase-2-closure",
+    "npm run ci:gate -- origin/codex/phase-2-closure"
+  ]
+}
