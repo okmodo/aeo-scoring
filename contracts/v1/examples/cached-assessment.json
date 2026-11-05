@@ -15,10 +15,10 @@
   "report": {
     "status": "incomplete",
     "score": null,
-    "earnedPoints": 1,
+    "earnedPoints": 4,
     "rubricVersion": "1.0.0",
     "category": null,
-    "productName": null,
+    "productName": "Example Road Shoe",
     "variant": null,
     "market": null,
     "currency": null,
@@ -81,15 +81,15 @@
         "id": "S2",
         "pillar": "structure",
         "maxPoints": 9,
-        "points": 1,
+        "points": 4,
         "complete": false,
         "subchecks": [
           {
             "id": "S2.entity",
             "maxPoints": 2,
             "status": "measured",
-            "fraction": 0.5,
-            "points": 1,
+            "fraction": 1,
+            "points": 2,
             "evidenceIds": [
               "e1"
             ],
@@ -98,11 +98,13 @@
           {
             "id": "S2.core-properties",
             "maxPoints": 2,
-            "status": "not_measured",
-            "fraction": null,
-            "points": null,
-            "evidenceIds": [],
-            "reason": "Available evidence does not establish this check."
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e2"
+            ],
+            "reason": null
           },
           {
             "id": "S2.offer",
@@ -511,27 +513,22 @@
         "kind": "derived_observation",
         "observedAt": "2026-11-05T12:00:02.000Z",
         "location": "script[type=\"application/ld+json\"] at extracted index 0",
-        "excerpt": "Product"
-      }
-    ],
-    "fixes": [
+        "excerpt": "One schema.org Product explicitly identifies the audited URL."
+      },
       {
-        "id": "verify-product-association",
-        "title": "Verify the structured product matches the audited page",
-        "owner": "Web developer",
-        "checkIds": [
-          "S2.entity"
-        ],
-        "evidenceIds": [
-          "e1"
-        ],
-        "recoverablePoints": null,
-        "condition": "Recovery cannot be calculated until the association is assessed."
+        "id": "e2",
+        "url": "https://shop.example/products/road-shoe?color=blue",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:02.000Z",
+        "location": "script[type=\"application/ld+json\"] at extracted index 0",
+        "excerpt": "Product properties present: name, description, image."
       }
     ],
+    "fixes": [],
     "coverage": {
-      "measured": 1,
-      "notMeasured": 39,
+      "measured": 2,
+      "notMeasured": 38,
       "total": 40,
       "category": null,
       "extraction": {

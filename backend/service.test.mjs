@@ -22,7 +22,7 @@ class Rewriter {
   transform(response) {
     this.handlers.get('body p').text({ text: 'Road running shoe.', lastInTextNode: true });
     this.handlers.get('script[type="application/ld+json"]').text({
-      text: JSON.stringify({'@context':'https://schema.org','@type':'Product',url:pending.submittedUrl,name:'Example Road Shoe',description:'Road running shoe.',image:'https://shop.example/shoe.png'}),
+      text: JSON.stringify({'@context':'https://schema.org','@type':'Product',url:pending.submittedUrl,name:'Example Road Shoe',description:'A running shoe for everyday training.',image:'https://shop.example/shoe.png'}),
       lastInTextNode: true,
     });
     return response;
