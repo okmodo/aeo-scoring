@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Validate and publish the isolated free-tier hosted sample preview after review and hosted CI.",
-  "state": "The isolated Free Pages preview was deployed from source 02016e638a22d4fad8fb0970ed7ea4cb5480df4a after hosted CI, fresh continuation and independent review. Final live browser and existing-resource inventory checks, plus renewed evaluation, fresh continuation and CI for the subsequent documentation changes, remain unfinished.",
+  "state": "The isolated Free Pages preview is live from source 02016e638a22d4fad8fb0970ed7ea4cb5480df4a after hosted CI and review. Live browser, four-asset byte comparison and scoped before/after inventory checks passed; deployment.md records actual outcomes and the corrected manifest instruction. Current documentation/evidence evaluation, fresh continuation and hosted CI remain unfinished; application files are unchanged since deployment.",
   "repository": "https://github.com/okmodo/aeo-scoring.git",
   "branch": "codex/hosted-preview-integration",
   "baseCommit": "1d8e07a",
@@ -22,12 +22,13 @@
     "Sample UI, reference-score regression, runtime component check, lint, typecheck, build, and permanent CI command registration implemented.",
     "Initial independent source review is retained with its limited status. Coordinator observed mobile cancellation, privacy, focus, action expansion, subcheck display and responsive behavior.",
     "Hosted CI run 42108143664 succeeded; fresh continuation and independent review preceded deployment.",
-    "A new isolated Pages project and deployment were created; the live index HTML hash matched the reviewed build. See deployment.md."
+    "A new isolated Pages project and deployment were created; the live index HTML hash matched the reviewed build. See deployment.md.",
+    "Live public flow, all four asset hashes and scoped Cloudflare before/after inventory verified; only the new Pages project and deployment were added."
   ],
   "remaining": [
-    "Complete the live browser check and compare the pre- and post-deployment inventory of existing resources; record actual observations.",
-    "Refresh source-bound evaluation, genuine fresh-agent continuation, independent review and hosted CI for the subsequent documentation changes. The application was not changed by these documentation edits; do not redeploy unless separately justified.",
-    "Do not merge the PR or change existing Cloudflare configurations or services."
+    "Inspect the actual deployment record and disclosed process exception; do not make further cloud calls or source changes in a clean continuation.",
+    "Refresh source-bound evaluation and genuine fresh-agent evidence for the final documentation; update PR #4 and verify current hosted Node 24 CI.",
+    "Report the live preview and remaining real-audit limitations to the user. Do not merge the PR or modify any pre-existing Cloudflare service."
   ],
   "resumeCommands": [
     "git log --oneline -5",
