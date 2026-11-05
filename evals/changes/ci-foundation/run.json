@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "ci-foundation",
-  "recordedAt": "2026-11-05T01:11:18.769Z",
-  "sourceCommit": "40f55c077204c0c79618c5017843a8e487579d5a",
-  "sourceDigest": "4a9c31724b5af2e389bf530b232bef69db6c64532396ef41ce6b353c791b2859",
+  "recordedAt": "2026-11-05T01:34:27.512Z",
+  "sourceCommit": "a1de07e111d4b495a4ea6efdce50ea76a3584cb0",
+  "sourceDigest": "ef21817650e4e3cc926a7705b96fb89ff47dc094243a8cfaff7dc269083c6b7f",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,20 +15,20 @@
     {
       "command": "npm run check",
       "exitCode": 0,
-      "durationMs": 561,
-      "outputSha256": "9686567c5af7ec56bdacbfccc875a2cf007e3ce7cb2d2e3667f33e4c7b0cb6d8"
+      "durationMs": 579,
+      "outputSha256": "7070adb74a3bb13543b6e445ac53896d3eef3920464eb92f3216a61d80e40198"
     },
     {
       "command": "npm test",
       "exitCode": 0,
-      "durationMs": 1791,
-      "outputSha256": "8c574a20bcd6f83d741217b5408b39c117b748d2f252010ef10df82d35ebd652"
+      "durationMs": 8482,
+      "outputSha256": "e57016d507794524eba1298002f825c75bb06def357e15dbfe58a424c42ae97e"
     },
     {
       "command": "npm run test:exit",
       "exitCode": 0,
-      "durationMs": 447,
-      "outputSha256": "7a610b49c26022ae69ac64e582a895e91aa2c8944002efa67011f3447140cbdb"
+      "durationMs": 468,
+      "outputSha256": "c10060df2836c0f82d001be1d49b34739b8e31004af1ed7fcebe905b1b9f565f"
     }
   ]
 }
