@@ -1,0 +1,662 @@
+{
+  "version": "1.0.0",
+  "scale": 100,
+  "pillars": [
+    {
+      "id": "structure",
+      "maxPoints": 40
+    },
+    {
+      "id": "content",
+      "maxPoints": 60
+    }
+  ],
+  "criteria": [
+    {
+      "id": "S1",
+      "pillar": "structure",
+      "maxPoints": 13,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "S1.identity",
+          "maxPoints": 2,
+          "full": "Readable name, model and selected variant",
+          "partial": "Useful but incomplete identity",
+          "zero": "Absent or only in state blob",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+          ]
+        },
+        {
+          "id": "S1.description",
+          "maxPoints": 3,
+          "full": "Meaningful readable description",
+          "partial": "Useful but incomplete description",
+          "zero": "Absent or only in state blob",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+          ]
+        },
+        {
+          "id": "S1.specifications",
+          "maxPoints": 3,
+          "full": "All applicable attributes readable",
+          "partial": "Some attributes or rendered-only evidence",
+          "zero": "Attributes absent or only in state blob",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+          ]
+        },
+        {
+          "id": "S1.price",
+          "maxPoints": 3,
+          "full": "Readable price and currency",
+          "partial": "Incomplete price or currency",
+          "zero": "Absent or only in state blob",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+          ]
+        },
+        {
+          "id": "S1.availability",
+          "maxPoints": 2,
+          "full": "Readable selected-variant availability",
+          "partial": "Useful but incomplete availability",
+          "zero": "Absent or only in state blob",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "pillar": "structure",
+      "maxPoints": 9,
+      "basis": "documented_platform_requirement",
+      "subchecks": [
+        {
+          "id": "S2.entity",
+          "maxPoints": 2,
+          "full": "Parseable product associated with page",
+          "partial": "Association ambiguous",
+          "zero": "Missing or malformed entity",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        },
+        {
+          "id": "S2.core-properties",
+          "maxPoints": 2,
+          "full": "Name, description and image present",
+          "partial": "Some properties present",
+          "zero": "No reliable properties",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        },
+        {
+          "id": "S2.offer",
+          "maxPoints": 2,
+          "full": "Price and currency plus availability",
+          "partial": "One offer component present",
+          "zero": "No reliable offer",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        },
+        {
+          "id": "S2.identifiers",
+          "maxPoints": 2,
+          "full": "Brand and valid applicable identifier",
+          "partial": "Incomplete identifier evidence, including merchant SKU alone",
+          "zero": "No reliable identifiers",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        },
+        {
+          "id": "S2.variants",
+          "maxPoints": 1,
+          "full": "Variants and offers correctly associated",
+          "partial": "Associations incomplete",
+          "zero": "Associations missing or incorrect",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "pillar": "structure",
+      "maxPoints": 9,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "S3.identity",
+          "maxPoints": 2,
+          "full": "Same product and variant agree",
+          "partial": "Correspondence incomplete or ambiguous",
+          "zero": "Material contradiction or missing comparison",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
+          ]
+        },
+        {
+          "id": "S3.price",
+          "maxPoints": 3,
+          "full": "Price and currency agree in same context",
+          "partial": "Correspondence incomplete or ambiguous",
+          "zero": "Material contradiction or missing comparison",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
+          ]
+        },
+        {
+          "id": "S3.availability",
+          "maxPoints": 2,
+          "full": "Availability agrees in same context",
+          "partial": "Correspondence incomplete or ambiguous",
+          "zero": "Material contradiction or missing comparison",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
+          ]
+        },
+        {
+          "id": "S3.optional-claims",
+          "maxPoints": 2,
+          "full": "Supplied claim groups agree",
+          "partial": "Some correspondence ambiguous",
+          "zero": "Material contradiction",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/sd-policies"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "pillar": "structure",
+      "maxPoints": 3,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "S4.title",
+          "maxPoints": 1,
+          "full": "Specific title and main product heading",
+          "partial": "Generic or incomplete labels",
+          "zero": "Missing or unusable labels",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://www.w3.org/WAI/tutorials/images/"
+          ]
+        },
+        {
+          "id": "S4.organization",
+          "maxPoints": 1,
+          "full": "Clearly labeled sections and readable specifications",
+          "partial": "Generic or incomplete organization",
+          "zero": "Missing or unusable organization",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://www.w3.org/WAI/tutorials/images/"
+          ]
+        },
+        {
+          "id": "S4.image-alternatives",
+          "maxPoints": 1,
+          "full": "Useful alternatives for informative images",
+          "partial": "Incomplete useful alternatives",
+          "zero": "Missing or unusable alternatives",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://www.w3.org/WAI/tutorials/images/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "pillar": "structure",
+      "maxPoints": 2,
+      "basis": "documented_platform_requirement",
+      "subchecks": [
+        {
+          "id": "S5.search",
+          "maxPoints": 1,
+          "full": "Both search crawlers allowed at product URL",
+          "partial": "One search crawler allowed",
+          "zero": "Both search crawlers disallowed",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec"
+          ]
+        },
+        {
+          "id": "S5.ai-retrieval",
+          "maxPoints": 1,
+          "full": "All listed retrieval crawlers allowed",
+          "partial": "Some listed retrieval crawlers allowed",
+          "zero": "All listed retrieval crawlers disallowed",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "pillar": "structure",
+      "maxPoints": 2,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "S6.usable",
+          "maxPoints": 1,
+          "full": "Retrievable parseable sitemap or index with relevant children",
+          "partial": "Partly usable with broken relevant references",
+          "zero": "Confirmed absent or unusable",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://www.sitemaps.org/protocol.html"
+          ]
+        },
+        {
+          "id": "S6.inclusion",
+          "maxPoints": 1,
+          "full": "Audited or legitimate canonical URL listed",
+          "partial": "Entry has redirect or canonical conflict",
+          "zero": "Confirmed absent",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://www.sitemaps.org/protocol.html"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S7",
+      "pillar": "structure",
+      "maxPoints": 1.0,
+      "basis": "emerging_practice",
+      "subchecks": [
+        {
+          "id": "S7.identity",
+          "maxPoints": 0.5,
+          "full": "Meaningful llms.txt identifies site and purpose",
+          "partial": "Useful but incomplete",
+          "zero": "Empty, unrelated or error page",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://llmstxt.org/"
+          ]
+        },
+        {
+          "id": "S7.links",
+          "maxPoints": 0.5,
+          "full": "Useful working catalog and policy or help links",
+          "partial": "Useful but incomplete links",
+          "zero": "Missing or unusable links",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://llmstxt.org/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "pillar": "structure",
+      "maxPoints": 1.0,
+      "basis": "emerging_practice",
+      "subchecks": [
+        {
+          "id": "S8.context",
+          "maxPoints": 0.5,
+          "full": "Meaningful site-specific agent guide",
+          "partial": "Useful but incomplete context",
+          "zero": "Missing or irrelevant guide",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://agents.md/"
+          ]
+        },
+        {
+          "id": "S8.guidance",
+          "maxPoints": 0.5,
+          "full": "Practical authoritative references",
+          "partial": "Useful but incomplete references",
+          "zero": "Missing or conflicting unusable guidance",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://agents.md/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C1",
+      "pillar": "content",
+      "maxPoints": 10,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "C1.identity",
+          "maxPoints": 3,
+          "full": "Specific product identity and applicable brand and model",
+          "partial": "Generic or incomplete identity",
+          "zero": "Absent identity",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C1.explanation",
+          "maxPoints": 4,
+          "full": "Clear complete explanation of product and function",
+          "partial": "Useful but incomplete explanation",
+          "zero": "Absent explanation",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C1.configuration",
+          "maxPoints": 3,
+          "full": "Clear selected configuration and included items",
+          "partial": "Useful but incomplete configuration",
+          "zero": "Absent configuration",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "pillar": "content",
+      "maxPoints": 20,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "C2.essential",
+          "maxPoints": 14,
+          "full": "Every applicable essential attribute explicit with required units and scope",
+          "partial": "Average useful incomplete attribute values",
+          "zero": "Missing or vague attributes",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        },
+        {
+          "id": "C2.supporting",
+          "maxPoints": 6,
+          "full": "Every applicable supporting attribute explicit with required units and scope",
+          "partial": "Average useful incomplete attribute values",
+          "zero": "Missing or vague attributes",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/product"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "pillar": "content",
+      "maxPoints": 10,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "C3.price",
+          "maxPoints": 3,
+          "full": "Price, currency and material conditions clear",
+          "partial": "Useful but material condition omitted",
+          "zero": "Missing information",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing"
+          ]
+        },
+        {
+          "id": "C3.availability",
+          "maxPoints": 2,
+          "full": "Availability for selected configuration clear",
+          "partial": "Useful but incomplete availability",
+          "zero": "Missing information",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing"
+          ]
+        },
+        {
+          "id": "C3.shipping",
+          "maxPoints": 3,
+          "full": "Coverage, cost or calculation and delivery guidance clear",
+          "partial": "Useful but material condition omitted",
+          "zero": "Missing information",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing"
+          ]
+        },
+        {
+          "id": "C3.returns",
+          "maxPoints": 2,
+          "full": "Eligibility, window and material conditions clear",
+          "partial": "Useful but material condition omitted",
+          "zero": "Missing information",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "pillar": "content",
+      "maxPoints": 10,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "C4.intended-use",
+          "maxPoints": 3,
+          "full": "Applicable category questions answered specifically",
+          "partial": "Useful but incomplete answers",
+          "zero": "Absent or generic answers",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C4.compatibility",
+          "maxPoints": 3,
+          "full": "Applicable category questions answered specifically",
+          "partial": "Useful but incomplete answers",
+          "zero": "Absent or generic answers",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C4.limitations",
+          "maxPoints": 2,
+          "full": "Applicable category questions answered specifically",
+          "partial": "Useful but incomplete answers",
+          "zero": "Absent or generic answers",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C4.selection",
+          "maxPoints": 2,
+          "full": "Applicable category questions answered specifically",
+          "partial": "Useful but incomplete answers",
+          "zero": "Absent or generic answers",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C5",
+      "pillar": "content",
+      "maxPoints": 10,
+      "basis": "supported_best_practice",
+      "subchecks": [
+        {
+          "id": "C5.consistency",
+          "maxPoints": 5,
+          "full": "No detected contradiction with sufficient comparable evidence",
+          "partial": "Unresolved ambiguity",
+          "zero": "Confirmed material contradiction",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        },
+        {
+          "id": "C5.claim-support",
+          "maxPoints": 5,
+          "full": "Material claims have relevant support or qualification",
+          "partial": "Support incomplete in scope or relevance",
+          "zero": "Unsupported or contradicted claims",
+          "method": "mixed",
+          "applicability": "Applicable unless a versioned category or criterion rule explicitly excludes it",
+          "sourceUrls": [
+            "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+          ]
+        }
+      ]
+    }
+  ],
+  "rules": {
+    "evidence": "Each deduction requires a quote or documented absence check, evidence location and retrieval method; unknown inspection is not absence.",
+    "incomplete": "Any applicable not_measured check withholds final score; show earned completed points and status. Unknown category leaves C2 unmeasured.",
+    "notApplicable": "Only explicit versioned rules permit exclusions; redistribute within the criterion. An empty criterion withholds final score; never redistribute across pillars.",
+    "delivery": "S1 initial readable HTML full, rendered-only half, state blob or interaction-only zero; failed rendering unmeasured. S2 rendered-only multiplies otherwise eligible points by one half.",
+    "rounding": "Keep full precision; round displayed criterion scores to one decimal and derive overall from unrounded values.",
+    "claimLimits": "Measures rubric evidence, not citations, traffic, ranking or recommendation probability; sources support practices, not editorial weights.",
+    "specialRules": [
+      "S1 specifications average applicable category attributes.",
+      "S2 core properties equal thirds; offer price with currency and availability each one point; brand and identifier each one point, merchant SKU alone half identifier; exclude variants for truly single configuration.",
+      "S3 no markup scores zero; optional claims absent exclude optional-claims, except no markup. Compare same variant, market, currency and conditions.",
+      "S5 search bots split equally; retrieval pool split equally; training and user-triggered agents unscored; unresolved access unmeasured.",
+      "S6 incomplete inspection unmeasured.",
+      "C2 pools split equally among applicable attributes.",
+      "C3 inspect linked policies; link alone is insufficient.",
+      "C4 average applicable category questions within their assigned subcheck.",
+      "C5 average applicable consistency groups and material claims; exclude claim-support when no claims require substantiation."
+    ],
+    "context": "Record audited URL, final URL, canonical, variant, market, currency, audit time, rubric, category and extraction/judge versions."
+  },
+  "schemaValidationPolicy": {
+    "version": "1.0.0",
+    "scope": "Project interpretation for S2; platform feature eligibility requirements do not establish universal AI requirements.",
+    "formats": [
+      "JSON-LD",
+      "microdata",
+      "RDFa"
+    ],
+    "entity": "Recognize a parseable schema.org Product associated with the audited product; ambiguous association is partial, malformed or unreliable extraction earns no credit for affected fields. Unknown extraction is not_measured.",
+    "coreProperties": {
+      "fields": [
+        "name",
+        "description",
+        "image"
+      ],
+      "scoring": "Divide two points equally. Values must be meaningful and associated with the audited product."
+    },
+    "offer": {
+      "fields": [
+        "price with priceCurrency",
+        "availability"
+      ],
+      "scoring": "One point for price and currency together; one for availability. Associate the Offer with the selected product and market."
+    },
+    "identifiers": {
+      "fields": [
+        "brand",
+        "gtin or appropriate manufacturer identifier"
+      ],
+      "scoring": "One point each for brand and identifier. Validate GTIN format and check digit when used; appropriate manufacturer identifiers may qualify; merchant SKU alone receives half the identifier point. Exclude a genuinely inapplicable identifier only under a versioned category rule."
+    },
+    "variants": "Variants and offers must be distinguishable and associated with the correct configuration. Exclude the subcheck for a verified single-configuration product.",
+    "delivery": "Recognized markup available only after ordinary rendering earns half of otherwise eligible credit. A failed rendering inspection is not_measured.",
+    "provenance": "Record format, source location, raw or rendered retrieval, selected variant and validation outcome. Inaccessible or ambiguous evidence is not proof of invalidity.",
+    "sourceUrls": [
+      "https://developers.google.com/search/docs/appearance/structured-data/product",
+      "https://developers.google.com/search/docs/appearance/structured-data/product-variants",
+      "https://schema.org/Product",
+      "https://schema.org/Offer",
+      "https://schema.org/gtin"
+    ]
+  }
+}

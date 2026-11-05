@@ -60,3 +60,9 @@ The score is 100 points: Structure 40 and Content 60, without bands. Every note 
 ## Delivery process
 
 - [[01 Specification/AEO PRs Require Evaluation Before Merge|Every PR requires evaluation before merge]]
+
+## Phase 1 scoring inputs
+
+- [[01 Specification/AEO Phase 1 Scoring Foundations|Phase 1 foundations and boundaries]]
+- [[01 Specification/AEO Category Coverage|Initial category coverage]]
+- [[02 Research/AEO Verified Crawler Registry|Verified crawler roles and policy]]

@@ -12,6 +12,7 @@
     "test:exit": "node --test test/exit.test.mjs",
     "evaluate": "node scripts/evaluate.mjs",
     "ci:gate": "node scripts/pr-gate.mjs",
-    "ci:checks": "node scripts/ci-checks.mjs"
+    "ci:checks": "node scripts/ci-checks.mjs",
+    "test:foundations": "node --test test/scoring-foundations.test.mjs"
   }
 }

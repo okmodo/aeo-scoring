@@ -12,6 +12,6 @@ CI runs deterministic checks, preserves real command results and durations, and 
 
 Every change exports a handoff. Changes affecting portability, memory, workflow, handoff, or resumability require a genuine fresh-agent exit test; clean-process serialization tests alone do not satisfy it. Other changes document specific non-applicability. No paid model or Cloudflare deployment runs in ordinary PR checks.
 
-Main requires a PR, the named evaluation check, and independent approval. No automatic merge or deployment is authorized. Canonical executable policy lives in the repository's AGENTS.md, evals/PROCESS.md, and workflow, not duplicated code inside the vault.
+Main requires a PR and the named evaluation check. Project policy also requires independent technical review by an agent or human before merge; GitHub approval is not required. No automatic merge or deployment is authorized. Canonical executable policy lives in the repository's AGENTS.md, evals/PROCESS.md, and workflow, not duplicated code inside the vault.
 
 Related: [[AEO Delivery Plan and Open Decisions]], [[AEO Product Scope]], [[AEO Scoring Project Specification]].
