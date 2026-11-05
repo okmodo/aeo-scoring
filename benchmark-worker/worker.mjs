@@ -17,11 +17,25 @@ export function snapshot(size) {
 export async function handle(request, env) {
   const url = new URL(request.url);
   const match = /^\/(small|medium|large|error)$/.exec(url.pathname);
-  if (request.method !== 'POST' || !match || url.search || request.body !== null) return new Response('Not found', { status: 404 });
+  if (request.method !== 'POST' || !match || url.search) return new Response('Not found', { status: 404 });
   const token = request.headers.get('authorization')?.replace(/^Bearer /, '') || '';
   if (!/^[a-f0-9]{64}$/.test(token) || !/^[a-f0-9]{64}$/.test(env?.BENCH_TOKEN || '') || !env?.BENCH_DB || typeof crypto.subtle.timingSafeEqual !== 'function') return new Response('Unavailable', { status: 503 });
   const encoder = new TextEncoder();
   if (!crypto.subtle.timingSafeEqual(encoder.encode(token), encoder.encode(env.BENCH_TOKEN))) return new Response('Unavailable', { status: 503 });
+  if (request.body !== null) {
+    const reader = request.body.getReader();
+    try {
+      const first = await reader.read();
+      if (!first.done) {
+        await reader.cancel();
+        return new Response('Not found', { status: 404 });
+      }
+    } catch {
+      return new Response('Not found', { status: 404 });
+    } finally {
+      reader.releaseLock();
+    }
+  }
   let admission;
   try {
     // One conditional SQLite UPDATE serializes permits on D1; the database

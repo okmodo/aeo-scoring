@@ -26,7 +26,7 @@ test('only built-in POST workloads reach database', async () => {
   const db = database(), env = { BENCH_DB: db, BENCH_TOKEN: token };
   assert.equal((await handle(req('small?url=https://example.com'), env)).status, 404);
   assert.equal((await handle(new Request('https://example.invalid/small'), env)).status, 404);
-  assert.equal((await handle(new Request('https://example.invalid/small', { method: 'POST', body: 'html' }), env)).status, 404);
+  assert.equal((await handle(new Request('https://example.invalid/small', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: 'html' }), env)).status, 404);
   assert.equal(db.remaining, 30);
   const error = await handle(req('error'), env);
   assert.deepEqual(await error.json(), { workload: 'error', rejected: true });
@@ -37,4 +37,19 @@ test('30 admitted requests consume permits and all later requests fail closed', 
   assert.equal(responses.filter(response => response.status === 200).length, 30);
   assert.equal(responses.filter(response => response.status === 503).length, 5);
   assert.equal(db.remaining, 0);
+});
+
+
+test('bodyless runtime stream is accepted, nonempty streams fail before admission', async () => {
+  const db = database(), env = { BENCH_DB: db, BENCH_TOKEN: token };
+  const empty = new ReadableStream({ start(controller) { controller.close(); } });
+  const emptyRequest = new Request('https://example.invalid/small', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: empty, duplex: 'half' });
+  assert.equal((await handle(emptyRequest, env)).status, 200);
+  assert.equal(db.remaining, 29);
+  let cancelled = false;
+  const nonempty = new ReadableStream({ pull(controller) { controller.enqueue(new Uint8Array([1])); }, cancel() { cancelled = true; } });
+  const bodyRequest = new Request('https://example.invalid/small', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: nonempty, duplex: 'half' });
+  assert.equal((await handle(bodyRequest, env)).status, 404);
+  assert.equal(cancelled, true);
+  assert.equal(db.remaining, 29);
 });
