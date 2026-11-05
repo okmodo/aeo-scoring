@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "changeId": "ci-foundation",
+  "recordedAt": "2026-11-05T01:11:18.769Z",
+  "sourceCommit": "40f55c077204c0c79618c5017843a8e487579d5a",
+  "sourceDigest": "4a9c31724b5af2e389bf530b232bef69db6c64532396ef41ce6b353c791b2859",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 561,
+      "outputSha256": "9686567c5af7ec56bdacbfccc875a2cf007e3ce7cb2d2e3667f33e4c7b0cb6d8"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 1791,
+      "outputSha256": "8c574a20bcd6f83d741217b5408b39c117b748d2f252010ef10df82d35ebd652"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 447,
+      "outputSha256": "7a610b49c26022ae69ac64e582a895e91aa2c8944002efa67011f3447140cbdb"
+    }
+  ]
+}
