@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "error": {
+    "code": "rate_limited",
+    "message": "The audit limit has been reached. Try again after the indicated wait.",
+    "retryAfterSeconds": 900
+  }
+}

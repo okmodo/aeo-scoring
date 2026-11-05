@@ -48,3 +48,16 @@ test('conditional C4 exclusions require every exact template condition and obser
 test('schema validation policy is versioned and pins the supported formats',()=>{
   const p=rubric.schemaValidationPolicy; assert.equal(p.version,'1.0.0'); assert.deepEqual(p.formats,['JSON-LD','microdata','RDFa']); for (const k of ['entity','coreProperties','offer','identifiers','variants','delivery','provenance']) assert.ok(p[k]); assert.ok(p.sourceUrls.length);
 });
+
+test('version 1.1 clarifies only the basic T-shirt care anchor and preserves v1', () => {
+  const v1 = read('config/categories.v1.json'), v11 = read('config/categories.v1.1.json');
+  assert.equal(v1.version, '1.0.0'); assert.equal(v11.version, '1.1.0');
+  const care = registry => registry.categories.find(c => c.id === 'basic-tshirts').supportingAttributes.find(a => a.id === 'care');
+  assert.equal(care(v1).full, 'Specific regular washing and drying or other care instructions are given.');
+  assert.match(care(v11).full, /Specific applicable regular care instructions/);
+  assert.match(care(v11).full, /Washing guidance alone can satisfy this/);
+  assert.match(care(v11).full, /not both universally required/);
+  care(v11).full = care(v1).full;
+  v11.version = v1.version;
+  assert.deepEqual(v11, v1);
+});

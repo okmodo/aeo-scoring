@@ -28,3 +28,9 @@ Identifier handling is specified for compatibility with the broader rubric: GTIN
 - [FTC care labeling guidance](https://www.ftc.gov/business-guidance/resources/clothes-captioning-complying-care-labeling-rule) discusses care instructions for covered apparel in its jurisdiction.
 
 Sources are context for useful field types, not proof that any particular product has a property, that every template field is legally required, or that our weights are validated.
+
+## Care guidance clarification in version 1.1
+
+The user clarified during the phase 2 pilot that **specific applicable care is sufficient**. The separately versioned [`categories.v1.1.json`](../config/categories.v1.1.json) implements that decision for the basic T-shirt care full-credit anchor: specific applicable washing guidance alone can qualify, and washing plus drying is not a universal checklist. Partial remains for useful information with materially incomplete required scope or selected-variant association; zero remains for absent, generic or independently unusable information. The weights and all other category rules are unchanged.
+
+The original [`categories.v1.json`](../config/categories.v1.json), its consumers and frozen expectations remain unchanged. Version 1.1 is an explicit opt-in policy artifact; this clarification does not silently switch the existing reference harness or preview, or retroactively change past scores. The original blind pilot's wash-and-dry prompt and its disagreement are preserved in the [human pilot record](phase-2-human-pilot.md). Those results cannot be reinterpreted as agreement under the later clarified wording.

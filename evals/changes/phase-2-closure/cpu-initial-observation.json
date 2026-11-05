@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-11-05T21:51:39.299Z",
+  "clientRetryCount": 0,
+  "requestCap": 30,
+  "allocation": [
+    [
+      "small",
+      9
+    ],
+    [
+      "medium",
+      10
+    ],
+    [
+      "large",
+      10
+    ],
+    [
+      "error",
+      1
+    ]
+  ],
+  "observations": [
+    {
+      "workload": "small",
+      "attempt": 1,
+      "startedAt": "2026-11-05T21:51:39.304Z",
+      "elapsedMs": 244,
+      "status": 404,
+      "cfRay": "a55f14bfc8157c28-DEN",
+      "body": "Not found"
+    }
+  ],
+  "windows": [
+    {
+      "workload": "small",
+      "start": "2026-11-05T21:51:39.304Z",
+      "end": "2026-11-05T21:51:39.550Z"
+    }
+  ],
+  "stopReason": "Non-success response; no retries or later workloads",
+  "finishedAt": "2026-11-05T21:51:39.550Z",
+  "issuedRequests": 1
+}

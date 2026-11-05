@@ -1,0 +1,10 @@
+{
+  "url": "https://www.underarmour.com/en-us/p/ua_wordmark_mens_short_sleeve/1385068.html",
+  "userAgent": "AEOResearchBot/1.0",
+  "gotoOptions": {"timeout": 10000, "waitUntil": "domcontentloaded"},
+  "actionTimeout": 10000,
+  "waitForTimeout": 1000,
+  "allowRequestPattern": ["^https://www\\.underarmour\\.com/"],
+  "rejectResourceTypes": ["image", "media", "font"],
+  "bestAttempt": false
+}

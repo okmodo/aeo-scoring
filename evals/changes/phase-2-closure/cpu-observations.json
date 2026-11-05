@@ -1,0 +1,786 @@
+{
+  "version": 1,
+  "scope": "Isolated Pages Functions benchmark of fixed synthetic extraction workloads, not merchant or full-protocol feasibility.",
+  "configuredCpuLimitMs": 10,
+  "initialHostedCI": 42115741910,
+  "correctedHostedCI": 42117196142,
+  "project": {
+    "id": "ed88ac13-8e73-487c-be27-9b60ca9f0367",
+    "name": "aeo-scoring-cpu-20261105-k9m",
+    "subdomain": "aeo-scoring-cpu-20261105-k9m.pages.dev",
+    "production": {
+      "compatibility_date": "2026-11-05",
+      "limits": {
+        "cpu_ms": 10
+      },
+      "fail_open": false,
+      "d1_databases": {
+        "BENCH_DB": {
+          "id": "78cf635f-4987-4027-84f4-00502e0cd8bb"
+        }
+      },
+      "env_var_names": [
+        "BENCH_TOKEN"
+      ]
+    }
+  },
+  "database": {
+    "id": "78cf635f-4987-4027-84f4-00502e0cd8bb",
+    "name": "aeo-scoring-cpu-budget-20261105-k9m",
+    "created_at": "2026-11-05T21:47:50.189Z"
+  },
+  "expiryEpochSeconds": 1793916170,
+  "initialDeployment": {
+    "success": true,
+    "id": "7f8a8736-ac1b-4add-8ade-80d0b7180074",
+    "url": "https://7f8a8736.aeo-scoring-cpu-20261105-k9m.pages.dev",
+    "stage": {
+      "name": "queued",
+      "started_on": null,
+      "ended_on": null,
+      "status": "idle"
+    },
+    "artifactSha256": "104b2dac12d02a2b4c45e144f85d9053daf90e3e17e453f6c279972d6299b5ef"
+  },
+  "correctedDeployment": {
+    "success": true,
+    "id": "46d81b0c-39b6-4c6f-b54d-3dd98c73485f",
+    "url": "https://46d81b0c.aeo-scoring-cpu-20261105-k9m.pages.dev",
+    "stage": {
+      "name": "queued",
+      "started_on": null,
+      "ended_on": null,
+      "status": "idle"
+    },
+    "artifactSha256": "eb7968d0474a1e84edfbf96cb91b000d650aa201d7ad7f8bba290da8c423169e",
+    "budget": {
+      "remaining": 30,
+      "expires_at": 1793916170,
+      "database_now": 1793915891
+    }
+  },
+  "setup": "Initial Pages create attempts failed HTTP400 code 8000066; setting fail_open=false for both new production and preview environments succeeded. No pre-existing project was updated.",
+  "initial": {
+    "startedAt": "2026-11-05T21:51:39.299Z",
+    "clientRetryCount": 0,
+    "requestCap": 30,
+    "allocation": [
+      [
+        "small",
+        9
+      ],
+      [
+        "medium",
+        10
+      ],
+      [
+        "large",
+        10
+      ],
+      [
+        "error",
+        1
+      ]
+    ],
+    "observations": [
+      {
+        "workload": "small",
+        "attempt": 1,
+        "startedAt": "2026-11-05T21:51:39.304Z",
+        "elapsedMs": 244,
+        "status": 404,
+        "cfRay": "a55f14bfc8157c28-DEN",
+        "body": "Not found"
+      }
+    ],
+    "windows": [
+      {
+        "workload": "small",
+        "start": "2026-11-05T21:51:39.304Z",
+        "end": "2026-11-05T21:51:39.550Z"
+      }
+    ],
+    "stopReason": "Non-success response; no retries or later workloads",
+    "finishedAt": "2026-11-05T21:51:39.550Z",
+    "issuedRequests": 1
+  },
+  "corrected": {
+    "startedAt": "2026-11-05T21:58:54.171Z",
+    "clientRetryCount": 0,
+    "requestCap": 29,
+    "priorFailedRequests": 1,
+    "allocation": [
+      [
+        "small",
+        8
+      ],
+      [
+        "medium",
+        10
+      ],
+      [
+        "large",
+        10
+      ],
+      [
+        "error",
+        1
+      ]
+    ],
+    "observations": [
+      {
+        "workload": "small",
+        "attempt": 1,
+        "startedAt": "2026-11-05T21:58:54.177Z",
+        "elapsedMs": 322,
+        "status": 200,
+        "cfRay": "a55f1f5d6cca7c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 2,
+        "startedAt": "2026-11-05T21:58:54.509Z",
+        "elapsedMs": 145,
+        "status": 200,
+        "cfRay": "a55f1f5ebea27c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 3,
+        "startedAt": "2026-11-05T21:58:54.657Z",
+        "elapsedMs": 122,
+        "status": 200,
+        "cfRay": "a55f1f5fafed7c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 4,
+        "startedAt": "2026-11-05T21:58:54.779Z",
+        "elapsedMs": 135,
+        "status": 200,
+        "cfRay": "a55f1f6068cd7c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 5,
+        "startedAt": "2026-11-05T21:58:54.916Z",
+        "elapsedMs": 137,
+        "status": 200,
+        "cfRay": "a55f1f614a147c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 6,
+        "startedAt": "2026-11-05T21:58:55.055Z",
+        "elapsedMs": 122,
+        "status": 200,
+        "cfRay": "a55f1f622b3e7c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 7,
+        "startedAt": "2026-11-05T21:58:55.178Z",
+        "elapsedMs": 166,
+        "status": 200,
+        "cfRay": "a55f1f62ec5c7c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "small",
+        "attempt": 8,
+        "startedAt": "2026-11-05T21:58:55.346Z",
+        "elapsedMs": 148,
+        "status": 200,
+        "cfRay": "a55f1f63fe407c1a-DEN",
+        "body": "{\"workload\":\"small\",\"bytes\":2048,\"fields\":27,\"complete\":true}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 9,
+        "startedAt": "2026-11-05T21:58:55.497Z",
+        "elapsedMs": 205,
+        "status": 200,
+        "cfRay": "a55f1f64efa27c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 10,
+        "startedAt": "2026-11-05T21:58:55.704Z",
+        "elapsedMs": 176,
+        "status": 200,
+        "cfRay": "a55f1f6639417c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 11,
+        "startedAt": "2026-11-05T21:58:55.882Z",
+        "elapsedMs": 179,
+        "status": 200,
+        "cfRay": "a55f1f674ab27c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 12,
+        "startedAt": "2026-11-05T21:58:56.063Z",
+        "elapsedMs": 202,
+        "status": 200,
+        "cfRay": "a55f1f686c1d7c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 13,
+        "startedAt": "2026-11-05T21:58:56.266Z",
+        "elapsedMs": 127,
+        "status": 200,
+        "cfRay": "a55f1f69be2d7c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 14,
+        "startedAt": "2026-11-05T21:58:56.395Z",
+        "elapsedMs": 130,
+        "status": 200,
+        "cfRay": "a55f1f6a8f3e7c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 15,
+        "startedAt": "2026-11-05T21:58:56.527Z",
+        "elapsedMs": 153,
+        "status": 200,
+        "cfRay": "a55f1f6b58647c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 16,
+        "startedAt": "2026-11-05T21:58:56.682Z",
+        "elapsedMs": 167,
+        "status": 200,
+        "cfRay": "a55f1f6c49b07c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 17,
+        "startedAt": "2026-11-05T21:58:56.851Z",
+        "elapsedMs": 151,
+        "status": 200,
+        "cfRay": "a55f1f6d5af17c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "medium",
+        "attempt": 18,
+        "startedAt": "2026-11-05T21:58:57.004Z",
+        "elapsedMs": 149,
+        "status": 200,
+        "cfRay": "a55f1f6e4c3c7c1a-DEN",
+        "body": "{\"workload\":\"medium\",\"bytes\":131072,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 19,
+        "startedAt": "2026-11-05T21:58:57.155Z",
+        "elapsedMs": 424,
+        "status": 200,
+        "cfRay": "a55f1f6f4d547c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 20,
+        "startedAt": "2026-11-05T21:58:57.581Z",
+        "elapsedMs": 355,
+        "status": 200,
+        "cfRay": "a55f1f71e8da7c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 21,
+        "startedAt": "2026-11-05T21:58:57.937Z",
+        "elapsedMs": 448,
+        "status": 200,
+        "cfRay": "a55f1f742c0d7c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 22,
+        "startedAt": "2026-11-05T21:58:58.387Z",
+        "elapsedMs": 677,
+        "status": 200,
+        "cfRay": "a55f1f76ffbd7c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 23,
+        "startedAt": "2026-11-05T21:58:59.066Z",
+        "elapsedMs": 555,
+        "status": 200,
+        "cfRay": "a55f1f7b3d327c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 24,
+        "startedAt": "2026-11-05T21:58:59.623Z",
+        "elapsedMs": 605,
+        "status": 200,
+        "cfRay": "a55f1f7eba4a7c1a-DEN",
+        "body": "{\"workload\":\"large\",\"bytes\":1048576,\"fields\":100,\"complete\":false}"
+      },
+      {
+        "workload": "large",
+        "attempt": 25,
+        "startedAt": "2026-11-05T21:59:00.230Z",
+        "elapsedMs": 362,
+        "status": 503,
+        "cfRay": "a55f1f82783c7c1a-DEN",
+        "body": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Worker exceeded resource limits | aeo-scoring-cpu-20261105-k9m.pages.dev | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" conten"
+      }
+    ],
+    "windows": [
+      {
+        "workload": "small",
+        "start": "2026-11-05T21:58:54.177Z",
+        "end": "2026-11-05T21:58:55.497Z"
+      },
+      {
+        "workload": "medium",
+        "start": "2026-11-05T21:58:55.497Z",
+        "end": "2026-11-05T21:58:57.154Z"
+      },
+      {
+        "workload": "large",
+        "start": "2026-11-05T21:58:57.155Z",
+        "end": "2026-11-05T21:59:00.594Z"
+      }
+    ],
+    "tail": {
+      "connected": true,
+      "events": [
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915934331,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 14,
+          "cpuTimeMs": null,
+          "wallTime": 111,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f5d6cca7c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915934670,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 4,
+          "cpuTimeMs": null,
+          "wallTime": 95,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f5fafed7c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915934537,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 6,
+          "cpuTimeMs": null,
+          "wallTime": 103,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f5ebea27c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915934808,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 4,
+          "cpuTimeMs": null,
+          "wallTime": 90,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f6068cd7c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915934944,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 4,
+          "cpuTimeMs": null,
+          "wallTime": 95,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f614a147c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915935084,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 3,
+          "cpuTimeMs": null,
+          "wallTime": 79,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f622b3e7c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915935224,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 8,
+          "cpuTimeMs": null,
+          "wallTime": 106,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f62ec5c7c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/small",
+          "outcome": "ok",
+          "timestamp": 1793915935390,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 6,
+          "cpuTimeMs": null,
+          "wallTime": 89,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f63fe407c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/medium",
+          "outcome": "ok",
+          "timestamp": 1793915935528,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 61,
+          "cpuTimeMs": null,
+          "wallTime": 159,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f64efa27c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/medium",
+          "outcome": "ok",
+          "timestamp": 1793915935716,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 51,
+          "cpuTimeMs": null,
+          "wallTime": 148,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f6639417c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        },
+        {
+          "path": "/medium",
+          "outcome": "ok",
+          "timestamp": 1793915935894,
+          "scriptName": "pages-worker--23346600-production",
+          "status": 200,
+          "cpuTime": 54,
+          "cpuTimeMs": null,
+          "wallTime": 153,
+          "wallTimeMs": null,
+          "cfRay": "a55f1f674ab27c1a",
+          "eventKeys": [
+            "wallTime",
+            "cpuTime",
+            "truncated",
+            "executionModel",
+            "outcome",
+            "scriptVersion",
+            "scriptName",
+            "diagnosticsChannelEvents",
+            "exceptions",
+            "logs",
+            "eventTimestamp",
+            "event"
+          ]
+        }
+      ]
+    },
+    "stopReason": "Non-success response; no retries or later workloads",
+    "finishedAt": "2026-11-05T21:59:02.597Z",
+    "issuedRequests": 25
+  },
+  "stats": {
+    "small": {
+      "attempts": 8,
+      "http200": 8,
+      "matchedCpuTimeMs": [
+        3,
+        4,
+        4,
+        4,
+        6,
+        6,
+        8,
+        14
+      ]
+    },
+    "medium": {
+      "attempts": 10,
+      "http200": 10,
+      "matchedCpuTimeMs": [
+        51,
+        54,
+        61
+      ]
+    },
+    "large": {
+      "attempts": 7,
+      "http200": 6,
+      "matchedCpuTimeMs": []
+    }
+  },
+  "clientAttemptsTotal": 26,
+  "admittedWorkloads": 25,
+  "initialPermits": 30,
+  "finalPermits": 5,
+  "aggregateBefore": {
+    "data": {
+      "viewer": {
+        "accounts": [
+          {
+            "pagesFunctionsInvocationsAdaptiveGroups": [
+              {
+                "dimensions": {
+                  "scriptName": "__unknown__",
+                  "status": "success"
+                },
+                "quantiles": {
+                  "cpuTimeP50": 301,
+                  "cpuTimeP95": 1111,
+                  "cpuTimeP99": 2194
+                },
+                "sum": {
+                  "errors": 0,
+                  "requests": 53,
+                  "wallTime": 34991
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "errors": null
+  },
+  "finalQueries": {
+    "budget": [
+      {
+        "remaining": 5,
+        "expires_at": 1793916170,
+        "database_now": 1793916026
+      }
+    ],
+    "analytics": "Error: GraphQL error: Rate limiter budget depleted. Please try again after 5 minutes. Refer to this page for more details about rate limits: https://developers.cloudflare.com/analytics/graphql-api/limits/",
+    "tailCleanup": {
+      "success": true
+    }
+  },
+  "beforeInventory": {
+    "pages": [
+      {
+        "id": "8518b728-9297-4361-ba9e-4f1ed8c2d2ad",
+        "name": "aeo-scoring-preview-20261105-kk7"
+      }
+    ],
+    "databases": [],
+    "workerIds": [],
+    "candidateProject": "aeo-scoring-cpu-20261105-k9m",
+    "candidateDatabase": "aeo-scoring-cpu-budget-20261105-k9m",
+    "candidatesAbsent": true
+  },
+  "afterInventory": {
+    "pages": [
+      {
+        "id": "8518b728-9297-4361-ba9e-4f1ed8c2d2ad",
+        "name": "aeo-scoring-preview-20261105-kk7"
+      }
+    ],
+    "databases": [],
+    "workerIds": [],
+    "workersSubdomain": "absent",
+    "previewDeployment": "097a94e7-d7e0-4e01-9941-b6c4c1ecb23a"
+  },
+  "cleanup": {
+    "projectDeleted": true,
+    "databaseDeleted": true
+  },
+  "unitSources": [
+    "https://developers.cloudflare.com/pages/functions/debugging-and-logging/",
+    "https://raw.githubusercontent.com/cloudflare/workerd/main/src/workerd/api/trace.c%2B%2B",
+    "https://developers.cloudflare.com/workers/observability/metrics-and-analytics/"
+  ],
+  "limits": [
+    "11 matched real-time log events for 25 corrected requests; no large-workload CPU value, no reliable p95/max beyond observed samples.",
+    "Named aggregate query rate-limited; earlier __unknown__ aggregate was not attributable.",
+    "Final HTTP503 resource limit had no matching tail event; CPU versus memory not determined from it.",
+    "CPU includes auth, D1 response handling, workload construction and parser; excludes client wall time.",
+    "Account-wide quota/headroom and billing telemetry not established. No paid features enabled."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "phase-2-closure",
+  "task": "Close phase 2 feasibility gaps with reproducible, independently reviewed evidence and an explicit evidence-based go/no-go, without delivering the production scorer.",
+  "scope": ["scripts/**", "test/**", "evals/**", "docs/**", "AEO Scoring Vault/**", "config/**", "package.json", "package-lock.json", ".github/workflows/**", "benchmark-worker/**"],
+  "nonGoals": ["Build a production audit, scoring engine, user interface or arbitrary-URL crawler", "Alter pre-existing Cloudflare resources or use paid services", "Make cloud calls or deploy before approved budget and independent review", "Represent synthetic or controlled pages as merchant accuracy", "Invent independent human labels, model outcomes, CPU measurements or quota headroom", "Commit full copyrighted HTML or bypass robots or access controls", "Weaken evaluation, CI, security or review gates"],
+  "outcomes": [
+    {"id":"O1","description":"Freeze explicit experiment protocols, thresholds, budgets, provenance and independent labeling rules before outcomes, including representative matched raw/rendered evidence and honest coverage limits.","verification":"human","evidence":"Protocol, corpus provenance, matched labels and independent review"},
+    {"id":"O2","description":"Harden bounded extraction where evidence warrants and measure it against independently labeled, matched input; distinguish public excerpts and synthetic fixtures.","verification":"automated","evidence":"Offline regression tests, gold labels, matching inputs and calibration report"},
+    {"id":"O3","description":"Define and evaluate a safe proposal-only AI architecture against the original injection and broader frozen adversarial corpus; fail closed when independent semantic assessment is absent.","verification":"human","evidence":"Adversarial fixtures, recorded results and security review"},
+    {"id":"O4","description":"Measure actual bounded Worker CPU and free-tier budget if an isolated approved benchmark can be run; otherwise record the blocker and no-go without substituting local measurements.","verification":"human","evidence":"Benchmark harness, usage observations, budgets and decision"},
+    {"id":"O5","description":"Publish a reproducible evidence-based go/no-go and distinguish measured findings, limitations, and any remaining human or cloud dependencies.","verification":"human","evidence":"Decision report and source-linked observations"},
+    {"id":"O6","description":"Permanently run meaningful offline closure regressions in CI without network, model or paid dependencies.","verification":"automated","evidence":"Registered offline tests and CI checks"}
+  ],
+  "process": [
+    {"id":"P1","description":"Commit this immutable validated plan alone before implementation; preserve gates and obtain independent review.","verification":"human","evidence":"Git history and review"},
+    {"id":"P2","description":"Respect robots and permissions, limit copyright excerpts, isolate untrusted material and avoid unapproved cloud mutations.","verification":"human","evidence":"Provenance and security review"},
+    {"id":"P3","description":"Record genuine commands, observations, missing evidence and resumable handoff; never infer unobserved costs or human judgments.","verification":"human","evidence":"Evaluation record, trace and handoff"}
+  ],
+  "styleEfficiency": [{"id":"E1","description":"Keep evidence, interpretation and uncertainty separate, favor bounded reproducible experiments and avoid speculative production features.","verification":"human","evidence":"Independent review"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required": true, "reason": "Phase handoff and resumability are material deliverables and require a genuine fresh-agent continuation from an export."}
+}

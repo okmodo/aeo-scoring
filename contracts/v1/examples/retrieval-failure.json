@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "id": "bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "status": "unable_to_assess",
+  "statusUrl": "/api/v1/audits/bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "submittedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "assessedUrl": null,
+  "createdAt": "2026-11-05T12:00:00.000Z",
+  "completedAt": "2026-11-05T12:00:02.000Z",
+  "expiresAt": "2026-11-06T12:00:00.000Z",
+  "cache": {
+    "hit": false,
+    "validUntil": null
+  },
+  "report": null,
+  "error": {
+    "code": "robots_blocked",
+    "message": "The site’s robots policy blocks this audit.",
+    "retryAfterSeconds": null
+  }
+}
