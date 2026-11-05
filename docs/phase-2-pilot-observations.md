@@ -1,0 +1,11 @@
+# Phase 2 architecture pilot observations
+
+The [pilot protocol](phase-2-architecture-pilot.md) was committed before these observations. The [full closure protocol](phase-2-closure-protocol.md) remains the production/autonomy evidence target. This file records what was observed and does not infer absent outcomes.
+
+## Permitted raw capture
+
+A prior independently recorded source observation was made from the raw HTML of [Under Armour's Wordmark shirt](https://www.underarmour.com/en-us/p/ua_wordmark_mens_short_sleeve/1385068.html), fetched 2026-11-05 21:23:23 UTC, HTTP 200, 815,720 bytes, SHA-256 `479358893165201b39f8d46968d85934f7a4e9d402121f189b65f04a0a9fee10`. The investigator checked robots access and did not bypass a challenge. This private capture is not committed; reproducibility requires independently authorized access to the same exact bytes. A single capture is neither representative nor independent human agreement.
+
+The independently recorded product name before extraction was “UA Wordmark Men's Short Sleeve”. The initial extractor stopped after reaching 100 text findings at 698 visited nodes, emitted no fields, and marked coverage incomplete. After correcting traversal to continue collecting bounded field observations, and collecting visible nested field text, the same input visited 3,166 nodes, retained 100 text findings, and emitted one visible heading field: “UA Wordmark Men's Short Sleeve - Fast-Drying” (source offsets 153529–153814). This output includes a marketing suffix and is not identical to the prior label. The page's coverage remains incomplete, so this is an illustrative observation, not a measured accuracy result or a conclusion that other fields were absent. The original and corrected measurements used the same raw bytes; both followed the protocol commit. Text extraction still cannot establish visual visibility under CSS or JavaScript.
+
+A rendered capture and three blind human judgments are not yet recorded here. Cloud CPU, account headroom and the proposed model replay are also not established by this observation. Failed capture attempts on other merchant sites must be included in any eventual sample accounting; they are not silently replaced to claim broad coverage.
