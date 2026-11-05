@@ -1,4 +1,4 @@
-import service from './service.mjs';
+import service, { handleAuditRequest } from './service.mjs';
 import { createPreviewEgress } from './preview-egress.mjs';
 
 const egress = createPreviewEgress({
@@ -7,11 +7,7 @@ const egress = createPreviewEgress({
 
 export default {
   fetch(request, env, ctx) {
-    return service.fetch(request, {
-      AUDIT_DB: env.AUDIT_DB,
-      AUDIT_RATE_SECRET: env.AUDIT_RATE_SECRET,
-      AUDIT_EGRESS: egress,
-    }, ctx);
+    return handleAuditRequest(request, env, ctx, { egress, allowsProduct: egress.allowsProduct });
   },
   scheduled: service.scheduled,
 };

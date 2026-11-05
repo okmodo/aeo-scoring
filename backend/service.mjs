@@ -116,7 +116,7 @@ function retrievalProblem(error) {
 }
 
 export function createAuditService({
-  store, egress, secret, HTMLRewriter, now = Date.now, retrievePage = retrieve,
+  store, egress, secret, HTMLRewriter, allowsProduct, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit,
 }) {
   async function run(audit) {
@@ -148,6 +148,11 @@ export function createAuditService({
         if (request.method !== 'POST') return errorResponse(405, 'method_not_allowed', null, { allow: 'POST' });
         let url;
         try { url = await submission(request); } catch { return errorResponse(400, 'invalid_input'); }
+        if (allowsProduct && !allowsProduct(url)) {
+          const error = problem('invalid_input');
+          error.message = 'This preview accepts only its approved demo product URL.';
+          return json({ version: '1', error }, 400);
+        }
         if (!store || !egress?.fetch || typeof HTMLRewriter !== 'function' || typeof defer !== 'function' ||
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
@@ -181,17 +186,19 @@ export function createAuditService({
   };
 }
 
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct } = {}) {
+  const service = createAuditService({
+    store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
+    egress, allowsProduct, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
+  });
+  return service(request, {
+    defer: ctx.waitUntil.bind(ctx),
+    address: request.headers.get('cf-connecting-ip'),
+  });
+}
+
 export default {
-  fetch(request, env, ctx) {
-    const service = createAuditService({
-      store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
-      egress: env.AUDIT_EGRESS, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
-    });
-    return service(request, {
-      defer: ctx.waitUntil.bind(ctx),
-      address: request.headers.get('cf-connecting-ip'),
-    });
-  },
+  fetch: handleAuditRequest,
   async scheduled(_event, env) {
     const now = Date.now();
     await createStore(env.AUDIT_DB).prune({

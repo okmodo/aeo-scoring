@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPreviewEgress } from './preview-egress.mjs';
 import { retrieve } from './retrieval.mjs';
+import preview from './preview-worker.mjs';
 
 const product = 'https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html';
 const robots = 'https://books.toscrape.com/robots.txt';
@@ -39,4 +40,21 @@ test('retrieval rejects redirect to an unapproved destination without fetching i
   } });
   await assert.rejects(retrieve(product, { egress }), { code: 'fetch_failed' });
   assert.deepEqual(calls, [robots, product]);
+});
+
+test('preview rejects unapproved submissions before persistence or background work', async () => {
+  const request = new Request('https://audit.example/api/v1/audits', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.1' },
+    body: JSON.stringify({ url: product + '?private=value' }),
+  });
+  const response = await preview.fetch(request, {
+    AUDIT_DB: { prepare: () => assert.fail('Unapproved input must not reach D1') },
+    AUDIT_RATE_SECRET: 'x'.repeat(32),
+  }, { waitUntil: () => assert.fail('Unapproved input must not start an audit') });
+  assert.equal(response.status, 400);
+  const body = await response.json();
+  assert.equal(body.error.code, 'invalid_input');
+  assert.match(body.error.message, /approved demo product URL/);
+  assert.doesNotMatch(JSON.stringify(body), /private=value/);
 });
