@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "id": "aeo-customer-ui",
+  "task": "Bring the mockup's visual style to the existing AEO landing page and sample report while retaining the agreed product behavior.",
+  "scope": ["src/App.tsx", "src/style.css", "test/preview.test.mjs"],
+  "nonGoals": ["Live intake or assessment, contact collection, rubric changes, enrichment, production hosting, deployment or merge."],
+  "outcomes": [
+    {"id":"O1","description":"Landing uses the mockup's navy hero, peach accents, audit card, section layout and sample report entry.","verification":"human","evidence":"Inspect desktop and mobile rendering and sample navigation."},
+    {"id":"O2","description":"The sample journey remains ungated, clearly synthetic and preserves the actionable report and its /100, /40 and /60 scores.","verification":"automated","evidence":"npm run test:preview plus browser verification of navigation and report interactions."},
+    {"id":"O3","description":"The layout remains usable on mobile and the sample journey has keyboard focus and input handling.","verification":"human","evidence":"Desktop and mobile keyboard and invalid-input checks."}
+  ],
+  "process": [
+    {"id":"P1","description":"Use an isolated feature branch, preserve scoring expectations, verify offline and obtain independent review.","verification":"human","evidence":"Git ancestry, source-bound evaluation, handoff and independent review."}
+  ],
+  "styleEfficiency": [
+    {"id":"E1","description":"Reuse existing React and rubric-backed sample data, with focused styling and no additional dependencies.","verification":"human","evidence":"Diff and independent review."}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run lint", "npm run typecheck", "npm run build", "npm run test:preview"],
+  "exitTest": {"required":false,"reason":"Presentation and preview behavior only. No changes to portability, memory, workflow, handoff infrastructure, or resumability."}
+}
