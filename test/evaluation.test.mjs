@@ -131,7 +131,11 @@ test('CI executes mandatory plus task-specific checks once, including app checks
   assert.ok(collectCommands([],{ 'test:feasibility':'node --test test/feasibility.test.mjs' },false,false,true).includes('npm run test:feasibility'));
   assert.throws(()=>collectCommands([],{ 'test:feasibility':'echo skipped' },false,false,true),/real test:feasibility/);
   assert.throws(()=>collectCommands([p],{},true),/App needs/);
-  assert.ok(collectCommands([p],{lint:'real-lint',typecheck:'real-tsc',build:'real-build'},true).includes('npm run typecheck'));
+  assert.ok(collectCommands([p],{lint:'real-lint',typecheck:'real-tsc',build:'real-build','test:preview':'node --test test/preview.test.mjs'},true).includes('npm run test:preview'));
+  const appScripts={lint:'real-lint',typecheck:'real-tsc',build:'real-build','test:preview':'node --test test/preview.test.mjs'};
+  assert.throws(()=>collectCommands([],{...appScripts,'test:preview':'echo skipped'},true),/real test:preview/);
+  assert.throws(()=>collectCommands([],{...appScripts,'test:preview':''},true),/real test:preview/);
+  assert.equal(collectCommands([{...p,commands:['npm run test:preview']}],appScripts,true).filter(c=>c==='npm run test:preview').length,1);
   p.commands=['npm run ci:checks'];assert.throws(()=>collectCommands([p],{},false),/recursively/);
 });
 test('PR gate rejects implementation committed before its plan',()=>sandbox(ctx=>{
