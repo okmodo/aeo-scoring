@@ -78,7 +78,7 @@ input:focus-visible {
   letter-spacing: 0.13em;
 }
 .top-label {
-  color: #778780;
+  color: #526b60;
 }
 .top-right span {
   color: #cf7755;
@@ -139,7 +139,7 @@ label {
   margin-bottom: 12px;
 }
 label span {
-  color: #9ba8a1;
+  color: #526b60;
   margin-left: 8px;
 }
 .input-row {
@@ -470,7 +470,7 @@ label span {
   margin: 8px 0;
 }
 .heading-note {
-  color: #84938a;
+  color: #526b60;
   text-align: right;
   line-height: 1.8;
 }
@@ -494,7 +494,7 @@ label span {
 }
 .action-num {
   font-family: Georgia, serif;
-  color: #9aaba0;
+  color: #526b60;
   font-size: 20px;
 }
 .action-title {
@@ -532,7 +532,7 @@ label span {
   gap: 70px;
 }
 .detail-label {
-  color: #8c9c91;
+  color: #526b60;
 }
 .action-details p {
   font-size: 13px;
@@ -555,7 +555,7 @@ footer {
 footer > span:not(.brand) {
   font-size: 9px;
   letter-spacing: 0.1em;
-  color: #8b9b90;
+  color: #526b60;
 }
 @media (max-width: 800px) {
   .top {

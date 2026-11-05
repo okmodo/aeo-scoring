@@ -2,7 +2,7 @@
 
 The Vite, React and TypeScript application demonstrates the report experience with one fictional running shoe. The optional URL stays in the browser and is never fetched or assessed. Progress, findings, evidence and recovery are illustrative; this is not a merchant audit. The sample scores 84.5/100: Structure 36.5/40 and Content 48/60. Its sample attributes and deductions are checked against the versioned rubric and reference arithmetic. The report presents conditional actions and the complete subcheck breakdown.
 
-Use Node 24, install with `npm ci --ignore-scripts --no-audit --no-fund`, and run `npm run dev` locally. `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:preview` validate the application; the existing repository checks remain required. Browser testing is separate from the offline checks.
+Use Node 24, install with `npm ci --ignore-scripts --no-audit --no-fund`, and run `npm run dev` locally. `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:preview` validate the application; the existing repository checks remain required. Browser testing is separate from the offline checks. A local desktop and 390-pixel-wide mobile flow was checked for cancellation, report focus, action expansion, subcheck display, horizontal overflow and absence of an entered-URL request; this is not a full accessibility audit.
 
 The intended hosted preview is a new, isolated Cloudflare Pages Direct Upload project using only the Free plan. It must be deployed manually only after hosted CI and independent review; pre-existing Cloudflare configurations and services must remain untouched. See [deployment procedure](hosted-preview-deployment.md). A deployment is not established until its actual result is recorded.
 
