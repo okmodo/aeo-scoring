@@ -3,3 +3,7 @@ AEO Scoring Vault/.obsidian/workspace*.json
 AEO Scoring Vault/.obsidian/cache/
 AEO Scoring Vault/.obsidian/plugins/
 .DS_Store
+
+# Local evaluation output
+node_modules/
+reports/

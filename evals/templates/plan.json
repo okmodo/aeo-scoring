@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "id": "replace-with-change-id",
+  "task": "Describe the requested outcome before implementation.",
+  "scope": [
+    "replace-with-exact-file.md"
+  ],
+  "nonGoals": [
+    "Describe excluded work."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Define an observable outcome.",
+      "verification": "automated",
+      "evidence": "Name the real test or artifact."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Replace with a task-specific applicability explanation."
+  }
+}

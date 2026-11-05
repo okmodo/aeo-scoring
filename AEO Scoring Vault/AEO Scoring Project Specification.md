@@ -56,3 +56,7 @@ The score is 100 points: Structure 40 and Content 60, without bands. Every note 
 - [[01 Specification/AEO Report Actions and Exports|Report Actions and Exports]]
 - [[01 Specification/AEO Sources and Evidence Classes|Sources and Evidence Classes]]
 - [[01 Specification/AEO Delivery Plan and Open Decisions|Delivery Plan and Open Decisions]]
+
+## Delivery process
+
+- [[01 Specification/AEO PRs Require Evaluation Before Merge|Every PR requires evaluation before merge]]
