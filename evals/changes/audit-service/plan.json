@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "audit-service",
+  "task": "Implement the backend audit foundation and publish a versioned frontend contract and frozen responses.",
+  "scope": ["backend/**", "contracts/**", "docs/audit-service.md", "test/feasibility.test.mjs", "evals/changes/audit-service/**"],
+  "nonGoals": ["Presentation changes, shared dependency changes, enrichment, deployment or merge", "Autonomous AI judging or fabricated rubric coverage"],
+  "outcomes": [
+    {"id":"O1","description":"Versioned contract and frozen examples cover submission, polling, complete and partial reports, failures, invalid input, rate limits and cache reuse.","verification":"automated","evidence":"Contract fixtures and service regression tests"},
+    {"id":"O2","description":"Bounded retrieval and supported deterministic rubric checks produce source evidence and conservative assessment states and recovery.","verification":"automated","evidence":"Retrieval, scoring and response tests"},
+    {"id":"O3","description":"Persist reports and enforce cache and rate controls, with production binding prerequisites documented.","verification":"automated","evidence":"Store and API tests and handoff"}
+  ],
+  "process": [{"id":"P1","description":"Use separate worktree, independent review and hosted CI, preserve existing gates and frontend ownership.","verification":"human","evidence":"Git history and review"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse rubric logic and keep contract and backend independent of presentation.","verification":"human","evidence":"Diff and review"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":true,"reason":"The versioned contract and cross-chat integration handoff introduce a new continuation boundary."}
+}
