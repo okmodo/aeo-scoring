@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { Assessment } from '../contracts/v1/types';
 
 export function LiveReport({ assessment, onBack }: { assessment: Assessment; onBack: () => void }) {
   const report = assessment.report;
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { heading.current?.focus(); }, []);
   return <main className="report">
     <div className="breadcrumb"><button onClick={onBack}>← Back to start</button><span>LIVE ASSESSMENT</span></div>
-    <section className="report-intro"><div><div className="eyebrow"><span className="status-dot" /> LIVE ASSESSMENT</div><h1 tabIndex={-1}> {assessment.status === 'pending' ? 'Assessment in progress' : assessment.status === 'unable_to_assess' ? 'Unable to assess' : assessment.status === 'incomplete' ? 'Assessment incomplete' : 'Your assessment'}<span className="brand-dot">.</span></h1><p>{assessment.submittedUrl}</p></div>
+    <section className="report-intro"><div><div className="eyebrow"><span className="status-dot" /> LIVE ASSESSMENT</div><h1 tabIndex={-1} ref={heading}> {assessment.status === 'pending' ? 'Assessment in progress' : assessment.status === 'unable_to_assess' ? 'Unable to assess' : assessment.status === 'incomplete' ? 'Assessment incomplete' : 'Your assessment'}<span className="brand-dot">.</span></h1><p>{assessment.submittedUrl}</p></div>
       <div className="report-meta"><span>REPORT DETAILS</span><strong>{report?.productName || 'Product page'}</strong><small>Created {assessment.createdAt}</small><small>Available until {assessment.expiresAt}</small>{assessment.cache.hit && <small>Reused cached assessment{assessment.cache.validUntil ? ` · reusable until ${assessment.cache.validUntil}` : ''}</small>}</div></section>
     {assessment.status === 'pending' && <div className="notice" role="status">The page is being assessed. This report updates automatically.</div>}
     {assessment.status === 'unable_to_assess' && <div className="notice" role="status">{assessment.error?.message || 'The page could not be assessed.'}</div>}

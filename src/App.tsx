@@ -38,10 +38,13 @@ export function App() {
       setAssessment(next);
       setScreen("live");
       let attempt = 0;
+      const deadline = Date.now() + 120_000;
       while (next.status === "pending") {
+        if (Date.now() >= deadline) throw new Error("The assessment is taking longer than expected. Please try again later.");
         await new Promise<void>((resolve, reject) => {
-          const timer = setTimeout(resolve, pollDelay(attempt++));
-          request.signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
+          const onAbort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
+          const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
+          request.signal.addEventListener("abort", onAbort, { once: true });
         });
         next = await getAudit(next.statusUrl, request.signal);
         if (request.signal.aborted) return;
@@ -61,7 +64,7 @@ export function App() {
         LIVE PRODUCT PAGE ASSESSMENT <span> · </span> A fictional sample is also available below.
       </div>
       <header className="top">
-        <a className="brand" href="#home" onClick={() => setScreen("entry")}>
+        <a className="brand" href="#home" onClick={back}>
           <span className="brandmark">a</span> answerable
           <span className="brand-dot">.</span>
         </a>
