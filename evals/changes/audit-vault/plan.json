@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "audit-vault",
+  "task": "Record the merged backend audit milestone in the atomic project vault.",
+  "scope": ["AEO Scoring Vault/**", "evals/changes/audit-vault/**"],
+  "nonGoals": ["Change application behavior or the contract", "Merge the Phase 2 pull request or deploy"],
+  "outcomes": [{"id":"O1","description":"The linked atomic notes document the proposed service contract and current audit readiness accurately.","verification":"human","evidence":"Review notes against PR 6 and the versioned contract"}],
+  "process": [{"id":"P1","description":"Keep vault changes separate and run standard checks.","verification":"human","evidence":"Plan commit, trace and PR CI"}],
+  "styleEfficiency": [{"id":"E1","description":"Keep each note scoped to one concept and link to canonical sources.","verification":"human","evidence":"Vault diff"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit"],
+  "exitTest": {"required":false,"reason":"The vault records existing behavior and status without changing handoff, portability or resumability."}
+}

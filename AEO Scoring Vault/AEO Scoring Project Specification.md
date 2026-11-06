@@ -1,12 +1,12 @@
 ---
 tags: [aeo-scoring, index, specification]
-updated: 2026-11-04
+updated: 2026-11-05
 status: agreed-planning
 ---
 
 # AEO Scoring Project Specification
 
-Standalone AEO Scoring project. This vault consolidates the agreed rubric, report experience, and priority-fix rules from planning on November 4, 2026. It is an Obsidian folder vault, not part of the BCAG vault. A synthetic sample preview now demonstrates the planned report experience; production assessment remains unbuilt.
+Standalone AEO Scoring project. This vault consolidates the agreed rubric, report experience, and priority-fix rules from planning on November 4, 2026. It is an Obsidian folder vault, not part of the BCAG vault. A synthetic sample preview now demonstrates the planned report experience; the backend foundation is recorded below and live audits remain pending.
 
 Repository: https://github.com/okmodo/aeo-scoring.git
 
@@ -74,3 +74,8 @@ The score is 100 points: Structure 40 and Content 60, without bands. Every note 
 ## Sample preview
 
 - [[01 Specification/AEO Hosted Sample Preview|Hosted sample preview and boundaries]]
+
+## Audit service
+
+- [[01 Specification/AEO Audit Service Contract|Proposed audit service contract]]
+- [[01 Specification/AEO Audit Service Readiness|Backend readiness and remaining gates]]

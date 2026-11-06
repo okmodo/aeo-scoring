@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Record the backend milestone in the Obsidian vault",
+  "state": "Two atomic notes and the vault index link to canonical backend documentation.",
+  "decisions": ["Separate the proposed interface from implementation readiness."],
+  "constraints": ["Vault documentation only. Preserve the Phase 2 merge target and avoid deployment."],
+  "completed": ["Documented PR 6, the contract and current runtime limitations."],
+  "remaining": ["Confirm the documentation PR checks and independent review."],
+  "resumeCommands": ["npm run evaluate -- --change audit-vault --base origin/codex/phase-2-closure", "npm run ci:gate -- origin/codex/phase-2-closure"]
+}
