@@ -139,3 +139,5 @@ test('overlong JSON-LD is omitted and reported', async () => {
   assert.deepEqual(result.jsonLd, []);
   assert.equal(result.coverage.jsonLdTruncated, true);
 });
+
+import './preview-egress.test.mjs';

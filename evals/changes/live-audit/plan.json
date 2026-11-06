@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "live-audit",
+  "task": "Enable a narrow live preview audit for an operator-approved product URL.",
+  "scope": ["backend/**", "docs/**", "evals/changes/live-audit/**"],
+  "nonGoals": ["Frontend changes, arbitrary URL retrieval, paid resources, deployment or merge", "Treating allowlisted fetch as public-IP-pinned general egress"],
+  "outcomes": [
+    {"id":"O1","description":"Only exact operator-approved HTTPS product URLs and their robots URLs can be fetched in the preview; redirects remain bounded and unlisted destinations fail closed.","verification":"automated","evidence":"Deterministic adapter and retrieval tests"},
+    {"id":"O2","description":"Document and configure a free-tier backend preview with the limited trust model and a public product proof.","verification":"human","evidence":"Configuration, runbook and observed proof"}
+  ],
+  "process": [{"id":"P1","description":"Preserve existing checks, use separate plan commit and obtain independent review.","verification":"human","evidence":"Git history and review"}],
+  "styleEfficiency": [{"id":"E1","description":"Keep the adapter narrow and reuse existing retrieval limits.","verification":"human","evidence":"Diff and tests"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"This change does not alter portability, memory, workflow, handoff, or resumability."}
+}
