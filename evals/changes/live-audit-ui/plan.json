@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "live-audit-ui",
+  "task": "Connect the public preview to live v1 audit submissions and evidence-backed partial reports.",
+  "scope": ["src/**", "test/preview.test.mjs", "test/feasibility.test.mjs", "backend/public-worker.mjs", "backend/public-worker.test.mjs", "evals/changes/live-audit-ui/**"],
+  "nonGoals": ["Paid usage, new cloud resources, changes to scoring weights or contract, unrelated Workers or Pages settings, or automatic deployment in CI."],
+  "outcomes": [
+    {"id":"O1","description":"Only the existing Pages origin receives browser access on v1 audit routes, including preflight and errors.","verification":"automated","evidence":"Worker tests cover allowed and disallowed origins, routes and responses."},
+    {"id":"O2","description":"The live form submits and polls the v1 service, showing evidence and partial coverage without a final score for incomplete results. The sample stays independent.","verification":"automated","evidence":"Frozen contract examples and adapter/presentation tests."},
+    {"id":"O3","description":"The deployed preview opens a live partial assessment and shows its evidence and measured coverage.","verification":"human","evidence":"Browser smoke with a public demo product after independent review and hosted CI."}
+  ],
+  "process": [{"id":"P1","description":"Use Terra implementation and independent review, retain source-bound offline evidence and deploy manually only to the two authorized resources.","verification":"human","evidence":"Git history, evaluation trace, hosted CI and live verification."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the contract, design and service lifecycle. Avoid extra dependencies, broad permissions and polling past terminal states.","verification":"human","evidence":"Independent diff review."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:feasibility", "npm run lint", "npm run typecheck", "npm run build", "npm run test:preview"],
+  "exitTest": {"required":false,"reason":"Audit UI and browser transport changes do not affect agent portability, memory, handoff or resumability."}
+}
