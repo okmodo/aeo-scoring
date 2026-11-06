@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "product-label-scoring",
+  "task": "Expand deterministic scoring for raw page labels and product identity.",
+  "scope": ["backend/**", "docs/**", "evals/changes/product-label-scoring/**"],
+  "nonGoals": ["Frontend, existing Cloudflare services, paid inference, rubric weights, or rendered visibility claims"],
+  "outcomes": [
+    {"id":"O1","description":"Extract bounded title and primary heading observations from raw HTML.","verification":"automated","evidence":"Extraction tests for text boundaries and unsupported markup"},
+    {"id":"O2","description":"Award conservative S4 title and C1 identity credit from corroborated product evidence and retain partial assessment rules.","verification":"automated","evidence":"Scoring and evidence regression tests"}
+  ],
+  "process": [{"id":"P1","description":"Separate backend branch, independent review and hosted CI.","verification":"human","evidence":"Git history, review and CI"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse existing HTMLRewriter pass and score/report contract without extra network requests or dependencies.","verification":"human","evidence":"Focused backend diff"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Adding deterministic scoring does not change workflow, portability or resumability."}
+}
