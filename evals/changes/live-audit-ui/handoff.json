@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Connect the existing Pages preview and public audit Worker for live v1 submissions.",
+  "state": "Integration is isolated on codex/live-audit-ui from merged scoring PR #11 at e458758. Hosted release and browser validation are separate from the offline PR checks.",
+  "decisions": ["Allow the exact existing Pages origin on the public audit Worker.", "Use the existing v1 contract. Keep the fictional sample available separately and omit the final score on incomplete live assessments."],
+  "constraints": ["Cloudflare Free only. Keep existing resource identities and bindings. No provisioning, secret rotation, paid calls, CI deployment or self-merge.", "The evaluation trace covers named npm commands only. It does not record the full development session, independent review, or hosted checks."],
+  "completed": ["Committed the plan before Terra implementation.", "Based this change on the merged scoring update covering structured offers, identifiers and crawler access."],
+  "remaining": ["Complete hosted CI and independent review before manual Worker and Pages deployment.", "Verify the exact-origin preflight and a public demo product submission in a browser. Record actual deployment and smoke results outside CI."],
+  "resumeCommands": ["npm ci --ignore-scripts --no-audit --no-fund", "npm run evaluate -- --change live-audit-ui --base origin/main", "npm run ci:gate -- origin/main", "See docs/public-url-egress.md for Worker build steps and docs/hosted-preview-deployment.md for Pages asset packaging."]
+}

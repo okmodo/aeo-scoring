@@ -1,13 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { actions, checks, total } from "./sample";
 import "./style.css";
+import { getAudit, pollDelay, requestAudit } from "./audit";
+import { LiveReport } from "./LiveReport";
+import type { Assessment } from "../contracts/v1/types";
 export function App() {
-  const [screen, setScreen] = useState<"entry" | "report">(
+  const [screen, setScreen] = useState<"entry" | "report" | "live">(
       "entry",
     ),
     [url, setUrl] = useState(""),
     [open, setOpen] = useState<number | null>(0),
     [showAll, setShowAll] = useState(false);
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => controller.current?.abort(), []);
   const reportHeading = useRef<HTMLHeadingElement>(null);
   const entryHeading = useRef<HTMLHeadingElement>(null);
   const hasNavigated = useRef(false);
@@ -17,22 +25,50 @@ export function App() {
       entryHeading.current?.focus();
     if (screen !== "entry") hasNavigated.current = true;
   }, [screen]);
-  function preview(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setScreen("report");
+    controller.current?.abort();
+    const request = new AbortController();
+    controller.current = request;
+    setError("");
+    setSubmitting(true);
+    try {
+      let next = await requestAudit(url, request.signal);
+      if (request.signal.aborted) return;
+      setAssessment(next);
+      setScreen("live");
+      let attempt = 0;
+      const deadline = Date.now() + 120_000;
+      while (next.status === "pending") {
+        if (Date.now() >= deadline) throw new Error("The assessment is taking longer than expected. Please try again later.");
+        await new Promise<void>((resolve, reject) => {
+          const onAbort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
+          const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
+          request.signal.addEventListener("abort", onAbort, { once: true });
+        });
+        next = await getAudit(next.statusUrl, request.signal);
+        if (request.signal.aborted) return;
+        setAssessment(next);
+      }
+    } catch (err) {
+      if (!request.signal.aborted) {
+        setError(err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
+        setScreen("entry");
+      }
+    } finally { if (!request.signal.aborted) setSubmitting(false); }
   }
+  function back() { controller.current?.abort(); setSubmitting(false); setScreen("entry"); }
   return (
     <>
       <div className="sample-banner">
-        SAMPLE PREVIEW <span> · </span> Synthetic data only. No website is
-        fetched or assessed.
+        LIVE PRODUCT PAGE ASSESSMENT <span> · </span> A fictional sample is also available below.
       </div>
       <header className="top">
-        <a className="brand" href="#home" onClick={() => setScreen("entry")}>
+        <a className="brand" href="#home" onClick={back}>
           <span className="brandmark">a</span> answerable
           <span className="brand-dot">.</span>
         </a>
-        <span className="top-label">AEO REPORT PREVIEW</span>
+        <span className="top-label">AEO REPORT</span>
         <span className="top-right">
           Built for better answers <span>↗</span>
         </span>
@@ -40,7 +76,7 @@ export function App() {
       {screen === "entry" && (
         <main id="home">
           <nav className="section-nav" aria-label="Page sections">
-            <strong>AEO report preview</strong>
+            <strong>AEO report</strong>
             <a href="#how">How it works</a>
             <a href="#preview">Sample score</a>
             <a href="#scope">Scope</a>
@@ -60,18 +96,19 @@ export function App() {
                   <li>A fictional example, ready to explore</li>
                 </ul>
               </div>
-              <form className="audit-card" onSubmit={preview}>
-                <div className="audit-bar">SAMPLE REPORT <span>✳</span>
+              <form className="audit-card" onSubmit={submit}>
+                <div className="audit-bar">LIVE AUDIT <span>✳</span>
                 </div>
                 <div className="audit-body">
-                  <h2>Explore the report</h2>
-                  <p>See what an AEO assessment can look like.</p>
-                  <label htmlFor="url">Product page URL <span>Optional</span>
+                  <h2>Assess a product page</h2>
+                  <p>Enter a public product page URL to start an assessment.</p>
+                  <label htmlFor="url">Product page URL
                   </label>
-                  <input id="url" type="url" placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
-                  <p className="form-note">Your URL stays in this browser and is not fetched or assessed. The report always shows the same fictional product.</p>
-                  <button type="submit">Explore sample report <span>↗</span>
+                  <input id="url" type="url" required placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
+                  <p className="form-note">The URL is sent to our audit service and the page is fetched. Submit only public URLs suitable for an unlisted report; anyone with the report link can view it.</p>
+                  <button type="submit" disabled={submitting}>{submitting ? "Starting assessment…" : "Assess product page"} <span>↗</span>
                   </button>
+                  {error && <p role="alert">{error}</p>}
                 </div>
               </form>
             </div>
@@ -164,24 +201,24 @@ export function App() {
             <div className="landing-wrap">
               <div className="landing-head">
                 <div className="eyebrow">FAQ</div>
-                <h2>Questions about the preview</h2>
+                <h2>Questions about the assessment</h2>
               </div>
               <div className="faq-list">
                 <details>
                   <summary>Does this assess my website?</summary>
-                  <p>No. This preview shows a fictional product and invented findings. No website is fetched or assessed.</p>
+                  <p>Yes. The live audit fetches the public page you submit. The separate sample shows fictional findings.</p>
                 </details>
                 <details>
                   <summary>What happens to the URL I enter?</summary>
-                  <p>It stays in your browser and does not change the sample report.</p>
+                  <p>It is sent to the audit service and used to fetch the page. Reports are unlisted; anyone with the report link can view one.</p>
                 </details>
                 <details>
                   <summary>What does the score measure?</summary>
-                  <p>The sample illustrates product content readiness. It does not predict traffic, recommendations, or citations.</p>
+                  <p>The score describes product content readiness. It does not predict traffic, recommendations, or citations.</p>
                 </details>
                 <details>
                   <summary>Will anything on my website change?</summary>
-                  <p>No. The sample is illustrative and makes no changes to your site.</p>
+                  <p>No. The assessment reads the page and does not change your site.</p>
                 </details>
               </div>
               <div className="final-cta">
@@ -193,10 +230,11 @@ export function App() {
           <footer>
             <span className="brand">answerable<span className="brand-dot">.</span>
             </span>
-            <span>SAMPLE PREVIEW · NO LIVE ASSESSMENT</span>
+            <span>LIVE ASSESSMENT · FICTIONAL SAMPLE AVAILABLE</span>
           </footer>
         </main>
       )}
+      {screen === "live" && assessment && <LiveReport assessment={assessment} onBack={back} />}
       {screen === "report" && (
         <main className="report">
           <div className="breadcrumb">

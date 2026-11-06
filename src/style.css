@@ -869,3 +869,11 @@ main > footer {
   padding: 0 18px;
 }
 }
+
+.live-detail { padding: 22px; }
+.live-detail summary { cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; }
+.live-detail p, .live-evidence p { line-height: 1.6; overflow-wrap: anywhere; }
+.live-check { display: block !important; }
+.live-check p { margin: .4rem 0; }
+.live-evidence { padding: 1rem 0; border-bottom: 1px solid #ddd; overflow-wrap: anywhere; }
+button:disabled { opacity: .65; cursor: wait; }
