@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Expand deterministic scoring coverage",
+  "state": "Offer, identifier and two crawler-policy subchecks feed the existing v1 report.",
+  "decisions": ["Reuse the final robots policy and uniquely associated Product record.", "Change the scoring cache namespace without invalidating old report links."],
+  "constraints": ["No front-end changes or Cloudflare service mutations. No paid inference.", "Unresolved checks remain unmeasured and withhold the final score."],
+  "completed": ["Added deterministic grading, derived evidence and conditional recovery with regression tests."],
+  "remaining": ["Broaden raw and rendered evidence, content assessment and category coverage.", "Verify hosted CPU and merchant accuracy separately before rollout."],
+  "resumeCommands": ["npm run evaluate -- --change scoring-coverage --base origin/main", "npm run ci:gate -- origin/main"]
+}
