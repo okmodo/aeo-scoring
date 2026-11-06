@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "task": "Record the UI milestone and replay instructions under the repository's handoff rules.",
+  "state": "The separately committed metadata scope covers both plans and handoff paths. The original UI plan remains unchanged and was the plan used for the source implementation.",
+  "decisions": ["Use a metadata-only plan because the original plan omitted the plan and handoff paths required by the gate."],
+  "constraints": ["Preserve the original plan, evaluator, fixtures and PR protections. The evaluation trace covers only its named commands."],
+  "completed": ["Committed the supplemental plan before writing either handoff."],
+  "remaining": ["Evaluate both plans against origin/main and verify the combined source digest in the local and hosted PR checks."],
+  "resumeCommands": [
+    "git log --oneline origin/main..HEAD",
+    "npm run evaluate -- --change aeo-customer-ui-handoff --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ]
+}

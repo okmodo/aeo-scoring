@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "aeo-customer-ui",
+  "recordedAt": "2026-11-05T23:01:48.788Z",
+  "sourceCommit": "28d7dc8f7462d3f2cf0504e49c95ff5381a1fcda",
+  "sourceDigest": "811aa62b6c5047ec33e5985142245c7e8805ef214ab1d8eccfeddc4dca500243",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 440,
+      "outputSha256": "bc0b76ef1fac9e4617c1bcfcbe3b3c50091a7d712907771fac13516f1801f2f9"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8461,
+      "outputSha256": "a0686f9b3aab2097cccc8f96b37a4970b9e3567f15046b5f51733a8c61f33d57"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 197,
+      "outputSha256": "aa0e34f038bad1d6a0eccd76efa9364deedaa04918e0af91704d25c6c616b1dd"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 479,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 421,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 210,
+      "outputSha256": "615374b1a980fb700610cbc4b6335315c087e60e33f5e553d448f1b90a534ac3"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 332,
+      "outputSha256": "e117d386de2df533f5758aca3b15c964a140b07bb279b237207e5b683394deac"
+    }
+  ]
+}

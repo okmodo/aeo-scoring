@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "id": "aeo-customer-ui-handoff",
+  "task": "Record the front-end implementation and verification state in the required handoffs. The original immutable plan covered the UI source but omitted the exact metadata paths required by the gate.",
+  "scope": [
+    "evals/changes/aeo-customer-ui/plan.json",
+    "evals/changes/aeo-customer-ui/handoff.json",
+    "evals/changes/aeo-customer-ui-handoff/plan.json",
+    "evals/changes/aeo-customer-ui-handoff/handoff.json"
+  ],
+  "nonGoals": ["Changes to the original plan, evaluator, workflow, customer experience, or evidence requirements."],
+  "outcomes": [{"id":"O1","description":"Handoffs record the actual branch state, remaining integration, trace limits and replay commands.","verification":"human","evidence":"Both scoped handoffs and local PR gate."}],
+  "process": [{"id":"P1","description":"Commit the metadata scope separately before creating either handoff.","verification":"human","evidence":"Commit ancestry and scope checks."}],
+  "styleEfficiency": [{"id":"E1","description":"Keep the handoffs focused on replay and decisions specific to their scopes.","verification":"human","evidence":"Independent review."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit"],
+  "exitTest": {"required":false,"reason":"Records state using the existing handoff schema and workflow. It does not change how tasks are transferred or resumed."}
+}
