@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "public-url-egress",
+  "task": "Enable audited public URL retrieval through the managed Cloudflare Workers egress boundary.",
+  "scope": ["backend/**", "docs/**", "evals/changes/public-url-egress/**"],
+  "nonGoals": ["Frontend changes, changes to any existing Cloudflare service, paid services, full rubric coverage, or explicit application IP pinning"],
+  "outcomes": [
+    {"id":"O1","description":"Only validated public HTTP and HTTPS hostnames are accepted; redirects and robots retrieval reuse destination validation, bound requests and carry no caller credentials.","verification":"automated","evidence":"Frozen rejection, credential and redirect scenarios"},
+    {"id":"O2","description":"Evaluate the documented Cloudflare network boundary and verify a real product audit in a dedicated zone-free Worker without private network bindings.","verification":"human","evidence":"Primary Cloudflare sources, hosted checks and live isolated audit"}
+  ],
+  "process": [{"id":"P1","description":"Keep new resources isolated and require independent security review and hosted CI.","verification":"human","evidence":"Git history, resource scope and review"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the existing bounded retrieval, status, storage and rubric paths.","verification":"human","evidence":"Focused diff and replay"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"This retrieval transport does not change portability, workflow, handoff or resumability."}
+}
