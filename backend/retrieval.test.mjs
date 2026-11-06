@@ -31,19 +31,19 @@ test('checks robots and fetches bounded HTML without forwarding credentials', as
   assert.deepEqual(Object.keys(calls[1].options.headers).sort(), ['accept', 'user-agent']);
 });
 
-test('robots deny, unknown, and unsupported rules fail closed', async () => {
+test('robots denies matching literal and wildcard rules and fails closed on unavailable policy', async () => {
   for (const policy of ['User-agent: *\nDisallow: /', 'User-agent: AEOAuditBot\nDisallow: /']) {
     await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response(policy), '/a': page() }) }), 'robots_denied');
   }
   await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('', { status: 503 }) }) }), 'robots_unknown');
-  await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /*') }) }), 'robots_unknown');
+  await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /*') }) }), 'robots_denied');
 });
 
 test('redirects check each destination and enforce limit', async () => {
   const calls = [];
-  const egress = binding({ '/a': new Response(null, { status: 302, headers: { location: 'https://other.example/b' } }), '/b': page() }, calls);
-  assert.equal((await retrieve('https://example.com/a', { egress })).url, 'https://other.example/b');
-  assert.deepEqual(calls.map(x => new URL(x.url).host), ['example.com', 'example.com', 'other.example', 'other.example']);
+  const egress = binding({ '/a': new Response(null, { status: 302, headers: { location: 'https://other.example.org/b' } }), '/b': page() }, calls);
+  assert.equal((await retrieve('https://example.com/a', { egress })).url, 'https://other.example.org/b');
+  assert.deepEqual(calls.map(x => new URL(x.url).host), ['example.com', 'example.com', 'other.example.org', 'other.example.org']);
   await rejectsCode(retrieve('https://example.com/a', { egress, maxRedirects: 0 }), 'too_many_redirects');
   await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/a': new Response(null, { status: 302, headers: { location: 'http://127.0.0.1/' } }) }) }), 'invalid_redirect');
 });
@@ -141,3 +141,19 @@ test('overlong JSON-LD is omitted and reported', async () => {
 });
 
 import './preview-egress.test.mjs';
+
+import './public-egress.test.mjs';
+
+import './robots-path.test.mjs';
+
+test('robots wildcard filters respect specificity, end anchors, and reserved escape rules', async () => {
+  const policy = 'User-agent: *\nAllow: /\nDisallow: /*/checkout\nDisallow: /products/*?*preview=1$\nDisallow: /collections/*%2B*\nDisallow: /*?*ls%3*ls%3*';
+  const egress = binding({ '/robots.txt': new Response(policy), '/products/coffee': page() });
+  assert.equal((await retrieve('https://example.com/products/coffee', { egress })).robots, 'allowed');
+  await rejectsCode(retrieve('https://example.com/products/coffee?preview=1', {
+    egress: binding({ '/robots.txt': new Response(policy) }),
+  }), 'robots_denied');
+  await rejectsCode(retrieve('https://example.com/' + 'a'.repeat(500), {
+    egress: binding({ '/robots.txt': new Response('User-agent: *\n' + ('Disallow: /never*matches\n').repeat(40)) }),
+  }), 'robots_unknown');
+});

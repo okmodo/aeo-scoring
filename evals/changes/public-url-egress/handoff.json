@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Verify public retrieval in a dedicated Cloudflare Worker",
+  "state": "The public Worker uses v1 service and the strictly public Cloudflare fetch boundary.",
+  "decisions": ["Use Cloudflare network enforcement instead of application IP pinning.", "Reject unsafe URL syntax and evaluate bounded wildcard robots rules."],
+  "constraints": ["Keep the existing frontend and Cloudflare resources untouched.", "No private bindings or custom zone routes. Cloudflare Free only."],
+  "completed": ["Added dedicated backend deployment configuration and deterministic retrieval regressions."],
+  "remaining": ["Broaden rubric coverage separately from network retrieval.", "Validate hosted retrieval on representative merchants."],
+  "resumeCommands": ["npm run evaluate -- --change public-url-egress --base origin/main", "npm run ci:gate -- origin/main", "Follow docs/public-url-egress.md for the independent hosted check."]
+}
