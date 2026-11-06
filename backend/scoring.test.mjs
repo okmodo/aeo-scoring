@@ -278,3 +278,23 @@ test('ambiguous ProductGroups do not establish variants or selected fields', () 
     }
   }
 });
+
+import './website-guides.test.mjs';
+
+test('guide evidence adds only confirmed identity and context credit', () => {
+  const url = 'https://example-shop.example.com/products/trail-shoe';
+  const text = '# Example Shop\n\n> We sell outdoor equipment and clothing and maintain a catalog for shoppers.\n\n## Products\n\n- [Trail shoe](' + url + ')\n';
+  const report = scoreAudit({ ...snapshot, url, guides: {
+    llms: { url: new URL('/llms.txt', url).href, text },
+    agents: { url: new URL('/AGENTS.md', url).href, text },
+  } }, null);
+  const checks = report.criteria.filter(criterion => ['S7', 'S8'].includes(criterion.id)).flatMap(criterion => criterion.subchecks);
+  assert.deepEqual(checks.map(item => [item.id, item.status, item.points]), [
+    ['S7.identity', 'measured', 0.5], ['S7.links', 'not_measured', null],
+    ['S8.context', 'measured', 0.5], ['S8.guidance', 'not_measured', null],
+  ]);
+  assert.equal(report.status, 'incomplete');
+  assert.equal(report.score, null);
+  assert.deepEqual(report.evidence.map(item => item.url), [new URL('/llms.txt', url).href, new URL('/AGENTS.md', url).href]);
+  assert.doesNotMatch(JSON.stringify(report.evidence), /sells outdoor footwear/);
+});

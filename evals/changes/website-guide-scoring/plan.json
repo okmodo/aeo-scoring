@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "website-guide-scoring",
+  "task": "Expand deterministic scoring for llms.txt identity and website agent-guide context.",
+  "scope": ["backend/**", "docs/**", "evals/changes/website-guide-scoring/**"],
+  "nonGoals": ["Frontend, existing Cloudflare service changes, paid inference, following guide instructions or links, rubric and contract changes"],
+  "outcomes": [
+    {"id":"O1","description":"Inspect bounded same-origin guide files through existing egress and robots checks without compromising the page audit.","verification":"automated","evidence":"Frozen successful, blocked, duplicate, and failure retrieval cases"},
+    {"id":"O2","description":"Score positive site-specific guide observations and keep uncertain or conflicting guides unmeasured.","verification":"automated","evidence":"Parser, scoring and evidence regressions"}
+  ],
+  "process": [{"id":"P1","description":"Separate backend branch, independent review and hosted CI.","verification":"human","evidence":"Git history, CI and review"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse bounded retrieval and existing evidence shapes without dependencies or bindings.","verification":"human","evidence":"Focused diff and tests"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Guide scoring does not change workflow, portability or continuation."}
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Expand deterministic website guide scoring",
+  "state": "The public Worker can obtain bounded root guide observations and map them to S7 identity and S8 context.",
+  "decisions": ["Use explicit same-origin storefront evidence and an exact link to the already retrieved product.", "Leave uncertain, blocked and conflicting documents unmeasured."],
+  "constraints": ["No frontend or Cloudflare resource changes, inference or guide-directed actions."],
+  "completed": ["Added bounded retrieval, deterministic evidence and regression tests.", "Versioned the scoring cache key for new submissions."],
+  "remaining": ["Validate hosted CPU, time and representative merchant guide coverage separately.", "Broaden content scoring separately."],
+  "resumeCommands": ["npm run evaluate -- --change website-guide-scoring --base origin/main", "npm run ci:gate -- origin/main"]
+}

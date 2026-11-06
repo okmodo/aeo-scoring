@@ -299,3 +299,32 @@ test('optional sitemap failures, redirects, and oversized bodies do not fail the
   assert.equal(result.sitemap, undefined);
   assert.equal(calls.length, 2);
 });
+
+test('guide inspection is opt-in, bounded to fixed final-origin paths, and reconciles case variants', async () => {
+  const calls = [];
+  const routes = { '/a': page(), '/llms.txt': new Response('guide'), '/AGENTS.md': new Response(' instructions '), '/agents.md': new Response('instructions') };
+  const snapshot = await retrieve('https://example.com/a', { egress: binding(routes, calls), observeGuides: true });
+  assert.deepEqual(snapshot.guides, { llms: { url: 'https://example.com/llms.txt', text: 'guide' }, agents: { url: 'https://example.com/AGENTS.md', text: ' instructions ' } });
+  assert.deepEqual(calls.slice(2).map(call => new URL(call.url).pathname), ['/llms.txt', '/AGENTS.md', '/agents.md']);
+  const basicCalls = [];
+  await retrieve('https://example.com/a', { egress: binding({ '/a': page() }, basicCalls) });
+  assert.equal(basicCalls.length, 2);
+});
+
+test('guide failures and conflicts never assert agents evidence or fail the page', async () => {
+  for (const lower of [new Response('different'), new Response('', { status: 503 }), new Response(null, { status: 302, headers: { location: '/elsewhere' } }), new Response(new Uint8Array([255]), { headers: { 'content-type': 'text/plain' } }), new Response('x'.repeat(8193))]) {
+    const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/a': page(), '/AGENTS.md': new Response('instructions'), '/agents.md': lower }), observeGuides: true });
+    assert.equal(snapshot.guides.agents, null);
+    assert.equal(snapshot.body, html);
+  }
+  const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/a': page(), '/AGENTS.md': new Response('instructions') }), observeGuides: true });
+  assert.equal(snapshot.guides.agents.text, 'instructions');
+});
+
+test('guide probes obey robots and abort on their shared deadline', async () => {
+  const calls = [];
+  const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /AGENTS.md'), '/a': page(), '/agents.md': new Response('instructions'), '/llms.txt': () => new Promise(() => {}) }, calls), observeGuides: true });
+  assert.deepEqual(snapshot.guides, { llms: null, agents: null });
+  assert.equal(calls.some(call => call.url.endsWith('/AGENTS.md')), false);
+  assert.equal(calls.find(call => call.url.endsWith('/llms.txt')).options.signal.aborted, true);
+});
