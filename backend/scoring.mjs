@@ -155,6 +155,18 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
       condition: 'If the site intends to permit these crawlers and its effective robots policy allows them on the audited URL.',
     });
   }
+  const sitemap = snapshot?.sitemap;
+  if (sitemap && typeof observedAt === 'string') {
+    for (const [id, url, location, excerpt] of [
+      ['S6.usable', sitemap.usableSource, 'sitemap XML document',
+        'A bounded same-origin sitemap inspection verified a parseable URL listing.'],
+      ['S6.inclusion', sitemap.inclusionSource, 'sitemap XML url/loc',
+        'A sitemap URL entry exactly matches the final audited product URL.'],
+    ]) {
+      if (typeof url !== 'string' || !url) continue;
+      checks[id] = { status: 'measured', fraction: 1, evidence: addEvidence(url, location, excerpt) };
+    }
+  }
   fixes.sort((a, b) => (b.recoverablePoints ?? -1) - (a.recoverablePoints ?? -1));
 
   const reference = scoreReference(rubric, categories, { category, checks });

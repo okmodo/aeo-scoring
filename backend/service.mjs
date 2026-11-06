@@ -98,7 +98,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-3:' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-4:' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -186,10 +186,10 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage } = {}) {
   const service = createAuditService({
     store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
-    egress, allowsProduct, normalizeUrl, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),

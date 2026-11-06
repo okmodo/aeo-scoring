@@ -1,3 +1,4 @@
+import './sitemap-parser.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { retrieve, extract } from './retrieval.mjs';
@@ -234,4 +235,67 @@ test('label evidence assembles complete element text and fails closed on ambigui
   EvidenceRewriter.ancestorSelector = null;
   EvidenceRewriter.overlong = true;
   assert.equal((await evidence()).mainH1, null);
+});
+
+test('optional sitemap observation follows bounded same-origin permitted paths', async () => {
+  const calls = [];
+  const xml = locations => `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(loc => `<url><loc>${loc}</loc></url>`).join('')}</urlset>`;
+  const index = locations => `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(loc => `<sitemap><loc>${loc}</loc></sitemap>`).join('')}</sitemapindex>`;
+  const egress = binding({
+    '/robots.txt': () => new Response('User-agent: *\nDisallow: /blocked\nSitemap: https://example.com/index.xml'),
+    '/a': page,
+    '/index.xml': () => new Response(index(['https://example.com/child.xml'])),
+    '/child.xml': () => new Response(xml(['https://example.com/a'])),
+  }, calls);
+  const result = await retrieve('https://example.com/a', { egress, observeSitemap: true });
+  assert.deepEqual(result.sitemap, { usableSource: 'https://example.com/child.xml', inclusionSource: 'https://example.com/child.xml' });
+  assert.equal(calls.length, 4);
+  assert.equal(calls[2].options.redirect, 'manual');
+
+  const blockedCalls = [];
+  const blocked = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({
+    '/robots.txt': () => new Response('User-agent: *\nDisallow: /blocked\nSitemap: https://other.example.org/sitemap.xml\nSitemap: https://example.com/blocked'),
+    '/a': page,
+  }, blockedCalls) });
+  assert.deepEqual(blocked.sitemap, { usableSource: null, inclusionSource: null });
+  assert.equal(blockedCalls.length, 2);
+
+  const multi = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({
+    '/a': page,
+    '/sitemap.xml': () => new Response(index(['https://example.com/child.xml', 'https://example.com/other.xml'])),
+    '/child.xml': () => new Response(xml(['https://example.com/a'])),
+  }) });
+  assert.deepEqual(multi.sitemap, { usableSource: null, inclusionSource: 'https://example.com/child.xml' });
+});
+
+test('optional sitemap failures, redirects, and oversized bodies do not fail the audit', async () => {
+  for (const response of [
+    () => new Response(null, { status: 302, headers: { location: 'https://other.example.org/sitemap.xml' } }),
+    () => new Response('x'.repeat(32769)),
+    () => new Response('<urlset>'),
+    () => { throw new Error('offline'); },
+  ]) {
+    const result = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({ '/a': page, '/sitemap.xml': response }) });
+    assert.deepEqual(result.sitemap, { usableSource: null, inclusionSource: null });
+  }
+  const calls = [];
+  let sitemapSignal;
+  const bounded = await retrieve('https://example.com/a', { observeSitemap: true, timeoutMs: 60, egress: {
+    fetch(url, options) {
+      calls.push(url);
+      if (url.endsWith('/robots.txt')) return new Response(null, { status: 404 });
+      if (url.endsWith('/sitemap.xml')) {
+        sitemapSignal = options.signal;
+        return new Promise(() => {});
+      }
+      return page();
+    },
+  } });
+  assert.equal(bounded.status, 200);
+  assert.deepEqual(bounded.sitemap, { usableSource: null, inclusionSource: null });
+  assert.equal(sitemapSignal?.aborted, true);
+  calls.length = 0;
+  const result = await retrieve('https://example.com/a', { egress: binding({ '/a': page }, calls) });
+  assert.equal(result.sitemap, undefined);
+  assert.equal(calls.length, 2);
 });

@@ -1,6 +1,7 @@
 // The supplied egress is the network security boundary. This module never falls
 // back to global fetch and validates every URL before handing it to that boundary.
 import { robotsPathMatch, ROBOTS_MATCH_MAX_WORK } from './robots-path.mjs';
+import { parseSitemap } from './sitemap-parser.mjs';
 import crawlers from '../config/crawlers.v1.json' with { type: 'json' };
 
 const scoredBots = Object.values(crawlers.scoring).flatMap(group => group.botIds)
@@ -45,7 +46,7 @@ async function withTimeout(promise, signal) {
   finally { signal.removeEventListener('abort', onAbort); }
 }
 
-async function boundedResponse(response, limit, signal) {
+async function boundedResponse(response, limit, signal, { fatal = false } = {}) {
   const length = response.headers.get('content-length');
   if (length && /^\d+$/.test(length) && Number(length) > limit) { discard(response); throw failure('too_large', 'Response exceeds byte limit'); }
   if (!response.body) return '';
@@ -67,7 +68,7 @@ async function boundedResponse(response, limit, signal) {
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return new TextDecoder().decode(bytes);
+  return new TextDecoder('utf-8', { fatal }).decode(bytes);
 }
 
 // Unknown directives and ambiguous target encodings still fail closed.
@@ -94,6 +95,12 @@ function parseRobots(text) {
   }
   if (agents.length) groups.push({ agents, rules });
   return groups;
+}
+
+function sitemapDeclarations(text) {
+  return text.split(/\r?\n/).map(line => line.trim())
+    .filter(line => /^sitemap\s*:/i.test(line))
+    .slice(0, 8).map(line => line.slice(line.indexOf(':') + 1).split('#', 1)[0].trim());
 }
 
 function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 0 }) {
@@ -128,6 +135,79 @@ function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 
   return match?.key !== 'disallow';
 }
 
+// Inspection uses the final page origin and its already retrieved robots policy.
+// Missing, partial, ambiguous, or exhausted inspection never asserts absence.
+async function inspectSitemap({ url, policy, declarations, fetchBounded, signal }) {
+  const optional = new AbortController();
+  const abort = () => optional.abort();
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) optional.abort();
+  const timer = setTimeout(abort, 750);
+  const result = { usableSource: null, inclusionSource: null };
+  const seen = new Set();
+  let requests = 0;
+  const robotsBudget = { work: 0 };
+  function candidate(value) {
+    try {
+      if (!/^https?:\/\//i.test(value) || value.includes('#')) return null;
+      const checked = checkedUrl(value);
+      return checked.origin === url.origin ? checked : null;
+    } catch { return null; }
+  }
+  async function read(value) {
+    const target = candidate(value);
+    if (!target || requests >= 2 || optional.signal.aborted) return null;
+    const location = target.href;
+    if (seen.has(location)) return null;
+    seen.add(location);
+    try {
+      if (policy && !robotsAllowed(policy, target, 'AEOAuditBot', robotsBudget)) return null;
+      requests++;
+      const response = await fetchBounded(target, optional.signal);
+      const type = response.headers.get('content-type') || '';
+      if (response.status !== 200 || !/^(?:application\/xml|text\/(?:xml|plain))(?:\s*;|\s*$)/i.test(type)) {
+        discard(response);
+        return null;
+      }
+      const text = await boundedResponse(response, 32 * 1024, optional.signal, { fatal: true });
+      const parsed = parseSitemap(text);
+      return parsed ? { location, ...parsed } : null;
+    } catch { return null; }
+  }
+  function usableUrlset(doc) {
+    const directory = new URL('.', doc.location).pathname;
+    return doc.kind === 'urlset' && doc.locations.length > 0 &&
+      doc.locations.every(location => candidate(location)?.pathname.startsWith(directory));
+  }
+  function hasPage(doc) {
+    return doc.locations.some(location => candidate(location)?.href === url.href);
+  }
+  try {
+    const starts = declarations.length ? declarations : [new URL('/sitemap.xml', url).toString()];
+    for (const start of starts) {
+      const doc = await read(start);
+      if (!doc) continue;
+      if (usableUrlset(doc)) {
+        result.usableSource = doc.location;
+        if (hasPage(doc)) result.inclusionSource = doc.location;
+      } else if (doc.kind === 'sitemapindex') {
+        const indexDirectory = new URL('.', doc.location).pathname;
+        const firstChild = doc.locations.find(location => candidate(location)?.pathname.startsWith(indexDirectory));
+        const child = firstChild && await read(firstChild);
+        if (child && usableUrlset(child)) {
+          if (doc.locations.length === 1) result.usableSource = child.location;
+          if (hasPage(child)) result.inclusionSource = child.location;
+        }
+      }
+      if (requests >= 2 || (result.usableSource && result.inclusionSource)) break;
+    }
+    return result;
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener('abort', abort);
+  }
+}
+
 export async function retrieve(input, options = {}) {
   const { egress, maxBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
   if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
@@ -137,24 +217,25 @@ export async function retrieve(input, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const budget = { work: 0 };
-  const fetchBounded = async target => {
+  const fetchBounded = async (target, signal = controller.signal) => {
     try {
-      const pending = Promise.resolve(egress.fetch(target.toString(), { method: 'GET', redirect: 'manual', headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' }, signal: controller.signal }));
-      pending.then(response => { if (controller.signal.aborted) discard(response); }, () => {});
-      return await withTimeout(pending, controller.signal);
-    } catch (error) { if (controller.signal.aborted) throw failure('timeout', 'Retrieval timed out'); throw failure('fetch_failed', 'Egress request failed'); }
+      const pending = Promise.resolve(egress.fetch(target.toString(), { method: 'GET', redirect: 'manual', headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' }, signal }));
+      pending.then(response => { if (signal.aborted) discard(response); }, () => {});
+      return await withTimeout(pending, signal);
+    } catch (error) { if (signal.aborted) throw failure('timeout', 'Retrieval timed out'); throw failure('fetch_failed', 'Egress request failed'); }
   };
   try {
     for (let redirects = 0; ; redirects++) {
       const robotsUrl = new URL('/robots.txt', url);
       const robotsResponse = await fetchBounded(robotsUrl);
-      let policy = null;
+      let policy = null, declarations = [];
       const missingPolicy = robotsResponse.status === 404 || robotsResponse.status === 410;
       if (missingPolicy) discard(robotsResponse);
       else {
         if (robotsResponse.status !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) { discard(robotsResponse); throw failure('robots_unknown', 'Robots policy unavailable'); }
         try { policy = await boundedResponse(robotsResponse, maxRobotsBytes, controller.signal); }
         catch (error) { if (error.code === 'timeout') throw error; throw failure('robots_unknown', 'Robots policy unavailable'); }
+        if (options.observeSitemap === true) declarations = sitemapDeclarations(policy);
         policy = parseRobots(policy);
         if (!robotsAllowed(policy, url, 'AEOAuditBot', budget)) throw failure('robots_denied', 'Robots policy does not permit retrieval');
       }
@@ -181,7 +262,12 @@ export async function retrieve(input, options = {}) {
         }
         return { botId: bot.id, status };
       });
-      return { url: url.toString(), status: response.status, contentType, body, robots: 'allowed', crawlerPolicy: { version: crawlers.version, url: robotsUrl.toString(), httpStatus: robotsResponse.status, observations } };
+      const snapshot = { url: url.toString(), status: response.status, contentType, body, robots: 'allowed', crawlerPolicy: { version: crawlers.version, url: robotsUrl.toString(), httpStatus: robotsResponse.status, observations } };
+      if (options.observeSitemap === true) {
+        try { snapshot.sitemap = await inspectSitemap({ url, policy, declarations, fetchBounded, signal: controller.signal }); }
+        catch { /* Optional evidence must not fail a completed page retrieval. */ }
+      }
+      return snapshot;
     }
   } finally { clearTimeout(timer); }
 }
