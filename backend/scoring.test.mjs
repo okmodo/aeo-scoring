@@ -197,3 +197,84 @@ test('sitemap scoring distinguishes confirmed usability and exact inclusion from
   assert.deepEqual(checks(run({ usableSource: map, inclusionSource: null })).map(item => item.status), ['measured', 'not_measured']);
   assert.deepEqual(checks(run(null)).map(item => item.status), ['not_measured', 'not_measured']);
 });
+
+test('scores an explicitly selected ProductGroup variant and its own offer and identifiers', () => {
+  const group = {
+    '@context': 'https://schema.org', '@type': 'ProductGroup', name: 'Example shoe',
+    variesBy: ['https://schema.org/color', 'https://schema.org/size'],
+    hasVariant: [
+      { '@type': 'Product', url: snapshot.url, name: 'Blue shoe', color: 'Blue', size: '9',
+        sku: 'BLUE-9', brand: 'Example',
+        offers: { '@type': 'Offer', url: snapshot.url, price: '49.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock' } },
+      { '@type': 'Product', url: 'https://shop.example/item-red', name: 'Red shoe', color: 'Red', size: '10',
+        offers: { '@type': 'Offer', url: 'https://shop.example/item-red', price: '75.00', priceCurrency: 'EUR', availability: 'https://schema.org/OutOfStock' } },
+    ],
+  };
+  const run = record => scoreAudit(snapshot, { jsonLd: [JSON.stringify(record)], coverage: { jsonLdTruncated: false } });
+  const check = (report, id) => report.criteria.flatMap(c => c.subchecks).find(s => s.id === id);
+  const report = run(group);
+  assert.equal(report.score, null);
+  const variants = check(report, 'S2.variants');
+  assert.equal(variants.status, 'measured');
+  assert.equal(variants.fraction, 1);
+  assert.ok(variants.evidenceIds.length > 0);
+  const evidence = report.evidence.find(item => item.id === variants.evidenceIds[0]);
+  assert.equal(evidence.url, snapshot.url);
+  assert.equal(evidence.kind, 'derived_observation');
+  assert.match(evidence.location, /application\/ld\+json/);
+  assert.equal(check(report, 'S2.offer').fraction, 1);
+  assert.equal(check(report, 'S2.identifiers').fraction, 0.75);
+  assert.equal(report.currency, 'USD');
+
+  // The sibling's availability and identifiers cannot fill gaps in the selected variant.
+  const selectedIncomplete = structuredClone(group);
+  delete selectedIncomplete.hasVariant[0].offers.availability;
+  delete selectedIncomplete.hasVariant[0].brand;
+  delete selectedIncomplete.hasVariant[0].sku;
+  selectedIncomplete.hasVariant[1].brand = 'Other';
+  selectedIncomplete.hasVariant[1].sku = 'RED-10';
+  const partial = run(selectedIncomplete);
+  assert.equal(check(partial, 'S2.offer').fraction, 0.5);
+  assert.equal(check(partial, 'S2.variants').fraction, 1);
+  assert.equal(check(partial, 'S2.identifiers').status, 'not_measured');
+  assert.equal(partial.currency, 'USD');
+});
+
+test('ambiguous ProductGroups do not establish variants or selected fields', () => {
+  const group = {
+    '@context': 'https://schema.org', '@type': 'ProductGroup', name: 'Example shoe',
+    variesBy: ['https://schema.org/color', 'https://schema.org/size'],
+    hasVariant: [
+      { '@type': 'Product', url: snapshot.url, name: 'Blue shoe', color: 'Blue', size: '9', sku: 'BLUE-9', brand: 'Example',
+        offers: { '@type': 'Offer', url: snapshot.url, price: '49.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock' } },
+      { '@type': 'Product', url: 'https://shop.example/item-red', name: 'Red shoe', color: 'Red', size: '10',
+        offers: { '@type': 'Offer', url: 'https://shop.example/item-red', price: '75.00', priceCurrency: 'EUR', availability: 'https://schema.org/OutOfStock' } },
+    ],
+  };
+  const duplicateUrl = structuredClone(group);
+  duplicateUrl.hasVariant[1].url = snapshot.url;
+  const conflictingOffer = structuredClone(group);
+  conflictingOffer.hasVariant[0].offers.url = 'https://shop.example/item-red';
+  const competingProduct = { '@context': 'https://schema.org', '@type': 'https://schema.org/Product', url: snapshot.url,
+    name: 'Competing shoe', brand: 'Example', sku: 'COMPETING',
+    offers: { '@type': 'Offer', price: '99.00', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } };
+  const aliasedGroup = { '@context': { schema: 'https://schema.org/' }, '@type': 'schema:ProductGroup' };
+  const hiddenCompetitor = { '@context': 'https://schema.org', '@included': [competingProduct] };
+  const cases = [
+    { jsonLd: [JSON.stringify(group), JSON.stringify(hiddenCompetitor)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(group), JSON.stringify(competingProduct)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(group), JSON.stringify(aliasedGroup)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(competingProduct), JSON.stringify(aliasedGroup)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(group), JSON.stringify(group)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(duplicateUrl)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(conflictingOffer)], coverage: { jsonLdTruncated: false } },
+    { jsonLd: [JSON.stringify(group)], coverage: { jsonLdTruncated: true } },
+  ];
+  for (const input of cases) {
+    const result = scoreAudit(snapshot, input);
+    assert.equal(result.score, null);
+    for (const id of ['S2.variants', 'S2.offer', 'S2.identifiers']) {
+      assert.equal(result.criteria.flatMap(c => c.subchecks).find(s => s.id === id).status, 'not_measured', id);
+    }
+  }
+});

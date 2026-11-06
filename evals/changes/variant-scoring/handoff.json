@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Expand deterministic selected-variant scoring",
+  "state": "Bounded inline ProductGroup evidence can score S2 variants and selected-member offer and identifier fields.",
+  "decisions": ["Use exact final URL association, explicit dimensions and verified nested offers.", "Keep unsupported or ambiguous relations unmeasured."],
+  "constraints": ["No frontend, Cloudflare service changes, extra requests or paid dependencies."],
+  "completed": ["Added selected-variant scoring, evidence, cache namespace change and regression tests."],
+  "remaining": ["Validate broader merchant formats and hosted CPU separately.", "Expand independently measured content coverage."],
+  "resumeCommands": ["npm run evaluate -- --change variant-scoring --base origin/main", "npm run ci:gate -- origin/main"]
+}

@@ -3,6 +3,7 @@ import rubric from '../config/rubric.v1.json' with { type: 'json' };
 import categories from '../config/categories.v1.1.json' with { type: 'json' };
 import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
 import { scoreProductFields } from './product-fields.mjs';
+import { selectProductVariant } from './product-variants.mjs';
 import { scoreProductLabels } from './product-labels.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
 
@@ -26,6 +27,7 @@ const PRODUCT_FIXES = {
   },
 };
 
+const schemaType = (types, type) => types.includes(type) || types.includes('https://schema.org/' + type) || types.includes('http://schema.org/' + type);
 const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'http://schema.org', 'http://schema.org/']);
 
 /** Score supported observations from a bounded retrieved document. */
@@ -33,6 +35,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
   const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
   const evidence = [];
   let productName = null;
+  let variant = null;
   const fixes = [];
   let currency = null;
   const sourceUrl = snapshot?.url;
@@ -43,25 +46,46 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     evidence.push(item);
     return item.id;
   };
+  const scoreFields = (record, addFieldEvidence) => {
+    for (const [checkId, field] of Object.entries(scoreProductFields(record, sourceUrl))) {
+      const evidenceId = addFieldEvidence(field.excerpt);
+      checks[checkId] = { status: 'measured', fraction: field.fraction, evidence: evidenceId };
+      if (field.currency) currency = field.currency;
+      if (field.fraction < 1) fixes.push({
+        ...PRODUCT_FIXES[checkId], owner: 'Web developer', checkIds: [checkId],
+        evidenceIds: [evidenceId], recoverablePoints: maxPoints[checkId] * (1 - field.fraction),
+      });
+    }
+  };
   // A Product JSON-LD record proves a parseable entity, but its association with
   // the selected product is ambiguous without additional page context.
   const scripts = Array.isArray(extracted?.jsonLd) ? extracted.jsonLd : [];
   const products = [];
+  const groups = [];
   let scriptsComplete = Array.isArray(extracted?.jsonLd) && scripts.length < 100 && extracted?.coverage?.jsonLdTruncated === false;
   for (const [index, script] of scripts.entries()) {
     if (typeof script !== 'string' || script.length >= 8192) { scriptsComplete = false; continue; }
-    let records, context;
+    let records, context, graphContainer;
     try {
       const parsed = JSON.parse(script);
       context = parsed?.['@context'];
+      graphContainer = Array.isArray(parsed?.['@graph']) ? parsed : null;
+      if (parsed && Object.hasOwn(parsed, '@context') && !SCHEMA_CONTEXTS.has(context)) scriptsComplete = false;
       records = Array.isArray(parsed) ? parsed : [parsed, ...(Array.isArray(parsed?.['@graph']) ? parsed['@graph'] : [])];
     } catch { scriptsComplete = false; continue; }
     for (const record of records) {
-      if (record && typeof record === 'object' && [record['@type']].flat().includes('Product')) {
-        const effectiveContext = Object.hasOwn(record, '@context') ? record['@context'] : context;
-        if (SCHEMA_CONTEXTS.has(effectiveContext)) products.push({ record, index });
-        else scriptsComplete = false;
-      }
+      if (!record || typeof record !== 'object') continue;
+      if (['@included', '@nest', '@reverse'].some(key => Object.hasOwn(record, key)) ||
+          (record !== graphContainer && Object.hasOwn(record, '@graph'))) scriptsComplete = false;
+      const types = [record['@type']].flat();
+      const ownsContext = Object.hasOwn(record, '@context');
+      const effectiveContext = ownsContext ? record['@context'] : context;
+      if (ownsContext && !SCHEMA_CONTEXTS.has(effectiveContext)) scriptsComplete = false;
+      const isGroup = schemaType(types, 'ProductGroup');
+      if (!isGroup && !schemaType(types, 'Product')) continue;
+      if (!SCHEMA_CONTEXTS.has(effectiveContext)) { scriptsComplete = false; continue; }
+      if (isGroup) groups.push({ record, index });
+      else products.push({ record, index });
     }
   }
   if (products.length && typeof sourceUrl === 'string' && typeof snapshot?.observedAt === 'string') {
@@ -71,7 +95,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     checks['S2.entity'] = { status: 'measured', fraction: 0.5, evidence: id };
     // Score properties only for an explicitly associated schema.org Product.
     // Non-string and short values are ambiguous rather than confirmed omissions.
-    if (scriptsComplete && products.length === 1) {
+    if (scriptsComplete && products.length === 1 && groups.length === 0) {
       const { record, index } = products[0];
       let associated = false;
       try {
@@ -110,16 +134,20 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
           const evidenceId = addEvidence(sourceUrl, label.location, label.excerpt);
           checks[checkId] = { status: 'measured', fraction: label.fraction, evidence: evidenceId };
         }
-        for (const [checkId, field] of Object.entries(scoreProductFields(record, sourceUrl))) {
-          const evidenceId = addProductEvidence(index, field.excerpt);
-          checks[checkId] = { status: 'measured', fraction: field.fraction, evidence: evidenceId };
-          if (field.currency) currency = field.currency;
-          if (field.fraction < 1) fixes.push({
-            ...PRODUCT_FIXES[checkId], owner: 'Web developer', checkIds: [checkId],
-            evidenceIds: [evidenceId], recoverablePoints: maxPoints[checkId] * (1 - field.fraction),
-          });
-        }
+        scoreFields(record, excerpt => addProductEvidence(index, excerpt));
       }
+    }
+  }
+  if (scriptsComplete && groups.length === 1 && products.length === 0 &&
+      typeof sourceUrl === 'string' && typeof observedAt === 'string') {
+    const { record, index } = groups[0];
+    const selected = selectProductVariant(record, sourceUrl);
+    if (selected) {
+      const location = `script[type="application/ld+json"] at extracted index ${index}; ProductGroup hasVariant[${selected.selectedIndex}]`;
+      const variantEvidence = addEvidence(sourceUrl, location, selected.evidence.excerpt);
+      checks['S2.variants'] = { status: 'measured', fraction: selected.evidence.fraction, evidence: variantEvidence };
+      variant = selected.variant;
+      scoreFields(selected.record, excerpt => addEvidence(sourceUrl, location, excerpt));
     }
   }
   if (checks['S2.entity'].fraction === 0.5) fixes.push({
@@ -192,7 +220,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     } : null,
     earnedPoints: reference.earnedPoints, rubricVersion: rubric.version,
     category: categories.categories.some(c => c.id === category) ? category : null,
-    productName, variant: null, market: null, currency,
+    productName, variant, market: null, currency,
     criteria, evidence, fixes,
     coverage: { measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
