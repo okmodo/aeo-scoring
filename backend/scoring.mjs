@@ -63,7 +63,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
   const scripts = Array.isArray(extracted?.jsonLd) ? extracted.jsonLd : [];
   const products = [];
   const groups = [];
-  let scriptsComplete = Array.isArray(extracted?.jsonLd) && scripts.length < 100 && extracted?.coverage?.jsonLdTruncated === false;
+  let scriptsComplete = !snapshot?.htmlLimited && Array.isArray(extracted?.jsonLd) && scripts.length < 100 && extracted?.coverage?.jsonLdTruncated === false;
   for (const [index, script] of scripts.entries()) {
     if (typeof script !== 'string' || script.length >= 8192) { scriptsComplete = false; continue; }
     let records, context, graphContainer;
@@ -92,7 +92,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
   if (products.length && typeof sourceUrl === 'string' && typeof snapshot?.observedAt === 'string') {
     const addProductEvidence = (index, excerpt) =>
       addEvidence(sourceUrl, `script[type="application/ld+json"] at extracted index ${index}`, excerpt);
-    const id = addProductEvidence(products[0].index, 'Product');
+    const id = addProductEvidence(products[0].index, scriptsComplete ? 'Product' : 'Observed a schema.org Product candidate in retained JSON-LD.');
     checks['S2.entity'] = { status: 'measured', fraction: 0.5, evidence: id };
     // Score properties only for an explicitly associated schema.org Product.
     // Non-string and short values are ambiguous rather than confirmed omissions.
@@ -151,7 +151,11 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
       scoreFields(selected.record, excerpt => addEvidence(sourceUrl, location, excerpt));
     }
   }
-  if (checks['S2.entity'].fraction === 0.5) fixes.push({
+  if (!scriptsComplete && groups.length && typeof sourceUrl === 'string' && typeof observedAt === 'string') {
+    addEvidence(sourceUrl, `script[type="application/ld+json"] at extracted index ${groups[0].index}`,
+      'Observed a schema.org ProductGroup candidate in retained JSON-LD.');
+  }
+  if (scriptsComplete && checks['S2.entity'].fraction === 0.5) fixes.push({
     id: 'verify-product-association', title: 'Verify the structured product matches the audited page',
     owner: 'Web developer', checkIds: ['S2.entity'], evidenceIds: ['e1'], recoverablePoints: null,
     condition: 'Recovery cannot be calculated until the association is assessed.',
@@ -219,8 +223,8 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
   }));
   const allChecks = criteria.flatMap(c => c.subchecks);
   return {
-    status: reference.status,
-    score: reference.status === 'complete' ? {
+    status: snapshot?.htmlLimited ? 'incomplete' : reference.status,
+    score: !snapshot?.htmlLimited && reference.status === 'complete' ? {
       total: reference.finalScore,
       structure: criteria.filter(c => c.pillar === 'structure').reduce((sum, c) => sum + c.points, 0),
       content: criteria.filter(c => c.pillar === 'content').reduce((sum, c) => sum + c.points, 0)
@@ -233,6 +237,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
       total: allChecks.length, category: categories.categories.some(c => c.id === category) ? category : null,
       extraction: extracted?.coverage ?? null,
-      limitations: [...(extracted?.limitations ?? []), 'Semantic assessment, rendering, and unobserved evidence are not scored.'] }
+      limitations: [...(extracted?.limitations ?? []),
+        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), 'Semantic assessment, rendering, and unobserved evidence are not scored.'] }
   };
 }

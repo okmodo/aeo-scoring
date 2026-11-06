@@ -7,7 +7,7 @@ import crawlers from '../config/crawlers.v1.json' with { type: 'json' };
 const scoredBots = Object.values(crawlers.scoring).flatMap(group => group.botIds)
   .map(id => crawlers.bots.find(bot => bot.id === id));
 
-const DEFAULTS = { maxBytes: 512 * 1024, maxRobotsBytes: 64 * 1024, timeoutMs: 8000, maxRedirects: 3 };
+const DEFAULTS = { maxBytes: 512 * 1024, maxStreamBytes: 1024 * 1024, maxRobotsBytes: 64 * 1024, timeoutMs: 8000, maxRedirects: 3 };
 
 function failure(code, message) {
   return Object.assign(new Error(message), { code });
@@ -69,6 +69,52 @@ async function boundedResponse(response, limit, signal, { fatal = false } = {}) 
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return new TextDecoder('utf-8', { fatal }).decode(bytes);
+}
+
+// The consumer receives only a bounded prefix, including when the deadline
+// expires. Reading one extra chunk distinguishes an exact limit from truncation.
+function streamingBody(response, limit, signal, snapshot) {
+  if (!response.body) return { body: new ReadableStream({ start(controller) { controller.close(); } }), cancel() {} };
+  const reader = response.body.getReader();
+  let size = 0, finished = false;
+  const cancel = () => { Promise.resolve(reader.cancel()).catch(() => {}); };
+  const body = new ReadableStream({
+    async pull(controller) {
+      if (finished) return;
+      try {
+        const part = await withTimeout(reader.read(), signal);
+        if (part.done) { finished = true; controller.close(); return; }
+        const remaining = limit - size;
+        if (part.value.byteLength > remaining) {
+          if (remaining) controller.enqueue(part.value.subarray(0, remaining));
+          size += remaining;
+          snapshot.htmlLimited = 'bytes';
+          finished = true; cancel(); controller.close(); return;
+        }
+        size += part.value.byteLength;
+        if (part.value.byteLength) controller.enqueue(part.value);
+      } catch (error) {
+        finished = true; cancel();
+        if (error.code === 'timeout') { snapshot.htmlLimited = 'time'; controller.close(); }
+        else controller.error(failure('fetch_failed', 'Page response failed'));
+      }
+    },
+    cancel() { finished = true; cancel(); },
+  });
+  return { body, cancel };
+}
+
+async function withTimeoutConsumer(promise, signal, snapshot) {
+  // The stream itself turns a deadline into a clean EOF. Give its consumer a
+  // turn to finish parsing that prefix, but do not allow an unrelated callback
+  // to keep retrieval alive indefinitely.
+  let timer, abort;
+  const deadline = new Promise((_, reject) => {
+    abort = () => { timer = setTimeout(() => reject(failure('timeout', 'HTML consumer timed out')), 100); };
+    if (signal.aborted) abort(); else signal.addEventListener('abort', abort, { once: true });
+  });
+  try { return await Promise.race([promise, deadline]); }
+  finally { clearTimeout(timer); signal.removeEventListener('abort', abort); }
 }
 
 // Unknown directives and ambiguous target encodings still fail closed.
@@ -244,9 +290,9 @@ async function inspectGuides({ url, policy, fetchBounded, signal }) {
 }
 
 export async function retrieve(input, options = {}) {
-  const { egress, maxBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
+  const { egress, maxBytes, maxStreamBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
   if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
-  for (const n of [maxBytes, maxRobotsBytes, timeoutMs]) if (!Number.isSafeInteger(n) || n < 1) throw failure('invalid_limits', 'Limits must be positive integers');
+  for (const n of [maxBytes, maxStreamBytes, maxRobotsBytes, timeoutMs]) if (!Number.isSafeInteger(n) || n < 1) throw failure('invalid_limits', 'Limits must be positive integers');
   if (!Number.isSafeInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 10) throw failure('invalid_limits', 'Invalid redirect limit');
   let url = checkedUrl(input);
   const controller = new AbortController();
@@ -287,7 +333,7 @@ export async function retrieve(input, options = {}) {
       if (!response.ok) { discard(response); throw failure('http_error', `Page returned HTTP ${response.status}`); }
       const contentType = response.headers.get('content-type') || '';
       if (!/^text\/html(?:\s*;|\s*$)/i.test(contentType)) { discard(response); throw failure('unsupported_content', 'Page is not HTML'); }
-      const body = await boundedResponse(response, maxBytes, controller.signal);
+      const body = options.consumeHtml ? null : await boundedResponse(response, maxBytes, controller.signal);
       const observations = scoredBots.map(bot => {
         let status = 'not_measured';
         if (missingPolicy && bot.robots.missingFilePolicy === 'allow') status = 'allowed';
@@ -298,6 +344,14 @@ export async function retrieve(input, options = {}) {
         return { botId: bot.id, status };
       });
       const snapshot = { url: url.toString(), status: response.status, contentType, body, robots: 'allowed', crawlerPolicy: { version: crawlers.version, url: robotsUrl.toString(), httpStatus: robotsResponse.status, observations } };
+      if (options.consumeHtml) {
+        snapshot.htmlLimited = null;
+        const streaming = streamingBody(response, maxStreamBytes, controller.signal, snapshot);
+        snapshot.body = streaming.body;
+        try { snapshot.extracted = await withTimeoutConsumer(Promise.resolve().then(() => options.consumeHtml(snapshot)), controller.signal, snapshot); }
+        finally { streaming.cancel(); }
+        delete snapshot.body;
+      }
       if (options.observeSitemap === true) {
         try { snapshot.sitemap = await inspectSitemap({ url, policy, declarations, fetchBounded, signal: controller.signal }); }
         catch { /* Optional evidence must not fail a completed page retrieval. */ }
@@ -373,18 +427,32 @@ export async function extract(snapshot, options = {}) {
     if (rel.includes('canonical') && !result.canonical) result.canonical = (element.getAttribute('href') || '').slice(0, maxText);
   } });
   for (const level of [1, 2, 3, 4, 5, 6]) rewriter.on(`h${level}`, textHandler(value => { if (value && result.headings.length < maxItems) result.headings.push({ level, text: value }); }));
-  let jsonLdValue = '', jsonLdOverlong = false;
-  rewriter.on('script[type="application/ld+json"]', { text(chunk) {
-    if (jsonLdValue.length + chunk.text.length > maxText) jsonLdOverlong = true;
-    if (!jsonLdOverlong) jsonLdValue += chunk.text;
-    if (chunk.lastInTextNode) {
-      if (jsonLdOverlong || (jsonLdValue.trim() && result.jsonLd.length >= maxItems)) result.coverage.jsonLdTruncated = true;
-      else if (jsonLdValue.trim()) result.jsonLd.push(jsonLdValue.trim());
-      jsonLdValue = ''; jsonLdOverlong = false;
-    }
-  } });
+  let jsonLdValue = '', jsonLdOverlong = false, jsonLdEnded = false;
+  const streaming = Object.hasOwn(snapshot, 'htmlLimited');
+  rewriter.on('script[type="application/ld+json"]', {
+    element(element) {
+      jsonLdValue = ''; jsonLdOverlong = false; jsonLdEnded = false;
+      if (typeof element.onEndTag === 'function') element.onEndTag(() => {
+        jsonLdEnded = true;
+        if (jsonLdOverlong || (jsonLdValue.trim() && result.jsonLd.length >= maxItems)) result.coverage.jsonLdTruncated = true;
+        else if (jsonLdValue.trim()) result.jsonLd.push(jsonLdValue.trim());
+        jsonLdValue = ''; jsonLdOverlong = false;
+      });
+    },
+    text(chunk) {
+      if (jsonLdValue.length + chunk.text.length > maxText) jsonLdOverlong = true;
+      if (!jsonLdOverlong) jsonLdValue += chunk.text;
+      // Legacy test doubles do not expose element/end-tag events.
+      if (!streaming && chunk.lastInTextNode && !jsonLdEnded) {
+        if (jsonLdOverlong || (jsonLdValue.trim() && result.jsonLd.length >= maxItems)) result.coverage.jsonLdTruncated = true;
+        else if (jsonLdValue.trim()) result.jsonLd.push(jsonLdValue.trim());
+        jsonLdValue = ''; jsonLdOverlong = false;
+      }
+    },
+  });
   const transformed = rewriter.transform(new Response(snapshot.body, { headers: { 'content-type': 'text/html' } }));
   if (transformed.body) { const reader = transformed.body.getReader(); while (!(await reader.read()).done) { /* drain without buffering output */ } }
+  if (snapshot.htmlLimited) result.coverage.jsonLdTruncated = true;
   for (const [key, state] of Object.entries(identity)) {
     const value = state.value;
     if (state.count === 1 && value && value.ended && !value.invalid && value.value.trim() &&

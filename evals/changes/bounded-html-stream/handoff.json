@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Stream bounded audit HTML and verify incomplete reporting for truncated inputs.",
+  "state": "Isolated branch codex/bounded-html-stream from origin/main 264623b. This handoff precedes hosted CI and the dedicated Free Worker probe.",
+  "decisions": ["Use a 1 MiB streaming byte budget and the existing shared retrieval deadline.", "Keep observed evidence when inspection stops, withhold the final score, and avoid negative or uniqueness claims based on unseen HTML."],
+  "constraints": ["Keep the existing public Worker and Pages preview untouched. The authenticated, expiring probe uses fixed synthetic inputs and no remote egress or storage.", "Evaluation traces cover the named offline commands. They do not capture the whole development session or runtime resource measurements."],
+  "completed": ["Committed the evaluation plan before implementing. Added the bounded retrieval path, incomplete scoring, regression cases and isolated probe source."],
+  "remaining": ["Pass hosted CI and independent review, run the Free-tier probe separately, and remove the probe Worker after recording observed results.", "A rollout to the public audit Worker is separate from this validation."],
+  "resumeCommands": ["npm ci --ignore-scripts --no-audit --no-fund", "npm run evaluate -- --change bounded-html-stream --base origin/main", "npm run ci:gate -- origin/main", "npm ci --ignore-scripts --no-audit --no-fund --prefix backend"]
+}

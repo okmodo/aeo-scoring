@@ -21,10 +21,13 @@ class Rewriter {
   on(selector, handler) { this.handlers.set(selector, handler); return this; }
   transform(response) {
     this.handlers.get('body p').text({ text: 'Road running shoe.', lastInTextNode: true });
+    let endScript;
+    this.handlers.get('script[type="application/ld+json"]').element({onEndTag: callback => {endScript = callback;}});
     this.handlers.get('script[type="application/ld+json"]').text({
       text: JSON.stringify({'@context':'https://schema.org','@type':'Product',url:pending.submittedUrl,name:'Example Road Shoe',description:'A running shoe for everyday training.',image:'https://shop.example/shoe.png'}),
       lastInTextNode: true,
     });
+    endScript();
     return response;
   }
 }
@@ -130,4 +133,31 @@ test('full synthetic report reconciles its fixed scales, evidence and conditiona
   }
   const affected = fixes.flatMap(f => f.checkIds);
   assert.equal(new Set(affected).size, affected.length);
+});
+
+test('a limited stream returns an incomplete report even when no HTML is usable', async () => {
+  for (const htmlLimited of ['bytes', 'time']) {
+    let audit = {...fixtureAudit};
+    let task;
+    let consumed = false;
+    const handle = createAuditService({
+      store: { reserve: async () => ({kind:'created', audit}),
+        finish: async (_id, updates) => {audit = {...audit, ...updates};} },
+      egress: {fetch: async () => assert.fail('injected retrieval')},
+      secret: 'x'.repeat(32), HTMLRewriter: Rewriter, now: () => time + 2000,
+      retrievePage: async (_url, {consumeHtml}) => {
+        const extracted = await consumeHtml({body: new ReadableStream()});
+        consumed = true;
+        return {url: pending.submittedUrl, htmlLimited, extracted,
+          sitemap: {usableSource:'https://shop.example/sitemap.xml'}};
+      },
+      extractPage: async () => ({jsonLd: [], coverage: {usable:false, jsonLdTruncated:false}}),
+    });
+    await handle(post(read('submission-request')), {address, defer: promise => {task = promise;}});
+    await task;
+    assert.equal(consumed, true);
+    assert.equal(audit.status, 'incomplete');
+    assert.equal(audit.report.score, null);
+    assert.equal(audit.report.criteria.find(c => c.id === 'S6').subchecks[0].fraction, 1);
+  }
 });
