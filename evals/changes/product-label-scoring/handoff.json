@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Expand deterministic product label and identity scoring",
+  "state": "Backend scoring can use bounded raw title and main heading evidence.",
+  "decisions": ["Require corroboration against uniquely associated Product markup.", "Require explicit brand and model in the heading for C1 identity, with no deduction for unresolved details."],
+  "constraints": ["No frontend or Cloudflare resource changes. No extra network requests or paid services."],
+  "completed": ["Added label extraction and scoring with regression tests and a new scoring cache namespace."],
+  "remaining": ["Validate representative merchant labels and hosted CPU before rollout.", "Broaden content and applicable category coverage."],
+  "resumeCommands": ["npm run evaluate -- --change product-label-scoring --base origin/main", "npm run ci:gate -- origin/main"]
+}

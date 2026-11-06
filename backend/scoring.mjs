@@ -3,6 +3,7 @@ import rubric from '../config/rubric.v1.json' with { type: 'json' };
 import categories from '../config/categories.v1.1.json' with { type: 'json' };
 import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
 import { scoreProductFields } from './product-fields.mjs';
+import { scoreProductLabels } from './product-labels.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
 
 const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
@@ -105,6 +106,10 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
         });
       }
       if (associated && values.name) {
+        for (const [checkId, label] of Object.entries(scoreProductLabels(record, extracted.labelEvidence))) {
+          const evidenceId = addEvidence(sourceUrl, label.location, label.excerpt);
+          checks[checkId] = { status: 'measured', fraction: label.fraction, evidence: evidenceId };
+        }
         for (const [checkId, field] of Object.entries(scoreProductFields(record, sourceUrl))) {
           const evidenceId = addProductEvidence(index, field.excerpt);
           checks[checkId] = { status: 'measured', fraction: field.fraction, evidence: evidenceId };

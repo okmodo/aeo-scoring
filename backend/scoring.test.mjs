@@ -156,3 +156,30 @@ test('crawler policy grades verified pools independently and keeps unresolved po
   assert.equal(unresolved.coverage.measured, 1);
   assert.equal(run(observations, '0.0.0').coverage.measured, 0);
 });
+
+import './product-labels.test.mjs';
+
+test('scores raw title and explicit brand and model identity only for the uniquely associated Product', () => {
+  const name = 'Example Trail X24P Running Shoe';
+  const product = { '@context': 'https://schema.org', '@type': 'Product', url: snapshot.url, name, model: 'X24P', brand: 'Example' };
+  const run = (record, labelEvidence, jsonLdTruncated = false) => scoreAudit(snapshot, {
+    jsonLd: [JSON.stringify(record)], labelEvidence, coverage: { jsonLdTruncated },
+  });
+  const check = (report, id) => report.criteria.flatMap(c => c.subchecks).find(s => s.id === id);
+  const labels = { title: name, mainH1: name };
+  const report = run(product, labels);
+  assert.equal(report.status, 'incomplete');
+  assert.equal(report.score, null);
+  assert.equal(check(report, 'S4.title').fraction, 1);
+  assert.equal(check(report, 'C1.identity').fraction, 1);
+  for (const id of ['S4.title', 'C1.identity']) {
+    const [evidenceId] = check(report, id).evidenceIds;
+    const evidence = report.evidence.find(item => item.id === evidenceId);
+    assert.equal(evidence.url, snapshot.url);
+    assert.equal(evidence.kind, 'derived_observation');
+    assert.match(evidence.location, /h1/i);
+  }
+  assert.equal(check(run({ ...product, url: 'https://other.example/item' }, labels), 'C1.identity').status, 'not_measured');
+  assert.equal(check(run(product, labels, true), 'S4.title').status, 'not_measured');
+  assert.equal(check(run(product, { title: name, mainH1: 'Another item' }), 'C1.identity').status, 'not_measured');
+});
