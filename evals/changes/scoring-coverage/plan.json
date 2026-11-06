@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "scoring-coverage",
+  "task": "Expand deterministic scoring for structured product fields and documented crawler policies.",
+  "scope": ["backend/**", "docs/**", "evals/changes/scoring-coverage/**"],
+  "nonGoals": ["Frontend, Cloudflare service mutations, paid inference, contract or rubric weight changes, or full rubric coverage"],
+  "outcomes": [
+    {"id":"O1","description":"Score supported Offer and identifier observations only on unambiguous associated Product markup.","verification":"automated","evidence":"Frozen positive, partial and ambiguous cases"},
+    {"id":"O2","description":"Score registered search and AI retrieval crawler access from a verified final robots policy, leaving unknown policy unmeasured.","verification":"automated","evidence":"Frozen crawler policy, mixed access and unknown cases"},
+    {"id":"O3","description":"Retain auditable evidence, conservative recovery and unchanged assessment status rules.","verification":"automated","evidence":"Scoring and service regression tests"}
+  ],
+  "process": [{"id":"P1","description":"Separate branch, independent review and hosted CI. Preserve frontend and all existing services.","verification":"human","evidence":"Git scope, evaluation and review"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse extraction and versioned registry without adding network calls or dependencies.","verification":"human","evidence":"Diff and review"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Scoring coverage does not change workflow, portability or continuation."}
+}
