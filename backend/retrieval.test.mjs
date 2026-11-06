@@ -157,3 +157,38 @@ test('robots wildcard filters respect specificity, end anchors, and reserved esc
     egress: binding({ '/robots.txt': new Response('User-agent: *\n' + ('Disallow: /never*matches\n').repeat(40)) }),
   }), 'robots_unknown');
 });
+
+test('crawler policy uses bot-specific groups for the final redirect path', async () => {
+  const calls = [];
+  const egress = binding({
+    '/robots.txt': new Response('User-agent: *\nAllow: /\nUser-agent: OAI-SearchBot\nDisallow: /final\nUser-agent: GPTBot\nDisallow: /'),
+    '/start': new Response(null, { status: 302, headers: { location: '/final' } }),
+    '/final': page(),
+  }, calls);
+  // The fixture supplies independent robots responses for the two requests.
+  const original = egress.fetch;
+  egress.fetch = async (url, options) => url.endsWith('/robots.txt')
+    ? new Response('User-agent: *\nAllow: /\nUser-agent: OAI-SearchBot\nDisallow: /final\nUser-agent: GPTBot\nDisallow: /')
+    : original(url, options);
+  const result = await retrieve('https://example.com/start', { egress });
+  assert.equal(result.crawlerPolicy.url, 'https://example.com/robots.txt');
+  assert.equal(result.crawlerPolicy.httpStatus, 200);
+  assert.deepEqual(result.crawlerPolicy.observations.map(({ botId, status }) => [botId, status]), [
+    ['googlebot', 'allowed'], ['bingbot', 'allowed'], ['oai-searchbot', 'disallowed'],
+    ['claude-searchbot', 'allowed'], ['perplexitybot', 'allowed'],
+  ]);
+});
+
+test('missing robots only reports documented crawler behavior', async () => {
+  const result = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response(null, { status: 404 }), '/a': page() }) });
+  assert.equal(result.crawlerPolicy.httpStatus, 404);
+  assert.deepEqual(result.crawlerPolicy.observations.map(item => item.status), ['allowed', 'not_measured', 'not_measured', 'not_measured', 'not_measured']);
+});
+
+test('crawler matching shares a bounded work budget and leaves excess observations unmeasured', async () => {
+  const rules = Array.from({ length: 20 }, (_, i) => `Disallow: /${'x'.repeat(100)}${i}`).join('\n');
+  const policy = `User-agent: *\nAllow: /\nUser-agent: Googlebot\n${rules}\nUser-agent: bingbot\n${rules}\nUser-agent: OAI-SearchBot\n${rules}`;
+  const result = await retrieve(`https://example.com/${'a'.repeat(40)}`, { egress: binding({ '/robots.txt': new Response(policy), [`/${'a'.repeat(40)}`]: page() }) });
+  assert.equal(result.crawlerPolicy.observations[0].status, 'allowed');
+  assert.equal(result.crawlerPolicy.observations[1].status, 'not_measured');
+});

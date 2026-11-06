@@ -109,3 +109,50 @@ test('unqualified and unrelated vocabularies do not establish a schema.org Produ
     assert.deepEqual(result.evidence, []);
   }
 });
+
+import './product-fields.test.mjs';
+
+test('associated raw Product offers and identifiers contribute evidence without a final score', () => {
+  const product = {
+    '@context': 'https://schema.org', '@type': 'Product', name: 'Example shoe', url: snapshot.url,
+    offers: { '@type': 'Offer', price: '49.00', priceCurrency: 'USD', availability: 'https://schema.org/InStock' },
+    brand: { '@type': 'Brand', name: 'Example' }, sku: 'EX-1',
+  };
+  const run = (record, coverage = { jsonLdTruncated: false }) =>
+    scoreAudit(snapshot, { jsonLd: [JSON.stringify(record)], coverage });
+  const check = (report, id) => report.criteria.flatMap(c => c.subchecks).find(s => s.id === id);
+  const report = run(product);
+  assert.equal(report.status, 'incomplete');
+  assert.equal(report.score, null);
+  assert.equal(report.currency, 'USD');
+  assert.equal(check(report, 'S2.offer').points, 2);
+  assert.equal(check(report, 'S2.identifiers').points, 1.5);
+  const fix = report.fixes.find(item => item.checkIds.includes('S2.identifiers'));
+  assert.equal(fix.recoverablePoints, 0.5);
+  assert.ok(report.evidence.some(item => item.id === fix.evidenceIds[0] && item.kind === 'derived_observation'));
+  assert.equal(check(run({ ...product, url: 'https://other.example/item' }), 'S2.offer').status, 'not_measured');
+  assert.equal(check(run(product, { jsonLdTruncated: true }), 'S2.identifiers').status, 'not_measured');
+});
+
+test('crawler policy grades verified pools independently and keeps unresolved pools unmeasured', () => {
+  const url = 'https://shop.example/robots.txt';
+  const observations = [
+    { botId: 'googlebot', status: 'allowed' }, { botId: 'bingbot', status: 'disallowed' },
+    { botId: 'oai-searchbot', status: 'allowed' }, { botId: 'claude-searchbot', status: 'allowed' },
+    { botId: 'perplexitybot', status: 'disallowed' }, { botId: 'gptbot', status: 'allowed' },
+  ];
+  const run = (entries, version = '1.0.0') =>
+    scoreAudit({ ...snapshot, crawlerPolicy: { url, version, httpStatus: 200, observations: entries } }, null);
+  const report = run(observations);
+  const [search, retrieval] = report.criteria.find(c => c.id === 'S5').subchecks;
+  assert.equal(search.points, 0.5);
+  assert.equal(retrieval.points, 2 / 3);
+  assert.equal(report.score, null);
+  assert.deepEqual(report.evidence.map(e => e.url), [url, url]);
+  assert.equal(report.fixes[0].recoverablePoints, 0.5 + (1 - 2 / 3));
+  assert.deepEqual(report.fixes[0].checkIds, ['S5.search', 'S5.ai-retrieval']);
+  const unresolved = run([...observations, observations[0]]);
+  assert.equal(unresolved.criteria.find(c => c.id === 'S5').subchecks[0].status, 'not_measured');
+  assert.equal(unresolved.coverage.measured, 1);
+  assert.equal(run(observations, '0.0.0').coverage.measured, 0);
+});

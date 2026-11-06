@@ -1,6 +1,10 @@
 // The supplied egress is the network security boundary. This module never falls
 // back to global fetch and validates every URL before handing it to that boundary.
 import { robotsPathMatch, ROBOTS_MATCH_MAX_WORK } from './robots-path.mjs';
+import crawlers from '../config/crawlers.v1.json' with { type: 'json' };
+
+const scoredBots = Object.values(crawlers.scoring).flatMap(group => group.botIds)
+  .map(id => crawlers.bots.find(bot => bot.id === id));
 
 const DEFAULTS = { maxBytes: 512 * 1024, maxRobotsBytes: 64 * 1024, timeoutMs: 8000, maxRedirects: 3 };
 
@@ -67,7 +71,7 @@ async function boundedResponse(response, limit, signal) {
 }
 
 // Unknown directives and ambiguous target encodings still fail closed.
-function robotsAllowed(text, url) {
+function parseRobots(text) {
   let agents = [], rules = [], inRules = false, groups = [];
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.replace(/#.*/, '').trim();
@@ -89,7 +93,11 @@ function robotsAllowed(text, url) {
     }
   }
   if (agents.length) groups.push({ agents, rules });
-  const specific = groups.filter(group => group.agents.some(agent => agent !== '*' && agent === 'aeoauditbot'));
+  return groups;
+}
+
+function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 0 }) {
+  const specific = groups.filter(group => group.agents.some(agent => agent !== '*' && agent === userAgent.toLowerCase()));
   const applicable = specific.length ? specific : groups.filter(group => group.agents.includes('*'));
   function decodeUnreserved(value, isTarget) {
     if (isTarget && /%(?![0-9a-f]{2})/i.test(value)) throw failure('robots_unknown', 'Ambiguous URL encoding');
@@ -103,7 +111,6 @@ function robotsAllowed(text, url) {
   const rawPath = url.pathname + url.search;
   const path = decodeUnreserved(rawPath, true);
   let match = null;
-  let work = 0;
   for (const group of applicable) for (const rule of group.rules) {
     const value = decodeUnreserved(rule.value, false);
     // No accepted target retains a percent escape. A rule with a literal percent
@@ -112,8 +119,8 @@ function robotsAllowed(text, url) {
       if (rawPath.includes('%')) throw failure('robots_unknown', 'Ambiguous escaped rule and target');
       continue;
     }
-    work += (value.length + 1) * (path.length + 1);
-    if (work > ROBOTS_MATCH_MAX_WORK) throw failure('robots_unknown', 'Robots path matching budget exceeded');
+    budget.work += (value.length + 1) * (path.length + 1);
+    if (budget.work > ROBOTS_MATCH_MAX_WORK) throw failure('robots_unknown', 'Robots path matching budget exceeded');
     const { matches, specificity } = robotsPathMatch(path, value);
     if (matches && (!match || specificity > match.specificity ||
         (specificity === match.specificity && rule.key === 'allow'))) match = { key: rule.key, specificity };
@@ -129,6 +136,7 @@ export async function retrieve(input, options = {}) {
   let url = checkedUrl(input);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const budget = { work: 0 };
   const fetchBounded = async target => {
     try {
       const pending = Promise.resolve(egress.fetch(target.toString(), { method: 'GET', redirect: 'manual', headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' }, signal: controller.signal }));
@@ -140,13 +148,15 @@ export async function retrieve(input, options = {}) {
     for (let redirects = 0; ; redirects++) {
       const robotsUrl = new URL('/robots.txt', url);
       const robotsResponse = await fetchBounded(robotsUrl);
-      if (robotsResponse.status === 404 || robotsResponse.status === 410) discard(robotsResponse);
+      let policy = null;
+      const missingPolicy = robotsResponse.status === 404 || robotsResponse.status === 410;
+      if (missingPolicy) discard(robotsResponse);
       else {
         if (robotsResponse.status !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) { discard(robotsResponse); throw failure('robots_unknown', 'Robots policy unavailable'); }
-        let policy;
         try { policy = await boundedResponse(robotsResponse, maxRobotsBytes, controller.signal); }
         catch (error) { if (error.code === 'timeout') throw error; throw failure('robots_unknown', 'Robots policy unavailable'); }
-        if (!robotsAllowed(policy, url)) throw failure('robots_denied', 'Robots policy does not permit retrieval');
+        policy = parseRobots(policy);
+        if (!robotsAllowed(policy, url, 'AEOAuditBot', budget)) throw failure('robots_denied', 'Robots policy does not permit retrieval');
       }
       const response = await fetchBounded(url);
       if ([301, 302, 303, 307, 308].includes(response.status)) {
@@ -162,7 +172,16 @@ export async function retrieve(input, options = {}) {
       const contentType = response.headers.get('content-type') || '';
       if (!/^text\/html(?:\s*;|\s*$)/i.test(contentType)) { discard(response); throw failure('unsupported_content', 'Page is not HTML'); }
       const body = await boundedResponse(response, maxBytes, controller.signal);
-      return { url: url.toString(), status: response.status, contentType, body, robots: 'allowed' };
+      const observations = scoredBots.map(bot => {
+        let status = 'not_measured';
+        if (missingPolicy && bot.robots.missingFilePolicy === 'allow') status = 'allowed';
+        else if (policy !== null && bot.robots.respectsRules === true) {
+          try { status = robotsAllowed(policy, url, bot.userAgentToken, budget) ? 'allowed' : 'disallowed'; }
+          catch (error) { if (error.code !== 'robots_unknown' && !(error instanceof RangeError)) throw error; }
+        }
+        return { botId: bot.id, status };
+      });
+      return { url: url.toString(), status: response.status, contentType, body, robots: 'allowed', crawlerPolicy: { version: crawlers.version, url: robotsUrl.toString(), httpStatus: robotsResponse.status, observations } };
     }
   } finally { clearTimeout(timer); }
 }

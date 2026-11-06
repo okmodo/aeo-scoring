@@ -1,17 +1,47 @@
 // Deterministic observations only. An unobserved field is not proof of absence.
 import rubric from '../config/rubric.v1.json' with { type: 'json' };
 import categories from '../config/categories.v1.1.json' with { type: 'json' };
+import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
+import { scoreProductFields } from './product-fields.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
+
+const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
+const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
+const CRAWLER_GROUPS = [
+  ['S5.search', crawlerRegistry.scoring.search.botIds],
+  ['S5.ai-retrieval', crawlerRegistry.scoring.aiRetrieval.botIds],
+].map(([id, botIds]) => ({ id, bots: crawlerRegistry.bots.filter(bot => botIds.includes(bot.id)) }));
+
+const PRODUCT_FIXES = {
+  'S2.offer': {
+    id: 'complete-structured-offer',
+    title: 'Complete the structured offer',
+    condition: 'If the associated offer supplies a valid price and currency and a recognized availability value.',
+  },
+  'S2.identifiers': {
+    id: 'complete-structured-identifiers',
+    title: 'Complete the structured brand and identifiers',
+    condition: 'If the product has an applicable identifier and the associated record publishes it and the brand.',
+  },
+};
 
 const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'http://schema.org', 'http://schema.org/']);
 
 /** Score supported observations from a bounded retrieved document. */
 export function scoreAudit(snapshot, extracted, { category = null } = {}) {
-  const checks = Object.fromEntries(rubric.criteria.flatMap(c => c.subchecks.map(s => [s.id, { status: 'not_measured' }])));
+  const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
   const evidence = [];
   let productName = null;
-  let propertyFix = null;
+  const fixes = [];
+  let currency = null;
   const sourceUrl = snapshot?.url;
+  const observedAt = snapshot?.observedAt;
+  const addEvidence = (url, location, excerpt) => {
+    const item = { id: `e${evidence.length + 1}`, url, method: 'raw', kind: 'derived_observation',
+      observedAt, location, excerpt };
+    evidence.push(item);
+    return item.id;
+  };
   // A Product JSON-LD record proves a parseable entity, but its association with
   // the selected product is ambiguous without additional page context.
   const scripts = Array.isArray(extracted?.jsonLd) ? extracted.jsonLd : [];
@@ -34,14 +64,9 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     }
   }
   if (products.length && typeof sourceUrl === 'string' && typeof snapshot?.observedAt === 'string') {
-    const location = index => `script[type="application/ld+json"] at extracted index ${index}`;
-    const addEvidence = (index, excerpt) => {
-      const item = { id: `e${evidence.length + 1}`, url: sourceUrl, method: 'raw', kind: 'derived_observation', observedAt: snapshot.observedAt,
-        location: location(index), excerpt };
-      evidence.push(item);
-      return item.id;
-    };
-    const id = addEvidence(products[0].index, 'Product');
+    const addProductEvidence = (index, excerpt) =>
+      addEvidence(sourceUrl, `script[type="application/ld+json"] at extracted index ${index}`, excerpt);
+    const id = addProductEvidence(products[0].index, 'Product');
     checks['S2.entity'] = { status: 'measured', fraction: 0.5, evidence: id };
     // Score properties only for an explicitly associated schema.org Product.
     // Non-string and short values are ambiguous rather than confirmed omissions.
@@ -68,19 +93,65 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
       const missing = Object.keys(values).filter(key => !Object.hasOwn(record, key));
       if (associated && present.length + missing.length === 3) {
         const excerpt = `Product properties present: ${present.join(', ') || 'none'}${missing.length ? `; absent from record: ${missing.join(', ')}` : ''}.`;
-        const coreId = addEvidence(index, excerpt);
+        const coreId = addProductEvidence(index, excerpt);
         const fraction = present.length / 3;
         checks['S2.core-properties'] = { status: 'measured', fraction, evidence: coreId };
-        if (missing.length && productName) propertyFix = {
+        if (missing.length && productName) fixes.push({
           id: 'publish-structured-product-properties',
           title: 'Complete the structured product properties',
           owner: 'Web developer', checkIds: ['S2.core-properties'], evidenceIds: [coreId],
           recoverablePoints: 2 - 2 * fraction,
           condition: `If the same audited Product record supplies meaningful ${missing.join(', ')} values and its association remains clear.`,
-        };
+        });
+      }
+      if (associated && values.name) {
+        for (const [checkId, field] of Object.entries(scoreProductFields(record, sourceUrl))) {
+          const evidenceId = addProductEvidence(index, field.excerpt);
+          checks[checkId] = { status: 'measured', fraction: field.fraction, evidence: evidenceId };
+          if (field.currency) currency = field.currency;
+          if (field.fraction < 1) fixes.push({
+            ...PRODUCT_FIXES[checkId], owner: 'Web developer', checkIds: [checkId],
+            evidenceIds: [evidenceId], recoverablePoints: maxPoints[checkId] * (1 - field.fraction),
+          });
+        }
       }
     }
   }
+  if (checks['S2.entity'].fraction === 0.5) fixes.push({
+    id: 'verify-product-association', title: 'Verify the structured product matches the audited page',
+    owner: 'Web developer', checkIds: ['S2.entity'], evidenceIds: ['e1'], recoverablePoints: null,
+    condition: 'Recovery cannot be calculated until the association is assessed.',
+  });
+
+  const crawlerPolicy = snapshot?.crawlerPolicy;
+  if (crawlerPolicy?.version === crawlerRegistry.version && crawlerPolicy.httpStatus === 200 && Array.isArray(crawlerPolicy.observations) &&
+      typeof crawlerPolicy.url === 'string' && typeof observedAt === 'string') {
+    const blocked = [];
+    let recoverablePoints = 0;
+    for (const { id, bots } of CRAWLER_GROUPS) {
+      const statuses = bots.map(bot => {
+        const observations = crawlerPolicy.observations.filter(observation => observation?.botId === bot.id);
+        return observations.length === 1 ? observations[0].status : null;
+      });
+      if (!bots.length || !statuses.every(status => status === 'allowed' || status === 'disallowed')) continue;
+      const fraction = statuses.filter(status => status === 'allowed').length / bots.length;
+      const summary = bots.map((bot, index) => `${bot.name}: ${statuses[index]}`).join(', ');
+      const evidenceId = addEvidence(crawlerPolicy.url, 'robots.txt policy for the final product URL', summary);
+      checks[id] = { status: 'measured', fraction, evidence: evidenceId };
+      if (fraction < 1) {
+        blocked.push({ id, evidenceId });
+        recoverablePoints += maxPoints[id] * (1 - fraction);
+      }
+    }
+    if (blocked.length) fixes.push({
+      id: 'review-product-crawler-access', title: 'Review crawler access to the product page',
+      owner: 'Web developer', checkIds: blocked.map(check => check.id),
+      evidenceIds: blocked.map(check => check.evidenceId), recoverablePoints,
+      condition: 'If the site intends to permit these crawlers and its effective robots policy allows them on the audited URL.',
+    });
+  }
+  fixes.sort((a, b) => (b.recoverablePoints ?? -1) - (a.recoverablePoints ?? -1));
+
   const reference = scoreReference(rubric, categories, { category, checks });
   const criteria = rubric.criteria.map(c => ({
     id: c.id, pillar: c.pillar, maxPoints: c.maxPoints,
@@ -94,11 +165,6 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
         reason: check.status === 'not_measured' ? 'Available evidence does not establish this check.' : null };
     })
   }));
-  const fixes = propertyFix ? [propertyFix] : evidence.length && checks['S2.entity'].fraction === 0.5 ? [{
-    id: 'verify-product-association', title: 'Verify the structured product matches the audited page',
-    owner: 'Web developer', checkIds: ['S2.entity'], evidenceIds: ['e1'], recoverablePoints: null,
-    condition: 'Recovery cannot be calculated until the association is assessed.'
-  }] : [];
   const allChecks = criteria.flatMap(c => c.subchecks);
   return {
     status: reference.status,
@@ -109,7 +175,7 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     } : null,
     earnedPoints: reference.earnedPoints, rubricVersion: rubric.version,
     category: categories.categories.some(c => c.id === category) ? category : null,
-    productName, variant: null, market: null, currency: null,
+    productName, variant: null, market: null, currency,
     criteria, evidence, fixes,
     coverage: { measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
