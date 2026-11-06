@@ -4,6 +4,7 @@ import categories from '../config/categories.v1.1.json' with { type: 'json' };
 import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
 import { scoreProductFields } from './product-fields.mjs';
 import { selectProductVariant } from './product-variants.mjs';
+import { assessWebsiteGuides } from './website-guides.mjs';
 import { scoreProductLabels } from './product-labels.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
 
@@ -193,6 +194,12 @@ export function scoreAudit(snapshot, extracted, { category = null } = {}) {
     ]) {
       if (typeof url !== 'string' || !url) continue;
       checks[id] = { status: 'measured', fraction: 1, evidence: addEvidence(url, location, excerpt) };
+    }
+  }
+  if (snapshot?.guides && typeof sourceUrl === 'string' && typeof observedAt === 'string') {
+    for (const [id, finding] of Object.entries(assessWebsiteGuides(snapshot.guides, sourceUrl))) {
+      checks[id] = { status: 'measured', fraction: finding.fraction,
+        evidence: addEvidence(finding.url, finding.location, finding.excerpt) };
     }
   }
   fixes.sort((a, b) => (b.recoverablePoints ?? -1) - (a.recoverablePoints ?? -1));

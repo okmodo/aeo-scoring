@@ -208,6 +208,41 @@ async function inspectSitemap({ url, policy, declarations, fetchBounded, signal 
   }
 }
 
+// Fixed origin-root probes are optional and share one deadline. Unknown results
+// cannot establish that a differently cased AGENTS file is absent.
+async function inspectGuides({ url, policy, fetchBounded, signal }) {
+  const optional = new AbortController();
+  const abort = () => optional.abort();
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+  const timer = setTimeout(abort, 500);
+  const budget = { work: 0 };
+  async function read(path) {
+    const target = new URL(path, url.origin);
+    try {
+      if (optional.signal.aborted || (policy && !robotsAllowed(policy, target, 'AEOAuditBot', budget))) return { state: 'unknown' };
+      const response = await fetchBounded(target, optional.signal);
+      if (response.status === 404 || response.status === 410) { discard(response); return { state: 'absent' }; }
+      if (response.status !== 200 || !/^text\/(?:plain|markdown)(?:\s*;|\s*$)/i.test(response.headers.get('content-type') || '')) {
+        discard(response);
+        return { state: 'unknown' };
+      }
+      const text = await boundedResponse(response, 8 * 1024, optional.signal, { fatal: true });
+      return { state: 'found', value: { url: target.href, text } };
+    } catch { return { state: 'unknown' }; }
+  }
+  try {
+    const [llms, upper, lower] = await Promise.all(['/llms.txt', '/AGENTS.md', '/agents.md'].map(read));
+    let agents = null;
+    if (upper.state === 'found' && (lower.state === 'absent' || (lower.state === 'found' && upper.value.text.trim() === lower.value.text.trim()))) agents = upper.value;
+    else if (lower.state === 'found' && upper.state === 'absent') agents = lower.value;
+    return { llms: llms.state === 'found' ? llms.value : null, agents };
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener('abort', abort);
+  }
+}
+
 export async function retrieve(input, options = {}) {
   const { egress, maxBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
   if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
@@ -266,6 +301,10 @@ export async function retrieve(input, options = {}) {
       if (options.observeSitemap === true) {
         try { snapshot.sitemap = await inspectSitemap({ url, policy, declarations, fetchBounded, signal: controller.signal }); }
         catch { /* Optional evidence must not fail a completed page retrieval. */ }
+      }
+      if (options.observeGuides === true) {
+        try { snapshot.guides = await inspectGuides({ url, policy, fetchBounded, signal: controller.signal }); }
+        catch { snapshot.guides = { llms: null, agents: null }; }
       }
       return snapshot;
     }
