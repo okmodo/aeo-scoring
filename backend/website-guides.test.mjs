@@ -44,5 +44,7 @@ test('supports the llms.txt summary blockquote and rejects false fence closures'
 
 test('does not treat reference titles as visible guide purpose', () => {
   const hidden = '# Example\n\n[ref]: /foo "\nWe sell outdoor equipment and clothing for hikers.\n"\n\n[Boots](' + product + ')';
-  assert.deepEqual(assessWebsiteGuides({ llms: guide(hidden), agents: guide(hidden, 'https://example.com/AGENTS.md') }, product), {});
+  for (const text of [hidden, hidden.replace('[ref]', '[ref\n]')]) {
+    assert.deepEqual(assessWebsiteGuides({ llms: guide(text), agents: guide(text, 'https://example.com/AGENTS.md') }, product), {});
+  }
 });

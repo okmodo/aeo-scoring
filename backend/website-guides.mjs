@@ -29,7 +29,7 @@ function assessGuide(guide, finalUrl, paths) {
       continue;
     }
     if (fence) continue;
-    if (line.includes('`') || (line.includes('[') && line.includes(']:'))) return null;
+    if (line.includes('`') || line.includes(']:')) return null;
     if (!/^(?: {4}|\t)/.test(line)) lines.push(line);
   }
   if (fence) return null;
