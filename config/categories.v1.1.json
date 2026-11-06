@@ -1,0 +1,616 @@
+{
+  "version": "1.1.0",
+  "status": "initial-editorial-templates",
+  "categories": [
+    {
+      "id": "running-shoes",
+      "name": "Running shoes",
+      "scope": "Footwear presented for running; excludes protective or medical footwear and footwear not presented for running.",
+      "essentialAttributes": [
+        {
+          "id": "size",
+          "label": "Size",
+          "question": "Is size specified for the selected product or variant?",
+          "full": "Selected size and sizing system or market are explicit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "width",
+          "label": "Width",
+          "question": "Is width specified for the selected product or variant?",
+          "full": "Selected width is explicit, including an explicit standard/regular width when that is the offered width.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "surface",
+          "label": "Running surface",
+          "question": "Is running surface specified for the selected product or variant?",
+          "full": "Specific intended running surface is stated.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "upper",
+          "label": "Upper material",
+          "question": "Is upper material specified for the selected product or variant?",
+          "full": "Upper material is identified.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "outsole",
+          "label": "Outsole material",
+          "question": "Is outsole material specified for the selected product or variant?",
+          "full": "Outsole material is identified.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color",
+          "question": "Is color specified for the selected product or variant?",
+          "full": "Selected color is explicit and associated with the selected variant.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "supportingAttributes": [
+        {
+          "id": "weight",
+          "label": "Shoe weight",
+          "question": "Is shoe weight specified for the selected product or variant?",
+          "full": "Weight includes a unit and reference size and whether it is per shoe or pair.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "drop",
+          "label": "Heel-to-toe drop",
+          "question": "Is heel-to-toe drop specified for the selected product or variant?",
+          "full": "Heel-to-toe drop includes a length unit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "closure",
+          "label": "Closure",
+          "question": "Is closure specified for the selected product or variant?",
+          "full": "Closure type is explicit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "care",
+          "label": "Care",
+          "question": "Is care specified for the selected product or variant?",
+          "full": "Specific regular cleaning or care instructions are given.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "decisionSupport": [
+        {
+          "id": "running-use",
+          "subcheckId": "C4.intended-use",
+          "question": "What running use and audience is this shoe described for?",
+          "full": "Specific running use and intended audience are stated.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "surface"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "running-fit",
+          "subcheckId": "C4.compatibility",
+          "question": "What fit characteristics help assess compatibility with the wearer?",
+          "full": "Specific fit characteristics such as shape or fit profile are explained for this shoe.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "width"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "running-limits",
+          "subcheckId": "C4.limitations",
+          "question": "What use limitation is disclosed for a stated feature or claim?",
+          "full": "A specific limitation or exclusion of the stated feature or claim is explained.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "conditional",
+          "condition": "Product content makes an explicit use-limiting feature claim (for example, water resistance or a specified surface restriction).",
+          "attributeRefs": [
+            "surface"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "running-selection",
+          "subcheckId": "C4.selection",
+          "question": "How should a shopper choose among offered sizes or widths?",
+          "full": "Actionable guidance relates offered sizes or widths to a shopper measurement or fit preference.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "size",
+            "width"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "identifiers": {
+        "gtin": "when_assigned",
+        "mpn": "when_assigned",
+        "skuOnlyFraction": 0.5
+      },
+      "sourceUrls": [
+        "https://support.google.com/merchants/answer/7052112",
+        "https://support.google.com/merchants/answer/11018531"
+      ]
+    },
+    {
+      "id": "casual-daypacks",
+      "name": "Casual daypacks",
+      "scope": "Non-specialist backpacks presented for everyday or day use; excludes safety equipment, medical products, technical climbing packs and child carriers.",
+      "essentialAttributes": [
+        {
+          "id": "capacity",
+          "label": "Capacity",
+          "question": "Is capacity specified for the selected product or variant?",
+          "full": "Pack capacity is stated with a volume unit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "dimensions",
+          "label": "External dimensions",
+          "question": "Is external dimensions specified for the selected product or variant?",
+          "full": "Height, width and depth are stated with units and identified as external dimensions.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "material",
+          "label": "Main body material",
+          "question": "Is main body material specified for the selected product or variant?",
+          "full": "Main body material is identified.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "closure",
+          "label": "Main closure",
+          "question": "Is main closure specified for the selected product or variant?",
+          "full": "Main compartment closure type is explicit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color",
+          "question": "Is color specified for the selected product or variant?",
+          "full": "Selected color is explicit and associated with the selected variant.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "carry",
+          "label": "Carry configuration",
+          "question": "Is carry configuration specified for the selected product or variant?",
+          "full": "Shoulder strap configuration is described.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "supportingAttributes": [
+        {
+          "id": "weight",
+          "label": "Pack weight",
+          "question": "Is pack weight specified for the selected product or variant?",
+          "full": "Pack weight includes a unit and selected variant where it varies.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "compartments",
+          "label": "Compartments",
+          "question": "Is compartments specified for the selected product or variant?",
+          "full": "Main storage compartments or pockets are described specifically.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "care",
+          "label": "Care",
+          "question": "Is care specified for the selected product or variant?",
+          "full": "Specific cleaning or care instructions are given.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "laptop-size",
+          "label": "Laptop compartment size",
+          "question": "Is laptop compartment size specified for the selected product or variant?",
+          "full": "Maximum compatible laptop size is stated with a unit and measurement convention.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "conditional",
+          "condition": "Product content explicitly states that the pack has a laptop compartment or sleeve.",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        }
+      ],
+      "decisionSupport": [
+        {
+          "id": "pack-use",
+          "subcheckId": "C4.intended-use",
+          "question": "What everyday use and audience is the pack described for?",
+          "full": "Specific everyday use and intended audience are stated.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "capacity"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "pack-fit",
+          "subcheckId": "C4.compatibility",
+          "question": "How can a shopper determine whether a laptop fits the stated sleeve?",
+          "full": "The sleeve compatibility limit and how the shopper can compare their laptop to it are explained.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "conditional",
+          "condition": "Product content explicitly states that the pack has a laptop compartment or sleeve.",
+          "attributeRefs": [
+            "laptop-size"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "pack-limits",
+          "subcheckId": "C4.limitations",
+          "question": "What limitation applies to a stated protective or weather claim?",
+          "full": "A specific boundary of the stated claim is explained.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "conditional",
+          "condition": "Product content explicitly claims water resistance, waterproofing, or impact protection.",
+          "attributeRefs": [
+            "material"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "pack-selection",
+          "subcheckId": "C4.selection",
+          "question": "How should a shopper choose the offered pack size or capacity?",
+          "full": "Actionable guidance links the offered size or capacity to a concrete carrying need.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "capacity",
+            "dimensions"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "identifiers": {
+        "gtin": "when_assigned",
+        "mpn": "when_assigned",
+        "skuOnlyFraction": 0.5
+      },
+      "sourceUrls": [
+        "https://support.google.com/merchants/answer/7052112",
+        "https://support.google.com/merchants/answer/11018531"
+      ]
+    },
+    {
+      "id": "basic-tshirts",
+      "name": "Basic T-shirts",
+      "scope": "Everyday T-shirt garments; excludes protective equipment, medical garments and specialized performance or safety products.",
+      "essentialAttributes": [
+        {
+          "id": "size",
+          "label": "Size",
+          "question": "Is size specified for the selected product or variant?",
+          "full": "Selected size and sizing system or market are explicit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "fiber",
+          "label": "Fiber composition",
+          "question": "Is fiber composition specified for the selected product or variant?",
+          "full": "Fiber names and percentages are stated for the main fabric.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://www.ftc.gov/business-guidance/resources/threading-your-way-through-labeling-requirements-under-textile-wool-acts"
+          ]
+        },
+        {
+          "id": "fit",
+          "label": "Fit",
+          "question": "Is fit specified for the selected product or variant?",
+          "full": "Garment fit is described specifically.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "color",
+          "label": "Color",
+          "question": "Is color specified for the selected product or variant?",
+          "full": "Selected color is explicit and associated with the selected variant.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "sleeve",
+          "label": "Sleeve length",
+          "question": "Is sleeve length specified for the selected product or variant?",
+          "full": "Sleeve length or style is identified.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "neckline",
+          "label": "Neckline",
+          "question": "Is neckline specified for the selected product or variant?",
+          "full": "Neckline style is identified.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "supportingAttributes": [
+        {
+          "id": "care",
+          "label": "Care",
+          "question": "Is care specified for the selected product or variant?",
+          "full": "Specific applicable regular care instructions are given. Washing guidance alone can satisfy this when applicable; washing and drying are not both universally required.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://www.ftc.gov/business-guidance/resources/clothes-captioning-complying-care-labeling-rule"
+          ]
+        },
+        {
+          "id": "fabric-weight",
+          "label": "Fabric weight",
+          "question": "Is fabric weight specified for the selected product or variant?",
+          "full": "Fabric weight is stated with a mass-per-area unit.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "garment-measurements",
+          "label": "Garment measurements",
+          "question": "Is garment measurements specified for the selected product or variant?",
+          "full": "At least chest and length measurements include units and the size measured.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/11018531"
+          ]
+        },
+        {
+          "id": "origin",
+          "label": "Country of origin",
+          "question": "Is country of origin specified for the selected product or variant?",
+          "full": "Country of origin is stated for the selected product.",
+          "partial": "Useful specific information is present but a required value, unit, scope, or selected-variant association is materially incomplete.",
+          "zero": "Absent, generic, or independently unusable information; a contradiction alone is assessed in C5.",
+          "applicability": "always",
+          "sourceUrls": [
+            "https://www.ftc.gov/business-guidance/resources/threading-your-way-through-labeling-requirements-under-textile-wool-acts"
+          ]
+        }
+      ],
+      "decisionSupport": [
+        {
+          "id": "shirt-use",
+          "subcheckId": "C4.intended-use",
+          "question": "What use and audience is this T-shirt described for?",
+          "full": "Specific everyday use and intended audience are stated.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "fit"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "shirt-fit",
+          "subcheckId": "C4.compatibility",
+          "question": "What fit characteristics help a shopper assess the garment?",
+          "full": "Specific fit characteristics explain how the garment is intended to sit on the body.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "fit"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "shirt-limits",
+          "subcheckId": "C4.limitations",
+          "question": "What restriction applies to an explicit fabric or care claim?",
+          "full": "A specific restriction or boundary of the claim is explained.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "conditional",
+          "condition": "Product content explicitly claims a special fabric treatment or makes a restricted-care claim.",
+          "attributeRefs": [
+            "care"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        },
+        {
+          "id": "shirt-selection",
+          "subcheckId": "C4.selection",
+          "question": "How should a shopper choose a size?",
+          "full": "Actionable guidance relates sizes to body or garment measurements with units.",
+          "partial": "Useful specific guidance is present but materially incomplete or ambiguous.",
+          "zero": "Absent, generic, contradictory, or unusable guidance.",
+          "applicability": "always",
+          "attributeRefs": [
+            "size",
+            "garment-measurements"
+          ],
+          "sourceUrls": [
+            "https://support.google.com/merchants/answer/7052112"
+          ]
+        }
+      ],
+      "identifiers": {
+        "gtin": "when_assigned",
+        "mpn": "when_assigned",
+        "skuOnlyFraction": 0.5
+      },
+      "sourceUrls": [
+        "https://support.google.com/merchants/answer/7052112",
+        "https://support.google.com/merchants/answer/11018531",
+        "https://www.ftc.gov/business-guidance/resources/threading-your-way-through-labeling-requirements-under-textile-wool-acts",
+        "https://www.ftc.gov/business-guidance/resources/clothes-captioning-complying-care-labeling-rule"
+      ]
+    }
+  ]
+}

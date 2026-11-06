@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "care-guidance-clarification",
+  "task": "Version the basic T-shirt care anchor to reflect the user decision that specific applicable care is sufficient, while preserving the original rule and pilot judgments.",
+  "scope": ["config/**", "docs/**", "evals/**", "AEO Scoring Vault/**", "test/**"],
+  "nonGoals": ["Change original v1 category policy, frozen fixtures or historical pilot expectations", "Alter category weights or other scoring rules", "Retroactively revise human or model results", "Implement production scoring or deploy services"],
+  "outcomes": [
+    {"id":"O1","description":"A distinct versioned basic T-shirt care policy grants full credit for specific applicable care, including washing alone, and preserves partial for materially incomplete scope and zero for absence or unusable information.","verification":"automated","evidence":"Versioned configuration and regression tests"},
+    {"id":"O2","description":"The old policy and blind human pilot remain intact, and documentation identifies the user's clarified choice without claiming retroactive agreement.","verification":"human","evidence":"Versioned policy diff, pilot record and independent review"}
+  ],
+  "process": [{"id":"P1","description":"Validate and commit this plan alone before the requirement change; independently review old-gold preservation and scope.","verification":"human","evidence":"Git history and independent review"}],
+  "styleEfficiency": [{"id":"E1","description":"Limit the version change to the care anchor and document version selection and unchanged weights.","verification":"human","evidence":"Configuration diff and tests"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility"],
+  "exitTest": {"required":false,"reason":"This rule-only version clarification does not change portability, memory, workflow, handoff or resumability; the separate phase-2-closure plan still requires its fresh-agent exit test."}
+}

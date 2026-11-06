@@ -1,10 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { inspectSnapshot } from './feasibility.mjs';
 import os from 'node:os';
+import { performance } from 'node:perf_hooks';
 const { cases } = JSON.parse(readFileSync('evals/fixtures/feasibility/synthetic/cases.json', 'utf8'));
 const context = { url: 'https://example.com/product', method: 'raw', observedAt: '2026-11-04T00:00:00Z' };
 for (let i = 0; i < 100; i++) inspectSnapshot({ ...context, html: cases[0].html });
 const results = [];
-for (let i = 0; i < 1000; i++) results.push(inspectSnapshot({ ...context, html: cases[i % cases.length].html }).measurement);
+for (let i = 0; i < 1000; i++) {
+  const start = performance.now(), cpu = process.cpuUsage();
+  inspectSnapshot({ ...context, html: cases[i % cases.length].html });
+  const used = process.cpuUsage(cpu);
+  results.push({ elapsedMs: performance.now() - start, cpuMs: (used.user + used.system) / 1000 });
+}
 const summary = key => { const a = results.map(r => r[key]).sort((x,y) => x-y); return { median: a[499], p95: a[949], max: a[999] }; };
 console.log(JSON.stringify({ node: process.version, platform: `${os.platform()} ${os.arch()}`, cpu: os.cpus()[0]?.model, warmup: 100, iterations: results.length, sizesBytes: cases.map(c => Buffer.byteLength(c.html)), elapsedMs: summary('elapsedMs'), cpuMs: summary('cpuMs'), note: 'Local process only; no network, model, rendering or Cloudflare execution.' }, null, 2));

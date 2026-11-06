@@ -1,0 +1,5 @@
+{"timestamp":"2026-11-05T23:01:18.911Z","tool":"npm","action":"npm run check","durationMs":1594,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T23:01:20.506Z","tool":"npm","action":"npm test","durationMs":10155,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T23:01:30.662Z","tool":"npm","action":"npm run test:exit","durationMs":426,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T23:01:31.088Z","tool":"npm","action":"npm run test:foundations","durationMs":241,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-05T23:01:31.330Z","tool":"npm","action":"npm run test:feasibility","durationMs":340,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}

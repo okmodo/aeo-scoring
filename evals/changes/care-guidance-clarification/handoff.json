@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Version the user's clarification that specific applicable basic T-shirt care guidance is sufficient.",
+  "state": "The original v1 rule and pilot are preserved; explicit v1.1 changes only the basic T-shirt care full-credit anchor. Independent policy review passed; source-bound evaluation and hosted CI remain necessary.",
+  "decisions": [
+    "Specific applicable care can be full credit; washing alone can qualify and washing plus drying is not universally required.",
+    "Keep v1 and historical pilot expectations unchanged; v1.1 requires explicit selection and changes no weights."
+  ],
+  "constraints": [
+    "Do not retroactively revise human judgments, model outcomes, v1 fixtures or existing v1 consumers.",
+    "The related phase-2-closure plan retains its fresh-agent exit requirement."
+  ],
+  "completed": [
+    "Committed and validated the supplemental immutable plan before policy edits.",
+    "Added the v1.1 artifact, documentation and regression checking that only the version and targeted anchor differ.",
+    "Independent review confirmed the sole policy difference, unchanged weights and preserved v1/pilot."
+  ],
+  "remaining": [
+    "Run source-bound evaluation for both plans and obtain hosted CI.",
+    "Retain the original pilot disagreement and resolve no historical result retroactively."
+  ],
+  "resumeCommands": [
+    "npm run test:foundations",
+    "npm run evaluate -- --change care-guidance-clarification --base origin/main"
+  ],
+  "expectedOutcome": "The clarified policy is reviewable, opt-in and backward-compatible; historical v1 and pilot evidence remains unchanged."
+}

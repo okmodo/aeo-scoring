@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "coordinatorCalls": 1,
+  "coordinatorRetries": 0,
+  "connectorInternalRetryPolicy": "Not exposed",
+  "request": {
+    "url": "https://www.underarmour.com/en-us/p/ua_wordmark_mens_short_sleeve/1385068.html",
+    "userAgent": "AEOResearchBot/1.0",
+    "gotoOptions": {
+      "timeout": 10000,
+      "waitUntil": "domcontentloaded"
+    },
+    "actionTimeout": 10000,
+    "waitForTimeout": 1000,
+    "allowRequestPattern": [
+      "^https://www\\.underarmour\\.com/"
+    ],
+    "rejectResourceTypes": [
+      "image",
+      "media",
+      "font"
+    ],
+    "bestAttempt": false
+  },
+  "startedAt": "2026-11-05T21:36:58.255Z",
+  "elapsedMs": 4613,
+  "apiSuccess": true,
+  "error": null,
+  "rendered": {
+    "privateCapture": "/private/tmp/aeo-corpus-research/tshirt-rendered.html",
+    "bytes": 21256,
+    "sha256": "70156def566105cfa160e75485008e572a9372f4b7bd37748a6fa217b9ccfbce",
+    "title": "UA Wordmark Men's Short Sleeve | Under Armour",
+    "hasBody": false,
+    "extractedFindings": 0,
+    "extractedProductFields": 0
+  },
+  "classification": "Unusable head-only render; no product absence or extraction accuracy inferred.",
+  "limitations": [
+    "Same URL captured at different times, not identical source bytes.",
+    "Same-host allowlist and blocked image/media/font requests can affect rendering.",
+    "Separate stage timeouts do not establish total runtime or billed duration.",
+    "API response supplied no browser-seconds usage value."
+  ]
+}
