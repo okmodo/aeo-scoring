@@ -58,7 +58,7 @@ function assessment(audit, hit = false) {
   };
 }
 
-async function submission(request) {
+async function submission(request, normalizeUrl) {
   if (!/^application\/json(?:\s*;|\s*$)/i.test(request.headers.get('content-type') ?? '') ||
       !request.body || Number(request.headers.get('content-length')) > BODY_LIMIT) {
     throw new Error('Invalid request body');
@@ -85,7 +85,7 @@ async function submission(request) {
     if (!body || typeof body !== 'object' || Object.keys(body).length !== 1 || typeof body.url !== 'string') {
       throw new Error('Invalid submission');
     }
-    return normalizeTarget(body.url);
+    return normalizeUrl(body.url);
   } finally {
     clearTimeout(timer);
     reader.cancel().catch(() => {});
@@ -116,7 +116,7 @@ function retrievalProblem(error) {
 }
 
 export function createAuditService({
-  store, egress, secret, HTMLRewriter, allowsProduct, now = Date.now, retrievePage = retrieve,
+  store, egress, secret, HTMLRewriter, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit,
 }) {
   async function run(audit) {
@@ -147,7 +147,7 @@ export function createAuditService({
       if (path === ROUTE) {
         if (request.method !== 'POST') return errorResponse(405, 'method_not_allowed', null, { allow: 'POST' });
         let url;
-        try { url = await submission(request); } catch { return errorResponse(400, 'invalid_input'); }
+        try { url = await submission(request, normalizeUrl); } catch { return errorResponse(400, 'invalid_input'); }
         if (allowsProduct && !allowsProduct(url)) {
           const error = problem('invalid_input');
           error.message = 'This preview accepts only its approved demo product URL.';
@@ -186,10 +186,10 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl } = {}) {
   const service = createAuditService({
     store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
-    egress, allowsProduct, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),

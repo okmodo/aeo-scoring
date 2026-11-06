@@ -1,20 +1,25 @@
-// The egress service is a security boundary: it must resolve and pin only public IPs
-// for every connection. This module intentionally never falls back to global fetch.
+// The supplied egress is the network security boundary. This module never falls
+// back to global fetch and validates every URL before handing it to that boundary.
+import { robotsPathMatch, ROBOTS_MATCH_MAX_WORK } from './robots-path.mjs';
+
 const DEFAULTS = { maxBytes: 512 * 1024, maxRobotsBytes: 64 * 1024, timeoutMs: 8000, maxRedirects: 3 };
 
 function failure(code, message) {
   return Object.assign(new Error(message), { code });
 }
 
+const unsafeUrlCharacters = /[\\\x00-\x20\x7f]/;
+
 function checkedUrl(input) {
   let url;
-  if (typeof input !== 'string' || input.length > 2048) throw failure('invalid_url', 'URL must be a string of at most 2048 characters');
+  if (typeof input !== 'string' || input.length > 2048 || unsafeUrlCharacters.test(input)) throw failure('invalid_url', 'URL must be a string of at most 2048 characters without whitespace, control characters, or backslashes');
   try { url = new URL(input); } catch { throw failure('invalid_url', 'Invalid URL'); }
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.port ||
-      !host.includes('.') || host === 'localhost' || host.endsWith('.localhost') ||
-      host.endsWith('.local') || host.endsWith('.internal') ||
-      /^\[.*\]$/.test(host) || /^[\d.]+$/.test(host)) {
+      !host.includes('.') || host.length > 253 ||
+      /(?:^|\.)(?:localhost|local|internal|invalid|test|onion|home|lan|alt)$/.test(host) ||
+      /(?:^|\.)home\.arpa$/.test(host) || /^\[.*\]$/.test(host) || /^[\d.]+$/.test(host) ||
+      !host.split('.').every(label => /^(?!-)[a-z0-9-]{1,63}(?<!-)$/.test(label))) {
     throw failure('invalid_url', 'URL must use a public hostname without credentials');
   }
   url.hash = '';
@@ -61,8 +66,7 @@ async function boundedResponse(response, limit, signal) {
   return new TextDecoder().decode(bytes);
 }
 
-// Only simple literal rules are supported. Unrecognized wildcard/end-anchor rules
-// fail closed instead of being misinterpreted as permission to crawl.
+// Unknown directives and ambiguous target encodings still fail closed.
 function robotsAllowed(text, url) {
   let agents = [], rules = [], inRules = false, groups = [];
   for (const raw of text.split(/\r?\n/)) {
@@ -87,28 +91,39 @@ function robotsAllowed(text, url) {
   if (agents.length) groups.push({ agents, rules });
   const specific = groups.filter(group => group.agents.some(agent => agent !== '*' && agent === 'aeoauditbot'));
   const applicable = specific.length ? specific : groups.filter(group => group.agents.includes('*'));
-  function decodeUnreserved(value) {
-    if (/%(?![0-9a-f]{2})/i.test(value)) throw failure('robots_unknown', 'Ambiguous URL encoding');
+  function decodeUnreserved(value, isTarget) {
+    if (isTarget && /%(?![0-9a-f]{2})/i.test(value)) throw failure('robots_unknown', 'Ambiguous URL encoding');
     return value.replace(/%([0-9a-f]{2})/gi, (encoded, hex) => {
       const character = String.fromCharCode(parseInt(hex, 16));
-      if (!/^[a-z0-9._~-]$/i.test(character)) throw failure('robots_unknown', 'Escaped reserved or non-ASCII character');
-      return character;
+      if (/^[a-z0-9._~-]$/i.test(character)) return character;
+      if (isTarget) throw failure('robots_unknown', 'Escaped reserved or non-ASCII character');
+      return encoded.toUpperCase();
     });
   }
-  const path = decodeUnreserved(url.pathname + url.search);
+  const rawPath = url.pathname + url.search;
+  const path = decodeUnreserved(rawPath, true);
   let match = null;
+  let work = 0;
   for (const group of applicable) for (const rule of group.rules) {
-    if (/[*$]/.test(rule.value)) throw failure('robots_unknown', 'Unsupported robots rule');
-    const value = decodeUnreserved(rule.value);
-    if (path.startsWith(value) && (!match || value.length > match.value.length ||
-        (value.length === match.value.length && rule.key === 'allow'))) match = { key: rule.key, value };
+    const value = decodeUnreserved(rule.value, false);
+    // No accepted target retains a percent escape. A rule with a literal percent
+    // cannot match that target, including Shopify's partial-escape patterns.
+    if (value.includes('%')) {
+      if (rawPath.includes('%')) throw failure('robots_unknown', 'Ambiguous escaped rule and target');
+      continue;
+    }
+    work += (value.length + 1) * (path.length + 1);
+    if (work > ROBOTS_MATCH_MAX_WORK) throw failure('robots_unknown', 'Robots path matching budget exceeded');
+    const { matches, specificity } = robotsPathMatch(path, value);
+    if (matches && (!match || specificity > match.specificity ||
+        (specificity === match.specificity && rule.key === 'allow'))) match = { key: rule.key, specificity };
   }
   return match?.key !== 'disallow';
 }
 
 export async function retrieve(input, options = {}) {
   const { egress, maxBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
-  if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-IP-pinning egress binding required');
+  if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
   for (const n of [maxBytes, maxRobotsBytes, timeoutMs]) if (!Number.isSafeInteger(n) || n < 1) throw failure('invalid_limits', 'Limits must be positive integers');
   if (!Number.isSafeInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 10) throw failure('invalid_limits', 'Invalid redirect limit');
   let url = checkedUrl(input);
@@ -138,7 +153,7 @@ export async function retrieve(input, options = {}) {
         discard(response);
         if (redirects >= maxRedirects) throw failure('too_many_redirects', 'Redirect limit exceeded');
         const location = response.headers.get('location');
-        if (!location) throw failure('invalid_redirect', 'Redirect has no location');
+        if (!location || unsafeUrlCharacters.test(location)) throw failure('invalid_redirect', 'Redirect has no valid location');
         try { url = checkedUrl(new URL(location, url).toString()); }
         catch { throw failure('invalid_redirect', 'Redirect destination is invalid'); }
         continue;
