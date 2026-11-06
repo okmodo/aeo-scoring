@@ -1,12 +1,20 @@
 import { normalizeTarget } from './retrieval.mjs';
 
+export function normalizePublicTarget(input) {
+  const url = normalizeTarget(input);
+  if (/\.example\.?$/.test(new URL(url).hostname)) {
+    throw Object.assign(new TypeError('Reserved example hostname'), { code: 'invalid_url' });
+  }
+  return url;
+}
+
 // This transport relies on Cloudflare's global_fetch_strictly_public runtime
 // boundary. Deploy only in the isolated Worker described by its configuration.
 export function createPublicEgress({ fetcher = globalThis.fetch } = {}) {
   if (typeof fetcher !== 'function') throw new TypeError('Fetch implementation required');
   return {
     fetch(input, options = {}) {
-      const url = normalizeTarget(input);
+      const url = normalizePublicTarget(input);
       if (options.method !== 'GET' || options.redirect !== 'manual') {
         throw new TypeError('Only manual GET requests are permitted');
       }

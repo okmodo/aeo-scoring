@@ -17,7 +17,7 @@ function checkedUrl(input) {
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.port ||
       !host.includes('.') || host.length > 253 ||
-      /(?:^|\.)(?:localhost|local|internal|invalid|test|example|onion|home|lan|alt)$/.test(host) ||
+      /(?:^|\.)(?:localhost|local|internal|invalid|test|onion|home|lan|alt)$/.test(host) ||
       /(?:^|\.)home\.arpa$/.test(host) || /^\[.*\]$/.test(host) || /^[\d.]+$/.test(host) ||
       !host.split('.').every(label => /^(?!-)[a-z0-9-]{1,63}(?<!-)$/.test(label))) {
     throw failure('invalid_url', 'URL must use a public hostname without credentials');

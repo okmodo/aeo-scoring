@@ -36,7 +36,7 @@ test('retrieval rejects redirect to an unapproved destination without fetching i
   const calls = [];
   const egress = createPreviewEgress({ productUrls: [product], fetcher: async url => {
     calls.push(url);
-    return url === robots ? new Response('', { status: 404 }) : new Response(null, { status: 302, headers: { location: 'https://evil.example.com/' } });
+    return url === robots ? new Response('', { status: 404 }) : new Response(null, { status: 302, headers: { location: 'https://evil.example/' } });
   } });
   await assert.rejects(retrieve(product, { egress }), { code: 'fetch_failed' });
   assert.deepEqual(calls, [robots, product]);

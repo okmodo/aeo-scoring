@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPublicEgress } from './public-egress.mjs';
-import { normalizeTarget, retrieve } from './retrieval.mjs';
+import { createPublicEgress, normalizePublicTarget } from './public-egress.mjs';
+import { retrieve } from './retrieval.mjs';
+import publicWorker from './public-worker.mjs';
 
 test('public transport fixes outbound options and checks each redirected host and robots policy', async () => {
   const calls = [];
@@ -28,13 +29,13 @@ test('public transport fixes outbound options and checks each redirected host an
 
 test('rejects unsafe destinations before any request to them', async () => {
   for (const destination of ['http://127.1/', 'http://[::1]/', 'http://host.local/', 'http://service.internal/', 'http://host.test/', 'http://host.invalid/', 'http://host.example/', 'http://foo.home.arpa/', 'http://foo.alt/', 'https://user:pass@shop.example.com/']) {
-    assert.throws(() => normalizeTarget(destination), { code: 'invalid_url' });
+    assert.throws(() => normalizePublicTarget(destination), { code: 'invalid_url' });
     const calls = [];
     const egress = createPublicEgress({ fetcher: async url => {
       calls.push(url);
       return url.endsWith('/robots.txt') ? new Response(null, { status: 404 }) : new Response(null, { status: 302, headers: { location: destination } });
     } });
-    await assert.rejects(retrieve('https://shop.example.com/a', { egress }), { code: 'invalid_redirect' });
+    await assert.rejects(retrieve('https://shop.example.com/a', { egress }), { code: destination === 'http://host.example/' ? 'fetch_failed' : 'invalid_redirect' });
     assert.deepEqual(calls, ['https://shop.example.com/robots.txt', 'https://shop.example.com/a']);
   }
 });
@@ -48,4 +49,16 @@ test('rejects a redirect with raw backslashes before URL resolution', async () =
   } });
   await assert.rejects(retrieve('https://shop.example.com/a', { egress }), { code: 'invalid_redirect' });
   assert.deepEqual(calls, ['https://shop.example.com/robots.txt', 'https://shop.example.com/a']);
+});
+
+test('public submission rejects reserved example domains before database admission', async () => {
+  const response = await publicWorker.fetch(new Request('https://api.example.com/api/v1/audits', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url: 'https://shop.example/item' }),
+  }), {
+    AUDIT_DB: { prepare: () => assert.fail('Reserved URL reached database') },
+  }, { waitUntil: () => assert.fail('Reserved URL started an audit') });
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, 'invalid_input');
 });
