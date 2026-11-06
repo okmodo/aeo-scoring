@@ -183,3 +183,17 @@ test('scores raw title and explicit brand and model identity only for the unique
   assert.equal(check(run(product, labels, true), 'S4.title').status, 'not_measured');
   assert.equal(check(run(product, { title: name, mainH1: 'Another item' }), 'C1.identity').status, 'not_measured');
 });
+
+test('sitemap scoring distinguishes confirmed usability and exact inclusion from unknown', () => {
+  const map = 'https://shop.example/sitemap.xml';
+  const child = 'https://shop.example/sitemap-products.xml';
+  const run = sitemap => scoreAudit({ ...snapshot, sitemap }, null);
+  const checks = report => report.criteria.find(item => item.id === 'S6').subchecks;
+  const report = run({ usableSource: map, inclusionSource: child });
+  assert.deepEqual(checks(report).map(item => [item.status, item.points]), [['measured', 1], ['measured', 1]]);
+  assert.equal(report.status, 'incomplete');
+  assert.equal(report.score, null);
+  assert.deepEqual(report.evidence.map(item => [item.url, item.kind]), [[map, 'derived_observation'], [child, 'derived_observation']]);
+  assert.deepEqual(checks(run({ usableSource: map, inclusionSource: null })).map(item => item.status), ['measured', 'not_measured']);
+  assert.deepEqual(checks(run(null)).map(item => item.status), ['not_measured', 'not_measured']);
+});

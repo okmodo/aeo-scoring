@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "sitemap-scoring",
+  "task": "Expand deterministic sitemap usability and inclusion scoring.",
+  "scope": ["backend/**", "docs/**", "evals/changes/sitemap-scoring/**"],
+  "nonGoals": ["Frontend, existing Cloudflare services, paid services, full sitemap discovery, or rubric and wire-contract changes"],
+  "outcomes": [
+    {"id":"O1","description":"Inspect only bounded same-origin sitemap URLs through the existing public egress and robots policy, with limited index traversal.","verification":"automated","evidence":"Frozen request bounds and blocked target scenarios"},
+    {"id":"O2","description":"Award evidence-backed sitemap credit only for confirmed usable and exact inclusion observations.","verification":"automated","evidence":"Positive and unmeasured scoring regressions"}
+  ],
+  "process": [{"id":"P1","description":"Separate branch, independent review and hosted CI. No existing Cloudflare or frontend changes.","verification":"human","evidence":"Git scope, review and CI"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse bounded retrieval and avoid new dependencies.","verification":"human","evidence":"Code and fixture review"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Sitemap scoring does not change workflow, portability or continuation."}
+}

@@ -18,7 +18,7 @@ test('public transport fixes outbound options and checks each redirected host an
     assert.equal(options.method, 'GET');
     assert.equal(options.redirect, 'manual');
     assert.equal(options.cache, 'no-store');
-    assert.deepEqual(options.headers, { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' });
+    assert.deepEqual(options.headers, { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9,application/xml;q=0.8,text/xml;q=0.8' });
     assert.ok(options.signal instanceof AbortSignal);
   }
   await egress.fetch('https://shop.example.com/', { method: 'GET', redirect: 'manual', headers: { cookie: 'secret', authorization: 'secret' }, credentials: 'include' });

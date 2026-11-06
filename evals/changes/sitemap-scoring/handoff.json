@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Expand sitemap usability and inclusion scoring",
+  "state": "The public Worker can obtain bounded positive sitemap observations and map them to S6 checks.",
+  "decisions": ["Limit optional inspection to same-origin XML through existing public egress.", "Keep unsupported, incomplete and absent observations unmeasured."],
+  "constraints": ["No frontend or Cloudflare service changes. No paid resources or dependencies."],
+  "completed": ["Added bounded parser, retrieval, evidence and scoring tests.", "Changed the scoring cache namespace for new submissions."],
+  "remaining": ["Validate hosted CPU and representative sitemap formats separately.", "Expand content coverage in a separate increment."],
+  "resumeCommands": ["npm run evaluate -- --change sitemap-scoring --base origin/main", "npm run ci:gate -- origin/main"]
+}

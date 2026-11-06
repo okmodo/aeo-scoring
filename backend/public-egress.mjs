@@ -20,7 +20,7 @@ export function createPublicEgress({ fetcher = globalThis.fetch } = {}) {
       }
       return fetcher(url, {
         method: 'GET', redirect: 'manual', cache: 'no-store',
-        headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' },
+        headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9,application/xml;q=0.8,text/xml;q=0.8' },
         signal: options.signal,
       });
     },
