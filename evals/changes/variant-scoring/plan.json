@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "variant-scoring",
+  "task": "Expand deterministic ProductGroup and selected-variant scoring.",
+  "scope": ["backend/**", "docs/**", "evals/changes/variant-scoring/**"],
+  "nonGoals": ["Frontend, existing Cloudflare service changes, paid inference, new requests or full JSON-LD resolution"],
+  "outcomes": [
+    {"id":"O1","description":"Recognize bounded explicit ProductGroup variant and Offer relationships tied to the exact audited URL.","verification":"automated","evidence":"Frozen selected variant, conflicting offer and ambiguous group cases"},
+    {"id":"O2","description":"Score supported variant evidence and reuse existing offer and identifier scoring only for the selected record.","verification":"automated","evidence":"Report, evidence and unchanged incomplete-state regressions"}
+  ],
+  "process": [{"id":"P1","description":"Separate backend branch, independent review and hosted CI.","verification":"human","evidence":"History, review and CI"}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse bounded JSON-LD and existing evidence without new requests, dependencies or bindings.","verification":"human","evidence":"Diff and regression suite"}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Variant scoring does not change workflow, portability or continuation."}
+}
