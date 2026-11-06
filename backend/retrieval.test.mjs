@@ -192,3 +192,46 @@ test('crawler matching shares a bounded work budget and leaves excess observatio
   assert.equal(result.crawlerPolicy.observations[0].status, 'allowed');
   assert.equal(result.crawlerPolicy.observations[1].status, 'not_measured');
 });
+
+test('label evidence assembles complete element text and fails closed on ambiguity', async () => {
+  class EvidenceRewriter {
+    handlers = new Map();
+    on(selector, handler) { this.handlers.set(selector, handler); return this; }
+    transform(response) {
+      const element = (selector, attrs = {}) => {
+        let end;
+        this.handlers.get(selector).element({ getAttribute: key => attrs[key] ?? null, onEndTag: fn => { end = fn; } });
+        return () => end?.();
+      };
+      const titleEnd = element('head title');
+      this.handlers.get('head title').text({ text: 'The ', lastInTextNode: false });
+      this.handlers.get('head title').text({ text: 'Product', lastInTextNode: true });
+      titleEnd();
+      element('main');
+      if (this.constructor.ancestorSelector) this.handlers.get(this.constructor.ancestorSelector).element({});
+      const headingEnd = element('main h1', this.constructor.headingAttributes);
+      this.handlers.get('main h1').text({ text: 'Great ', lastInTextNode: true });
+      this.handlers.get('main h1').text({ text: this.constructor.overlong ? 'x'.repeat(8193) : 'Product', lastInTextNode: true });
+      headingEnd();
+      if (this.constructor.duplicate) element('main h1')();
+      return response;
+    }
+  }
+  const evidence = async () => (await extract({ body: '' }, { HTMLRewriter: EvidenceRewriter })).labelEvidence;
+  assert.deepEqual(await evidence(), { title: 'The Product', mainH1: 'Great Product' });
+  EvidenceRewriter.duplicate = true;
+  assert.equal((await evidence()).mainH1, null);
+  EvidenceRewriter.duplicate = false;
+  EvidenceRewriter.headingAttributes = { hidden: '' };
+  assert.equal((await evidence()).mainH1, null);
+  EvidenceRewriter.headingAttributes = { style: 'opacity:0' };
+  assert.equal((await evidence()).mainH1, null);
+  EvidenceRewriter.headingAttributes = {};
+  for (const selector of ['main [hidden] h1', 'main [inert] h1', 'main template h1', 'main noscript h1', '[inert] main']) {
+    EvidenceRewriter.ancestorSelector = selector;
+    assert.equal((await evidence()).mainH1, null, selector);
+  }
+  EvidenceRewriter.ancestorSelector = null;
+  EvidenceRewriter.overlong = true;
+  assert.equal((await evidence()).mainH1, null);
+});

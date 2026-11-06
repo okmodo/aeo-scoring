@@ -192,6 +192,49 @@ export async function extract(snapshot, options = {}) {
   const result = { title: '', description: '', headings: [], canonical: '', jsonLd: [], coverage: { html: true, bodyText: false, usable: false, visibility: 'unknown', jsonLdTruncated: false } };
   const maxItems = 100, maxText = 8192;
   const rewriter = new Rewriter();
+  // Keep identity evidence independent from the legacy, per-text-node fields.
+  // Element end callbacks are required so nested text nodes form one complete value.
+  result.labelEvidence = { title: null, mainH1: null };
+  const identity = { title: { count: 0, active: null, value: null }, mainH1: { count: 0, active: null, value: null } };
+  let mains = 0, unsafeMain = false;
+  const markUnsafeMain = { element() { unsafeMain = true; } };
+  const explicitlyHidden = element => ['hidden', 'inert', 'aria-hidden', 'style']
+    .some(attribute => element.getAttribute(attribute) != null);
+  function identityHandler(state) {
+    return {
+      element(element) {
+        state.count = Math.min(2, state.count + 1);
+        if (state.count > 1) { if (state.active) state.active.invalid = true; state.active = null; return; }
+        const current = { value: '', invalid: explicitlyHidden(element), ended: false };
+        if (state.active) { state.active.invalid = true; current.invalid = true; }
+        state.active = current;
+        if (typeof element.onEndTag !== 'function') { current.invalid = true; return; }
+        element.onEndTag(() => {
+          current.ended = true;
+          if (state.active === current) state.active = null;
+          state.value = current;
+        });
+      },
+      text(chunk) {
+        const current = state.active;
+        if (!current) return;
+        if (current.value.length + chunk.text.length > maxText) current.invalid = true;
+        else current.value += chunk.text;
+      },
+    };
+  }
+  rewriter.on('head title', identityHandler(identity.title));
+  rewriter.on('main', { element(element) { mains = Math.min(2, mains + 1); if (explicitlyHidden(element)) unsafeMain = true; } });
+  rewriter.on('main h1', identityHandler(identity.mainH1));
+  for (const selector of ['style', 'script:not([type="application/ld+json"])']) rewriter.on(selector, markUnsafeMain);
+  rewriter.on('main h1 *', { element(element) { if ((explicitlyHidden(element) || /^(?:script|style|template|noscript)$/i.test(element.tagName || '')) && identity.mainH1.active) identity.mainH1.active.invalid = true; } });
+  // A styled ancestor is treated conservatively because selector callbacks expose
+  // the matched descendant, not the ancestor's computed style.
+  for (const ancestor of ['[hidden]', '[inert]', '[aria-hidden]', '[style]', 'template', 'noscript', 'details', 'dialog']) {
+    for (const selector of [`${ancestor} main`, `main ${ancestor} h1`]) {
+      rewriter.on(selector, markUnsafeMain);
+    }
+  }
   function textHandler(callback) {
     let value = '';
     return { text(chunk) { value = (value + chunk.text).slice(0, maxText); if (chunk.lastInTextNode) { callback(value.trim()); value = ''; } } };
@@ -199,7 +242,11 @@ export async function extract(snapshot, options = {}) {
   for (const selector of ['body p', 'body h1', 'body h2', 'body h3', 'body h4', 'body h5', 'body h6', 'body li']) rewriter.on(selector, textHandler(value => { if (value) result.coverage.usable = true; }));
   rewriter.on('title', textHandler(value => { if (!result.title && value) result.title = value; }));
   rewriter.on('meta[name]', { element(element) { if (element.getAttribute('name')?.toLowerCase() === 'description' && !result.description) result.description = (element.getAttribute('content') || '').slice(0, maxText); } });
-  rewriter.on('link[rel]', { element(element) { if ((element.getAttribute('rel') || '').toLowerCase().split(/\s+/).includes('canonical') && !result.canonical) result.canonical = (element.getAttribute('href') || '').slice(0, maxText); } });
+  rewriter.on('link[rel]', { element(element) {
+    const rel = (element.getAttribute('rel') || '').toLowerCase().split(/\s+/);
+    if (rel.includes('stylesheet')) unsafeMain = true;
+    if (rel.includes('canonical') && !result.canonical) result.canonical = (element.getAttribute('href') || '').slice(0, maxText);
+  } });
   for (const level of [1, 2, 3, 4, 5, 6]) rewriter.on(`h${level}`, textHandler(value => { if (value && result.headings.length < maxItems) result.headings.push({ level, text: value }); }));
   let jsonLdValue = '', jsonLdOverlong = false;
   rewriter.on('script[type="application/ld+json"]', { text(chunk) {
@@ -213,5 +260,10 @@ export async function extract(snapshot, options = {}) {
   } });
   const transformed = rewriter.transform(new Response(snapshot.body, { headers: { 'content-type': 'text/html' } }));
   if (transformed.body) { const reader = transformed.body.getReader(); while (!(await reader.read()).done) { /* drain without buffering output */ } }
+  for (const [key, state] of Object.entries(identity)) {
+    const value = state.value;
+    if (state.count === 1 && value && value.ended && !value.invalid && value.value.trim() &&
+        (key !== 'mainH1' || (mains === 1 && !unsafeMain))) result.labelEvidence[key] = value.value.trim();
+  }
   return result;
 }
