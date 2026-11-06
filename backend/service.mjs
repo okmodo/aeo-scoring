@@ -98,7 +98,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-6:' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-7:' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -123,10 +123,12 @@ export function createAuditService({
     let snapshot;
     let report;
     try {
-      snapshot = await retrievePage(audit.url, { egress });
+      snapshot = await retrievePage(audit.url, {
+        egress, consumeHtml: page => extractPage(page, { HTMLRewriter }),
+      });
       const observedAt = new Date(now()).toISOString();
-      const extracted = await extractPage(snapshot, { HTMLRewriter });
-      if (extracted.coverage.usable !== true) throw new Error('Unusable HTML');
+      const extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
+      if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
       report = scorePage({ ...snapshot, observedAt }, extracted);
     } catch (error) {
       await store.finish(audit.id, {

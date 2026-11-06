@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "bounded-html-stream",
+  "task": "Stream public audit HTML into bounded extraction, preserve safe evidence on limits, and test larger pages on Workers Free.",
+  "scope": ["backend/**", "test/feasibility.test.mjs", "evals/changes/bounded-html-stream/**"],
+  "nonGoals": ["Paid resources, rollout to existing production or preview services, rubric weight changes, new public audit features, or weakened retrieval protections."],
+  "outcomes": [
+    {"id":"O1","description":"The live audit consumes HTML as a bounded stream and can extract evidence beyond the former 512 KiB ceiling.","verification":"automated","evidence":"Frozen complete, late-evidence, exactly-at-cap, over-cap, and timeout cases."},
+    {"id":"O2","description":"A bounded prefix yields incomplete findings without final score or unsupported absence, uniqueness, or fix claims.","verification":"automated","evidence":"Scoring and service regression tests on complete and limited input."},
+    {"id":"O3","description":"The reviewed pipeline runs on Cloudflare Workers Free for fixed over-512 KiB and truncated workloads.","verification":"human","evidence":"Dedicated finite, authenticated synthetic probe, measured CPU when observable, and cleanup record."}
+  ],
+  "process": [{"id":"P1","description":"Use Terra implementers and independent review, retain actual offline evaluation and hosted CI, and keep the live probe separate and isolated.","verification":"human","evidence":"Git history, trace, hosted CI and sanitized observed runtime results."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse current extractor, retrieval guards and report types. Bound work and retained evidence without new dependencies.","verification":"human","evidence":"Independent source review."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+  "exitTest":{"required":false,"reason":"Retrieval and scoring behavior change without changes to agent workflow, handoff, portability or resumability."}
+}

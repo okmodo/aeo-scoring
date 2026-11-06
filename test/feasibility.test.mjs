@@ -157,6 +157,7 @@ test('text outside the body cannot make an empty body usable', () => {
 
 // Keep backend contract and runtime regressions in the existing offline CI suite.
 await import('../backend/retrieval.test.mjs');
+await import('../backend/html-stream.test.mjs');
 await import('../backend/scoring.test.mjs');
 await import('../backend/store.test.mjs');
 await import('../backend/service.test.mjs');
