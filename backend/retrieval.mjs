@@ -132,7 +132,7 @@ function parseRobots(text) {
       if (!value || !/^(?:\*|[a-z0-9_-]+)$/i.test(value)) throw failure('robots_unknown', 'Malformed robots user agent');
       agents.push(value.toLowerCase());
     } else if (key === 'allow' || key === 'disallow') {
-      if (!agents.length || (value && !value.startsWith('/'))) throw failure('robots_unknown', 'Malformed robots rule');
+      if (!agents.length || (value && !value.startsWith('/') && !(key === 'disallow' && value.startsWith('*')))) throw failure('robots_unknown', 'Malformed robots rule');
       inRules = true;
       if (value) rules.push({ key, value });
     } else if (!['sitemap', 'crawl-delay', 'host'].includes(key) || !value) {
@@ -152,6 +152,12 @@ function sitemapDeclarations(text) {
 function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 0 }) {
   const specific = groups.filter(group => group.agents.some(agent => agent !== '*' && agent === userAgent.toLowerCase()));
   const applicable = specific.length ? specific : groups.filter(group => group.agents.includes('*'));
+  // Leading-star deny rules occur on storefronts. Our crawler honors them,
+  // while other crawlers' handling is unknown and therefore remains unmeasured.
+  if (userAgent.toLowerCase() !== 'aeoauditbot' &&
+      applicable.some(group => group.rules.some(rule => rule.value.startsWith('*')))) {
+    throw failure('robots_unknown', 'Nonstandard crawler path rule');
+  }
   function decodeUnreserved(value, isTarget) {
     if (isTarget && /%(?![0-9a-f]{2})/i.test(value)) throw failure('robots_unknown', 'Ambiguous URL encoding');
     return value.replace(/%([0-9a-f]{2})/gi, (encoded, hex) => {
