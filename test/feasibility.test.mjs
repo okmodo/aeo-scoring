@@ -161,3 +161,5 @@ await import('../backend/html-stream.test.mjs');
 await import('../backend/scoring.test.mjs');
 await import('../backend/store.test.mjs');
 await import('../backend/service.test.mjs');
+
+await import('../backend/public-worker.test.mjs');
