@@ -1,0 +1,11 @@
+{
+ "version":1,"id":"robots-leading-wildcards",
+ "task":"Handle leading wildcard Disallow rules without bypassing merchant crawl restrictions.",
+ "scope":["backend/**","docs/**","evals/changes/robots-leading-wildcards/**"],
+ "nonGoals":["Frontend or deployed Cloudflare changes","Assuming all registered crawlers support nonstandard syntax"],
+ "outcomes":[{"id":"O1","description":"Audit crawler evaluates bounded leading-star deny patterns, while malformed rules and blocked paths remain closed.","verification":"automated","evidence":"Frozen allowed product and denied route cases"},{"id":"O2","description":"Third-party crawler policies with nonstandard applicable rules stay unmeasured.","verification":"automated","evidence":"Crawler-policy regression"}],
+ "process":[{"id":"P1","description":"Separate plan, independent review and hosted CI.","verification":"human","evidence":"History and review"}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse existing bounded matcher and avoid dependencies or extra requests.","verification":"human","evidence":"Diff"}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+ "exitTest":{"required":false,"reason":"This parser correction does not change workflow or continuation."}
+}
