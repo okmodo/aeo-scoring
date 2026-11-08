@@ -298,3 +298,24 @@ test('guide evidence adds only confirmed identity and context credit', () => {
   assert.deepEqual(report.evidence.map(item => item.url), [new URL('/llms.txt', url).href, new URL('/AGENTS.md', url).href]);
   assert.doesNotMatch(JSON.stringify(report.evidence), /sells outdoor footwear/);
 });
+
+test('bounded HTML preserves observed candidates and independent evidence without inferring uniqueness', () => {
+  const product = { '@context': 'https://schema.org', '@type': 'Product', url: snapshot.url, name: 'Example shoe' };
+  const group = { '@context': 'https://schema.org', '@type': 'ProductGroup' };
+  for (const limit of ['bytes', 'time']) {
+    const report = scoreAudit({ ...snapshot, htmlLimited: limit,
+      sitemap: { usableSource: 'https://shop.example/sitemap.xml', inclusionSource: 'https://shop.example/sitemap.xml' } },
+    { jsonLd: [JSON.stringify(product), JSON.stringify(group)], coverage: { usable: true, jsonLdTruncated: false } });
+    const check = id => report.criteria.flatMap(c => c.subchecks).find(c => c.id === id);
+    assert.equal(report.status, 'incomplete');
+    assert.equal(report.score, null);
+    assert.equal(check('S2.entity').fraction, 0.5);
+    assert.equal(check('S2.core-properties').status, 'not_measured');
+    assert.equal(check('S2.variants').status, 'not_measured');
+    assert.equal(check('S6.inclusion').fraction, 1);
+    assert.match(report.evidence[0].excerpt, /Product candidate/);
+    assert.ok(report.evidence.some(e => /ProductGroup candidate/.test(e.excerpt)));
+    assert.deepEqual(report.fixes, []);
+    assert.ok(report.coverage.limitations.some(s => s.includes('limit')));
+  }
+});
