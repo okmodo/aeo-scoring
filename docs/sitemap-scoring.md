@@ -1,6 +1,6 @@
 # Bounded sitemap scoring
 
-The public audit Worker can inspect same-origin XML sitemaps after successful product retrieval. It uses a robots.txt declaration or the conventional /sitemap.xml path, follows at most one index child, and never follows sitemap redirects or fetches listed product pages. Each sitemap request is checked against the final site's observed robots policy. The existing public-only egress boundary applies.
+The public audit Worker can inspect same-origin XML sitemaps after successful product retrieval. It uses a robots.txt declaration or the conventional /sitemap.xml path, follows at most one index child, and never follows sitemap redirects or fetches listed product pages. Robots sitemap declarations provide discovery hints. Robots permissions do not control sitemap retrieval. The existing public-only egress boundary applies.
 
 Inspection makes at most two extra requests, with a 32 KiB cap per response and a short shared deadline within the audit timeout. The XML parser accepts a bounded subset of the sitemap protocol and rejects malformed XML, custom entities and unsupported forms. Failure to inspect a sitemap leaves the product assessment intact.
 
