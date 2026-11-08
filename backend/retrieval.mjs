@@ -152,8 +152,8 @@ function sitemapDeclarations(text) {
 function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 0 }) {
   const specific = groups.filter(group => group.agents.some(agent => agent !== '*' && agent === userAgent.toLowerCase()));
   const applicable = specific.length ? specific : groups.filter(group => group.agents.includes('*'));
-  // Leading-star deny rules occur on storefronts. Our crawler honors them,
-  // while other crawlers' handling is unknown and therefore remains unmeasured.
+  // Leading-star deny rules occur on storefronts. Other crawlers' handling is
+  // unknown and therefore remains unmeasured; policy never controls our retrieval.
   if (userAgent.toLowerCase() !== 'aeoauditbot' &&
       applicable.some(group => group.rules.some(rule => rule.value.startsWith('*')))) {
     throw failure('robots_unknown', 'Nonstandard crawler path rule');
@@ -187,9 +187,9 @@ function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 
   return match?.key !== 'disallow';
 }
 
-// Inspection uses the final page origin and its already retrieved robots policy.
+// Inspection uses the final page origin and any robots sitemap declarations.
 // Missing, partial, ambiguous, or exhausted inspection never asserts absence.
-async function inspectSitemap({ url, policy, declarations, fetchBounded, signal }) {
+async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
   const optional = new AbortController();
   const abort = () => optional.abort();
   signal.addEventListener('abort', abort, { once: true });
@@ -198,7 +198,6 @@ async function inspectSitemap({ url, policy, declarations, fetchBounded, signal 
   const result = { usableSource: null, inclusionSource: null };
   const seen = new Set();
   let requests = 0;
-  const robotsBudget = { work: 0 };
   function candidate(value) {
     try {
       if (!/^https?:\/\//i.test(value) || value.includes('#')) return null;
@@ -213,7 +212,6 @@ async function inspectSitemap({ url, policy, declarations, fetchBounded, signal 
     if (seen.has(location)) return null;
     seen.add(location);
     try {
-      if (policy && !robotsAllowed(policy, target, 'AEOAuditBot', robotsBudget)) return null;
       requests++;
       const response = await fetchBounded(target, optional.signal);
       const type = response.headers.get('content-type') || '';
@@ -262,17 +260,16 @@ async function inspectSitemap({ url, policy, declarations, fetchBounded, signal 
 
 // Fixed origin-root probes are optional and share one deadline. Unknown results
 // cannot establish that a differently cased AGENTS file is absent.
-async function inspectGuides({ url, policy, fetchBounded, signal }) {
+async function inspectGuides({ url, fetchBounded, signal }) {
   const optional = new AbortController();
   const abort = () => optional.abort();
   signal.addEventListener('abort', abort, { once: true });
   if (signal.aborted) abort();
   const timer = setTimeout(abort, 500);
-  const budget = { work: 0 };
   async function read(path) {
     const target = new URL(path, url.origin);
     try {
-      if (optional.signal.aborted || (policy && !robotsAllowed(policy, target, 'AEOAuditBot', budget))) return { state: 'unknown' };
+      if (optional.signal.aborted) return { state: 'unknown' };
       const response = await fetchBounded(target, optional.signal);
       if (response.status === 404 || response.status === 410) { discard(response); return { state: 'absent' }; }
       if (response.status !== 200 || !/^text\/(?:plain|markdown)(?:\s*;|\s*$)/i.test(response.headers.get('content-type') || '')) {
@@ -313,19 +310,6 @@ export async function retrieve(input, options = {}) {
   };
   try {
     for (let redirects = 0; ; redirects++) {
-      const robotsUrl = new URL('/robots.txt', url);
-      const robotsResponse = await fetchBounded(robotsUrl);
-      let policy = null, declarations = [];
-      const missingPolicy = robotsResponse.status === 404 || robotsResponse.status === 410;
-      if (missingPolicy) discard(robotsResponse);
-      else {
-        if (robotsResponse.status !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) { discard(robotsResponse); throw failure('robots_unknown', 'Robots policy unavailable'); }
-        try { policy = await boundedResponse(robotsResponse, maxRobotsBytes, controller.signal); }
-        catch (error) { if (error.code === 'timeout') throw error; throw failure('robots_unknown', 'Robots policy unavailable'); }
-        if (options.observeSitemap === true) declarations = sitemapDeclarations(policy);
-        policy = parseRobots(policy);
-        if (!robotsAllowed(policy, url, 'AEOAuditBot', budget)) throw failure('robots_denied', 'Robots policy does not permit retrieval');
-      }
       const response = await fetchBounded(url);
       if ([301, 302, 303, 307, 308].includes(response.status)) {
         discard(response);
@@ -340,6 +324,39 @@ export async function retrieve(input, options = {}) {
       const contentType = response.headers.get('content-type') || '';
       if (!/^text\/html(?:\s*;|\s*$)/i.test(contentType)) { discard(response); throw failure('unsupported_content', 'Page is not HTML'); }
       const body = options.consumeHtml ? null : await boundedResponse(response, maxBytes, controller.signal);
+      const snapshot = { url: url.toString(), status: response.status, contentType, body };
+      if (options.consumeHtml) {
+        snapshot.htmlLimited = null;
+        const streaming = streamingBody(response, maxStreamBytes, controller.signal, snapshot);
+        snapshot.body = streaming.body;
+        try { snapshot.extracted = await withTimeoutConsumer(Promise.resolve().then(() => options.consumeHtml(snapshot)), controller.signal, snapshot); }
+        finally { streaming.cancel(); }
+        delete snapshot.body;
+      }
+      // Robots is optional evidence and has its own short deadline within the
+      // overall retrieval deadline. It never controls which resources are fetched.
+      const robotsUrl = new URL('/robots.txt', url);
+      const optional = new AbortController();
+      const abortRobots = () => optional.abort();
+      controller.signal.addEventListener('abort', abortRobots, { once: true });
+      if (controller.signal.aborted) abortRobots();
+      const robotsTimer = setTimeout(abortRobots, 500);
+      let policy = null, declarations = [], httpStatus = null, missingPolicy = false;
+      try {
+        const robotsResponse = await fetchBounded(robotsUrl, optional.signal);
+        httpStatus = robotsResponse.status;
+        missingPolicy = httpStatus === 404 || httpStatus === 410;
+        if (missingPolicy || httpStatus !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) discard(robotsResponse);
+        else {
+          const text = await boundedResponse(robotsResponse, maxRobotsBytes, optional.signal, { fatal: true });
+          if (options.observeSitemap === true) declarations = sitemapDeclarations(text);
+          try { policy = parseRobots(text); } catch { /* Unverified policy remains unmeasured. */ }
+        }
+      } catch { /* Optional evidence must not fail a completed page retrieval. */ }
+      finally {
+        clearTimeout(robotsTimer);
+        controller.signal.removeEventListener('abort', abortRobots);
+      }
       const observations = scoredBots.map(bot => {
         let status = 'not_measured';
         if (missingPolicy && bot.robots.missingFilePolicy === 'allow') status = 'allowed';
@@ -349,21 +366,13 @@ export async function retrieve(input, options = {}) {
         }
         return { botId: bot.id, status };
       });
-      const snapshot = { url: url.toString(), status: response.status, contentType, body, robots: 'allowed', crawlerPolicy: { version: crawlers.version, url: robotsUrl.toString(), httpStatus: robotsResponse.status, observations } };
-      if (options.consumeHtml) {
-        snapshot.htmlLimited = null;
-        const streaming = streamingBody(response, maxStreamBytes, controller.signal, snapshot);
-        snapshot.body = streaming.body;
-        try { snapshot.extracted = await withTimeoutConsumer(Promise.resolve().then(() => options.consumeHtml(snapshot)), controller.signal, snapshot); }
-        finally { streaming.cancel(); }
-        delete snapshot.body;
-      }
+      snapshot.crawlerPolicy = { version: crawlers.version, url: robotsUrl.toString(), httpStatus, observations };
       if (options.observeSitemap === true) {
-        try { snapshot.sitemap = await inspectSitemap({ url, policy, declarations, fetchBounded, signal: controller.signal }); }
+        try { snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal }); }
         catch { /* Optional evidence must not fail a completed page retrieval. */ }
       }
       if (options.observeGuides === true) {
-        try { snapshot.guides = await inspectGuides({ url, policy, fetchBounded, signal: controller.signal }); }
+        try { snapshot.guides = await inspectGuides({ url, fetchBounded, signal: controller.signal }); }
         catch { snapshot.guides = { llms: null, agents: null }; }
       }
       return snapshot;

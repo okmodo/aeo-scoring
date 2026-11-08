@@ -1,0 +1,10 @@
+{
+ "version":1,"id":"robots-evidence-only","task":"Use robots.txt as optional audit evidence and sitemap discovery without blocking retrieval.",
+ "scope":["backend/**","docs/**","AEO Scoring Vault/**","evals/changes/robots-evidence-only/**"],
+ "nonGoals":["Frontend changes, weakening destination safety, paid services, deployment or merge"],
+ "outcomes":[{"id":"O1","description":"Product and supporting retrieval proceed independently of robots rules, fetch failures and parse errors.","verification":"automated","evidence":"Blocked, malformed, redirected, oversized and stalled robots regressions"},{"id":"O2","description":"Verified policies still inform crawler scores and sitemap discovery while unknown policy stays unmeasured.","verification":"automated","evidence":"Policy and scoring cases"}],
+ "process":[{"id":"P1","description":"Separate plan, independent review and hosted CI.","verification":"human","evidence":"History, review and CI"}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse bounded fetch and inspection logic without dependencies.","verification":"human","evidence":"Diff"}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+ "exitTest":{"required":false,"reason":"Changing crawl policy does not alter workflow or continuation."}
+}

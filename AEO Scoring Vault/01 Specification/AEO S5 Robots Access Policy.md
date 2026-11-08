@@ -1,6 +1,6 @@
 ---
 tags: [aeo-scoring, specification]
-updated: 2026-11-04
+updated: 2026-11-08
 status: agreed-planning
 ---
 
@@ -26,3 +26,5 @@ Confirmed restrictions receive prominent access warnings as well as their S5 sco
 Related: [[AEO Access and Eligibility]] · [[AEO Priority Ranking]].
 
 Project index: [[AEO Scoring Project Specification]].
+
+[[AEO Robots Evidence Does Not Gate Audits]] records the current audit retrieval decision.

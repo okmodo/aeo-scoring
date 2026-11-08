@@ -1,6 +1,6 @@
 ---
 tags: [aeo-scoring, specification]
-updated: 2026-11-04
+updated: 2026-11-08
 status: agreed-planning
 ---
 
@@ -17,3 +17,5 @@ Indexability requirements must be attributed to the platform or feature they gov
 Related: [[AEO S5 Robots Access Policy]] · [[AEO Report Summary]] · [[AEO Priority Ranking]].
 
 Project index: [[AEO Scoring Project Specification]].
+
+[[AEO Robots Evidence Does Not Gate Audits]] records the current audit retrieval decision.
