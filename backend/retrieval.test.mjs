@@ -328,3 +328,24 @@ test('guide probes obey robots and abort on their shared deadline', async () => 
   assert.equal(calls.some(call => call.url.endsWith('/AGENTS.md')), false);
   assert.equal(calls.find(call => call.url.endsWith('/llms.txt')).options.signal.aborted, true);
 });
+
+test('leading-star deny patterns permit unrelated products and preserve crawl restrictions', async () => {
+  const policy = 'User-agent: *\nDisallow: */search*\nDisallow: */checkout*\nDisallow: *index=0\n';
+  const product = '/products/duo-leather-crossbody-bag/KM218-302.html';
+  const allowed = await retrieve('https://example.com' + product, { egress: binding({
+    '/robots.txt': () => new Response(policy),
+    [product]: page,
+  }) });
+  assert.equal(allowed.status, 200);
+  assert.ok(allowed.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
+  for (const path of ['/search', '/shop/checkout', '/products/item?index=0']) {
+    const calls = [];
+    await rejectsCode(retrieve('https://example.com' + path, { egress: binding({
+      '/robots.txt': () => new Response(policy),
+    }, calls) }), 'robots_denied');
+    assert.equal(calls.length, 1);
+  }
+  await rejectsCode(retrieve('https://example.com' + product, { egress: binding({
+    '/robots.txt': () => new Response('User-agent: *\nAllow: *\nDisallow: /'),
+  }) }), 'robots_unknown');
+});
