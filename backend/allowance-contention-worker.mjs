@@ -1,6 +1,6 @@
 import { workerData, parentPort } from 'node:worker_threads';
 import { DatabaseSync } from 'node:sqlite';
-import { createAllowanceGuard } from './allowance-store.mjs';
+import { createTestAllowanceGuard } from './allowance-store.test-helper.mjs';
 
 const { path, barrier, id, evidence, allocations, costs, now } = workerData;
 const sqlite = new DatabaseSync(path);
@@ -9,7 +9,7 @@ const db = { prepare(sql) { return { bind(...args) {
   const stmt = sqlite.prepare(sql);
   return { run: async () => stmt.run(...args), first: async () => stmt.get(...args) ?? null };
 } }; } };
-const guard = createAllowanceGuard(db, { accountId: 'account', evidence, allocations });
+const guard = createTestAllowanceGuard(db, { accountId: 'account', evidence, allocations });
 const signal = new Int32Array(barrier);
 parentPort.postMessage({ ready: true });
 Atomics.wait(signal, 0, 0);

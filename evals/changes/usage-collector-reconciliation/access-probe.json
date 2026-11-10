@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "readOnly": true,
+  "credentialValuesRecorded": false,
+  "accountUsageRead": false,
+  "resourceMutations": 0,
+  "endpoints": [
+    {
+      "path": "GET /accounts/{account_id}/subscriptions",
+      "httpStatus": 403
+    },
+    {
+      "path": "GET /accounts/{account_id}/billable-usage/info",
+      "httpStatus": 403
+    },
+    {
+      "path": "GET /accounts/{account_id}/billable-usage",
+      "httpStatus": 403
+    }
+  ],
+  "conclusion": "Current connection cannot read these billing endpoints. Billing Read is the documented minimum; account/alpha endpoint eligibility still needs independent validation.",
+  "recordedAt": "2026-11-10T21:42:30Z"
+}
