@@ -39,12 +39,7 @@ test("sample score and action recovery reconcile with rubric without duplicate s
       action.ids.reduce((sum, id) => sum + deductions[id], 0),
     );
 });
-test("preview labels sample and does not implement merchant fetching", () => {
-  const s = readFileSync("src/App.tsx", "utf8");
-  assert.match(s, /No website is\s+fetched or assessed/);
-  assert.match(s, /No URL was assessed/);
-  assert.doesNotMatch(s, /\bfetch\s*\(/);
-});
+
 
 test("fictional running shoe score agrees with the reference scorer", async () => {
   const { scoreReference } = await import("../scripts/scoring-foundations.mjs");
@@ -99,15 +94,15 @@ test("preview component renders at runtime", async () => {
     const { App } = await vite.ssrLoadModule("/src/App.tsx");
     const React = await import("react");
     const html = renderToStaticMarkup(React.createElement(App));
-    assert.match(html, /No website is fetched or assessed/);
+    assert.match(html, /Assess product page/);
     assert.match(html, /Explore sample report/);
-    assert.match(html, /Your URL stays in this browser/);
+    assert.match(html, /anyone with the report link can view it/);
   } finally {
     await vite.close();
   }
 });
 
-test("landing presents navigable sample sections without simulated assessment", async () => {
+test("landing presents navigable sections and a distinct fictional sample", async () => {
   const { createServer } = await import("vite");
   const { renderToStaticMarkup } = await import("react-dom/server");
   const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
@@ -210,4 +205,35 @@ test("field-level changes cover the frozen action evidence and appear only with 
       assert.doesNotMatch(result, /Exactly what to update|Review field-level changes/);
     }
   } finally { await vite.close(); }
+});
+
+await import('./live-report.test.mjs');
+
+test('live transport restricts report locations and preserves server errors and cancellation', async () => {
+  const { auditStatusUrl, requestAudit, getAudit, pollDelay, AUDIT_ORIGIN } = await import('../src/audit.ts');
+  assert.equal(auditStatusUrl('/api/v1/audits/test-id'), AUDIT_ORIGIN + '/api/v1/audits/test-id');
+  for (const path of ['https://example.com/api/v1/audits/x', '//example.com/x', '/api/v1/audits/../secret', '/api/v1/audits/x?token=y']) assert.throws(() => auditStatusUrl(path));
+  assert.deepEqual([0, 1, 2, 3, 10].map(pollDelay), [2000, 4000, 8000, 10000, 10000]);
+  const original = globalThis.fetch;
+  const controller = new AbortController();
+  const pending = JSON.parse(readFileSync('contracts/v1/examples/submission-pending.json'));
+  try {
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, AUDIT_ORIGIN + '/api/v1/audits');
+      assert.equal(options.method, 'POST');
+      assert.deepEqual(JSON.parse(options.body), { url: 'https://example.com/product' });
+      assert.equal(options.signal, controller.signal);
+      return Response.json(pending);
+    };
+    assert.deepEqual(await requestAudit('https://example.com/product', controller.signal), pending);
+    globalThis.fetch = async () => Response.json({ error: { message: 'Please wait', retryAfterSeconds: 60 } }, { status: 429 });
+    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /Please wait.*60 seconds/);
+    globalThis.fetch = async () => Response.json({ version: '2', status: 'complete' });
+    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /invalid response/);
+    globalThis.fetch = async () => Response.json({ ...pending, statusUrl: 'https://example.com/private' });
+    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /invalid report address/);
+    controller.abort();
+    globalThis.fetch = async (_url, options) => { options.signal.throwIfAborted(); };
+    await assert.rejects(getAudit(pending.statusUrl, controller.signal), { name: 'AbortError' });
+  } finally { globalThis.fetch = original; }
 });

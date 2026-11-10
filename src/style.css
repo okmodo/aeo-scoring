@@ -869,3 +869,5 @@ main > footer {
   padding: 0 18px;
 }
 }
+
+button:disabled { opacity: .65; cursor: wait; }

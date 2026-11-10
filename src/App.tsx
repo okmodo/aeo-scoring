@@ -1,46 +1,80 @@
 import React, { useEffect, useRef, useState } from "react";
-import { actions, checks, total } from "./sample";
+import { total } from "./sample";
 import "./style.css";
+import { getAudit, pollDelay, requestAudit } from "./audit";
+import { LiveReport } from "./live-report/LiveReport";
+import type { Assessment } from "../contracts/v1/types";
 export function App() {
-  const [screen, setScreen] = useState<"entry" | "report">(
+  const [screen, setScreen] = useState<"entry" | "live">(
       "entry",
     ),
-    [url, setUrl] = useState(""),
-    [open, setOpen] = useState<number | null>(0),
-    [showAll, setShowAll] = useState(false);
-  const reportHeading = useRef<HTMLHeadingElement>(null);
+    [url, setUrl] = useState("");
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => { document.title = "Answerable — product page assessment"; return () => controller.current?.abort(); }, []);
   const entryHeading = useRef<HTMLHeadingElement>(null);
   const hasNavigated = useRef(false);
   useEffect(() => {
-    if (screen === "report") reportHeading.current?.focus();
     if (screen === "entry" && hasNavigated.current)
       entryHeading.current?.focus();
     if (screen !== "entry") hasNavigated.current = true;
   }, [screen]);
-  function preview(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setScreen("report");
+    controller.current?.abort();
+    const request = new AbortController();
+    controller.current = request;
+    setError("");
+    setSubmitting(true);
+    try {
+      let next = await requestAudit(url, request.signal);
+      if (request.signal.aborted) return;
+      setAssessment(next);
+      setScreen("live");
+      let attempt = 0;
+      const deadline = Date.now() + 120_000;
+      while (next.status === "pending") {
+        if (Date.now() >= deadline) throw new Error("The assessment is taking longer than expected. Please try again later.");
+        await new Promise<void>((resolve, reject) => {
+          const onAbort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
+          const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
+          request.signal.addEventListener("abort", onAbort, { once: true });
+        });
+        next = await getAudit(next.statusUrl, request.signal);
+        if (request.signal.aborted) return;
+        setAssessment(next);
+      }
+    } catch (err) {
+      if (!request.signal.aborted) {
+        setError(err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
+        setScreen("entry");
+      }
+    } finally { if (!request.signal.aborted) setSubmitting(false); }
   }
+  function back() { controller.current?.abort(); setSubmitting(false); setScreen("entry"); }
   return (
     <>
+      {screen !== "live" && <>
       <div className="sample-banner">
-        SAMPLE PREVIEW <span> · </span> Synthetic data only. No website is
-        fetched or assessed.
+        LIVE PRODUCT PAGE ASSESSMENT <span> · </span> A fictional sample is also available below.
       </div>
       <header className="top">
-        <a className="brand" href="#home" onClick={() => setScreen("entry")}>
+        <a className="brand" href="#home" onClick={back}>
           <span className="brandmark">a</span> answerable
           <span className="brand-dot">.</span>
         </a>
-        <span className="top-label">AEO REPORT PREVIEW</span>
+        <span className="top-label">AEO REPORT</span>
         <span className="top-right">
           Built for better answers <span>↗</span>
         </span>
       </header>
+      </>}
       {screen === "entry" && (
         <main id="home">
           <nav className="section-nav" aria-label="Page sections">
-            <strong>AEO report preview</strong>
+            <strong>AEO report</strong>
             <a href="#how">How it works</a>
             <a href="#preview">Sample score</a>
             <a href="#scope">Scope</a>
@@ -60,18 +94,19 @@ export function App() {
                   <li>A fictional example, ready to explore</li>
                 </ul>
               </div>
-              <form className="audit-card" onSubmit={preview}>
-                <div className="audit-bar">SAMPLE REPORT <span>✳</span>
+              <form className="audit-card" onSubmit={submit}>
+                <div className="audit-bar">LIVE AUDIT <span>✳</span>
                 </div>
                 <div className="audit-body">
-                  <h2>Explore the report</h2>
-                  <p>See what an AEO assessment can look like.</p>
-                  <label htmlFor="url">Product page URL <span>Optional</span>
+                  <h2>Assess a product page</h2>
+                  <p>Enter a public product page URL to start an assessment.</p>
+                  <label htmlFor="url">Product page URL
                   </label>
-                  <input id="url" type="url" placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
-                  <p className="form-note">Your URL stays in this browser and is not fetched or assessed. The report always shows the same fictional product.</p>
-                  <button type="submit">Explore sample report <span>↗</span>
+                  <input id="url" type="url" required placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
+                  <p className="form-note">The URL is sent to our audit service and the page is fetched. Submit only public URLs suitable for an unlisted report; anyone with the report link can view it.</p>
+                  <button type="submit" disabled={submitting}>{submitting ? "Starting assessment…" : "Assess product page"} <span>↗</span>
                   </button>
+                  {error && <p role="alert">{error}</p>}
                 </div>
               </form>
             </div>
@@ -137,7 +172,7 @@ export function App() {
                   </div>
                 </div>
                 <p>Open the sample for the full breakdown, supporting evidence, and prioritized recommendations. Scores describe readiness; they do not predict traffic or citations.</p>
-                <button className="blue-button" onClick={() => setScreen("report")}>Explore sample report ↗</button>
+                <button className="blue-button" onClick={() => window.location.assign("/report-design/")}>Explore sample report ↗</button>
               </div>
             </div>
           </section>
@@ -164,239 +199,40 @@ export function App() {
             <div className="landing-wrap">
               <div className="landing-head">
                 <div className="eyebrow">FAQ</div>
-                <h2>Questions about the preview</h2>
+                <h2>Questions about the assessment</h2>
               </div>
               <div className="faq-list">
                 <details>
                   <summary>Does this assess my website?</summary>
-                  <p>No. This preview shows a fictional product and invented findings. No website is fetched or assessed.</p>
+                  <p>Yes. The live audit fetches the public page you submit. The separate sample shows fictional findings.</p>
                 </details>
                 <details>
                   <summary>What happens to the URL I enter?</summary>
-                  <p>It stays in your browser and does not change the sample report.</p>
+                  <p>It is sent to the audit service and used to fetch the page. Reports are unlisted; anyone with the report link can view one.</p>
                 </details>
                 <details>
                   <summary>What does the score measure?</summary>
-                  <p>The sample illustrates product content readiness. It does not predict traffic, recommendations, or citations.</p>
+                  <p>The score describes product content readiness. It does not predict traffic, recommendations, or citations.</p>
                 </details>
                 <details>
                   <summary>Will anything on my website change?</summary>
-                  <p>No. The sample is illustrative and makes no changes to your site.</p>
+                  <p>No. The assessment reads the page and does not change your site.</p>
                 </details>
               </div>
               <div className="final-cta">
                 <h2>See what a useful AEO report looks like.</h2>
-                <button onClick={() => setScreen("report")}>Explore sample report ↗</button>
+                <button onClick={() => window.location.assign("/report-design/")}>Explore sample report ↗</button>
               </div>
             </div>
           </section>
           <footer>
             <span className="brand">answerable<span className="brand-dot">.</span>
             </span>
-            <span>SAMPLE PREVIEW · NO LIVE ASSESSMENT</span>
+            <span>LIVE ASSESSMENT · FICTIONAL SAMPLE AVAILABLE</span>
           </footer>
         </main>
       )}
-      {screen === "report" && (
-        <main className="report">
-          <div className="breadcrumb">
-            <button onClick={() => setScreen("entry")}>← Back to start</button>
-            <span>PREVIEW / SAMPLE REPORT</span>
-          </div>
-          <section className="report-intro">
-            <div>
-              <div className="eyebrow">
-                <span className="status-dot" /> FICTIONAL PRODUCT · SAMPLE
-                REPORT
-              </div>
-              <h1 tabIndex={-1} ref={reportHeading}>
-                Clarity starts here<span className="brand-dot">.</span>
-              </h1>
-              <p>Here’s what an actionable AEO report can look like.</p>
-            </div>
-            <div className="report-meta">
-              <span>EXAMPLE PRODUCT</span>
-              <strong>Northstar Road Runner</strong>
-              <small>Running shoe · US 9 · Blue · US / USD</small>
-              <small>Illustrative assessment · Rubric v1.0.0</small>
-            </div>
-          </section>
-          <div className="notice">
-            <strong>✳ &nbsp; This is a sample.</strong> All findings and
-            evidence below are invented. No URL was assessed, and this score
-            does not measure citations.
-          </div>
-          <section className="summary-grid">
-            <div className="score-card">
-              <div className="card-kicker">
-                OVERALL SCORE <span>↗</span>
-              </div>
-              <div className="score">
-                {total("structure") + total("content")}
-                <small> / 100</small>
-              </div>
-              <p>Product content readiness</p>
-              <div className="score-rule" />
-              <div className="score-splits">
-                <div>
-                  <span>STRUCTURE</span>
-                  <b>
-                    {total("structure")} <small>/ 40</small>
-                  </b>
-                </div>
-                <div>
-                  <span>CONTENT</span>
-                  <b>
-                    {total("content")} <small>/ 60</small>
-                  </b>
-                </div>
-              </div>
-            </div>
-            <div className="takeaway">
-              <div className="card-kicker">
-                THE MAIN TAKEAWAY <span>01 / 02</span>
-              </div>
-              <div className="takeaway-body">
-                <div className="asterisk">✳</div>
-                <h2>Good information deserves to be easy to find.</h2>
-                <p>
-                  In this fictional example, missing product details and
-                  incomplete specifications for a simple fetcher are the biggest
-                  opportunities.
-                </p>
-              </div>
-              <div className="takeaway-foot">
-                START WITH THE PLAN BELOW <span>↓</span>
-              </div>
-            </div>
-          </section>
-          <section className="actions-section">
-            <div className="section-heading">
-              <div>
-                <div className="eyebrow">02 / YOUR ACTION PLAN</div>
-                <h2>
-                  Make the next move<span className="brand-dot">.</span>
-                </h2>
-                <p>Prioritized sample actions, ready to assign to a team.</p>
-              </div>
-              <div className="heading-note">
-                RECOVERY IS CONDITIONAL
-                <br />A RE-ASSESSMENT ESTABLISHES ACTUAL CHANGE
-              </div>
-            </div>
-            <div className="action-list">
-              {(showAll ? actions : actions.slice(0, 3)).map((a, i) => (
-                <article className="action" key={a.title}>
-                  <button
-                    className="action-toggle"
-                    aria-expanded={open === i}
-                    onClick={() => setOpen(open === i ? null : i)}
-                  >
-                    <span className="action-num">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="action-title">
-                      <small>
-                        {i < 3 ? "Established practice" : "Emerging practice"} ·{" "}
-                        {a.owner}
-                      </small>
-                      <strong>{a.title}</strong>
-                    </span>
-                    <span className="action-points">
-                      UP TO <b>+{a.points}</b>
-                      <small> POINTS</small>
-                    </span>
-                    <span className="toggle-icon">
-                      {open === i ? "−" : "+"}
-                    </span>
-                  </button>
-                  {open === i && (
-                    <div className="action-details">
-                      <div>
-                        <span className="detail-label">
-                          WHAT THE SAMPLE SHOWS
-                        </span>
-                        <p>{a.evidence}</p>
-                        <span className="detail-label">RECOMMENDED CHANGE</span>
-                        <p>{a.change}</p>
-                      </div>
-                      <div>
-                        <span className="detail-label">POTENTIAL RECOVERY</span>
-                        <p>{a.condition}</p>
-                        <span className="detail-label">
-                          ASSIGNMENT &amp; DEPENDENCY
-                        </span>
-                        <p>
-                          Primary: {a.owner}
-                          <br />
-                          Supporting: {a.support}
-                          <br />
-                          Dependency: {a.dependency}
-                          <br />
-                          Evidence confidence: High (illustrative)
-                        </p>
-                        <span className="detail-label">AFFECTED SUBCHECKS</span>
-                        <p>
-                          {a.ids.map((id) => {
-                            const c = checks.find((item) => item.id === id)!;
-                            return (
-                              <React.Fragment key={id}>
-                                {id}: {c.awarded} / {c.maxPoints}
-                                <br />
-                              </React.Fragment>
-                            );
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-            <button
-              className="view-all"
-              onClick={() => setShowAll(!showAll)}
-              aria-expanded={showAll}
-            >
-              {showAll ? "Show fewer actions ↑" : "View all actions ↓"}
-            </button>
-            <details className="breakdown">
-              <summary>View sample scoring breakdown</summary>
-              <p>
-                Fictional coverage assumes all applicable checks, including the
-                linked shipping policy, were inspected. No real source was
-                inspected. C2 essential: 3 of 6 attributes complete, earning 7 /
-                14. S1 specifications: three initial, four rendered-only and
-                three absent attributes yield (3 + 4 × 0.5) / 10 = 0.5, earning
-                1.5 / 3. The fictional water-resistance claim makes limitations
-                applicable. In this example, a linked fictional laboratory
-                report supports that claim, but the page does not explain its
-                use limits.
-              </p>
-              {checks.map((c) => (
-                <div key={c.id}>
-                  <span>{c.id}</span>
-                  <span>
-                    {c.awarded} / {c.maxPoints}
-                  </span>
-                </div>
-              ))}
-            </details>
-            <p className="recovery-note">
-              Potential points are illustrative rubric projections, not promises
-              of traffic or citations. The fictional example assumes all
-              applicable checks were assessed; no real sources were inspected.
-            </p>
-          </section>
-          <footer>
-            <span className="brand">
-              answerable<span className="brand-dot">.</span>
-            </span>
-            <span>MADE FOR MORE USEFUL ANSWERS</span>
-            <span>SAMPLE PREVIEW · NO LIVE ASSESSMENT</span>
-          </footer>
-        </main>
-      )}
+      {screen === "live" && assessment && <LiveReport assessment={assessment} onBack={back} />}
     </>
   );
 }
