@@ -1,0 +1,16 @@
+{
+ "version":1,
+ "id":"report-action-visuals",
+ "task":"Redesign the synthetic report around recommended AEO changes, with data-generated visuals and score as supporting measurement.",
+ "scope":["src/report-design/**","test/preview.test.mjs","evals/changes/report-action-visuals/**"],
+ "nonGoals":["Backend or contract changes, new product facts, live audits, achieved uplift claims, paid services, production preview replacement or merging."],
+ "outcomes":[
+  {"id":"O1","description":"The initial view leads with specific customer changes and reasons rather than a numerical score.","verification":"human","evidence":"Desktop and mobile review of the published synthetic design."},
+  {"id":"O2","description":"Data-generated accessible charts visualize attribute gaps and action-level conditional improvements using the frozen rubric-backed sample.","verification":"automated","evidence":"Expected data sums, chart labels and scenario runtime tests."},
+  {"id":"O3","description":"Evidence, ownership, next steps and incomplete coverage stay clear across the four fictional states.","verification":"human","evidence":"Terra independent review and scenario browser checks."}
+ ],
+ "process":[{"id":"P1","description":"Commit the new requirement plan separately, preserve prior plans, independently review and verify current source before branch preview deployment.","verification":"human","evidence":"Git chronology, source-bound evaluations and hosted CI."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse sample facts and design tokens with code-generated vector charts, no dependency or invented metric additions.","verification":"human","evidence":"Diff and review."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"Presentation and fixture visualizations do not alter agent portability, workflow or handoff mechanisms."}
+}
