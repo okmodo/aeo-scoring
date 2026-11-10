@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Provide a report design page with synthetic scenarios for customer review.",
+ "state":"Frontend-only branch codex/report-design-review from c37de4c. The route is /report-design, intended for a separate Pages branch preview.",
+ "decisions":["Use fictional sample inputs and clear test-data disclosure across every report state.","Display complete scores numerically, suppress final score on incomplete reports, and provide human-readable findings and source evidence."],
+ "constraints":["Do not change backend engine, wire contract, live audit traffic or production Pages deployment. Cloudflare Free only.","Evaluation trace covers offline npm commands, not Terra review, full development, or visual checks."],
+ "completed":["Committed the plan separately before Terra implementation. Located the existing Pages project for a branch-only deployment."],
+ "remaining":["Finish source and design review, execute the source-bound evaluation and hosted CI, deploy a branch preview, and verify its route and interactions."],
+ "resumeCommands":["npm ci --ignore-scripts --no-audit --no-fund","npm run evaluate -- --change report-design-review --base origin/main","npm run ci:gate -- origin/main","npm exec vite -- --host 127.0.0.1 --port 5186"]
+}

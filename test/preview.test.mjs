@@ -126,3 +126,34 @@ test("landing presents navigable sample sections without simulated assessment", 
     await vite.close();
   }
 });
+
+test("report design scenarios render honest fictional states and reconcile scores", async () => {
+  const { createServer } = await import("vite");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const React = await import("react");
+  const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { ReportDesign } = await vite.ssrLoadModule("/src/report-design/ReportDesign.tsx");
+    const { scenarios } = await vite.ssrLoadModule("/src/report-design/scenarios.ts");
+    assert.equal(scenarios.complete.score, 84.5);
+    assert.equal(scenarios.complete.structure, 36.5);
+    assert.equal(scenarios.complete.content, 48);
+    assert.equal(scenarios.complete.checks.length, JSON.parse(readFileSync("config/rubric.v1.json")).criteria.flatMap(c => c.subchecks).length);
+    assert.equal(scenarios.complete.actions.reduce((sum, action) => sum + action.points, 0), 15.5);
+    for (const key of ["complete", "incomplete", "zero", "unavailable"]) {
+      const html = renderToStaticMarkup(React.createElement(ReportDesign, { initialScenario: key }));
+      assert.match(html, /TEST DATA/);
+      assert.match(html, /Fictional/);
+      assert.match(html, new RegExp(scenarios[key].status));
+      if (key !== "complete") {
+        assert.equal(scenarios[key].score, null);
+        assert.match(html, /Score unavailable/);
+      }
+    }
+    const html = renderToStaticMarkup(React.createElement(ReportDesign));
+    assert.match(html, /84\.5/);
+    assert.match(html, /Evidence &amp; recovery condition/);
+    assert.match(html, /View full rubric/);
+    assert.doesNotMatch(html, /https?:\/\//);
+  } finally { await vite.close(); }
+});
