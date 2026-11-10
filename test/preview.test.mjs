@@ -182,3 +182,32 @@ test("report visuals use sample data and explain conditional changes", async () 
     }
   } finally { await vite.close(); }
 });
+
+test("field-level changes cover the frozen action evidence and appear only with complete findings", async () => {
+  const { createServer } = await import("vite");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const React = await import("react");
+  const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { ReportDesign } = await vite.ssrLoadModule("/src/report-design/ReportDesign.tsx");
+    const { fieldGroups } = await vite.ssrLoadModule("/src/report-design/fields.ts");
+    const { actions } = await vite.ssrLoadModule("/src/sample.ts");
+    assert.deepEqual(fieldGroups.map(group => group.action), actions.map(action => action.title));
+    const fields = fieldGroups.flatMap(group => group.fields);
+    assert.equal(fields.length, 11);
+    assert.deepEqual(fields.map(field => field.name), ["Width", "Upper material", "Outsole material", "Rendered-only supporting attributes (4 fields)", "Shipping cost", "Delivery timing", "Water-resistance limits", "Site identity", "Resource links", "Site context", "Agent guidance"]);
+    for (const field of fields) {
+      assert.match(field.edit, /\[verified /i);
+      for (const key of ["finding", "publish", "owner", "verify"]) assert.ok(field[key]);
+    }
+    const html = renderToStaticMarkup(React.createElement(ReportDesign));
+    assert.match(html, /Review field-level changes/);
+    assert.match(html, /NOT PUBLISH-READY/);
+    assert.ok(html.indexOf("How improvements are measured") < html.indexOf("Exactly what to update"));
+    assert.ok(html.indexOf("Exactly what to update") < html.indexOf("About this example"));
+    for (const state of ["incomplete", "zero", "unavailable"]) {
+      const result = renderToStaticMarkup(React.createElement(ReportDesign, { initialScenario: state }));
+      assert.doesNotMatch(result, /Exactly what to update|Review field-level changes/);
+    }
+  } finally { await vite.close(); }
+});

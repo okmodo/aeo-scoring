@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { scenarios, type Scenario } from "./scenarios";
 import { actions } from "../sample";
 import { AttributeChart, OpportunityChart } from "./Charts";
+import { FieldDetails } from "./FieldDetails";
 import "./report.css";
 
 const actionTitles = ["Publish missing product details", "Explain shipping", "Clarify limitations", "Consider an llms.txt file", "Consider an agent guide"];
@@ -56,6 +57,7 @@ export function ReportDesign({ initialScenario = "complete" }: { initialScenario
             </h2>
             <p>In this fictional example, width, upper material and outsole material are missing. Verify and publish these details so shoppers and AI have more information to work with.</p>
             <a href="#rd-actions">Explore the actions ↓</a>
+            <a className="rd-field-jump" href="#field-changes">Review field-level changes ↓</a>
           </div>
           <AttributeChart />
         </section>
@@ -143,6 +145,7 @@ export function ReportDesign({ initialScenario = "complete" }: { initialScenario
         <h2>{report.status}</h2>
         <p>{report.description}</p>
         <p>No recommendations are available without sufficient evidence. Score unavailable.</p>{report.checks.length > 0 && <Rubric checks={report.checks} complete={false} />}</section>}
+      {selected === "complete" && <FieldDetails />}
       <section className="rd-section rd-scope">
         <p className="rd-kicker">COVERAGE / LIMITATIONS</p>
         <h2>About this example.</h2>
