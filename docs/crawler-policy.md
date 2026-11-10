@@ -19,3 +19,7 @@ Bing documents that a bot-specific group supersedes its generic group and that B
 `documented_js` means a vendor documents JavaScript rendering, not that a particular page or resource rendered successfully. Google documents a separate render queue and limitations for blocked resources in its [JavaScript guidance](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics). `unknown` means the cited material does not establish rendering capability; it does not mean the bot cannot render. No fetch-only claim is inferred from a user-agent string.
 
 Robots permission is distinct from actual retrieval, indexing, snippets, login, WAF or challenge barriers, and citation. A fetch using a spoofed user-agent shows only what that test received; it does not prove access for the real crawler. Where relevant, vendors publish IP-verification guidance in their linked sources. Record raw observations and uncertainty separately from policy conclusions. This registry is a dated snapshot: review official documentation and version the registry and dependent expectations when eligibility or behavior changes.
+
+## Audit retrieval policy
+
+The audit fetches publicly addressable product and supporting pages independently of robots.txt permissions. A bounded robots observation supports sitemap discovery and S5 scoring. Missing, malformed, blocked or slow robots responses leave policy evidence unmeasured and do not prevent the audit. This product decision was updated on November 8, 2026.

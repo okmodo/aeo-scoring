@@ -26,25 +26,25 @@ test('checks robots and fetches bounded HTML without forwarding credentials', as
   const response = await retrieve('https://example.com/a#fragment', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /private'), '/a': page() }, calls) });
   assert.equal(response.body, html);
   assert.equal(response.url, 'https://example.com/a');
-  assert.equal(response.robots, 'allowed');
+  assert.equal(calls[0].url, 'https://example.com/a');
   assert.equal(calls.length, 2);
   assert.equal(calls[1].options.redirect, 'manual');
   assert.deepEqual(Object.keys(calls[1].options.headers).sort(), ['accept', 'user-agent']);
 });
 
-test('robots denies matching literal and wildcard rules and fails closed on unavailable policy', async () => {
-  for (const policy of ['User-agent: *\nDisallow: /', 'User-agent: AEOAuditBot\nDisallow: /']) {
-    await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response(policy), '/a': page() }) }), 'robots_denied');
+test('robots restrictions and unavailable policies do not block products', async () => {
+  for (const policy of ['User-agent: *\nDisallow: /', 'User-agent: AEOAuditBot\nDisallow: /', null]) {
+    const result = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': policy === null ? new Response('', { status: 503 }) : new Response(policy), '/a': page() }) });
+    assert.equal(result.body, html);
+    if (policy === null) assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
   }
-  await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('', { status: 503 }) }) }), 'robots_unknown');
-  await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /*') }) }), 'robots_denied');
 });
 
 test('redirects check each destination and enforce limit', async () => {
   const calls = [];
   const egress = binding({ '/a': new Response(null, { status: 302, headers: { location: 'https://other.example.org/b' } }), '/b': page() }, calls);
   assert.equal((await retrieve('https://example.com/a', { egress })).url, 'https://other.example.org/b');
-  assert.deepEqual(calls.map(x => new URL(x.url).host), ['example.com', 'example.com', 'other.example.org', 'other.example.org']);
+  assert.deepEqual(calls.map(x => new URL(x.url).host), ['example.com', 'other.example.org', 'other.example.org']);
   await rejectsCode(retrieve('https://example.com/a', { egress, maxRedirects: 0 }), 'too_many_redirects');
   await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/a': new Response(null, { status: 302, headers: { location: 'http://127.0.0.1/' } }) }) }), 'invalid_redirect');
 });
@@ -83,15 +83,30 @@ test('normalization rejects nonstandard ports and oversized URLs', async () => {
   assert.throws(() => normalizeTarget(`https://example.com/${'a'.repeat(2048)}`), { code: 'invalid_url' });
 });
 
-test('robots maintenance pages, malformed policies, redirects and encoded paths fail closed', async () => {
+test('unusable robots evidence never fails the product', async () => {
   for (const response of [
     new Response('<html>maintenance</html>', { headers: { 'content-type': 'text/html' } }),
-    new Response('this is not robots syntax'),
-    new Response('Disallow: /'),
+    new Response('this is not robots syntax'), new Response('Disallow: /'),
     new Response(null, { status: 302, headers: { location: '/policy' } }),
-  ]) await rejectsCode(retrieve('https://example.com/a', { egress: binding({ '/robots.txt': response }) }), 'robots_unknown');
-  await rejectsCode(retrieve('https://example.com/%70rivate', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /private') }) }), 'robots_denied');
-  await rejectsCode(retrieve('https://example.com/private', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /%70rivate') }) }), 'robots_denied');
+    new Response(new Uint8Array([255]), { headers: { 'content-type': 'text/plain' } }),
+  ]) {
+    const result = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': response, '/a': page() }) });
+    assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
+  }
+});
+
+test('stalled robots is bounded and cannot consume the product deadline', async () => {
+  let signal;
+  const start = Date.now();
+  const result = await retrieve('https://example.com/a', { timeoutMs: 2000, egress: { fetch(url, options) {
+    if (url.endsWith('/robots.txt')) { signal = options.signal; return new Promise(() => {}); }
+    return page();
+  } } });
+  assert.equal(result.body, html);
+  assert.ok(Date.now() - start < 1500);
+  assert.equal(signal.aborted, true);
+  assert.equal(result.crawlerPolicy.httpStatus, null);
+  assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
 });
 
 test('cancels redirect and rejected response bodies', async () => {
@@ -119,10 +134,9 @@ test('marks head-only output unusable and body text usable while visibility rema
 });
 
 
-test('robots matches only exact agent and rejects escaped reserved paths', async () => {
-  const egress = binding({ '/robots.txt': new Response('User-agent: bot\nDisallow: /\nUser-agent: *\nAllow: /'), '/a': page() });
-  assert.equal((await retrieve('https://example.com/a', { egress })).status, 200);
-  await rejectsCode(retrieve('https://example.com/a%2Fb', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /a/b') }) }), 'robots_unknown');
+test('ambiguous escaped paths leave crawler policy unmeasured', async () => {
+  const result = await retrieve('https://example.com/a%2Fb', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /a/b'), '/a%2Fb': page() }) });
+  assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
 });
 
 test('overlong JSON-LD is omitted and reported', async () => {
@@ -147,16 +161,9 @@ import './public-egress.test.mjs';
 
 import './robots-path.test.mjs';
 
-test('robots wildcard filters respect specificity, end anchors, and reserved escape rules', async () => {
-  const policy = 'User-agent: *\nAllow: /\nDisallow: /*/checkout\nDisallow: /products/*?*preview=1$\nDisallow: /collections/*%2B*\nDisallow: /*?*ls%3*ls%3*';
-  const egress = binding({ '/robots.txt': new Response(policy), '/products/coffee': page() });
-  assert.equal((await retrieve('https://example.com/products/coffee', { egress })).robots, 'allowed');
-  await rejectsCode(retrieve('https://example.com/products/coffee?preview=1', {
-    egress: binding({ '/robots.txt': new Response(policy) }),
-  }), 'robots_denied');
-  await rejectsCode(retrieve('https://example.com/' + 'a'.repeat(500), {
-    egress: binding({ '/robots.txt': new Response('User-agent: *\n' + ('Disallow: /never*matches\n').repeat(40)) }),
-  }), 'robots_unknown');
+test('wildcard deny rules are reported without blocking the page', async () => {
+  const result = await retrieve('https://example.com/products/coffee?preview=1', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /products/*?*preview=1$'), '/products/coffee': page() }) });
+  assert.ok(result.crawlerPolicy.observations.some(item => item.status === 'disallowed'));
 });
 
 test('crawler policy uses bot-specific groups for the final redirect path', async () => {
@@ -258,7 +265,8 @@ test('optional sitemap observation follows bounded same-origin permitted paths',
     '/a': page,
   }, blockedCalls) });
   assert.deepEqual(blocked.sitemap, { usableSource: null, inclusionSource: null });
-  assert.equal(blockedCalls.length, 2);
+  assert.equal(blockedCalls.length, 3);
+  assert.ok(blockedCalls.some(call => call.url.endsWith('/blocked')));
 
   const multi = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({
     '/a': page,
@@ -266,6 +274,16 @@ test('optional sitemap observation follows bounded same-origin permitted paths',
     '/child.xml': () => new Response(xml(['https://example.com/a'])),
   }) });
   assert.deepEqual(multi.sitemap, { usableSource: null, inclusionSource: 'https://example.com/child.xml' });
+});
+
+test('sitemap declarations survive malformed robots rules', async () => {
+  const result = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({
+    '/a': page,
+    '/robots.txt': () => new Response('bad syntax\nSitemap: https://example.com/blocked'),
+    '/blocked': () => new Response('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/a</loc></url></urlset>'),
+  }) });
+  assert.equal(result.sitemap.inclusionSource, 'https://example.com/blocked');
+  assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
 });
 
 test('optional sitemap failures, redirects, and oversized bodies do not fail the audit', async () => {
@@ -321,10 +339,18 @@ test('guide failures and conflicts never assert agents evidence or fail the page
   assert.equal(snapshot.guides.agents.text, 'instructions');
 });
 
-test('guide probes obey robots and abort on their shared deadline', async () => {
+test('guide probes ignore robots and abort on their shared deadline', async () => {
   const calls = [];
   const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /AGENTS.md'), '/a': page(), '/agents.md': new Response('instructions'), '/llms.txt': () => new Promise(() => {}) }, calls), observeGuides: true });
-  assert.deepEqual(snapshot.guides, { llms: null, agents: null });
-  assert.equal(calls.some(call => call.url.endsWith('/AGENTS.md')), false);
+  assert.deepEqual(snapshot.guides, { llms: null, agents: { url: 'https://example.com/agents.md', text: 'instructions' } });
+  assert.equal(calls.some(call => call.url.endsWith('/AGENTS.md')), true);
   assert.equal(calls.find(call => call.url.endsWith('/llms.txt')).options.signal.aborted, true);
+});
+
+test('unsupported robots rules leave observations unmeasured without blocking', async () => {
+  const result = await retrieve('https://example.com/search', { egress: binding({
+    '/robots.txt': () => new Response('User-agent: *\nDisallow: */search*'), '/search': page,
+  }) });
+  assert.equal(result.status, 200);
+  assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
 });

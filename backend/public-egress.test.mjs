@@ -13,7 +13,7 @@ test('public transport fixes outbound options and checks each redirected host an
     return new Response('<p>Product</p>', { headers: { 'content-type': 'text/html' } });
   } });
   assert.equal((await retrieve('https://shop.example.com/a', { egress })).url, 'https://other.example.org/b');
-  assert.deepEqual(calls.map(call => call.url), ['https://shop.example.com/robots.txt', 'https://shop.example.com/a', 'https://other.example.org/robots.txt', 'https://other.example.org/b']);
+  assert.deepEqual(calls.map(call => call.url), ['https://shop.example.com/a', 'https://other.example.org/b', 'https://other.example.org/robots.txt']);
   for (const { options } of calls) {
     assert.equal(options.method, 'GET');
     assert.equal(options.redirect, 'manual');
@@ -36,7 +36,7 @@ test('rejects unsafe destinations before any request to them', async () => {
       return url.endsWith('/robots.txt') ? new Response(null, { status: 404 }) : new Response(null, { status: 302, headers: { location: destination } });
     } });
     await assert.rejects(retrieve('https://shop.example.com/a', { egress }), { code: destination === 'http://host.example/' ? 'fetch_failed' : 'invalid_redirect' });
-    assert.deepEqual(calls, ['https://shop.example.com/robots.txt', 'https://shop.example.com/a']);
+    assert.deepEqual(calls, ['https://shop.example.com/a']);
   }
 });
 
@@ -48,7 +48,7 @@ test('rejects a redirect with raw backslashes before URL resolution', async () =
       new Response(null, { status: 302, headers: { location: String.raw`/unsafe\path` } });
   } });
   await assert.rejects(retrieve('https://shop.example.com/a', { egress }), { code: 'invalid_redirect' });
-  assert.deepEqual(calls, ['https://shop.example.com/robots.txt', 'https://shop.example.com/a']);
+  assert.deepEqual(calls, ['https://shop.example.com/a']);
 });
 
 test('public submission rejects reserved example domains before database admission', async () => {

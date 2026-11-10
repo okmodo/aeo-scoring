@@ -84,14 +84,16 @@ test('retrieval failure is terminal without a report or score', async () => {
       finish: async (_id, updates) => {audit = {...audit, ...updates};},
       get: async () => audit,
     },
-    egress: {fetch: async () => new Response('User-agent: *\nDisallow: /')},
+    egress: {fetch: async () => new Response('Service unavailable', { status: 503 })},
     secret: 'x'.repeat(32), HTMLRewriter: Rewriter, now: () => time + 2000,
   });
   await handle(post(read('submission-request')), {address,defer: promise => {task = promise;}});
   await task;
   const response = await handle(poll());
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), read('retrieval-failure'));
+  const expected = read('retrieval-failure');
+  expected.error = { code: 'retrieval_failed', message: 'The page could not be retrieved or inspected.', retryAfterSeconds: null };
+  assert.deepEqual(await response.json(), expected);
 });
 
 test('bad input and rate limits produce stable errors without retrieval', async () => {

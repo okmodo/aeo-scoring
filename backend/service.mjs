@@ -98,7 +98,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-7:' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-8:' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {

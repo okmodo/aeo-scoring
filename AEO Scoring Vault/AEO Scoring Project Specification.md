@@ -1,6 +1,6 @@
 ---
 tags: [aeo-scoring, index, specification]
-updated: 2026-11-04
+updated: 2026-11-08
 status: agreed-planning
 ---
 
@@ -74,3 +74,7 @@ The score is 100 points: Structure 40 and Content 60, without bands. Every note 
 ## Sample preview
 
 - [[01 Specification/AEO Hosted Sample Preview|Hosted sample preview and boundaries]]
+
+## Audit retrieval policy
+
+- [[01 Specification/AEO Robots Evidence Does Not Gate Audits|Robots evidence and audit retrieval]]
