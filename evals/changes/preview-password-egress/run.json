@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "changeId": "preview-password-egress",
+  "recordedAt": "2026-11-10T23:46:45.803Z",
+  "sourceCommit": "6a78e67baf406de2ce92df724cdeaaa9605f648b",
+  "sourceDigest": "f858949673446909e959db64005c6bec7df434bd5e8ce854993f602513dfa753",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run test:feasibility",
+      "exitCode": 0,
+      "durationMs": 1876,
+      "outputSha256": "39868752b39e20162df1402a3bc5edb9333077f5cc31dc399ba5b53ac2b1ab1e"
+    }
+  ]
+}
