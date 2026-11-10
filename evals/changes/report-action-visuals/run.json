@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "report-action-visuals",
+  "recordedAt": "2026-11-10T02:19:28.022Z",
+  "sourceCommit": "3091bc23ea417a8b66d7da2a2b0735fb65f900a8",
+  "sourceDigest": "7b012357694ab1176c096fc2e1df0c13ab4bc3097cd2c75a1e8104abdea7096a",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1094,
+      "outputSha256": "0a07f13163ab4c088ac31169af643b06f0061fb5f00fb9759bf8f0df7aef648a"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8208,
+      "outputSha256": "49d5e0d9ada050fd683b39594f63f6638202197667dad1b7845b13ae17e6c268"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 199,
+      "outputSha256": "b86456a4037412f2ac4f22909f3db1431d093bbc402fe6ba5e091368bc90cf1d"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 354,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 480,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 210,
+      "outputSha256": "3392a93a1a4dd0f57b5a124b98d145cb0e422ec49b23a5b98ad59accce20b7b8"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 433,
+      "outputSha256": "4c0f509c313dbdb69510b500dc7e3d1c4b6bece08fc11b76d905bbc2dd26e584"
+    }
+  ]
+}

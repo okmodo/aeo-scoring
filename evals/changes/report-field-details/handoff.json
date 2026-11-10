@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Add actionable field-level edits below the visual summary.",
+ "state":"Third design requirement on codex/report-design-review. The action-led review page is currently deployed separately from production; the revised route remains /report-design.",
+ "decisions":["Keep summary and graphs first, then show current finding, proposed edit and publishing instructions for each affected field.","Use explicitly marked verification templates wherever the fictional sample does not supply an exact fact."],
+ "constraints":["No backend or contract changes, production writes, paid services, invented product facts or policy promises.","Field records must map to the existing sample actions and avoid duplicated recoverable-point totals."],
+ "completed":["Committed the new requirement plan before Terra implementation."],
+ "remaining":["Finish independent review and browser verification, refresh evaluations for all three plans, pass CI and publish the updated branch preview."],
+ "resumeCommands":["npm run evaluate -- --change report-design-review --base origin/main","npm run evaluate -- --change report-action-visuals --base origin/main","npm run evaluate -- --change report-field-details --base origin/main","npm run ci:gate -- origin/main"]
+}

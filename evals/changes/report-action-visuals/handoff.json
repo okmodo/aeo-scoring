@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Refocus the report design on customer changes and data-generated visuals.",
+ "state":"Second design pass on codex/report-design-review. The original design is hosted as a branch preview and the revised route remains /report-design.",
+ "decisions":["Lead with actionable AEO improvements and their evidence; keep the rubric score as secondary context.","Generate charts from the frozen sample and mark prospective changes as conditional on verification and publication."],
+ "constraints":["Fictional test data only. Do not add product facts or imply actual changes, traffic or citation outcomes.","No backend or API changes. Deploy only a Free Pages branch preview after independent review and hosted CI."],
+ "completed":["Committed the new requirement plan separately before the redesign."],
+ "remaining":["Complete Terra implementation and independent review, verify chart arithmetic and responsive interactions, evaluate both plans, and publish the new branch preview."],
+ "resumeCommands":["npm run evaluate -- --change report-design-review --base origin/main","npm run evaluate -- --change report-action-visuals --base origin/main","npm run ci:gate -- origin/main","npm exec vite -- --host 127.0.0.1 --port 5186"]
+}

@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "report-field-details",
+  "recordedAt": "2026-11-10T02:19:39.211Z",
+  "sourceCommit": "3091bc23ea417a8b66d7da2a2b0735fb65f900a8",
+  "sourceDigest": "7b012357694ab1176c096fc2e1df0c13ab4bc3097cd2c75a1e8104abdea7096a",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1106,
+      "outputSha256": "0a07f13163ab4c088ac31169af643b06f0061fb5f00fb9759bf8f0df7aef648a"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8235,
+      "outputSha256": "298968d974cb94f759d8616a270cf8a990b49dd7f4014524d7821e0eec63a473"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 201,
+      "outputSha256": "4b40c2ad04dfd6feabc5f23a8caa5b02602086af994ef694b2165d1bad7cc867"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 354,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 483,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 211,
+      "outputSha256": "67a7e056bfc700a37ae99dbf2e41918ebce4c9ab785aca94fd59c5ca4c95a2b4"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 435,
+      "outputSha256": "b5261bd9116b83f65fb4ad1a9e71398fd0703e1ce9fba3b9bc8f75e516859e16"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+ "version":1,
+ "id":"report-field-details",
+ "task":"Add exact field-level changes below the action-led report summary and charts.",
+ "scope":["src/report-design/**","test/preview.test.mjs","evals/changes/report-field-details/**"],
+ "nonGoals":["Backend or scoring changes, new product facts, automatic copy generation, actual publishing, production deployment or paid usage."],
+ "outcomes":[
+  {"id":"O1","description":"A bottom detail section identifies each field, current finding, proposed edit, publishing location, responsible team and verification needed.","verification":"human","evidence":"Terra review and desktop/mobile browser inspection."},
+  {"id":"O2","description":"Details map to the existing frozen actions; unknown values use clearly marked verification templates rather than invented specifications or policies.","verification":"automated","evidence":"Frozen field definitions and runtime regression tests."},
+  {"id":"O3","description":"The updated synthetic review page is available on the separate Free Pages branch preview.","verification":"human","evidence":"Current source evaluation, hosted CI and deployment verification."}
+ ],
+ "process":[{"id":"P1","description":"Commit new requirements before implementation, independently review, and refresh all current plan evidence before publishing.","verification":"human","evidence":"Git history, traces and hosted checks."}],
+ "styleEfficiency":[{"id":"E1","description":"Preserve the summary-first reading order and use readable responsive field cards with existing data and styles.","verification":"human","evidence":"Independent diff review and visual QA."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"Static report-detail presentation does not change portability, workflow or resumability."}
+}

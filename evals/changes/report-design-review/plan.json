@@ -1,0 +1,16 @@
+{
+ "version":1,
+ "id":"report-design-review",
+ "task":"Create a polished report design review page with frozen synthetic data, readable findings and evidence, and complete/incomplete/failure examples.",
+ "scope":["src/main.tsx","src/report-design/**","test/preview.test.mjs","evals/changes/report-design-review/**"],
+ "nonGoals":["Backend or scoring changes, real audits, modifying shared API contracts, paid services, merging or replacing the production preview."],
+ "outcomes":[
+  {"id":"O1","description":"A dedicated /report-design page presents product context, score breakdown, priority actions, evidence and human-readable checks using the approved visual style.","verification":"human","evidence":"Desktop and mobile browser inspection with synthetic-data disclosure."},
+  {"id":"O2","description":"Frozen complete, incomplete, zero-coverage and retrieval-failure states demonstrate honest scores, explanatory copy and accessible interaction.","verification":"automated","evidence":"Registered preview runtime tests and exact expected score/coverage assertions."},
+  {"id":"O3","description":"The user can review the design at a distinct Cloudflare Free Pages preview URL.","verification":"human","evidence":"Reviewed source, hosted CI, branch preview deployment and public browser verification."}
+ ],
+ "process":[{"id":"P1","description":"Plan first, use Terra implementation and independent review, keep backend ownership and current live preview separate.","verification":"human","evidence":"Git history, source-bound evaluation and review."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse existing rubric and sample data without adding dependencies, expose clear language before technical detail, and keep layout responsive.","verification":"human","evidence":"Diff and independent design review."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"A synthetic frontend review page does not alter workflow, portability, memory or handoff mechanisms."}
+}
