@@ -1,10 +1,26 @@
 {
- "version":1,
- "task":"Provide a report design page with synthetic scenarios for customer review.",
- "state":"Frontend-only branch codex/report-design-review from c37de4c. The route is /report-design, intended for a separate Pages branch preview.",
- "decisions":["Use fictional sample inputs and clear test-data disclosure across every report state.","Display complete scores numerically, suppress final score on incomplete reports, and provide human-readable findings and source evidence."],
- "constraints":["Do not change backend engine, wire contract, live audit traffic or production Pages deployment. Cloudflare Free only.","Evaluation trace covers offline npm commands, not Terra review, full development, or visual checks."],
- "completed":["Committed the plan separately before Terra implementation. Located the existing Pages project for a branch-only deployment."],
- "remaining":["Finish source and design review, execute the source-bound evaluation and hosted CI, deploy a branch preview, and verify its route and interactions."],
- "resumeCommands":["npm ci --ignore-scripts --no-audit --no-fund","npm run evaluate -- --change report-design-review --base origin/main","npm run ci:gate -- origin/main","npm exec vite -- --host 127.0.0.1 --port 5186"]
+  "version": 1,
+  "task": "Provide a report design page with synthetic scenarios for customer review.",
+  "state": "Original design published from cf8cd46 to a Free Pages branch preview. The action-led revision is separately planned in report-action-visuals on the same branch.",
+  "decisions": [
+    "Use fictional sample inputs and clear test-data disclosure across every report state.",
+    "Display complete scores numerically, suppress final score on incomplete reports, and provide human-readable findings and source evidence."
+  ],
+  "constraints": [
+    "Do not change backend engine, wire contract, live audit traffic or production Pages deployment. Cloudflare Free only.",
+    "Evaluation trace covers offline npm commands, not Terra review, full development, or visual checks."
+  ],
+  "completed": [
+    "Original design implemented and independently reviewed by Terra agents, then verified locally and in the branch preview.",
+    "Original preview deployment 3dc69e14-124b-42e2-9bce-790f84f99cca preserved the production preview."
+  ],
+  "remaining": [
+    "Complete the separately planned action-led redesign, refresh both evaluations and hosted CI, and publish the updated design branch preview."
+  ],
+  "resumeCommands": [
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change report-design-review --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "npm exec vite -- --host 127.0.0.1 --port 5186"
+  ]
 }

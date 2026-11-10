@@ -157,3 +157,28 @@ test("report design scenarios render honest fictional states and reconcile score
     assert.doesNotMatch(html, /https?:\/\//);
   } finally { await vite.close(); }
 });
+
+test("report visuals use sample data and explain conditional changes", async () => {
+  const { createServer } = await import("vite");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const React = await import("react");
+  const vite = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { ReportDesign } = await vite.ssrLoadModule("/src/report-design/ReportDesign.tsx");
+    const { essentialAttributes, actions } = await vite.ssrLoadModule("/src/sample.ts");
+    const html = renderToStaticMarkup(React.createElement(ReportDesign));
+    assert.match(html, new RegExp(`${essentialAttributes.reduce((a, b) => a + b, 0)} of ${essentialAttributes.length} essential attributes`));
+    assert.match(html, /If verified &amp; published/);
+    assert.match(html, /not an achieved result/);
+    assert.match(html, /not guaranteed/);
+    assert.match(html, /How improvements are measured/);
+    assert.ok(html.indexOf("Make the details complete") < html.indexOf("Opportunities by action"));
+    for (const action of actions) assert.match(html, new RegExp(`\\+${action.points}`.replace(".", "\\.")));
+    assert.equal((html.match(/aria-pressed="true"/g) ?? []).length, 1);
+    for (const key of ["incomplete", "zero", "unavailable"]) {
+      const state = renderToStaticMarkup(React.createElement(ReportDesign, { initialScenario: key }));
+      assert.doesNotMatch(state, /Opportunities by action|Make the details complete/);
+      assert.match(state, /No recommendations are available/);
+    }
+  } finally { await vite.close(); }
+});
