@@ -1,0 +1,1420 @@
+{
+  "version": "1",
+  "id": "33333333-3333-4333-8333-333333333333",
+  "status": "complete",
+  "statusUrl": "/api/v1/audits/33333333-3333-4333-8333-333333333333",
+  "submittedUrl": "https://shop.example/products/everyday-tshirt",
+  "assessedUrl": "https://shop.example/products/everyday-tshirt",
+  "createdAt": "2026-11-09T00:00:00.000Z",
+  "completedAt": "2026-11-09T00:00:02.000Z",
+  "expiresAt": "2026-11-10T00:00:00.000Z",
+  "cache": {
+    "hit": false,
+    "validUntil": "2026-11-09T01:00:02.000Z"
+  },
+  "report": {
+    "status": "complete",
+    "score": {
+      "total": 78.125,
+      "structure": 20,
+      "content": 58.125
+    },
+    "earnedPoints": 78.125,
+    "rubricVersion": "1.0.0",
+    "engineVersion": "1.0.0",
+    "categoryVersion": "1.2.0",
+    "category": "basic-tshirts",
+    "productName": "Acme Everyday T-shirt",
+    "variant": null,
+    "market": null,
+    "currency": "USD",
+    "criteria": [
+      {
+        "id": "S1",
+        "pillar": "structure",
+        "maxPoints": 13,
+        "points": 13,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S1.identity",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e10"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.description",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e11"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.specifications",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e14",
+              "e15",
+              "e16",
+              "e17",
+              "e18",
+              "e19",
+              "e20",
+              "e21",
+              "e22",
+              "e23",
+              "e24"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.price",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e12"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.availability",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e13"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S2",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 0,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S2.entity",
+            "maxPoints": 2,
+            "availablePoints": 2.25,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e5"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.core-properties",
+            "maxPoints": 2,
+            "availablePoints": 2.25,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e6"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.offer",
+            "maxPoints": 2,
+            "availablePoints": 2.25,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e7"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.identifiers",
+            "maxPoints": 2,
+            "availablePoints": 2.25,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e8"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.variants",
+            "maxPoints": 1,
+            "availablePoints": 0,
+            "status": "not_applicable",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [
+              "e9"
+            ],
+            "reason": "Complete product-scoped HTML explicitly establishes a single configuration."
+          }
+        ]
+      },
+      {
+        "id": "S3",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 0,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S3.identity",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e28"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.price",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e29"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.availability",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e30"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.optional-claims",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e31"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S4",
+        "pillar": "structure",
+        "maxPoints": 3,
+        "points": 3,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S4.title",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e25"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.organization",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e26"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.image-alternatives",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e27"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S5",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S5.search",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e69"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S5.ai-retrieval",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e70"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S6",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S6.usable",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e71"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S6.inclusion",
+            "maxPoints": 1,
+            "availablePoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e72"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S7",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 0,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S7.identity",
+            "maxPoints": 0.5,
+            "availablePoints": 0.5,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e73"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S7.links",
+            "maxPoints": 0.5,
+            "availablePoints": 0.5,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e74"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S8",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 0,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S8.context",
+            "maxPoints": 0.5,
+            "availablePoints": 0.5,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e75"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S8.guidance",
+            "maxPoints": 0.5,
+            "availablePoints": 0.5,
+            "status": "measured",
+            "fraction": 0,
+            "points": 0,
+            "evidenceIds": [
+              "e76"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C1.identity",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e32"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.explanation",
+            "maxPoints": 4,
+            "availablePoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "e33"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.configuration",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e34"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "pillar": "content",
+        "maxPoints": 20,
+        "points": 20,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C2.essential",
+            "maxPoints": 14,
+            "availablePoints": 14,
+            "status": "measured",
+            "fraction": 1,
+            "points": 14,
+            "evidenceIds": [
+              "e35",
+              "e36",
+              "e37",
+              "e38",
+              "e39",
+              "e40",
+              "e41",
+              "e42",
+              "e43",
+              "e44",
+              "e45",
+              "e46"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C2.supporting",
+            "maxPoints": 6,
+            "availablePoints": 6,
+            "status": "measured",
+            "fraction": 1,
+            "points": 6,
+            "evidenceIds": [
+              "e47",
+              "e48",
+              "e49",
+              "e50",
+              "e51",
+              "e52",
+              "e53",
+              "e54"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C3.price",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e55"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.availability",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e56"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.shipping",
+            "maxPoints": 3,
+            "availablePoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e57"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.returns",
+            "maxPoints": 2,
+            "availablePoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e58"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C4",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 8.125,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C4.intended-use",
+            "maxPoints": 3,
+            "availablePoints": 3.75,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3.75,
+            "evidenceIds": [
+              "e59",
+              "e60"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.compatibility",
+            "maxPoints": 3,
+            "availablePoints": 3.75,
+            "status": "measured",
+            "fraction": 0.5,
+            "points": 1.875,
+            "evidenceIds": [
+              "e61",
+              "e62"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.limitations",
+            "maxPoints": 2,
+            "availablePoints": 0,
+            "status": "not_applicable",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [
+              "e63"
+            ],
+            "reason": "All conditional questions were assessed against complete product evidence."
+          },
+          {
+            "id": "C4.selection",
+            "maxPoints": 2,
+            "availablePoints": 2.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2.5,
+            "evidenceIds": [
+              "e64",
+              "e65"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C5",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C5.consistency",
+            "maxPoints": 5,
+            "availablePoints": 10,
+            "status": "measured",
+            "fraction": 1,
+            "points": 10,
+            "evidenceIds": [
+              "e66",
+              "e67"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C5.claim-support",
+            "maxPoints": 5,
+            "availablePoints": 0,
+            "status": "not_applicable",
+            "fraction": null,
+            "points": null,
+            "evidenceIds": [
+              "e68"
+            ],
+            "reason": "Independent review found ordinary specifications and generic promotional comfort language, with no material claims requiring substantiation."
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "e5",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "script[type=\"application/ld+json\"]; inspected product markup",
+        "excerpt": "Complete raw markup inspection found no schema.org Product in supported markup."
+      },
+      {
+        "id": "e6",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "script[type=\"application/ld+json\"]; inspected product markup",
+        "excerpt": "Complete raw markup inspection found no schema.org Product in supported markup."
+      },
+      {
+        "id": "e7",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "script[type=\"application/ld+json\"]; inspected product markup",
+        "excerpt": "Complete raw markup inspection found no schema.org Product in supported markup."
+      },
+      {
+        "id": "e8",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "script[type=\"application/ld+json\"]; inspected product markup",
+        "excerpt": "Complete raw markup inspection found no schema.org Product in supported markup."
+      },
+      {
+        "id": "e9",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "product configuration",
+        "excerpt": "The product page explicitly states that only one configuration is offered."
+      },
+      {
+        "id": "e10",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "product h1",
+        "excerpt": "Acme Everyday T-shirt"
+      },
+      {
+        "id": "e11",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e12",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:16",
+        "excerpt": "This product costs USD 25.00. This product is in stock."
+      },
+      {
+        "id": "e13",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:16",
+        "excerpt": "This product costs USD 25.00. This product is in stock."
+      },
+      {
+        "id": "e14",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "product attributes in initial HTML",
+        "excerpt": "Inspected the essential and supporting category attributes in source HTML."
+      },
+      {
+        "id": "e15",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "size: html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e16",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fiber: html:element:11",
+        "excerpt": "Fabric composition: 100% cotton."
+      },
+      {
+        "id": "e17",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fit: html:element:11",
+        "excerpt": "Regular fit through the chest and body."
+      },
+      {
+        "id": "e18",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "color: html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e19",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "sleeve: html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e20",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "neckline: html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e21",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "care: html:element:14",
+        "excerpt": "Machine wash cold with like colors."
+      },
+      {
+        "id": "e22",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fabric-weight: html:element:13",
+        "excerpt": "Fabric weight: 180 gsm."
+      },
+      {
+        "id": "e23",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "garment-measurements: html:element:13",
+        "excerpt": "Garment measurements for selected Medium: chest 100 cm, length 70 cm."
+      },
+      {
+        "id": "e24",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "origin: html:element:13",
+        "excerpt": "Made in Portugal."
+      },
+      {
+        "id": "e25",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "head title; product h1",
+        "excerpt": "Page title: Acme Everyday T-shirt | Acme; product heading: Acme Everyday T-shirt."
+      },
+      {
+        "id": "e26",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:7; html:element:12",
+        "excerpt": "Product description; Specifications and care"
+      },
+      {
+        "id": "e27",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:18",
+        "excerpt": "1 of 1 inspected product images have useful text alternatives."
+      },
+      {
+        "id": "e28",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "inspected product HTML",
+        "excerpt": "No parseable associated Product markup is available for comparison with the inspected raw product content."
+      },
+      {
+        "id": "e29",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "inspected product HTML",
+        "excerpt": "No parseable associated Product markup is available for comparison with the inspected raw product content."
+      },
+      {
+        "id": "e30",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "inspected product HTML",
+        "excerpt": "No parseable associated Product markup is available for comparison with the inspected raw product content."
+      },
+      {
+        "id": "e31",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "inspected product HTML",
+        "excerpt": "No parseable associated Product markup is available for comparison with the inspected raw product content."
+      },
+      {
+        "id": "e32",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "product heading",
+        "excerpt": "Acme Everyday T-shirt"
+      },
+      {
+        "id": "e33",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e34",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:9",
+        "excerpt": "Selected configuration: Medium, US sizing, Navy. Includes one T-shirt."
+      },
+      {
+        "id": "e35",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e36",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:11",
+        "excerpt": "Fabric composition: 100% cotton."
+      },
+      {
+        "id": "e37",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:11",
+        "excerpt": "Regular fit through the chest and body."
+      },
+      {
+        "id": "e38",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e39",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e40",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e41",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "size: html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e42",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fiber: html:element:11",
+        "excerpt": "Fabric composition: 100% cotton."
+      },
+      {
+        "id": "e43",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fit: html:element:11",
+        "excerpt": "Regular fit through the chest and body."
+      },
+      {
+        "id": "e44",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "color: html:element:10",
+        "excerpt": "Selected size: Medium (US). Selected color: Navy."
+      },
+      {
+        "id": "e45",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "sleeve: html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e46",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "neckline: html:element:11",
+        "excerpt": "Short sleeves and a crew neckline."
+      },
+      {
+        "id": "e47",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:14",
+        "excerpt": "Machine wash cold with like colors."
+      },
+      {
+        "id": "e48",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:13",
+        "excerpt": "Fabric weight: 180 gsm."
+      },
+      {
+        "id": "e49",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:13",
+        "excerpt": "Garment measurements for selected Medium: chest 100 cm, length 70 cm."
+      },
+      {
+        "id": "e50",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:13",
+        "excerpt": "Made in Portugal."
+      },
+      {
+        "id": "e51",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "care: html:element:14",
+        "excerpt": "Machine wash cold with like colors."
+      },
+      {
+        "id": "e52",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "fabric-weight: html:element:13",
+        "excerpt": "Fabric weight: 180 gsm."
+      },
+      {
+        "id": "e53",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "garment-measurements: html:element:13",
+        "excerpt": "Garment measurements for selected Medium: chest 100 cm, length 70 cm."
+      },
+      {
+        "id": "e54",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "origin: html:element:13",
+        "excerpt": "Made in Portugal."
+      },
+      {
+        "id": "e55",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:16",
+        "excerpt": "This product costs USD 25.00. This product is in stock."
+      },
+      {
+        "id": "e56",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:16",
+        "excerpt": "This product costs USD 25.00. This product is in stock."
+      },
+      {
+        "id": "e57",
+        "url": "https://shop.example/shipping",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "main/p",
+        "excerpt": "We ship to the United States. Shipping is free on this order. Delivery takes 3 to 5 business days."
+      },
+      {
+        "id": "e58",
+        "url": "https://shop.example/returns",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "main/p",
+        "excerpt": "Unused and unworn items may be returned within 30 days in their original packaging. The customer pays return shipping. Refunds go to the original payment method."
+      },
+      {
+        "id": "e59",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e60",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "shirt-use: html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e61",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:11",
+        "excerpt": "Regular fit through the chest and body."
+      },
+      {
+        "id": "e62",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "shirt-fit: html:element:11",
+        "excerpt": "Regular fit through the chest and body."
+      },
+      {
+        "id": "e63",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e64",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:15",
+        "excerpt": "Measure your chest in cm and compare with the garment chart. Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference."
+      },
+      {
+        "id": "e65",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "shirt-selection: html:element:15",
+        "excerpt": "Measure your chest in cm and compare with the garment chart. Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference."
+      },
+      {
+        "id": "e66",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:16",
+        "excerpt": "This product costs USD 25.00. This product is in stock."
+      },
+      {
+        "id": "e67",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:17",
+        "excerpt": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+      },
+      {
+        "id": "e68",
+        "url": "https://shop.example/products/everyday-tshirt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "html:element:8",
+        "excerpt": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+      },
+      {
+        "id": "e69",
+        "url": "https://shop.example/robots.txt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "robots.txt policy for the final product URL",
+        "excerpt": "googlebot: allowed, bingbot: allowed"
+      },
+      {
+        "id": "e70",
+        "url": "https://shop.example/robots.txt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "robots.txt policy for the final product URL",
+        "excerpt": "oai-searchbot: allowed, claude-searchbot: allowed, perplexitybot: allowed"
+      },
+      {
+        "id": "e71",
+        "url": "https://shop.example/sitemap.xml",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "sitemap XML document",
+        "excerpt": "A bounded same-origin sitemap inspection verified a parseable URL listing."
+      },
+      {
+        "id": "e72",
+        "url": "https://shop.example/sitemap.xml",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "sitemap XML url/loc",
+        "excerpt": "A sitemap URL entry exactly matches the final audited product URL."
+      },
+      {
+        "id": "e73",
+        "url": "https://shop.example/llms.txt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "Root guide request",
+        "excerpt": "The root guide was confirmed absent."
+      },
+      {
+        "id": "e74",
+        "url": "https://shop.example/llms.txt",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "Root guide request",
+        "excerpt": "The root guide was confirmed absent."
+      },
+      {
+        "id": "e75",
+        "url": "https://shop.example/AGENTS.md",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "Root guide request",
+        "excerpt": "The root guide was confirmed absent."
+      },
+      {
+        "id": "e76",
+        "url": "https://shop.example/AGENTS.md",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-09T00:00:00.000Z",
+        "location": "Root guide request",
+        "excerpt": "The root guide was confirmed absent."
+      }
+    ],
+    "fixes": [
+      {
+        "id": "improve-s2",
+        "title": "Repair product structured data",
+        "owner": "Web developer",
+        "checkIds": [
+          "S2.entity",
+          "S2.core-properties",
+          "S2.offer",
+          "S2.identifiers"
+        ],
+        "evidenceIds": [
+          "e5",
+          "e6",
+          "e7",
+          "e8"
+        ],
+        "recoverablePoints": 9,
+        "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+      },
+      {
+        "id": "improve-s3",
+        "title": "Align structured data with product content",
+        "owner": "Web developer",
+        "checkIds": [
+          "S3.identity",
+          "S3.price",
+          "S3.availability",
+          "S3.optional-claims"
+        ],
+        "evidenceIds": [
+          "e28",
+          "e29",
+          "e30",
+          "e31"
+        ],
+        "recoverablePoints": 9,
+        "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+      },
+      {
+        "id": "improve-c4",
+        "title": "Answer product selection questions",
+        "owner": "Product specialist",
+        "checkIds": [
+          "C4.compatibility"
+        ],
+        "evidenceIds": [
+          "e61",
+          "e62"
+        ],
+        "recoverablePoints": 1.875,
+        "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+      },
+      {
+        "id": "improve-s7",
+        "title": "Improve the site llms.txt guide",
+        "owner": "Web developer",
+        "checkIds": [
+          "S7.identity",
+          "S7.links"
+        ],
+        "evidenceIds": [
+          "e73",
+          "e74"
+        ],
+        "recoverablePoints": 1,
+        "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+      },
+      {
+        "id": "improve-s8",
+        "title": "Improve the site agent guide",
+        "owner": "Web developer",
+        "checkIds": [
+          "S8.context",
+          "S8.guidance"
+        ],
+        "evidenceIds": [
+          "e75",
+          "e76"
+        ],
+        "recoverablePoints": 1,
+        "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+      }
+    ],
+    "coverage": {
+      "notApplicable": 3,
+      "semantic": {
+        "model": "independently-reviewed-synthetic-judgments",
+        "version": "1.0.0"
+      },
+      "measured": 37,
+      "notMeasured": 0,
+      "total": 40,
+      "category": "basic-tshirts",
+      "extraction": {
+        "html": true,
+        "bodyText": true,
+        "usable": true,
+        "visibility": "unknown",
+        "jsonLdTruncated": false
+      },
+      "limitations": [
+        "Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.",
+        "Rules assess English source HTML and supported categories. Browser rendering is outside this inspection."
+      ]
+    }
+  },
+  "error": null
+}

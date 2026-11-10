@@ -53,6 +53,8 @@ test('submission, polling, and cache reuse match the frozen service responses', 
   };
   const handle = createAuditService({
     store, secret: 'x'.repeat(32), HTMLRewriter: Rewriter, now: () => clock,
+    // This test freezes transport/storage behavior. Real scoring has dedicated extraction/report regressions.
+    scorePage: () => read('assessment-incomplete').report,
     egress: { fetch: async url => {
       fetches++;
       if (new URL(url).pathname === '/robots.txt') return new Response(null, {status:404});

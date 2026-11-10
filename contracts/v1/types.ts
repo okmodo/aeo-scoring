@@ -26,6 +26,7 @@ export interface Evidence {
 export interface Subcheck {
   id: string
   maxPoints: number
+  availablePoints?: number
   status: CheckStatus
   fraction: number | null
   points: number | null
@@ -55,6 +56,8 @@ export interface PriorityFix {
 export interface AuditReport {
   status: 'complete' | 'incomplete'
   rubricVersion: string
+  engineVersion?: string
+  categoryVersion?: string
   category: string | null
   productName: string | null
   variant: string | null
@@ -66,8 +69,10 @@ export interface AuditReport {
   evidence: Evidence[]
   fixes: PriorityFix[]
   coverage: {
+    semantic?: { model: string; version: string }
     measured: number
     notMeasured: number
+    notApplicable?: number
     total: number
     category: string | null
     extraction: { html: boolean; bodyText: boolean; usable: boolean; visibility: 'unknown'; jsonLdTruncated: boolean } | null

@@ -20,3 +20,9 @@ CREATE TABLE IF NOT EXISTS audit_admissions (
 );
 CREATE INDEX IF NOT EXISTS admissions_rate_window ON audit_admissions(rate_key, created_at);
 CREATE INDEX IF NOT EXISTS admissions_global_window ON audit_admissions(created_at);
+
+-- Reservations are consumed even if inference fails; budget resets by UTC day.
+CREATE TABLE IF NOT EXISTS semantic_budget (
+  day INTEGER PRIMARY KEY,
+  reserved_neurons INTEGER NOT NULL CHECK (reserved_neurons >= 0 AND reserved_neurons <= 8000)
+);

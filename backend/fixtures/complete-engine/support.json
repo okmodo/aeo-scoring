@@ -1,0 +1,9 @@
+{
+  "crawlerPolicy": {"version":"1.0.0","url":"https://shop.example/robots.txt","httpStatus":200,"observations":[{"botId":"googlebot","status":"allowed"},{"botId":"bingbot","status":"allowed"},{"botId":"oai-searchbot","status":"allowed"},{"botId":"claude-searchbot","status":"allowed"},{"botId":"perplexitybot","status":"allowed"}]},
+  "sitemap":{"usableSource":"https://shop.example/sitemap.xml","inclusionSource":"https://shop.example/sitemap.xml","complete":true},
+  "guides":{"llms":null,"agents":null,"llmsState":"absent","agentsState":"absent"},
+  "policies":{
+    "shipping":{"state":"read","url":"https://shop.example/shipping","extraction":{"complete":true,"blocks":[{"location":"main/p","text":"We ship to the United States. Shipping is free on this order. Delivery takes 3 to 5 business days."}]}},
+    "returns":{"state":"read","url":"https://shop.example/returns","extraction":{"complete":true,"blocks":[{"location":"main/p","text":"Unused and unworn items may be returned within 30 days in their original packaging. The customer pays return shipping. Refunds go to the original payment method."}]}}
+  }
+}

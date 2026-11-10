@@ -1,0 +1,17 @@
+// Local native-runtime replay entry point. No bindings or deployment configuration.
+import { extract } from './retrieval.mjs';
+import { scoreAudit } from './scoring.mjs';
+import { buildSemanticRequest, validateSemanticResponse } from './semantic-assessment.mjs';
+import { inspectProductSchema } from './structure-assessment.mjs';
+export default { async fetch(request) {
+        const { html, url, support = {}, judgments = null } = await request.json();
+        const snapshot = { url, observedAt: '2026-11-09T00:00:00.000Z', body: html, htmlLimited: null, ...support };
+        const extracted = await extract(snapshot);
+        let report = scoreAudit(snapshot, extracted);
+        const semanticRequest = buildSemanticRequest(snapshot, extracted, report, { product: inspectProductSchema(snapshot, extracted).product });
+        if (judgments) {
+            const semantic = validateSemanticResponse(semanticRequest, judgments);
+            report = scoreAudit(snapshot, extracted, { semantic: { ...semantic, status: 'assessed', model: 'independently-reviewed-synthetic-judgments' } });
+        }
+        return Response.json({ extracted, report, semanticRequest });
+    } };

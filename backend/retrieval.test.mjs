@@ -1,3 +1,4 @@
+import { HtmlTestRewriter } from './html-product-test-helper.mjs';
 import './sitemap-parser.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -145,7 +146,7 @@ test('overlong JSON-LD is omitted and reported', async () => {
     on(selector, handler) { this.handlers.set(selector, handler); return this; }
     transform(response) {
       const handler = this.handlers.get('script[type="application/ld+json"]');
-      handler.text({ text: ' '.repeat(8192), lastInTextNode: false });
+      handler.text({ text: ' '.repeat(128 * 1024), lastInTextNode: false });
       handler.text({ text: '{"@type":"Product"}', lastInTextNode: true });
       return response;
     }
@@ -255,7 +256,7 @@ test('optional sitemap observation follows bounded same-origin permitted paths',
     '/child.xml': () => new Response(xml(['https://example.com/a'])),
   }, calls);
   const result = await retrieve('https://example.com/a', { egress, observeSitemap: true });
-  assert.deepEqual(result.sitemap, { usableSource: 'https://example.com/child.xml', inclusionSource: 'https://example.com/child.xml' });
+  assert.deepEqual(result.sitemap, { usableSource: 'https://example.com/child.xml', inclusionSource: 'https://example.com/child.xml', complete: true });
   assert.equal(calls.length, 4);
   assert.equal(calls[2].options.redirect, 'manual');
 
@@ -264,7 +265,7 @@ test('optional sitemap observation follows bounded same-origin permitted paths',
     '/robots.txt': () => new Response('User-agent: *\nDisallow: /blocked\nSitemap: https://other.example.org/sitemap.xml\nSitemap: https://example.com/blocked'),
     '/a': page,
   }, blockedCalls) });
-  assert.deepEqual(blocked.sitemap, { usableSource: null, inclusionSource: null });
+  assert.deepEqual(blocked.sitemap, { usableSource: null, inclusionSource: null, complete: false });
   assert.equal(blockedCalls.length, 3);
   assert.ok(blockedCalls.some(call => call.url.endsWith('/blocked')));
 
@@ -273,7 +274,7 @@ test('optional sitemap observation follows bounded same-origin permitted paths',
     '/sitemap.xml': () => new Response(index(['https://example.com/child.xml', 'https://example.com/other.xml'])),
     '/child.xml': () => new Response(xml(['https://example.com/a'])),
   }) });
-  assert.deepEqual(multi.sitemap, { usableSource: null, inclusionSource: 'https://example.com/child.xml' });
+  assert.deepEqual(multi.sitemap, { usableSource: null, inclusionSource: 'https://example.com/child.xml', complete: false });
 });
 
 test('sitemap declarations survive malformed robots rules', async () => {
@@ -294,7 +295,7 @@ test('optional sitemap failures, redirects, and oversized bodies do not fail the
     () => { throw new Error('offline'); },
   ]) {
     const result = await retrieve('https://example.com/a', { observeSitemap: true, egress: binding({ '/a': page, '/sitemap.xml': response }) });
-    assert.deepEqual(result.sitemap, { usableSource: null, inclusionSource: null });
+    assert.deepEqual(result.sitemap, { usableSource: null, inclusionSource: null, complete: false });
   }
   const calls = [];
   let sitemapSignal;
@@ -310,7 +311,7 @@ test('optional sitemap failures, redirects, and oversized bodies do not fail the
     },
   } });
   assert.equal(bounded.status, 200);
-  assert.deepEqual(bounded.sitemap, { usableSource: null, inclusionSource: null });
+  assert.deepEqual(bounded.sitemap, { usableSource: null, inclusionSource: null, complete: false });
   assert.equal(sitemapSignal?.aborted, true);
   calls.length = 0;
   const result = await retrieve('https://example.com/a', { egress: binding({ '/a': page }, calls) });
@@ -322,7 +323,7 @@ test('guide inspection is opt-in, bounded to fixed final-origin paths, and recon
   const calls = [];
   const routes = { '/a': page(), '/llms.txt': new Response('guide'), '/AGENTS.md': new Response(' instructions '), '/agents.md': new Response('instructions') };
   const snapshot = await retrieve('https://example.com/a', { egress: binding(routes, calls), observeGuides: true });
-  assert.deepEqual(snapshot.guides, { llms: { url: 'https://example.com/llms.txt', text: 'guide' }, agents: { url: 'https://example.com/AGENTS.md', text: ' instructions ' } });
+  assert.deepEqual(snapshot.guides, { llms: { url: 'https://example.com/llms.txt', text: 'guide' }, agents: { url: 'https://example.com/AGENTS.md', text: ' instructions ' }, llmsState: 'found', agentsState: 'found' });
   assert.deepEqual(calls.slice(2).map(call => new URL(call.url).pathname), ['/llms.txt', '/AGENTS.md', '/agents.md']);
   const basicCalls = [];
   await retrieve('https://example.com/a', { egress: binding({ '/a': page() }, basicCalls) });
@@ -342,7 +343,7 @@ test('guide failures and conflicts never assert agents evidence or fail the page
 test('guide probes ignore robots and abort on their shared deadline', async () => {
   const calls = [];
   const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/robots.txt': new Response('User-agent: *\nDisallow: /AGENTS.md'), '/a': page(), '/agents.md': new Response('instructions'), '/llms.txt': () => new Promise(() => {}) }, calls), observeGuides: true });
-  assert.deepEqual(snapshot.guides, { llms: null, agents: { url: 'https://example.com/agents.md', text: 'instructions' } });
+  assert.deepEqual(snapshot.guides, { llms: null, agents: { url: 'https://example.com/agents.md', text: 'instructions' }, llmsState: 'unknown', agentsState: 'found' });
   assert.equal(calls.some(call => call.url.endsWith('/AGENTS.md')), true);
   assert.equal(calls.find(call => call.url.endsWith('/llms.txt')).options.signal.aborted, true);
 });
@@ -353,4 +354,34 @@ test('unsupported robots rules leave observations unmeasured without blocking', 
   }) });
   assert.equal(result.status, 200);
   assert.ok(result.crawlerPolicy.observations.every(item => item.status === 'not_measured'));
+});
+
+test('policy inspection fetches at most two safe same-origin pages and ignores robots restrictions', async () => {
+  const calls = [];
+  const routes = { '/a': page(), '/robots.txt': new Response('User-agent: *\nDisallow: /'), '/policies/shipping': new Response('<main><h1>Shipping</h1><p>Ships in two days.</p></main>', { headers: { 'content-type': 'text/html' } }), '/returns': new Response('<main><h1>Returns</h1><p>Return within 30 days.</p></main>', { headers: { 'content-type': 'text/html' } }) };
+  const snapshot = await retrieve('https://example.com/a', { egress: binding(routes, calls), observeGuides: true, HTMLRewriter: HtmlTestRewriter, consumeHtml: async () => ({ productHtml: { discoveryLinks: [{ url: 'https://evil.example/shipping', text: 'Shipping' }, { url: '/policies/shipping', text: 'Shipping' }, { url: '/returns', text: 'Returns' }] } }) });
+  assert.equal(snapshot.policies.shipping.state, 'read');
+  assert.equal(snapshot.policies.returns.extraction.blocks[0].text, 'Return within 30 days.');
+  assert.equal(calls.some(call => call.url.includes('evil.example')), false);
+});
+
+test('unrelated multiword and slash user agents do not invalidate ordinary crawler rules', async () => {
+  const snapshot = await retrieve('https://example.com/a', { egress: binding({ '/a': page(), '/robots.txt': new Response('User-agent: Some Bot/1.0\nDisallow: /private\nUser-agent: *\nDisallow: /a') }) });
+  assert.ok(snapshot.crawlerPolicy.observations.some(item => item.status === 'disallowed'));
+});
+
+test('sitemap absence requires successful inspection of every declared listing within the request budget', async () => {
+  const xml = locations => `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(loc=>`<url><loc>${loc}</loc></url>`).join('')}</urlset>`;
+  const routes = {
+    '/a':page,
+    '/robots.txt':()=>new Response('User-agent: *\nSitemap: https://example.com/one.xml\nSitemap: https://example.com/two.xml'),
+    '/one.xml':()=>new Response(xml(['https://example.com/other'])),
+    '/two.xml':()=>new Response(xml(['https://example.com/a'])),
+  };
+  const included=await retrieve('https://example.com/a',{egress:binding(routes),observeSitemap:true});
+  assert.equal(included.sitemap.complete,true);assert.equal(included.sitemap.inclusionSource,'https://example.com/two.xml');
+  const failed=await retrieve('https://example.com/a',{egress:binding({...routes,'/two.xml':()=>new Response(null,{status:503})}),observeSitemap:true});
+  assert.equal(failed.sitemap.complete,false);assert.equal(failed.sitemap.inclusionSource,null);
+  const limited=await retrieve('https://example.com/a',{egress:binding({...routes,'/robots.txt':()=>new Response('Sitemap: https://example.com/one.xml\nSitemap: https://example.com/two.xml\nSitemap: https://example.com/three.xml'),'/two.xml':()=>new Response(xml(['https://example.com/other2']))}),observeSitemap:true});
+  assert.equal(limited.sitemap.complete,false);assert.equal(limited.sitemap.inclusionSource,null);
 });

@@ -36,3 +36,11 @@ The submitted URL retains its path and query and drops its fragment. It must be 
 ## Frozen examples
 
 Each JSON file under examples is the response body for the matching scenario. assessment-complete.json is an explicitly synthetic full-rubric fixture for report UI development. The current deterministic backend can produce incomplete reports when remaining applicable checks require evidence or judgment outside its supported checks. No live server is needed to use the fixtures.
+
+## Compatible backend additions
+
+The scoring-engine revision preserves version `1`, routes, assessment statuses and the score-null rule. Optional `engineVersion` and `categoryVersion` identify implementation and template revisions. Subcheck `availablePoints` is its effective maximum after permitted within-criterion exclusions; `maxPoints` retains the original rubric weight. Points use the effective maximum. Optional `coverage.semantic` identifies the model and judgment recipe version when an approved model assessment was used. `extraction.bodyText` now indicates retained product text; visibility remains unknown. Evidence IDs can include individual attributes, questions, comparisons and policy terms.
+
+Semantic allowance exhaustion leaves the assessment incomplete with a limitation; it does not convert into an input error or an invented score. Existing submission quotas and cached-result statuses remain unchanged. The backend owns these additions. The frontend can ignore optional fields until its adapter is updated by its owner. No presentation or shared dependencies are changed here. See [the engine specification](../../docs/complete-scoring-engine.md) for coverage and release limitations.
+
+`assessment-engine-complete.json` is a second complete example produced from the frozen synthetic HTML and independently adjudicated judgments. Its exact score is 78.125 (Structure 20, Content 58.125), including three permitted exclusions and partial fit-guidance credit. It demonstrates arithmetic and response shape; it is **not** evidence that the disabled live semantic judge passed calibration. Optional `coverage.notApplicable` reconciles the check counts.

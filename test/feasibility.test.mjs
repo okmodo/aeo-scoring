@@ -161,3 +161,13 @@ await import('../backend/html-stream.test.mjs');
 await import('../backend/scoring.test.mjs');
 await import('../backend/store.test.mjs');
 await import('../backend/service.test.mjs');
+
+await import('../backend/html-product.test.mjs');
+await import('../backend/content-assessment.test.mjs');
+await import('../backend/support-assessment.test.mjs');
+
+await import('../backend/semantic-assessment.test.mjs');
+await import('../backend/semantic-runner.test.mjs');
+await import('../backend/complete-engine.test.mjs');
+
+await import('../backend/semantic-transport.test.mjs');

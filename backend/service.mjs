@@ -1,6 +1,7 @@
 import { createStore } from './store.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
+import { assessWithSemanticJudge } from './semantic-runner.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -97,8 +98,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.1:scoring-8:' + url)));
+async function cacheKey(url, semanticEnabled = false) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-9:semantic-' + (semanticEnabled ? '1' : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -116,7 +117,7 @@ function retrievalProblem(error) {
 }
 
 export function createAuditService({
-  store, egress, secret, HTMLRewriter, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
+  store, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit,
 }) {
   async function run(audit) {
@@ -129,7 +130,13 @@ export function createAuditService({
       const observedAt = new Date(now()).toISOString();
       const extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
       if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
-      report = scorePage({ ...snapshot, observedAt }, extracted);
+      snapshot = { ...snapshot, observedAt };
+      report = scorePage(snapshot, extracted);
+      if (AI && extracted.productHtml) {
+        const semantic = await assessWithSemanticJudge({AI,store,now,snapshot,extracted,report});
+        if (semantic.status === 'assessed') report = scorePage(snapshot, extracted, {semantic});
+        else report.coverage.limitations.push(semantic.reason);
+      }
     } catch (error) {
       await store.finish(audit.id, {
         status: 'unable_to_assess', error: retrievalProblem(error), completedAt: now(),
@@ -161,7 +168,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI)),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
         });
@@ -191,7 +198,7 @@ export function createAuditService({
 export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage } = {}) {
   const service = createAuditService({
     store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
-    egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),
