@@ -1,6 +1,7 @@
 // The supplied egress is the network security boundary. This module never falls
 // back to global fetch and validates every URL before handing it to that boundary.
 import { robotsPathMatch, ROBOTS_MATCH_MAX_WORK } from './robots-path.mjs';
+import { productHtmlAccumulator } from './html-product.mjs';
 import { parseSitemap } from './sitemap-parser.mjs';
 import crawlers from '../config/crawlers.v1.json' with { type: 'json' };
 
@@ -129,7 +130,7 @@ function parseRobots(text) {
     const value = line.slice(colon + 1).trim();
     if (key === 'user-agent') {
       if (inRules) { groups.push({ agents, rules }); agents = []; rules = []; inRules = false; }
-      if (!value || !/^(?:\*|[a-z0-9_-]+)$/i.test(value)) throw failure('robots_unknown', 'Malformed robots user agent');
+      if (!value) throw failure('robots_unknown', 'Malformed robots user agent');
       agents.push(value.toLowerCase());
     } else if (key === 'allow' || key === 'disallow') {
       if (!agents.length || (value && !value.startsWith('/') && !(key === 'disallow' && value.startsWith('*')))) throw failure('robots_unknown', 'Malformed robots rule');
@@ -189,13 +190,14 @@ function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 
 
 // Inspection uses the final page origin and any robots sitemap declarations.
 // Missing, partial, ambiguous, or exhausted inspection never asserts absence.
-async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
+async function inspectSitemap({ url, declarations, fetchBounded, signal, productPartition = false }) {
   const optional = new AbortController();
   const abort = () => optional.abort();
   signal.addEventListener('abort', abort, { once: true });
   if (signal.aborted) optional.abort();
   const timer = setTimeout(abort, 750);
-  const result = { usableSource: null, inclusionSource: null };
+  const result = { usableSource: null, inclusionSource: null, complete: false };
+  let defaultAbsent = false;
   const seen = new Set();
   let requests = 0;
   function candidate(value) {
@@ -215,6 +217,7 @@ async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
       requests++;
       const response = await fetchBounded(target, optional.signal);
       const type = response.headers.get('content-type') || '';
+      if (!declarations.length && target.href === new URL('/sitemap.xml', url).href && (response.status === 404 || response.status === 410)) defaultAbsent = true;
       if (response.status !== 200 || !/^(?:application\/xml|text\/(?:xml|plain))(?:\s*;|\s*$)/i.test(type)) {
         discard(response);
         return null;
@@ -232,25 +235,44 @@ async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
   function hasPage(doc) {
     return doc.locations.some(location => candidate(location)?.href === url.href);
   }
+  function productChildren(doc) {
+    if (!productPartition || new URL(doc.location).pathname !== '/xmlsitemap.php') return null;
+    const children = doc.locations.map(candidate);
+    if (!children.length || children.some(child => !child || child.pathname !== '/xmlsitemap.php' ||
+        child.searchParams.getAll('type').length !== 1 || child.searchParams.getAll('page').length !== 1 ||
+        [...child.searchParams.keys()].some(key => !['type','page'].includes(key)) ||
+        !['products','pages','categories','news'].includes(child.searchParams.get('type')) ||
+        !/^[1-9]\d{0,4}$/.test(child.searchParams.get('page')))) return null;
+    const products = children.filter(child=>child.searchParams.get('type')==='products').map(child=>child.href);
+    return products.length && new Set(products).size===products.length ? products : null;
+  }
+
   try {
     const starts = declarations.length ? declarations : [new URL('/sitemap.xml', url).toString()];
+    let complete = true, visitedStarts = 0;
     for (const start of starts) {
+      visitedStarts++;
       const doc = await read(start);
-      if (!doc) continue;
+      if (!doc) { complete = false; continue; }
       if (usableUrlset(doc)) {
         result.usableSource = doc.location;
         if (hasPage(doc)) result.inclusionSource = doc.location;
       } else if (doc.kind === 'sitemapindex') {
         const indexDirectory = new URL('.', doc.location).pathname;
-        const firstChild = doc.locations.find(location => candidate(location)?.pathname.startsWith(indexDirectory));
+        const relevant = productChildren(doc) || doc.locations;
+        const firstChild = relevant.find(location => candidate(location)?.pathname.startsWith(indexDirectory));
         const child = firstChild && await read(firstChild);
+        if (relevant.length !== 1 || !child || !usableUrlset(child)) complete = false;
         if (child && usableUrlset(child)) {
-          if (doc.locations.length === 1) result.usableSource = child.location;
+          if (relevant.length === 1) result.usableSource = child.location;
           if (hasPage(child)) result.inclusionSource = child.location;
         }
-      }
-      if (requests >= 2 || (result.usableSource && result.inclusionSource)) break;
+      } else complete = false;
+      if (requests >= 2) break;
     }
+    result.complete = complete && visitedStarts === starts.length && !!result.usableSource;
+    if (!result.complete) result.usableSource = null;
+    if (defaultAbsent) { result.state = 'absent'; result.url = new URL('/sitemap.xml', url).href; }
     return result;
   } finally {
     clearTimeout(timer);
@@ -285,11 +307,53 @@ async function inspectGuides({ url, fetchBounded, signal }) {
     let agents = null;
     if (upper.state === 'found' && (lower.state === 'absent' || (lower.state === 'found' && upper.value.text.trim() === lower.value.text.trim()))) agents = upper.value;
     else if (lower.state === 'found' && upper.state === 'absent') agents = lower.value;
-    return { llms: llms.state === 'found' ? llms.value : null, agents };
+    return { llms: llms.state === 'found' ? llms.value : null, agents, llmsState: llms.state, agentsState: agents ? 'found' : upper.state === 'absent' && lower.state === 'absent' ? 'absent' : 'unknown' };
   } finally {
     clearTimeout(timer);
     signal.removeEventListener('abort', abort);
   }
+}
+
+async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
+  const result = { shipping: { state: 'unknown' }, returns: { state: 'unknown' } };
+  const targets = new Map();
+  for (const link of links || []) {
+    let target;
+    try { target = checkedUrl(new URL(link.url, url).href); } catch { continue; }
+    if (target.origin !== url.origin || target.href === url.href || target.search) continue;
+    const name = `${link.text} ${target.pathname}`.toLowerCase();
+    for (const [kind, pattern] of [['shipping', /\b(?:shipping|delivery)\b/], ['returns', /\b(?:returns?|refunds?)\b/]]) {
+      if (pattern.test(name) && result[kind].state === 'unknown') {
+        result[kind] = { state: 'failed', url: target.href };
+        if (!targets.has(target.href)) targets.set(target.href, []);
+        targets.get(target.href).push(kind);
+      }
+    }
+  }
+  const optional = new AbortController();
+  const abort = () => optional.abort();
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+  const timer = setTimeout(abort, 750);
+  try {
+    for (const [target, kinds] of [...targets].slice(0, 2)) {
+      try {
+        const response = await fetchBounded(new URL(target), optional.signal);
+        if (response.status !== 200 || !/^text\/html(?:\s*;|\s*$)/i.test(response.headers.get('content-type') || '')) { discard(response); continue; }
+        // Policy templates often exceed 128 KiB before their visible terms.
+        // Keep the same hard source bound as product streaming, and reject any
+        // excess rather than interpreting a partial policy as complete.
+        const html = await boundedResponse(response, 1024 * 1024, optional.signal, { fatal: true });
+        if (!Rewriter) continue;
+        const rewriter = new Rewriter();
+        const accumulator = productHtmlAccumulator(rewriter, { policy: true });
+        await rewriter.transform(new Response(html)).arrayBuffer();
+        const extraction = accumulator.finish();
+        for (const kind of kinds) result[kind] = { state: 'read', url: target, extraction };
+      } catch { /* Optional pages remain unmeasured. */ }
+    }
+    return result;
+  } finally { clearTimeout(timer); signal.removeEventListener('abort', abort); }
 }
 
 export async function retrieve(input, options = {}) {
@@ -368,12 +432,19 @@ export async function retrieve(input, options = {}) {
       });
       snapshot.crawlerPolicy = { version: crawlers.version, url: robotsUrl.toString(), httpStatus, observations };
       if (options.observeSitemap === true) {
-        try { snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal }); }
+        try { const html = snapshot.extracted?.productHtml;
+          const associated = html?.structuredRecords?.filter(item=>item.complete && item.record?.['@type']==='Product' &&
+            typeof item.record.name==='string' && item.record.name.trim().replace(/\s+/g,' ')===html.identity?.mainH1);
+          const productPartition = html?.complete === true && html.platform === 'bigcommerce.stencil' && associated?.length === 1;
+          snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal, productPartition }); }
         catch { /* Optional evidence must not fail a completed page retrieval. */ }
       }
       if (options.observeGuides === true) {
         try { snapshot.guides = await inspectGuides({ url, fetchBounded, signal: controller.signal }); }
         catch { snapshot.guides = { llms: null, agents: null }; }
+      }
+      if (options.observeGuides === true && snapshot.extracted?.productHtml) {
+        snapshot.policies = await inspectPolicies({ url, links: snapshot.extracted.productHtml.discoveryLinks, fetchBounded, signal: controller.signal, Rewriter: options.HTMLRewriter || globalThis.HTMLRewriter });
       }
       return snapshot;
     }
@@ -383,9 +454,11 @@ export async function retrieve(input, options = {}) {
 export async function extract(snapshot, options = {}) {
   const Rewriter = options.HTMLRewriter || globalThis.HTMLRewriter;
   if (!Rewriter) throw failure('extractor_unavailable', 'HTMLRewriter runtime required');
+  const html = typeof snapshot.body === 'string' ? snapshot.body : await new Response(snapshot.body).text();
   const result = { title: '', description: '', headings: [], canonical: '', jsonLd: [], coverage: { html: true, bodyText: false, usable: false, visibility: 'unknown', jsonLdTruncated: false } };
   const maxItems = 100, maxText = 8192;
   const rewriter = new Rewriter();
+  const productAccumulator = productHtmlAccumulator(rewriter);
   // Keep identity evidence independent from the legacy, per-text-node fields.
   // Element end callbacks are required so nested text nodes form one complete value.
   result.labelEvidence = { title: null, mainH1: null };
@@ -403,11 +476,11 @@ export async function extract(snapshot, options = {}) {
         if (state.active) { state.active.invalid = true; current.invalid = true; }
         state.active = current;
         if (typeof element.onEndTag !== 'function') { current.invalid = true; return; }
-        element.onEndTag(() => {
+        try { element.onEndTag(() => {
           current.ended = true;
           if (state.active === current) state.active = null;
           state.value = current;
-        });
+        }); } catch { current.invalid = true; }
       },
       text(chunk) {
         const current = state.active;
@@ -417,9 +490,9 @@ export async function extract(snapshot, options = {}) {
       },
     };
   }
-  rewriter.on('head title', identityHandler(identity.title));
+  if (typeof rewriter.onDocument !== 'function') rewriter.on('head title', identityHandler(identity.title));
   rewriter.on('main', { element(element) { mains = Math.min(2, mains + 1); if (explicitlyHidden(element)) unsafeMain = true; } });
-  rewriter.on('main h1', identityHandler(identity.mainH1));
+  if (typeof rewriter.onDocument !== 'function') rewriter.on('main h1', identityHandler(identity.mainH1));
   for (const selector of ['style', 'script:not([type="application/ld+json"])']) rewriter.on(selector, markUnsafeMain);
   rewriter.on('main h1 *', { element(element) { if ((explicitlyHidden(element) || /^(?:script|style|template|noscript)$/i.test(element.tagName || '')) && identity.mainH1.active) identity.mainH1.active.invalid = true; } });
   // A styled ancestor is treated conservatively because selector callbacks expose
@@ -442,36 +515,46 @@ export async function extract(snapshot, options = {}) {
     if (rel.includes('canonical') && !result.canonical) result.canonical = (element.getAttribute('href') || '').slice(0, maxText);
   } });
   for (const level of [1, 2, 3, 4, 5, 6]) rewriter.on(`h${level}`, textHandler(value => { if (value && result.headings.length < maxItems) result.headings.push({ level, text: value }); }));
+  const jsonLdMax = 128 * 1024, jsonLdAggregateMax = 256 * 1024;
+  let jsonLdTotal = 0;
   let jsonLdValue = '', jsonLdOverlong = false, jsonLdEnded = false;
   const streaming = Object.hasOwn(snapshot, 'htmlLimited');
   rewriter.on('script[type="application/ld+json"]', {
     element(element) {
       jsonLdValue = ''; jsonLdOverlong = false; jsonLdEnded = false;
-      if (typeof element.onEndTag === 'function') element.onEndTag(() => {
+      if (typeof element.onEndTag === 'function') try { element.onEndTag(() => {
+        productAccumulator.endJsonLd();
         jsonLdEnded = true;
         if (jsonLdOverlong || (jsonLdValue.trim() && result.jsonLd.length >= maxItems)) result.coverage.jsonLdTruncated = true;
-        else if (jsonLdValue.trim()) result.jsonLd.push(jsonLdValue.trim());
+        else if (jsonLdValue.trim()) { jsonLdTotal += jsonLdValue.length; if (jsonLdTotal > jsonLdAggregateMax) result.coverage.jsonLdTruncated = true; else result.jsonLd.push(jsonLdValue.trim()); }
         jsonLdValue = ''; jsonLdOverlong = false;
-      });
+      }); } catch { result.coverage.jsonLdTruncated = true; }
     },
     text(chunk) {
-      if (jsonLdValue.length + chunk.text.length > maxText) jsonLdOverlong = true;
+      if (jsonLdValue.length + chunk.text.length > jsonLdMax) jsonLdOverlong = true;
       if (!jsonLdOverlong) jsonLdValue += chunk.text;
       // Legacy test doubles do not expose element/end-tag events.
       if (!streaming && chunk.lastInTextNode && !jsonLdEnded) {
         if (jsonLdOverlong || (jsonLdValue.trim() && result.jsonLd.length >= maxItems)) result.coverage.jsonLdTruncated = true;
-        else if (jsonLdValue.trim()) result.jsonLd.push(jsonLdValue.trim());
+        else if (jsonLdValue.trim()) { jsonLdTotal += jsonLdValue.length; if (jsonLdTotal > jsonLdAggregateMax) result.coverage.jsonLdTruncated = true; else result.jsonLd.push(jsonLdValue.trim()); }
         jsonLdValue = ''; jsonLdOverlong = false;
       }
     },
   });
-  const transformed = rewriter.transform(new Response(snapshot.body, { headers: { 'content-type': 'text/html' } }));
+  const transformed = rewriter.transform(new Response(html, { headers: { 'content-type': 'text/html' } }));
   if (transformed.body) { const reader = transformed.body.getReader(); while (!(await reader.read()).done) { /* drain without buffering output */ } }
   if (snapshot.htmlLimited) result.coverage.jsonLdTruncated = true;
+  result.productHtml = productAccumulator.finish(!!snapshot.htmlLimited);
+  result.coverage.bodyText = result.productHtml.blocks.length > 0 || result.productHtml.headings.length > 0;
   for (const [key, state] of Object.entries(identity)) {
     const value = state.value;
     if (state.count === 1 && value && value.ended && !value.invalid && value.value.trim() &&
         (key !== 'mainH1' || (mains === 1 && !unsafeMain))) result.labelEvidence[key] = value.value.trim();
+  }
+  if (typeof rewriter.onDocument === 'function') {
+    result.labelEvidence = { ...result.productHtml.identity };
+    result.title = result.productHtml.identity.title || '';
+    result.coverage.usable ||= result.productHtml.blocks.length > 0 || result.productHtml.headings.length > 0;
   }
   return result;
 }

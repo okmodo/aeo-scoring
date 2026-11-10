@@ -7,3 +7,7 @@ S7 identity and S8 context receive credit only when the file identifies the site
 The two files are emerging practices. The scorer does not determine whether a crawler reads them. This increment leaves S7 link usefulness and S8 guidance unmeasured because their broader reference quality is outside this inspection. The v1 response shape, rubric weights and incomplete-assessment rules stay in place. New submissions use a new scoring cache namespace.
 
 [llms.txt proposal](https://llmstxt.org/) · [AGENTS.md coding-agent convention](https://agents.md/)
+
+## Complete-engine extension
+
+The complete engine separates guide identity/context from working-reference checks. Meaningful site-specific purpose can earn context credit without an exact audited-product link. Empty or irrelevant fully inspected guides can earn zero; failed or ambiguous inspection stays unknown. Working-reference credit still requires retrieved product/catalog and policy/help evidence, and never follows guide instructions. See [the current engine specification](complete-scoring-engine.md).

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "included-allowance-guard",
+  "task": "Enforce a 60% included-allowance operating policy for the paid $5 Workers plan and continue backend calibration offline without overage risk.",
+  "scope": [
+    "AGENTS.md",
+    "backend/**",
+    "config/**",
+    "docs/**",
+    "contracts/v1/**",
+    "test/feasibility.test.mjs",
+    "evals/changes/included-allowance-guard/**"
+  ],
+  "nonGoals": [
+    "No frontend/shared dependency changes, paid overages, external paid APIs, unrelated resources, merge or production deployment. No live metered experiment without independently reviewed account allowance evidence and reservation."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Versioned 60% policy and atomic multi-metric budget reservations prevent optional audit work when allocation or evidence is missing, stale, exhausted or contradictory.",
+      "verification": "automated",
+      "evidence": "Frozen concurrent boundary, malformed/stale cycle, missing evidence, failures and no-network scenarios with real local SQLite."
+    },
+    {
+      "id": "O2",
+      "description": "Submission, polling, maintenance and inference use explicit bounded accounting; no network/model work is admitted through missing budget controls. Stable service responses explain paused audits.",
+      "verification": "automated",
+      "evidence": "Service and inference regressions including cached reads and maintenance. No false promise of account-wide hard billing cap."
+    },
+    {
+      "id": "O3",
+      "description": "Continue backend extraction protocol correctness and offline complete-report calibration without changing gold judgments or enabling an uncalibrated model.",
+      "verification": "automated",
+      "evidence": "Frozen valid/malformed model protocol cases and independently reviewed complete fixture."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan commit, Terra implementation/review, genuine evaluation, handoff and hosted draft CI; no deployment or unrelated changes.",
+      "verification": "human",
+      "evidence": "Git history, traces, independent review and PR checks."
+    },
+    {
+      "id": "P2",
+      "description": "Explicitly disclose account-wide billing blind spots; missing Billing Read cannot be treated as available headroom. Preserve daily and subscription-cycle boundaries and no-refund reservations.",
+      "verification": "human",
+      "evidence": "Cost policy, safe disabled defaults, permissions evidence and documented activation prerequisites."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep one reusable policy and atomic ledger; avoid unbounded housekeeping or duplicate AI attempts.",
+      "verification": "human",
+      "evidence": "Diff and review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "AGENTS.md standing cost boundary changes; a fresh Terra agent must continue from only exported state and repository files, preserving disabled-default and no-unrelated-service rules."
+  }
+}

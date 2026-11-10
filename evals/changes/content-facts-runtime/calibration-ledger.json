@@ -1,0 +1,45 @@
+{
+  "day": "2026-11-10",
+  "priorConservativeNeurons": 6631.65,
+  "cap": 8000,
+  "calls": [
+    {
+      "case": "reference-shirt",
+      "reserved": 781,
+      "status": "rejected-invalid-schema",
+      "actualNeurons": 214.2184295654297
+    },
+    {
+      "case": "reference-shirt-schema",
+      "reserved": 858,
+      "status": "valid-schema-incomplete-extraction",
+      "actualNeurons": 143.1510467529297,
+      "elapsedMs": 19096
+    },
+    {
+      "case": "kokatat-facts-v3",
+      "reserved": 780,
+      "status": "rejected-conflicting-condition-inspection",
+      "actualNeurons": 126.98536682128906,
+      "elapsedMs": 18071
+    },
+    {
+      "case": "reference-shirt-facts-v3",
+      "reserved": 660,
+      "status": "rejected-conflicting-condition-inspection",
+      "actualNeurons": 127.70828247070312,
+      "elapsedMs": 16658
+    },
+    {
+      "case": "reference-shirt-facts-v4",
+      "reserved": 679,
+      "status": "rejected-invalid-kind-key-and-context",
+      "actualNeurons": 129.1654052734375,
+      "elapsedMs": 17973
+    }
+  ],
+  "totalConservativeNeurons": 7372.878530883789,
+  "accountWideUsageVerified": false,
+  "productionReservationsRefunded": false,
+  "note": "Manual calibration replaces a reservation only with actual provider usage returned for that exact call; the production D1 budget never refunds reservations. Carry includes prior lost captures at conservative maxima."
+}

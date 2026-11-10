@@ -1,0 +1,386 @@
+{
+  "checks": [
+    {
+      "id": "C1.identity",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Acme Everyday T-shirt"
+        }
+      ]
+    },
+    {
+      "id": "C1.explanation",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+        }
+      ]
+    },
+    {
+      "id": "C1.configuration",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Selected configuration: Medium, US sizing, Navy. Includes one T-shirt."
+        }
+      ]
+    },
+    {
+      "id": "C3.price",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This product costs USD 25.00. This product is in stock."
+        }
+      ]
+    },
+    {
+      "id": "C3.availability",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This product costs USD 25.00. This product is in stock."
+        }
+      ]
+    },
+    {
+      "id": "C3.shipping",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s2",
+          "quote": "We ship to the United States. Shipping is free on this order. Delivery takes 3 to 5 business days."
+        }
+      ]
+    },
+    {
+      "id": "C3.returns",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s3",
+          "quote": "Unused and unworn items may be returned within 30 days in their original packaging. The customer pays return shipping. Refunds go to the original payment method."
+        }
+      ]
+    },
+    {
+      "id": "C5.consistency",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": "The explicitly single selected Medium Navy product, USD market price and stock in source HTML.",
+      "comparisonFields": [
+        {
+          "field": "price",
+          "value": "25.00",
+          "evidence": [
+            {
+              "sourceId": "s1",
+              "quote": "This product costs USD 25.00. This product is in stock."
+            },
+            {
+              "sourceId": "s1",
+              "quote": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+            }
+          ]
+        },
+        {
+          "field": "availability",
+          "value": "in stock",
+          "evidence": [
+            {
+              "sourceId": "s1",
+              "quote": "This product costs USD 25.00. This product is in stock."
+            },
+            {
+              "sourceId": "s1",
+              "quote": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This product costs USD 25.00. This product is in stock."
+        },
+        {
+          "sourceId": "s1",
+          "quote": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+        }
+      ]
+    },
+    {
+      "id": "C5.claim-support",
+      "status": "not_applicable",
+      "fraction": null,
+      "reason": "Independent review found ordinary specifications and generic promotional comfort language, with no material claims requiring substantiation.",
+      "rule": "no_material_claims",
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+        }
+      ]
+    }
+  ],
+  "attributes": [
+    {
+      "id": "size",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Selected size: Medium (US). Selected color: Navy."
+        }
+      ]
+    },
+    {
+      "id": "fiber",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Fabric composition: 100% cotton."
+        }
+      ]
+    },
+    {
+      "id": "fit",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Regular fit through the chest and body."
+        }
+      ]
+    },
+    {
+      "id": "color",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Selected size: Medium (US). Selected color: Navy."
+        }
+      ]
+    },
+    {
+      "id": "sleeve",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Short sleeves and a crew neckline."
+        }
+      ]
+    },
+    {
+      "id": "neckline",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Short sleeves and a crew neckline."
+        }
+      ]
+    },
+    {
+      "id": "care",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Machine wash cold with like colors."
+        }
+      ]
+    },
+    {
+      "id": "fabric-weight",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Fabric weight: 180 gsm."
+        }
+      ]
+    },
+    {
+      "id": "garment-measurements",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Garment measurements for selected Medium: chest 100 cm, length 70 cm."
+        }
+      ]
+    },
+    {
+      "id": "origin",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Made in Portugal."
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "shirt-use",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+        }
+      ]
+    },
+    {
+      "id": "shirt-fit",
+      "status": "measured",
+      "fraction": 0.5,
+      "reason": "Names fit and body region without explaining how the cut sits.",
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Regular fit through the chest and body."
+        }
+      ]
+    },
+    {
+      "id": "shirt-limits",
+      "status": "not_applicable",
+      "fraction": null,
+      "reason": "No special fabric treatment or restricted-care claim occurs in the completely inspected synthetic product.",
+      "rule": "category_conditions_absent",
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "This everyday T-shirt is designed for adult men and women for casual daily wear. Its soft cotton fabric provides breathable comfort."
+        }
+      ]
+    },
+    {
+      "id": "shirt-selection",
+      "status": "measured",
+      "fraction": 1,
+      "reason": null,
+      "rule": null,
+      "comparisonContext": null,
+      "comparisonFields": [],
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Measure your chest in cm and compare with the garment chart. Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference."
+        }
+      ]
+    }
+  ]
+}

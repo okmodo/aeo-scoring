@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "complete-scoring-engine",
+  "task": "Implement bounded product HTML extraction and all rubric subchecks with evidence, conservative abstention and complete real-product report verification.",
+  "scope": [
+    "backend/**",
+    "config/categories.v1.2.json",
+    "docs/**",
+    "contracts/v1/**",
+    "test/feasibility.test.mjs",
+    "AEO Scoring Vault/**",
+    "evals/changes/complete-scoring-engine/**"
+  ],
+  "nonGoals": [
+    "Frontend, shared dependencies, workflow weakening, paid services, unrelated Cloudflare resources, merge or deployment"
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Extract scoped ordinary HTML product facts, policies and schema with explicit bounded coverage and provenance; never repair malformed JSON into fabricated evidence.",
+      "verification": "automated",
+      "evidence": "Frozen happy, malformed, hidden, variant, truncation and injection fixtures."
+    },
+    {
+      "id": "O2",
+      "description": "Implement all 40 subchecks, category attributes and questions, exclusions, evidence-backed deductions, grouped fixes and conditional point recovery. Missing inspection remains incomplete.",
+      "verification": "automated",
+      "evidence": "Full report, partial report, contradictory and missing data regressions and score invariants."
+    },
+    {
+      "id": "O3",
+      "description": "Verify supported real product pages offline and document practical category, language, rendering and retrieval limitations honestly.",
+      "verification": "human",
+      "evidence": "Captured public-page replay results and independent review."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate committed plan, Terra implementation and independent review, actual source-bound evaluation and hosted CI; no merge or deployment.",
+      "verification": "human",
+      "evidence": "Git history, evaluation trace, review and PR."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse bounded fetch and inspection logic without dependencies.",
+      "verification": "human",
+      "evidence": "Diff"
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Backend extraction and scoring change does not alter portability, workflow, memory or continuation semantics; handoff records replay steps."
+  }
+}

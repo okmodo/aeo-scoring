@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "task": "Complete product extraction and scoring engine",
+  "state": "Draft PR #22. Native extraction and conservative scoring are implemented; newer content-fact work is recorded under evals/changes/content-facts-runtime. Both model assessment calibration gates remain false. The isolated runtime experiment failed Workers Free CPU limits; no complete real-product scoring pass or production deployment.",
+  "decisions": [
+    "Preserve Structure /40, Content /60, ungated URL-only audits, no bands and null final scores for missing applicable evidence.",
+    "Use bounded native HTMLRewriter extraction, safe same-origin policy retrieval and verified schema records; robots never gates crawling.",
+    "Retain the false semantic calibration gate. Exact evidence IDs do not prove a model interpretation is correct.",
+    "The 78.125 complete response uses independently adjudicated synthetic judgments and is not evidence of a passing live judge.",
+    "Additive effective availablePoints and coverage.notApplicable fields reconcile within-criterion exclusions without changing nominal rubric weights."
+  ],
+  "constraints": [
+    "Cloudflare Free only; no paid fallback, resource changes, frontend files, shared dependencies, merge or deployment.",
+    "Project inference reservations remain capped atomically at 8000 neurons per UTC day. The newer calibration-ledger.json records the conservative carry and all additional observed model usage; do not reuse the historical 6631.65 carry as fresh allowance.",
+    "No live inference in CI. Account-wide Free usage can be consumed elsewhere; user confirmed Workers Free after Billing Read was unavailable.",
+    "Native runtime replay does not establish production Free CPU compliance."
+  ],
+  "completed": [
+    "Committed immutable plan f74382a before implementation in isolated codex/complete-scoring-engine worktree.",
+    "Implemented bounded raw product facts, current/prior prices, selected controls, Product microdata and expanded offer/identifier handling.",
+    "Implemented conservative content/support assessment and evidence-preserving point/recovery arithmetic with category templates.",
+    "Fixed independent review findings for sitemap completeness, ambiguous comparisons, expired-offer credit and policy evidence provenance.",
+    "Verified the complete synthetic report in actual local workerd and replayed Kokatat extraction with 28 blocks, valid Product microdata and 17 measured checks.",
+    "Preserved actual failed model calibration evidence, a frozen rejected synthetic response and independent reviews.",
+    "Synchronized upstream PR #18 while preserving the CORS worker and both sets of offline test imports."
+  ],
+  "remaining": [
+    "Finish and calibrate automatic content assessment before enabling the semantic gate or declaring the scoring engine complete.",
+    "Continue source-bound fact extraction calibration and preserve failed observations; the new pipeline computes grades deterministically but has not passed representative live calibration.",
+    "Verify complete real-product reports including supporting policies and cross-variant context; current real replay is partial.",
+    "Resolve measured Workers Free CPU overruns and remeasure final-source real-product invocations; see the newer runtime-measurements.json and parser performance documentation.",
+    "Apply only the project D1 schema addition and configure a project AI binding after an approved separately authorized release; neither has been done.",
+    "Preserve the canonical frontend CORS wrapper now merged upstream in backend/public-worker.mjs during any future authorized deployment."
+  ],
+  "resumeCommands": [
+    "npm ci --ignore-scripts --no-audit --no-fund",
+    "npm ci --prefix backend --ignore-scripts --no-audit --no-fund",
+    "npm run evaluate -- --change complete-scoring-engine --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "node backend/replay-engine.mjs backend/fixtures/complete-engine/complete-shirt.html https://shop.example/products/everyday-tshirt --support backend/fixtures/complete-engine/support.json --judgments backend/fixtures/complete-engine/reviewed-judgments.json",
+    "node backend/replay-engine.mjs /private/tmp/aeo-kokatat-direct-product.html https://kokatat.com/naiad-pfd-lvhnai"
+  ]
+}

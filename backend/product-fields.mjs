@@ -73,3 +73,82 @@ export function scoreProductFields(record, sourceUrl) {
   if (identifiers) result['S2.identifiers'] = identifiers;
   return result;
 }
+
+// Complete assessment is only for a uniquely associated, fully read Product.
+// Unknown qualifiers and multiple plausible offers remain unmeasured.
+const unknown = reason => ({ status: 'not_measured', reason });
+const measured = (fraction, excerpt, extra = {}) => ({ status: 'measured', fraction, excerpt, ...extra });
+const validPrice = value => (typeof value === 'number' && Number.isFinite(value) && value >= 0) ||
+  (typeof value === 'string' && /^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value));
+function absoluteMatch(candidate, sourceUrl) {
+  try { return typeof candidate === 'string' && typeof sourceUrl === 'string' && new URL(candidate, sourceUrl).href === new URL(sourceUrl).href; }
+  catch { return false; }
+}
+function isoDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const time = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value ? time : null;
+}
+function selectedMarket(qualifier, context) {
+  const value = typeof qualifier === 'string' ? qualifier : object(qualifier) && schemaType(qualifier['@type'], 'Country') ? qualifier.name : null;
+  return typeof value === 'string' && /^[A-Z]{2}$/.test(value) && typeof context?.market === 'string' && /^[A-Z]{2}$/.test(context.market)
+    ? value === context.market : null;
+}
+function qualifiers(item, context) {
+  if (['@context','itemOffered','availableAtOrFrom','availabilityStarts','availabilityEnds','businessFunction','eligibleQuantity','eligibleCustomerType','eligibleTransactionVolume','validFrom','validThrough','valueAddedTaxIncluded','referenceQuantity','billingDuration','billingIncrement','unitCode','unitText'].some(key => own(item, key))) return false;
+  for (const key of ['areaServed', 'eligibleRegion']) if (own(item, key) && selectedMarket(item[key], context) !== true) return false;
+  return true;
+}
+function completeOffer(record, sourceUrl, observedAt, context) {
+  if (!own(record, 'offers') || record.offers == null) return measured(0, 'Product has no valid Offer.');
+  let offer = record.offers;
+  if (Array.isArray(offer)) {
+    const matches = offer.filter(value => object(value) && absoluteMatch(value.url, sourceUrl));
+    if (matches.length !== 1) return unknown('Multiple offers cannot be uniquely associated with the selected URL.');
+    offer = matches[0];
+  }
+  if (!object(offer)) return measured(0, 'Product offer is malformed.');
+  if (!schemaType(offer['@type'], 'Offer')) return schemaType(offer['@type'], 'AggregateOffer')
+    ? unknown('Aggregate offer does not identify the selected configuration.') : measured(0, 'Product offer has no valid Offer type.');
+  if (own(offer, 'url') && !absoluteMatch(offer.url, sourceUrl)) return unknown('Offer URL does not identify the audited page.');
+  if (!qualifiers(offer, context)) return unknown('Offer qualifiers require market or other context that was not established.');
+  let pricing = offer;
+  if (own(offer, 'priceSpecification')) {
+    const spec = offer.priceSpecification;
+    if (Array.isArray(spec) || !object(spec) || !schemaType(spec['@type'], 'UnitPriceSpecification')) return unknown('Price specification is not a uniquely applicable unit price.');
+    if (!qualifiers(spec, context) || own(spec, 'priceValidUntil')) return unknown('Price specification qualifiers are not established.');
+    if ((own(offer,'price') && own(spec,'price') && String(offer.price) !== String(spec.price)) ||
+        (own(offer,'priceCurrency') && own(spec,'priceCurrency') && offer.priceCurrency !== spec.priceCurrency)) return unknown('Offer and price specification conflict.');
+    pricing = { price: spec.price ?? offer.price, priceCurrency: spec.priceCurrency ?? offer.priceCurrency };
+  }
+  if (context?.currency && pricing.priceCurrency && context.currency !== pricing.priceCurrency) return unknown('Price currency does not match the established currency context.');
+  let priceOk = validPrice(pricing.price) && currencies.has(pricing.priceCurrency), expired = false;
+  if (own(offer, 'priceValidUntil')) {
+    const end = isoDate(offer.priceValidUntil);
+    const observed = typeof observedAt === 'string' ? Date.parse(observedAt) : NaN;
+    if (end === null) priceOk = false;
+    else if (!Number.isFinite(observed)) return unknown('Offer expiry cannot be assessed without an observation date.');
+    else if (observed >= end + 86400000) { priceOk = false; expired = true; }
+  }
+  const state = typeof offer.availability === 'string' ? offer.availability.replace(/^https?:\/\/schema\.org\//, '') : '';
+  const availabilityOk = availability.has(state);
+  const fraction = (Number(priceOk) + Number(availabilityOk)) / 2;
+  const excerpt = expired ? `Offer price expired on ${offer.priceValidUntil}; ${availabilityOk ? 'availability is valid' : 'availability is absent or invalid'}.`
+    : `Offer price and currency are ${priceOk ? 'valid' : 'absent or invalid'}; availability is ${availabilityOk ? 'valid' : 'absent or invalid'}.`;
+  return measured(fraction, excerpt, priceOk ? { currency: pricing.priceCurrency } : {});
+}
+function completeIdentifiers(record) {
+  const brand = record.brand;
+  const brandOk = text(brand) || (object(brand) && !own(brand, '@context') && schemaType(brand['@type'], 'Brand') && text(brand.name));
+  const keys = [['gtin', null], ['gtin8',8], ['gtin12',12], ['gtin13',13], ['gtin14',14]].filter(([key]) => own(record,key));
+  const valid = keys.filter(([key, length]) => validGtin(record[key], length)).map(([key]) => record[key].padStart(14,'0'));
+  if (new Set(valid).size > 1 || (keys.length > 1 && valid.length !== keys.length)) return unknown('Multiple GTIN fields cannot be reconciled.');
+  const manufacturer = valid.length > 0 || text(record.mpn);
+  const sku = text(record.sku);
+  const fraction = (brandOk ? 0.5 : 0) + (manufacturer ? 0.5 : sku ? 0.25 : 0);
+  return measured(fraction, `Brand is ${brandOk ? 'valid' : 'absent or invalid'}; ${manufacturer ? 'a manufacturer identifier is valid' : sku ? 'only a merchant SKU is valid' : 'no valid manufacturer identifier or merchant SKU was found'}.`);
+}
+export function assessCompleteProductFields(record, sourceUrl, { observedAt, context } = {}) {
+  if (!object(record)) return { 'S2.offer': unknown('Product record is unavailable.'), 'S2.identifiers': unknown('Product record is unavailable.') };
+  return { 'S2.offer': completeOffer(record, sourceUrl, observedAt, context), 'S2.identifiers': completeIdentifiers(record) };
+}

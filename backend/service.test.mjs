@@ -8,6 +8,7 @@ const pending = read('submission-pending');
 const target = 'https://audit.example/api/v1/audits';
 const time = Date.parse(pending.createdAt);
 const address = '192.0.2.1';
+const allowance = { reserve: async () => ({accepted:true, duplicate:false}) };
 const post = (value) => new Request(target, {
   method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(value),
 });
@@ -51,8 +52,10 @@ test('submission, polling, and cache reuse match the frozen service responses', 
     get: async () => audit,
     finish: async (_id, updates) => { audit = {...audit, ...updates}; },
   };
-  const handle = createAuditService({
+  const handle = createAuditService({ allowance,
     store, secret: 'x'.repeat(32), HTMLRewriter: Rewriter, now: () => clock,
+    // This test freezes transport/storage behavior. Real scoring has dedicated extraction/report regressions.
+    scorePage: () => read('assessment-incomplete').report,
     egress: { fetch: async url => {
       fetches++;
       if (new URL(url).pathname === '/robots.txt') return new Response(null, {status:404});
@@ -78,7 +81,7 @@ test('submission, polling, and cache reuse match the frozen service responses', 
 test('retrieval failure is terminal without a report or score', async () => {
   let audit = {...fixtureAudit};
   let task;
-  const handle = createAuditService({
+  const handle = createAuditService({ allowance,
     store: {
       reserve: async () => ({kind:'created', audit}),
       finish: async (_id, updates) => {audit = {...audit, ...updates};},
@@ -97,7 +100,7 @@ test('retrieval failure is terminal without a report or score', async () => {
 });
 
 test('bad input and rate limits produce stable errors without retrieval', async () => {
-  const handle = createAuditService({
+  const handle = createAuditService({ allowance,
     store: {reserve: async () => ({kind:'limited',retryAfter:900})},
     egress: {fetch: async () => assert.fail('Unexpected fetch')},
     secret:'x'.repeat(32), HTMLRewriter: Rewriter,
@@ -142,7 +145,7 @@ test('a limited stream returns an incomplete report even when no HTML is usable'
     let audit = {...fixtureAudit};
     let task;
     let consumed = false;
-    const handle = createAuditService({
+    const handle = createAuditService({ allowance,
       store: { reserve: async () => ({kind:'created', audit}),
         finish: async (_id, updates) => {audit = {...audit, ...updates};} },
       egress: {fetch: async () => assert.fail('injected retrieval')},
@@ -151,7 +154,7 @@ test('a limited stream returns an incomplete report even when no HTML is usable'
         const extracted = await consumeHtml({body: new ReadableStream()});
         consumed = true;
         return {url: pending.submittedUrl, htmlLimited, extracted,
-          sitemap: {usableSource:'https://shop.example/sitemap.xml'}};
+          sitemap: {usableSource:'https://shop.example/sitemap.xml',complete:true}};
       },
       extractPage: async () => ({jsonLd: [], coverage: {usable:false, jsonLdTruncated:false}}),
     });
@@ -162,4 +165,65 @@ test('a limited stream returns an incomplete report even when no HTML is usable'
     assert.equal(audit.report.score, null);
     assert.equal(audit.report.criteria.find(c => c.id === 'S6').subchecks[0].fraction, 1);
   }
+});
+
+test('an AI binding leaves the deterministic report intact until facts calibration is approved', async () => {
+  let audit={...fixtureAudit}, task, cacheKey;
+  let scores=0, reservations=0, modelCalls=0;
+  const handle=createAuditService({ allowance,
+    store:{reserve:async input=>{cacheKey=input.cacheKey;return {kind:'created',audit};},finish:async(_id,updates)=>{audit={...audit,...updates};},reserveSemantic:async()=>{reservations++;return true;}},
+    AI:{run:async()=>{modelCalls++;throw new Error('Must remain disabled');}},
+    egress:{fetch:async()=>assert.fail('Injected retrieval should be used')},secret:'x'.repeat(32),HTMLRewriter:Rewriter,now:()=>time,
+    retrievePage:async()=>({url:pending.submittedUrl,extracted:{coverage:{usable:true},productHtml:{complete:true,identity:'Example Road Shoe',blocks:[]}}}),
+    scorePage:(_snapshot,_extracted,options)=>{scores++;assert.equal(options,undefined);return {status:'incomplete',category:'running-shoes',coverage:{limitations:[]}};},
+  });
+  const response=await handle(post({url:pending.submittedUrl}),{address,defer:p=>{task=p;}});
+  assert.equal(response.status,202);await task;
+  assert.equal(audit.status,'incomplete');assert.equal(scores,1);assert.equal(reservations,0);assert.equal(modelCalls,0);
+  assert.match(audit.report.coverage.limitations[0],/calibration/);
+  const cryptoInput='audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-1:calibrated-0:'+pending.submittedUrl;
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(cryptoInput));
+  assert.equal(cacheKey,Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''));
+});
+
+test('missing, invalid, exhausted and duplicate allowance block submissions and polls before storage or egress', async () => {
+  const store = { reserve: () => assert.fail('Unexpected admission'), get: () => assert.fail('Unexpected lookup') };
+  const egress = { fetch: () => assert.fail('Unexpected retrieval') };
+  for (const [guard, status] of [
+    [undefined, 503],
+    [{reserve: async () => ({accepted:false, reason:'invalid_evidence'})}, 503],
+    [{reserve: async () => ({accepted:false, reason:'allowance_exhausted'})}, 429],
+    [{reserve: async () => ({accepted:true, duplicate:true})}, 503],
+    [{reserve: async () => {throw Error('unavailable');}}, 503],
+  ]) {
+    const handle = createAuditService({store, allowance:guard, egress, secret:'x'.repeat(32), HTMLRewriter:Rewriter, now:()=>time});
+    assert.equal((await handle(post(read('submission-request')), {address, defer:()=>assert.fail('Unexpected task')})).status, status);
+    assert.equal((await handle(poll())).status, status);
+  }
+});
+
+test('oversized reports are not persisted and oversized cached reports are not returned', async () => {
+  let updates, task;
+  const audit = {...fixtureAudit};
+  const store = {reserve:async()=>({kind:'created',audit}),finish:async(_id, value)=>{updates=value;}};
+  const handle = createAuditService({allowance, store, egress:{fetch:()=>assert.fail('injected retrieval')}, secret:'x'.repeat(32), HTMLRewriter:Rewriter, now:()=>time,
+    retrievePage:async()=>({url:pending.submittedUrl,extracted:{coverage:{usable:true}}}), scorePage:()=>({status:'incomplete', data:'x'.repeat(300000)})});
+  assert.equal((await handle(post(read('submission-request')), {address,defer:p=>{task=p;}})).status,202);
+  await task;
+  assert.equal(updates.status,'unable_to_assess');
+  assert.equal(updates.report,undefined);
+  store.reserve = async()=>({kind:'cached',audit:{...audit,report:{data:'x'.repeat(300000)}}});
+  assert.equal((await handle(post(read('submission-request')), {address,defer:()=>assert.fail('Unexpected task')})).status,503);
+});
+
+test('worker production entry and scheduled maintenance remain paused', async () => {
+  const {handleAuditRequest, default: worker} = await import('./service.mjs');
+  const env = {AUDIT_DB:{prepare:()=>assert.fail('Unexpected database access')}, AUDIT_EGRESS:{fetch:()=>assert.fail('Unexpected retrieval')}, AUDIT_RATE_SECRET:'x'.repeat(32)};
+  const previous = globalThis.HTMLRewriter;
+  globalThis.HTMLRewriter = Rewriter;
+  try {
+    const request = new Request(target, {method:'POST',headers:{'content-type':'application/json','cf-connecting-ip':address},body:JSON.stringify(read('submission-request'))});
+    assert.equal((await handleAuditRequest(request,env,{waitUntil:()=>assert.fail('Unexpected task')})).status,503);
+    await worker.scheduled({},env);
+  } finally { globalThis.HTMLRewriter = previous; }
 });

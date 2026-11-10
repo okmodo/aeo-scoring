@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "runtime": "Local workerd via locked Miniflare; no production CPU measurement",
+  "replayClock": "2026-11-09T00:00:00.000Z",
+  "commands": [
+    "node backend/replay-engine.mjs backend/fixtures/complete-engine/complete-shirt.html https://shop.example/products/everyday-tshirt --support backend/fixtures/complete-engine/support.json --judgments backend/fixtures/complete-engine/reviewed-judgments.json",
+    "node backend/replay-engine.mjs /private/tmp/aeo-kokatat-direct-product.html https://kokatat.com/naiad-pfd-lvhnai"
+  ],
+  "synthetic": {
+    "sourceSha256": "570d5926fb61300fe025513eae2f26abf49c6d1f53068f53491bf1099c0fffc6",
+    "judgmentSha256": "abbdf60c2b8fff6c4abee3ea20f1ab7254e7c460c8a67df4a492ff2c771af8b7",
+    "status": "complete",
+    "score": {
+      "total": 78.125,
+      "structure": 20,
+      "content": 58.125
+    },
+    "origin": "Independently adjudicated synthetic judgments; not a live model calibration success",
+    "frozenReportMatchesNative": true
+  },
+  "real": {
+    "url": "https://kokatat.com/naiad-pfd-lvhnai",
+    "captureTimestamp": "Not independently established in this replay; existing public-page capture from prior retrieval verification",
+    "sourceSha256": "5ad256e3a72137a8173ca6b662349f8e37b9b6ea55b53665dff91568ca9a2401",
+    "status": "incomplete",
+    "score": null,
+    "coverage": {
+      "notApplicable": 0,
+      "measured": 17,
+      "notMeasured": 23,
+      "total": 40,
+      "category": "personal-flotation-devices",
+      "extraction": {
+        "html": true,
+        "bodyText": true,
+        "usable": true,
+        "visibility": "unknown",
+        "jsonLdTruncated": false
+      },
+      "limitations": [
+        "Rules assess English source HTML and supported categories. Browser rendering is outside this inspection."
+      ]
+    },
+    "productRegionComplete": true,
+    "textBlocks": 28,
+    "priceCandidates": [
+      {
+        "amount": 159,
+        "role": "previous",
+        "text": "$159.00",
+        "location": "html:element:449"
+      },
+      {
+        "amount": 99,
+        "role": "current",
+        "text": "$99.00",
+        "location": "html:element:452"
+      }
+    ],
+    "structuredFormats": [
+      "microdata"
+    ]
+  },
+  "limitations": [
+    "Recorded manual local-runtime calls are outside the automated evaluation trace.",
+    "Real replay omits optional supporting network requests and has no enabled semantic judge.",
+    "Merchant HTML and embedded state are kept outside the repository.",
+    "No complete automatic real-product report or Free production CPU ceiling is established."
+  ]
+}
