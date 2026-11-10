@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "worker": "aeo-content-runtime-probe-20261109-kk7",
+  "bundleSha256": "471403593cd0174120240dec3719dd9b42ae1a9cb7a917944b68ec0ac0cb04f1",
+  "productionModified": false,
+  "aiCalls": 0,
+  "deleted": true,
+  "remainingWorkers": [
+    "aeo-audit-live-20261105",
+    "aeo-audit-public-20261105"
+  ],
+  "freeCpuLimitMs": 10,
+  "verdict": "failed-runtime-budget",
+  "status": "COMPLETED",
+  "invocations": [
+    {
+      "id": "2596528b66ed3dedbd1376b18fda6225",
+      "events": [
+        {
+          "timestamp": 1794288020394,
+          "ray": "a5829b73df9ea436",
+          "path": "/sync/kokatat",
+          "cpuTimeMs": 418,
+          "wallTimeMs": 2003,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "7d2b917a7767f1953f45ff939c8c2166",
+      "events": [
+        {
+          "timestamp": 1794288011792,
+          "ray": "a5829b499fb62403",
+          "path": "/background/truncated",
+          "completed": true,
+          "case": "truncated",
+          "status": "incomplete"
+        },
+        {
+          "timestamp": 1794288011792,
+          "ray": "a5829b499fb62403",
+          "path": "/background/truncated",
+          "cpuTimeMs": 36,
+          "wallTimeMs": 49,
+          "outcome": "ok",
+          "httpStatus": 202,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "731da5aff17098bc80453a4af20301f5",
+      "events": [
+        {
+          "timestamp": 1794288011687,
+          "ray": "a5829b48f9f48d41",
+          "path": "/background/large",
+          "completed": true,
+          "case": "large",
+          "status": "complete"
+        },
+        {
+          "timestamp": 1794288011687,
+          "ray": "a5829b48f9f48d41",
+          "path": "/background/large",
+          "cpuTimeMs": 63,
+          "wallTimeMs": 75,
+          "outcome": "ok",
+          "httpStatus": 202,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "28d6eda2a782ff1b0b09594795d25c61",
+      "events": [
+        {
+          "timestamp": 1794288011653,
+          "ray": "a5829b48ce252403",
+          "path": "/background/injection",
+          "completed": true,
+          "case": "injection",
+          "status": "incomplete"
+        },
+        {
+          "timestamp": 1794288011653,
+          "ray": "a5829b48ce252403",
+          "path": "/background/injection",
+          "cpuTimeMs": 7,
+          "wallTimeMs": 10,
+          "outcome": "ok",
+          "httpStatus": 202,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "170ad434eef52265730090c77fce1414",
+      "events": [
+        {
+          "timestamp": 1794288011570,
+          "ray": "a5829b47f8b98d41",
+          "path": "/background/partial",
+          "completed": true,
+          "case": "partial",
+          "status": "incomplete"
+        },
+        {
+          "timestamp": 1794288011570,
+          "ray": "a5829b47f8b98d41",
+          "path": "/background/partial",
+          "cpuTimeMs": 65,
+          "wallTimeMs": 69,
+          "outcome": "ok",
+          "httpStatus": 202,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "16d5d7f6620d500f91d26279f069c6ee",
+      "events": [
+        {
+          "timestamp": 1794288011468,
+          "ray": "a5829b478c2d2403",
+          "path": "/background/complete",
+          "completed": true,
+          "case": "complete",
+          "status": "complete"
+        },
+        {
+          "timestamp": 1794288011468,
+          "ray": "a5829b478c2d2403",
+          "path": "/background/complete",
+          "cpuTimeMs": 11,
+          "wallTimeMs": 14,
+          "outcome": "ok",
+          "httpStatus": 202,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "e12bff44a3204bc6c81afb877d8b62ab",
+      "events": [
+        {
+          "timestamp": 1794288011381,
+          "ray": "a5829b470b9b2403",
+          "path": "/sync/truncated",
+          "cpuTimeMs": 38,
+          "wallTimeMs": 49,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "ea2995b3817642c8d9228d98f69b1335",
+      "events": [
+        {
+          "timestamp": 1794288011321,
+          "ray": "a5829b469b162403",
+          "path": "/sync/large",
+          "cpuTimeMs": 25,
+          "wallTimeMs": 32,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "17fea7407c35378003ac4a5040d3ace3",
+      "events": [
+        {
+          "timestamp": 1794288011272,
+          "ray": "a5829b466ad92403",
+          "path": "/sync/injection",
+          "cpuTimeMs": 9,
+          "wallTimeMs": 12,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "ae9fc8e8e2f47cad521fd4681df5b28e",
+      "events": [
+        {
+          "timestamp": 1794288011248,
+          "ray": "a5829b462a732403",
+          "path": "/sync/partial",
+          "cpuTimeMs": 10,
+          "wallTimeMs": 11,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "64a781b6481caf91018abde766bde65b",
+      "events": [
+        {
+          "timestamp": 1794288011138,
+          "ray": "a5829b4589b62403",
+          "path": "/sync/complete",
+          "cpuTimeMs": 54,
+          "wallTimeMs": 59,
+          "outcome": "ok",
+          "httpStatus": 200,
+          "completed": false
+        }
+      ]
+    }
+  ],
+  "probeExpiry": "2026-11-10T06:12:51.417Z",
+  "cleanupVerifiedAt": "2026-11-10T05:30:14.574Z",
+  "provenance": "Cloudflare Workers Observability telemetry/query, completed invocation query filtered to the exact isolated service; headers and merchant payload omitted.",
+  "finalSourceMeasured": false,
+  "note": "Byte-identical reviewed bundle was tested before later protocol, price-role and policy-cap fixes; those source changes have not been deployed. No inference or persistence was tested. Local or HTTP success does not override CPU overruns."
+}

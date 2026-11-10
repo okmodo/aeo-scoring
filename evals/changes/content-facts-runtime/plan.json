@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "id": "content-facts-runtime",
+  "task": "Finish grounded content fact extraction and deterministic rubric grading, validate automatic complete real-product reports and Cloudflare Free runtime limits.",
+  "scope": [
+    "backend/**",
+    "config/categories.v1.2.json",
+    "docs/**",
+    "contracts/v1/**",
+    "test/feasibility.test.mjs",
+    "evals/changes/content-facts-runtime/**"
+  ],
+  "nonGoals": [
+    "Frontend or shared dependency changes, weakening evaluation or unknown-evidence rules, paid plans/models/gateway credit, unrelated services, merge or production deployment."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Model proposes source-bound facts only; server validates provenance, context, values and applicability and computes all content fractions. Known fit, ordinary-claim, negation and variant counterexamples grade correctly.",
+      "verification": "automated",
+      "evidence": "Frozen normal, partial, conflict, injection and real-merchant fact/rubric regressions, independently adjudicated before expectations change."
+    },
+    {
+      "id": "O2",
+      "description": "Automatic audits of supported real product pages can complete all applicable checks without hand-authored judgment overrides; unsupported or failed inspection remains incomplete.",
+      "verification": "human",
+      "evidence": "Fresh public URL runs and independently checked criterion/evidence outcomes; no synthetic report presented as real."
+    },
+    {
+      "id": "O3",
+      "description": "Measure actual CPU and lifecycle behavior on Workers Free using a separately reviewed isolated project validation worker, with no production or unrelated resource changes.",
+      "verification": "human",
+      "evidence": "Runtime metrics, tested input hashes, expiry and cleanup record, model usage/reservation ledger and failure/limit tests."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan commit, Terra implementation and independent review, genuine source-bound evaluation and hosted CI on draft PR #22.",
+      "verification": "human",
+      "evidence": "Git history, immutable plans, command trace, review and PR checks."
+    },
+    {
+      "id": "P2",
+      "description": "Any live validation occurs outside CI and only on a new isolated project probe after its code and limits are concretely reviewed. Keep an 8000-neuron UTC-day project ceiling with no paid fallback.",
+      "verification": "human",
+      "evidence": "Read-only resource inventory, probe scope/expiry, calibration ledger and measured usage."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Replace unreliable free-form grading with reusable evidence/fact validators and deterministic rules; minimize repeated inference and preserve existing contracts.",
+      "verification": "human",
+      "evidence": "Diff, frozen counterexample replay and bounded calibration plan."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This changes assessment/runtime implementation and adds an isolated test probe, without changing agent workflow, portability, memory or continuation protocol."
+  }
+}

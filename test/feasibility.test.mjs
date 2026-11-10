@@ -162,4 +162,17 @@ await import('../backend/scoring.test.mjs');
 await import('../backend/store.test.mjs');
 await import('../backend/service.test.mjs');
 
+await import('../backend/html-product.test.mjs');
+await import('../backend/content-assessment.test.mjs');
+await import('../backend/support-assessment.test.mjs');
+
+await import('../backend/semantic-assessment.test.mjs');
+await import('../backend/semantic-runner.test.mjs');
+await import('../backend/complete-engine.test.mjs');
+
+await import('../backend/semantic-transport.test.mjs');
 await import('../backend/public-worker.test.mjs');
+await import('../backend/content-facts.test.mjs');
+await import('../backend/fact-grading.test.mjs');
+await import('../backend/content-facts-runner.test.mjs');
+await import('../backend/allowance-store.test.mjs');

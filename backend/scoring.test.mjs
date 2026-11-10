@@ -189,12 +189,12 @@ test('sitemap scoring distinguishes confirmed usability and exact inclusion from
   const child = 'https://shop.example/sitemap-products.xml';
   const run = sitemap => scoreAudit({ ...snapshot, sitemap }, null);
   const checks = report => report.criteria.find(item => item.id === 'S6').subchecks;
-  const report = run({ usableSource: map, inclusionSource: child });
+  const report = run({ usableSource: map, inclusionSource: child, complete: true });
   assert.deepEqual(checks(report).map(item => [item.status, item.points]), [['measured', 1], ['measured', 1]]);
   assert.equal(report.status, 'incomplete');
   assert.equal(report.score, null);
   assert.deepEqual(report.evidence.map(item => [item.url, item.kind]), [[map, 'derived_observation'], [child, 'derived_observation']]);
-  assert.deepEqual(checks(run({ usableSource: map, inclusionSource: null })).map(item => item.status), ['measured', 'not_measured']);
+  assert.deepEqual(checks(run({ usableSource: map, inclusionSource: null, complete: true })).map(item => item.status), ['measured', 'not_measured']);
   assert.deepEqual(checks(run(null)).map(item => item.status), ['not_measured', 'not_measured']);
 });
 

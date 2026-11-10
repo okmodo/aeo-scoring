@@ -49,3 +49,32 @@ test('SKU alone requires an absent brand and no conflicting identifier', () => {
   assert.deepEqual(scoreProductFields({ sku: '123', brand: null }), {});
   assert.deepEqual(scoreProductFields({ sku: '123', gtin: 'invalid' }), {});
 });
+
+import { assessCompleteProductFields } from './product-fields.mjs';
+const assess = (record, options = {}) => assessCompleteProductFields(record, 'https://example.com/item', { observedAt: '2026-11-09T12:00:00Z', ...options });
+test('complete offer assessment scores absent, partial, invalid and expired components', () => {
+  assert.equal(assess({})['S2.offer'].fraction, 0);
+  assert.equal(assess({offers:{'@type':'Offer',price:'19',priceCurrency:'USD'}})['S2.offer'].fraction, 0.5);
+  assert.equal(assess({offers:{...offer,price:'bad'}})['S2.offer'].fraction, 0.5);
+  assert.equal(assess({offers:{...offer,priceValidUntil:'2026-11-09'}})['S2.offer'].fraction, 1);
+  const expired = assess({offers:{...offer,priceValidUntil:'2026-11-08'}})['S2.offer'];
+  assert.equal(expired.fraction, 0.5);
+  assert.match(expired.excerpt, /2026-11-08/);
+  assert.equal(assess({offers:{...offer,priceValidUntil:'2026-02-30'}})['S2.offer'].fraction, 0.5);
+  assert.equal(assess({offers:{...offer,priceValidUntil:'2026-11-09'}},{observedAt:undefined})['S2.offer'].status, 'not_measured');
+});
+test('complete offers select exact URL and assess qualified unit prices only with context', () => {
+  const selected = {...offer, url:'https://example.com/item'};
+  assert.equal(assess({offers:[{...offer,url:'https://example.com/other'},selected]})['S2.offer'].fraction,1);
+  assert.equal(assess({offers:[selected,selected]})['S2.offer'].status,'not_measured');
+  const unit = {'@type':'Offer',availability:'InStock',priceSpecification:{'@type':'UnitPriceSpecification',price:5,priceCurrency:'USD',eligibleRegion:'US'}};
+  assert.equal(assess({offers:unit})['S2.offer'].status,'not_measured');
+  assert.equal(assess({offers:unit},{context:{market:'US',currency:'USD'}})['S2.offer'].fraction,1);
+  assert.equal(assess({offers:unit},{context:{market:'CA',currency:'USD'}})['S2.offer'].status,'not_measured');
+  assert.equal(assess({offers:{...unit,price:9}} ,{context:{market:'US'}})['S2.offer'].status,'not_measured');
+});
+test('complete identifiers grade brand and valid identifiers independently', () => {
+  for (const [record, fraction] of [[{},0],[{brand:'Acme'},0.5],[{mpn:'ABC'},0.5],[{sku:'ABC'},0.25],[{brand:'Acme',sku:'ABC'},0.75],[{brand:'Acme',gtin12:'036000291452'},1],[{gtin12:'036000291453'},0]]) assert.equal(assess(record)['S2.identifiers'].fraction,fraction);
+  assert.equal(assess({brand:'Acme',gtin12:'036000291452',gtin13:'0036000291452'})['S2.identifiers'].fraction,1);
+  assert.equal(assess({brand:'Acme',gtin12:'036000291452',gtin13:'4006381333931'})['S2.identifiers'].status,'not_measured');
+});

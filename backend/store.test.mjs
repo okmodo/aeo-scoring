@@ -93,3 +93,13 @@ test('pruning cannot remove current fixed-hour admissions', async () => {
   await store.prune({ now: 3600000, admissionBefore: 3600000 });
   assert.equal((await store.reserve(request('c', { now: 3600000, expiresAt: 3700000, windowStart: 3600000, windowEnd: 7200000, limit: 1 }))).kind, 'created');
 });
+
+test('legacy daily-only semantic reservations cannot authorize inference under the account allowance policy', async () => {
+  const store = setup();
+  const results = await Promise.all(Array.from({length:8},()=>store.reserveSemantic({day:1,neurons:1500})));
+  assert.equal(results.filter(Boolean).length,0);
+  assert.equal(await store.reserveSemantic({day:1,neurons:501}),false);
+  assert.equal(await store.reserveSemantic({day:1,neurons:500}),false);
+  assert.equal(await store.reserveSemantic({day:2,neurons:8000}),false);
+  assert.equal(await store.reserveSemantic({day:2,neurons:0}),false);
+});

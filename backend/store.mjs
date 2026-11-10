@@ -42,6 +42,11 @@ export function createStore(db) {
       return created ? { kind: 'created', audit: audit(created, now) } :
         { kind: 'cached', audit: audit(results[3].results[0], now) };
     },
+    async reserveSemantic() {
+      // Historical daily-only reservations cannot establish account-wide headroom.
+      // Retain the API fail-closed for callers migrating to the allowance guard.
+      return false;
+    },
     async get(id, now) {
       const row = await db.prepare('SELECT * FROM audits WHERE id = ?1 AND expires_at >= ?2').bind(id, now).first();
       return audit(row, now);
@@ -61,6 +66,7 @@ export function createStore(db) {
     async prune({ now, admissionBefore, limit = 100 }) {
       if (![now, admissionBefore, limit].every(Number.isSafeInteger) || admissionBefore > Math.floor(now / 3_600_000) * 3_600_000 || limit < 1 || limit > 1000) throw new TypeError('Invalid pruning');
       return db.batch([
+        db.prepare('DELETE FROM semantic_budget WHERE day < ?1').bind(Math.floor(now / 86_400_000) - 2),
         db.prepare('DELETE FROM audits WHERE id IN (SELECT id FROM audits WHERE expires_at < ?1 LIMIT ?2)').bind(now, limit),
         db.prepare('DELETE FROM audit_admissions WHERE id IN (SELECT id FROM audit_admissions WHERE created_at < ?1 LIMIT ?2)').bind(admissionBefore, limit),
       ]);
