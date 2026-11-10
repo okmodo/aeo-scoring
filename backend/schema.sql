@@ -78,3 +78,11 @@ CREATE TRIGGER IF NOT EXISTS allowance_record_totals AFTER INSERT ON allowance_r
   INSERT INTO allowance_storage VALUES (NEW.account_id, NEW.d1_storage_bytes)
   ON CONFLICT(account_id) DO UPDATE SET d1_storage_bytes = d1_storage_bytes + NEW.d1_storage_bytes;
 END;
+
+-- Latest collection attempt invalidates admission before any network request. The
+-- retained baseline is minimal and never contains raw provider billing payloads.
+CREATE TABLE IF NOT EXISTS allowance_receipts (
+  account_id TEXT PRIMARY KEY, generation INTEGER NOT NULL, active INTEGER NOT NULL,
+  subscription_id TEXT, cycle_start INTEGER, cycle_end INTEGER, ai_day TEXT,
+  observed_at INTEGER, usage_json TEXT, watermarks_json TEXT, diagnostic_status TEXT, diagnostic_highwater_json TEXT, baseline_json TEXT
+);

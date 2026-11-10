@@ -176,3 +176,6 @@ await import('../backend/content-facts.test.mjs');
 await import('../backend/fact-grading.test.mjs');
 await import('../backend/content-facts-runner.test.mjs');
 await import('../backend/allowance-store.test.mjs');
+await import('../backend/usage-collector.test.mjs');
+await import('../backend/usage-reconciliation.test.mjs');
+await import('../backend/usage-collection.test.mjs');

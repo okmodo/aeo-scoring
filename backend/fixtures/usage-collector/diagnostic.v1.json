@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "description": "Synthetic documented wire shapes; labels and subscription are test data, not a verified Cloudflare metric mapping.",
+  "now": 1794312000000,
+  "accountId": "0123456789abcdef0123456789abcdef",
+  "subscriptionId": "fixture_subscription",
+  "mapping": {
+    "version": 1,
+    "operatorReviewed": true,
+    "entries": [
+      {
+        "serviceFamily": "Fixture family",
+        "serviceName": "Fixture requests",
+        "consumedUnit": "Count",
+        "metric": "requests",
+        "unit": "count",
+        "multiplier": 1
+      }
+    ]
+  },
+  "subscriptions": {
+    "success": true,
+    "errors": [],
+    "messages": [],
+    "result": [
+      {
+        "id": "fixture_subscription",
+        "state": "Paid",
+        "current_period_start": "2026-11-04T00:00:00Z",
+        "current_period_end": "2026-12-04T00:00:00Z"
+      }
+    ]
+  },
+  "info": {
+    "success": true,
+    "errors": [],
+    "messages": [],
+    "result": {
+      "covered": true,
+      "subscriptions": [
+        {
+          "id": "fixture_subscription",
+          "start_timestamp": "2026-11-04T00:00:00Z",
+          "billing_cycle_anchor_timestamp": "2026-11-04T00:00:00Z"
+        }
+      ]
+    }
+  },
+  "usage": {
+    "success": true,
+    "errors": [],
+    "messages": [],
+    "result": [
+      {
+        "BillingAccountId": "0123456789abcdef0123456789abcdef",
+        "SubscriptionId": "fixture_subscription",
+        "BillingPeriodStart": "2026-11-04T00:00:00Z",
+        "ChargePeriodStart": "2026-11-04T00:00:00Z",
+        "ChargePeriodEnd": "2026-11-05T00:00:00Z",
+        "ConsumedQuantity": 25,
+        "ConsumedUnit": "Count",
+        "PricingQuantity": 0,
+        "CumulatedPricingQuantity": 0,
+        "ServiceFamilyName": "Fixture family",
+        "ServiceName": "Fixture requests"
+      }
+    ]
+  }
+}

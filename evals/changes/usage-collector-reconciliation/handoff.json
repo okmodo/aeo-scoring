@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "task": "Read-only usage collector and persistent reconciliation under 60% included allowances",
+  "state": "Implemented on isolated codex/usage-collector worktree. Collector, local operator CLI, generation-based persistent reconciliation and guard subscription binding are offline-tested. Documented provider data remains diagnostic: no authoritative completeness watermark, no activation path, no deployment or merge.",
+  "decisions": [
+    "Use three bounded GET endpoints for account subscriptions and v1 alpha billable usage; pin subscription and actual current period fields.",
+    "Use Billing Read scoped to one account; no Billing Write, Workers edit or Global API key for acquisition. All three existing-credential probes returned403.",
+    "Do not infer freshness from acquisition time or charge period end, total usage from chargeable quantity, missing values from zero, daily AI or storage stock from billing-period rows.",
+    "Every acquisition begins by invalidating old eligibility. Production transition evaluator and persisted CAS handle identity, replay, decreases, cycle/day scope and storage high-water; normalized complete fixtures remain untrusted.",
+    "Guard ignores caller evidence booleans and requires current persisted evidence for matching account AND subscription; generation rechecked during atomic reservation. Test helpers seed only isolated SQLite fixtures.",
+    "Keep60% ceilings unchanged and productionpaused. LocalCLI storesprivate SQLite only; no billableWorker polling, liveD1writes or unbounded bootstrap."
+  ],
+  "constraints": [
+    "Frontend, shared dependencies, unrelated services, account billing configuration and production deployments untouched.",
+    "Provider v1 references do not establish completeness watermarks; Billing Read alone does not establish safe admission. Restricted v2 eligibility remains separate and unused.",
+    "Diagnostic baselines and partial highwaters must be discarded/migrated on any future trusted-provider integration; account-wide bill guarantee remains impossible from these observations alone.",
+    "LocaldevelopmentruntimeNode25.9 differs from declaredNode24; hostedCI must verify pinnedNode24. No liveAI/browser/calibrationserviceconsumed."
+  ],
+  "completed": [
+    "Plan a1b7209 committed before Terra implementation in separate worktree from merged main.",
+    "Read-only subscriptions/info/usage probes all403 at2026-11-10T21:42:30Z; no usage payload or secrets committed.",
+    "23 focused tests pass including malformed/403/429/partial/overflow/unit cases, real production transition logic, SQLite generation concurrency,20-connection reservations and end-to-end CLI fixture replay.",
+    "PrivateCLI enforces0700 trusted directory,0600 localstatefile, no symlinks/tokenargs; blocked diagnostics exit2 and configuration failures exit1.",
+    "Accessguide documents exactoneaccount BillingRead customtoken andprivateenvironmentvariables. No credentials requestedinchat."
+  ],
+  "remaining": [
+    "Run requiredsource-boundevaluation and independentexactcommitreview, commit evidence, openPRandobservehostedCI. Do notmerge/deploy.",
+    "Supply oneaccount BillingRead credential securely and pinnedWorkersPaid subscription ID; privatelyvalidate actualresponses andmetricmapping.",
+    "Establish authoritativesource freshness/completeness, dailyAI/currentstorage observations, andsafeaccount-wideallocation beforeimplementing any activation authority.",
+    "ExistingD1cost/physicalstorage/retention/ingress andcalibrationprerequisites remain; collectorCLIisnotdeploymentorhardspendcap."
+  ],
+  "resumeCommands": [
+    "node --test backend/usage-collector.test.mjs backend/usage-reconciliation.test.mjs backend/usage-collection.test.mjs backend/allowance-store.test.mjs",
+    "node backend/usage-collector-cli.mjs --fixture backend/fixtures/usage-collector/diagnostic.v1.json --db /private/tmp/aeo-usage-private/state.sqlite",
+    "npm run evaluate -- --change usage-collector-reconciliation --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ]
+}

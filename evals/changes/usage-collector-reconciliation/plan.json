@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "id": "usage-collector-reconciliation",
+  "task": "Build bounded read-only Cloudflare usage collection and persistent conservative reconciliation for the existing 60% allowance policy; document exact billing access and preserve safe paused activation.",
+  "scope": [
+    "backend/**",
+    "config/**",
+    "docs/**",
+    "contracts/v1/**",
+    "test/feasibility.test.mjs",
+    "evals/changes/usage-collector-reconciliation/**"
+  ],
+  "nonGoals": [
+    "No frontend/shared dependency edits, unrelated Cloudflare mutations, paid usage, live inference, deployments or merge. No invented freshness, completeness, metric mappings or account-wide hard-cap claims."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Read-only collector uses documented account subscriptions and billable usage endpoints with bounded request/response/time limits, explicit account/subscription/period identity and sanitized results; missing permissions, incomplete data and transport failures never become zero usage.",
+      "verification": "automated",
+      "evidence": "Frozen documented wire-shape normal, 403/429, malformed, over-limit, mismatched, partial and unknown-metric fixtures and no credential leakage tests."
+    },
+    {
+      "id": "O2",
+      "description": "Persistent transactional reconciliation rejects stale, replayed, out-of-order or contradictory/decreasing cumulative measurements; distinguishes UTC AI resets, subscription rollover, storage stock and local reservations without refunds or double-credit.",
+      "verification": "automated",
+      "evidence": "Real SQLite interleaving/contention and cycle/reset/stock/replay regressions; accepted-only evidence consumed through guarded interface, no public verified:true bypass."
+    },
+    {
+      "id": "O3",
+      "description": "Collector orchestration can be run offline or explicitly read-only for access verification, exports blocked reasons and integrates with the allowance guard while production remains paused unless all trust/cost prerequisites are proven.",
+      "verification": "automated",
+      "evidence": "End-to-end frozen transport→collector→reconciler→guard replay, stale invalidation and permission documentation."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan commit, isolated codex worktree, Terra implementation and independent review; source-bound evaluation, handoff and hosted PR CI; no deploy or unrelated changes.",
+      "verification": "human",
+      "evidence": "Git, review, run/trace and CI."
+    },
+    {
+      "id": "P2",
+      "description": "Verify Billing Read needs through official Cloudflare docs/spec and sanitized read-only permission probes. No token in repository, browser, URL, traces or chat; restricted API eligibility distinct from permissions.",
+      "verification": "human",
+      "evidence": "Access guide, explicit last probe and source citations."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing six-metric policy and ledger, keep collectors deterministic/bounded, avoid billing endpoint guesses or polling without a proven bootstrap allowance.",
+      "verification": "human",
+      "evidence": "Review and reusable modules."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Application usage collection and reconciliation only; existing AGENTS cost/workflow policy, memory and continuation protocol remain unchanged."
+  }
+}

@@ -5,7 +5,7 @@ import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Worker } from 'node:worker_threads';
-import { createAllowanceGuard } from './allowance-store.mjs';
+import { createTestAllowanceGuard } from './allowance-store.test-helper.mjs';
 import { INCLUDED_CEILINGS } from './allowance-policy.mjs';
 
 const now = Date.UTC(2026, 10, 10);
@@ -18,7 +18,7 @@ function setup(e = evidence(), allocations = INCLUDED_CEILINGS) {
     const stmt = sqlite.prepare(sql);
     return { run: async () => stmt.run(...args), first: async () => stmt.get(...args) ?? null };
   } }; } };
-  return { db, sqlite, guard: createAllowanceGuard(db, { accountId: 'account', evidence: e, allocations }) };
+  return { db, sqlite, guard: createTestAllowanceGuard(db, { accountId: 'account', evidence: e, allocations }) };
 }
 const reserve = (guard, id, costs, at = now) => guard.reserve({ id, costs, now: at });
 
@@ -50,7 +50,7 @@ test('other usage counts, limits cannot change within a cycle, and bad amounts f
   assert.equal((await reserve(guard, 'a', { requests: 2 })).reason, 'allowance_exhausted');
   assert.equal((await reserve(guard, 'b', { requests: -1 })).reason, 'invalid_request');
   assert.equal((await reserve(guard, 'c', { unexpected: 1 })).reason, 'invalid_request');
-  const changed = createAllowanceGuard(db, { accountId: 'account', evidence: e, allocations: { ...INCLUDED_CEILINGS, requests: 5 } });
+  const changed = createTestAllowanceGuard(db, { accountId: 'account', evidence: e, allocations: { ...INCLUDED_CEILINGS, requests: 5 } });
   assert.equal((await reserve(changed, 'd', { requests: 1 })).reason, 'cycle_mismatch');
 });
 
@@ -61,10 +61,10 @@ test('daily AI resets while storage reservations persist and overlapping cycles 
   assert.equal((await reserve(guard, 'a', { aiNeurons: 6000, d1StorageBytes: 9 }, start)).accepted, true);
   const tomorrow = start + 120000;
   const nextEvidence = { ...e, observedAt: tomorrow, aiDay: '2026-11-11' };
-  const next = createAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
+  const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
   assert.equal((await reserve(next, 'b', { aiNeurons: 6000, d1StorageBytes: 2 }, tomorrow)).reason, 'allowance_exhausted');
   assert.equal((await reserve(next, 'c', { aiNeurons: 6000 }, tomorrow)).accepted, true);
-  const overlap = createAllowanceGuard(db, { accountId: 'account', evidence: { ...nextEvidence, cycleStart: start }, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
+  const overlap = createTestAllowanceGuard(db, { accountId: 'account', evidence: { ...nextEvidence, cycleStart: start }, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
   assert.equal((await reserve(overlap, 'd', { requests: 1 }, tomorrow)).reason, 'cycle_mismatch');
 });
 
@@ -74,7 +74,7 @@ test('storage reservations carry into a new billing cycle', async () => {
   assert.equal((await reserve(guard, 'a', { d1StorageBytes: 9 })).accepted, true);
   const nextNow = now + 1000000;
   const nextEvidence = { ...evidence(), observedAt: nextNow, cycleStart: nextNow, cycleEnd: nextNow + 1000000 };
-  const next = createAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: allocation });
+  const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: allocation });
   assert.equal((await reserve(next, 'b', { d1StorageBytes: 2 }, nextNow)).reason, 'allowance_exhausted');
 });
 
