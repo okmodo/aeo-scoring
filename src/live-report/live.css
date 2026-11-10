@@ -1,0 +1,20 @@
+.rd-live .rd-live-back, .rd-live .rd-live-retry { border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 12px; font-weight: bold; }
+.rd-live .rd-live-retry { padding: 13px 18px; background: var(--navy); color: white; }
+.rd-live .rd-intro p, .rd-live .rd-live-sources, .rd-live .rd-scope { overflow-wrap: anywhere; }
+.rd-live .rd-live-chart { display: block; }
+.rd-live .rd-live-stack { display: flex; height: 16px; margin: 25px 0; background: #e5e4e1; overflow: hidden; border-radius: 8px; }
+.rd-live .rd-live-stack span { flex-basis: 0; min-width: 0; }
+.rd-live .rd-live-fulfilled { background: #061135; }
+.rd-live .rd-live-partial { background: #8b8db6; }
+.rd-live .rd-live-zero { background: #c97665; }
+.rd-live .rd-live-unmeasured { background: #dfddd7; }
+.rd-live .rd-live-excluded { background: #f1c5af; }
+.rd-live .rd-live-legend { display: grid; gap: 10px; font-size: 12px; }
+.rd-live .rd-live-legend div { display: flex; justify-content: space-between; }
+.rd-live .rd-live-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 9px; }
+.rd-live .rd-live-sources > div { border-top: 1px solid #dcd9d4; margin-top: 12px; padding-top: 12px; }
+.rd-live .rd-live-sources small { color: #646a7b; line-height: 1.5; }
+.rd-live .rd-live-note { padding: 20px 24px; background: #edece6; font-size: 13px; line-height: 1.6; }
+.rd-live .rd-bar { grid-template-columns: minmax(90px, 1fr) minmax(45px, 1fr) 42px; }
+.rd-live .rd-bar > span:first-child { overflow-wrap: anywhere; }
+.rd-live .rd-field-list { margin-top: 25px; }

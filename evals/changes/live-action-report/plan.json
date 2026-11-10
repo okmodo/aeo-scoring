@@ -1,0 +1,17 @@
+{
+ "version":1,
+ "id":"live-action-report",
+ "task":"Connect the visual action-led report and field guide to live v1 audit results.",
+ "scope":["src/**","test/preview.test.mjs","test/live-report.test.mjs","evals/changes/live-action-report/**"],
+ "nonGoals":["Backend, rubric or shared contract changes; invented facts or field values; deploying the draft engine; paid usage; merging or unrelated services."],
+ "outcomes":[
+  {"id":"O1","description":"The existing live submission journey opens an action-first report using only returned product context, fixes, evidence and coverage.","verification":"automated","evidence":"Frozen v1 fixtures and runtime report/adapter tests including partial, zero, failure and cache."},
+  {"id":"O2","description":"Charts derive from live check statuses and fixes; unmeasured evidence remains distinct from failure and partial reports have no final score.","verification":"automated","evidence":"Counts, optional metadata, null values, exclusions and conditional-recovery regressions."},
+  {"id":"O3","description":"Field-level details map returned affected checks to source findings and bounded verification instructions, without synthetic product leakage or fabricated ready-to-publish copy.","verification":"human","evidence":"Independent Terra review and source-grounded browser check."},
+  {"id":"O4","description":"The public Free Pages preview can submit a real public demo URL and display the updated report.","verification":"human","evidence":"Manual post-CI deployment and live browser verification."}
+ ],
+ "process":[{"id":"P1","description":"Plan before implementation, use Terra agents and independent review, preserve engine ownership and deploy only reviewed frontend assets after hosted CI.","verification":"human","evidence":"Git chronology, source-bound evaluation and release record."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse the approved report theme and v1 lifecycle without new dependencies or hardcoded fictional findings in live reports.","verification":"human","evidence":"Review and responsive UI verification."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"Frontend live-data presentation does not alter agent workflow, portability or resumability."}
+}
