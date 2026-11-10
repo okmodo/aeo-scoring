@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Connect the action-first report to live v1 assessments.",
+ "state":"Implementation on codex/live-action-report, based on ffe91a8. Plan committed separately before implementation. Frontend only; existing audit Worker remains unchanged.",
+ "decisions":["Restore the already deployed submission and bounded polling lifecycle into source control and render the new report for its real results.","Use returned fixes, check outcomes and non-synthetic evidence; show verification guidance when exact field values or edit locations are unavailable.","Keep the approved fictional review page at /report-design/ and direct sample links there.","Display a final score only when assessment and report are complete and no check is unmeasured. Do not sum potentially overlapping recoverable points."],
+ "constraints":["Cloudflare Free only; reuse the existing public Pages project and Worker endpoint.","No shared contract, backend or draft engine deployment changes; no merge authorization in this task.","Evaluation trace records evaluation commands only. Development and browser activity are separately summarized; model cost/token telemetry is unavailable."],
+ "completed":["Terra agents implemented the adapter, renderer and frozen-fixture regressions; parent restored submission and transport and added route/error/cancellation tests."],
+ "remaining":["Finish independent review and source-bound evaluation, open PR and pass hosted CI, then deploy static assets manually to the existing Pages project and verify a fresh real audit in the browser.","Merge requires a separate user request. Automatic content assessment remains owned by the engine chat."],
+ "resumeCommands":["npm run evaluate -- --change live-action-report --base origin/main","npm run ci:gate -- origin/main","npm run test:preview","npm run build"]
+}
