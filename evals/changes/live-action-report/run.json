@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "live-action-report",
+  "recordedAt": "2026-11-10T05:03:08.788Z",
+  "sourceCommit": "7933edf7b847710b00c473c6e27f7754777305b1",
+  "sourceDigest": "2cf11077bfc8cd0fa005a47877b78b3f2c17567bc261d99debbbd7cabbe38b49",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1113,
+      "outputSha256": "71723a30df12f745914b1888f8f39a4d7702baf33a894bc9eee86959fe690f8a"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7288,
+      "outputSha256": "40f67fa3c4e9351a6189b791a6f3b498e9466b9d322f5333139a03daf14addcb"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 184,
+      "outputSha256": "1e062d200acbaae6ef49b46a8aab97b297f14d35164b7e24061c0e50c33cb5d5"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 530,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 514,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 435,
+      "outputSha256": "646755d331c2d362c66750696f443ed381f7c7d0f728faa25ab6b2bfa40312bf"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 524,
+      "outputSha256": "f3038f731fcb4cecf0ed3fd652985243e6825a2ae2528a3722da050e1c760640"
+    }
+  ]
+}
