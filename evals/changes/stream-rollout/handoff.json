@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Roll out merged streaming with preview-origin compatibility.",
+ "state":"PR #17 merged at cc919f1. Rollout branch adds the previously deployed CORS policy to the merged Worker and a temporary public synthetic fixture server.",
+ "decisions":["Preserve exact preview origin and existing sitemap/guide observation flags.","Use fixed synthetic pages for browser verification, then remove the expiring fixture Worker."],
+ "constraints":["Free only, preserve existing audit database and rate secret, no unrelated deployments.","Evaluation trace covers offline npm commands, not full development or live deployment."],
+ "completed":["Committed rollout plan before compatibility edits. Existing PR #17 has independent review and hosted CI."],
+ "remaining":["Independent compatibility review, current CI, manual deployment, public preview checks and fixture cleanup."],
+ "resumeCommands":["npm run evaluate -- --change stream-rollout --base origin/main","npm run ci:gate -- origin/main"]
+}

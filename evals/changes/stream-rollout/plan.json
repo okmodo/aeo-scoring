@@ -1,0 +1,15 @@
+{
+  "version":1,
+  "id":"stream-rollout",
+  "task":"Deploy merged bounded streaming while preserving the existing preview browser-access policy and verify actual large page audits.",
+  "scope":["backend/public-worker.mjs","backend/public-worker.test.mjs","backend/rollout-probe/**","test/feasibility.test.mjs","evals/changes/stream-rollout/**"],
+  "nonGoals":["Scoring changes, paid usage, database or secret changes, unrelated resources, or CI deployment."],
+  "outcomes":[
+    {"id":"O1","description":"The new streaming release preserves exact preview-origin CORS and current sitemap/guide retrieval.","verification":"automated","evidence":"Registered CORS regressions and feasibility tests."},
+    {"id":"O2","description":"An actual public preview submission reads a synthetic page beyond 512 KiB and reports partial findings without final score at the 1 MiB cap.","verification":"human","evidence":"Expiring synthetic fixture Worker, public preview browser checks, and private sanitized release record."}
+  ],
+  "process":[{"id":"P1","description":"Commit plan first, obtain independent review and hosted CI, deploy the reviewed source manually with existing bindings preserved.","verification":"human","evidence":"Git history, CI, review and release verification."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse previously reviewed browser policy and fixed synthetic fixtures without dependencies or new persistent resources.","verification":"human","evidence":"Independent diff review and cleanup."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+  "exitTest":{"required":false,"reason":"Release compatibility and temporary validation fixtures do not change agent portability, workflow or resumability."}
+}

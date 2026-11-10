@@ -21,7 +21,8 @@
     "Implemented conservative content/support assessment and evidence-preserving point/recovery arithmetic with category templates.",
     "Fixed independent review findings for sitemap completeness, ambiguous comparisons, expired-offer credit and policy evidence provenance.",
     "Verified the complete synthetic report in actual local workerd and replayed Kokatat extraction with 28 blocks, valid Product microdata and 17 measured checks.",
-    "Preserved actual failed model calibration evidence, a frozen rejected synthetic response and independent reviews."
+    "Preserved actual failed model calibration evidence, a frozen rejected synthetic response and independent reviews.",
+    "Synchronized upstream PR #18 while preserving the CORS worker and both sets of offline test imports."
   ],
   "remaining": [
     "Finish and calibrate automatic content assessment before enabling the semantic gate or declaring the scoring engine complete.",
@@ -29,7 +30,7 @@
     "Verify complete real-product reports including supporting policies and cross-variant context; current real replay is partial.",
     "Measure production-like CPU consumption against Workers Free before release.",
     "Apply only the project D1 schema addition and configure a project AI binding after an approved separately authorized release; neither has been done.",
-    "Preserve the live frontend CORS wrapper during any future authorized deployment; backend main source does not represent that wrapper."
+    "Preserve the canonical frontend CORS wrapper now merged upstream in backend/public-worker.mjs during any future authorized deployment."
   ],
   "resumeCommands": [
     "npm ci --ignore-scripts --no-audit --no-fund",

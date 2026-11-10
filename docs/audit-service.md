@@ -4,4 +4,4 @@ The current backend pipeline, limits, ownership and release boundaries are speci
 
 The public Worker uses the existing isolated public-only egress transport, D1 audit storage, HMAC client quotas and a background audit lease. Robots policy never gates product retrieval. Reports preserve Structure /40, Content /60, evidence, assignable fixes and conditional recovery. Missing applicable evidence withholds the final score; retrieval failure returns no report or numerical score.
 
-Frontend presentation, integration adapters and live browser CORS configuration have separate ownership. Preserve the existing live CORS wrapper during any separately authorized deployment; it is not represented by this backend change.
+Frontend presentation, integration adapters and live browser CORS configuration have separate ownership. The browser CORS wrapper is now canonical in backend/public-worker.mjs after upstream PR #18. This branch preserves it unchanged; retain its exact origin and method rules in any separately authorized release.
