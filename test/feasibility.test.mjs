@@ -172,3 +172,6 @@ await import('../backend/complete-engine.test.mjs');
 
 await import('../backend/semantic-transport.test.mjs');
 await import('../backend/public-worker.test.mjs');
+await import('../backend/content-facts.test.mjs');
+await import('../backend/fact-grading.test.mjs');
+await import('../backend/content-facts-runner.test.mjs');

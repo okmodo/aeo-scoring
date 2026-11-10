@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "task": "Finish grounded content fact extraction and deterministic rubric grading, validate automatic complete real-product reports and Cloudflare Free runtime limits.",
+  "state": "Draft PR #22 on codex/complete-scoring-engine. Fact extraction, validation and deterministic content grading are implemented behind a false calibration gate. Live calibration has not passed. The separately reviewed isolated Worker measured 11 invocations and FAILED the Workers Free CPU budget, including 418 ms for Kokatat. It was deleted and inventory verified. No merge or production deployment; frontend and existing services untouched.",
+  "decisions": [
+    "Keep model output to source-observation references and explicit absence proposals; the server validates scope and computes rubric fractions.",
+    "Treat positive role checks and absence cue checks as conservative safeguards, not proof of semantic truth or exhaustive inspection.",
+    "Preserve unmeasured outcomes for incomplete or ambiguous evidence and the independently reviewed synthetic total of 78.125, with Structure 20 and Content 58.125.",
+    "Keep sitemap usability dependent on complete relevant coverage while preserving an independently observed exact inclusion.",
+    "Keep CONTENT_FACTS_CALIBRATION_APPROVED false pending independent representative calibration and an explicit release decision."
+  ],
+  "constraints": [
+    "Follow the separately committed content-facts-runtime plan at 450d69e and AGENTS.md; no frontend or shared dependency changes, paid services, merge, or production deployment.",
+    "Workers Free only, no paid fallback and no model calls in CI; preserve the 8000-neuron UTC-day project reservation ceiling. Verify the current reservation ledger and account headroom before any further authorized live call.",
+    "Do not commit merchant HTML, raw user content, private transcripts, credentials or ephemeral live captures.",
+    "An isolated runtime probe requires source and bundle identity review, bounded authorization, actual measurements and cleanup evidence; local synthetic execution alone does not establish production CPU compliance."
+  ],
+  "completed": [
+    "Implemented source-reference extraction and validation, deterministic C1–C5 grading, evidence preservation and an independently adjudicated frozen end-to-end synthetic report.",
+    "Added role, negation, incomplete attribute, claim-support, comparison-scope, sale-price and multiple-sitemap regressions.",
+    "Inspected the supplied synthetic model response and replayed it through the current decoder: it was rejected as Invalid content fact. Its non-content SHA-256 is c042bd1c44d7e821a2ef0ea704648cea6b136ff96fa2b590ce9708ca81f63300.",
+    "Added a reusable source-reference factory for the reviewed synthetic shirt, without supplying scores or changing the expected result.",
+    "Recorded the draft architecture and release limitations in docs/content-facts-runtime.md.",
+    "Measured all 11 isolated probe invocations, including five correlated background completions; stored sanitized per-invocation CPU and cleanup evidence in runtime-measurements.json.",
+    "Reproduced real Kokatat retrieval through Cloudflare, retaining bounded evidence privately; discovered 172686-byte policy exceeded old 128 KiB source cap, and added 1 MiB cap regression without treating failures as absence.",
+    "Recorded five real model experiments this turn with conservative prior-day carry in calibration-ledger.json; no representative automatic complete-report pass."
+  ],
+  "remaining": [
+    "Redesign or optimize callback-heavy extraction and bounded assessment stages, then independently review and remeasure actual final-source CPU against Workers Free 10 ms; successful HTTP responses were insufficient.",
+    "Fix/calibrate source-bound model extraction across independently adjudicated normal, edge and merchant cases; do not enable the gate from authored fixture success.",
+    "Verify automatic complete real-product reports including successfully inspected supporting policies and variant/claim context.",
+    "Complete evaluation, independent final technical review and hosted draft CI; no merge or production deployment authorized."
+  ],
+  "resumeCommands": [
+    "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs",
+    "node --test backend/retrieval.test.mjs backend/scoring.test.mjs backend/support-assessment.test.mjs backend/service.test.mjs",
+    "npm run evaluate -- --change content-facts-runtime --base origin/main",
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ]
+}

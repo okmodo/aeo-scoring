@@ -153,7 +153,7 @@ test('a limited stream returns an incomplete report even when no HTML is usable'
         const extracted = await consumeHtml({body: new ReadableStream()});
         consumed = true;
         return {url: pending.submittedUrl, htmlLimited, extracted,
-          sitemap: {usableSource:'https://shop.example/sitemap.xml'}};
+          sitemap: {usableSource:'https://shop.example/sitemap.xml',complete:true}};
       },
       extractPage: async () => ({jsonLd: [], coverage: {usable:false, jsonLdTruncated:false}}),
     });
@@ -164,4 +164,23 @@ test('a limited stream returns an incomplete report even when no HTML is usable'
     assert.equal(audit.report.score, null);
     assert.equal(audit.report.criteria.find(c => c.id === 'S6').subchecks[0].fraction, 1);
   }
+});
+
+test('an AI binding leaves the deterministic report intact until facts calibration is approved', async () => {
+  let audit={...fixtureAudit}, task, cacheKey;
+  let scores=0, reservations=0, modelCalls=0;
+  const handle=createAuditService({
+    store:{reserve:async input=>{cacheKey=input.cacheKey;return {kind:'created',audit};},finish:async(_id,updates)=>{audit={...audit,...updates};},reserveSemantic:async()=>{reservations++;return true;}},
+    AI:{run:async()=>{modelCalls++;throw new Error('Must remain disabled');}},
+    egress:{fetch:async()=>assert.fail('Injected retrieval should be used')},secret:'x'.repeat(32),HTMLRewriter:Rewriter,now:()=>time,
+    retrievePage:async()=>({url:pending.submittedUrl,extracted:{coverage:{usable:true},productHtml:{complete:true,identity:'Example Road Shoe',blocks:[]}}}),
+    scorePage:(_snapshot,_extracted,options)=>{scores++;assert.equal(options,undefined);return {status:'incomplete',category:'running-shoes',coverage:{limitations:[]}};},
+  });
+  const response=await handle(post({url:pending.submittedUrl}),{address,defer:p=>{task=p;}});
+  assert.equal(response.status,202);await task;
+  assert.equal(audit.status,'incomplete');assert.equal(scores,1);assert.equal(reservations,0);assert.equal(modelCalls,0);
+  assert.match(audit.report.coverage.limitations[0],/calibration/);
+  const cryptoInput='audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-1:calibrated-0:'+pending.submittedUrl;
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(cryptoInput));
+  assert.equal(cacheKey,Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''));
 });

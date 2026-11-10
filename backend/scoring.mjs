@@ -6,6 +6,7 @@ import { scoreProductFields } from './product-fields.mjs';
 import { selectProductVariant } from './product-variants.mjs';
 import { assessWebsiteGuides } from './website-guides.mjs';
 import { scoreProductLabels } from './product-labels.mjs';
+import { assessContentFacts } from './fact-grading.mjs';
 import { assessContent } from './content-assessment.mjs';
 import { assessSupport } from './support-assessment.mjs';
 import { inspectProductSchema, assessStructure } from './structure-assessment.mjs';
@@ -35,7 +36,7 @@ const schemaType = (types, type) => types.includes(type) || types.includes('http
 const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'http://schema.org', 'http://schema.org/']);
 
 /** Score supported observations from a bounded retrieved document. */
-export function scoreAudit(snapshot, extracted, { category = null, semantic = null } = {}) {
+export function scoreAudit(snapshot, extracted, { category = null, semantic = null, validatedFacts = null } = {}) {
   const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
   const evidence = [];
   let productName = null;
@@ -194,7 +195,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
   const sitemap = snapshot?.sitemap;
   if (sitemap && typeof observedAt === 'string') {
     for (const [id, url, location, excerpt] of [
-      ['S6.usable', sitemap.usableSource, 'sitemap XML document',
+      ['S6.usable', sitemap.complete === true ? sitemap.usableSource : null, 'sitemap XML document',
         'A bounded same-origin sitemap inspection verified a parseable URL listing.'],
       ['S6.inclusion', sitemap.inclusionSource, 'sitemap XML url/loc',
         'A sitemap URL entry exactly matches the final audited product URL.'],
@@ -211,13 +212,13 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
   }
   if (extracted?.productHtml) {
     const schema = inspectProductSchema(snapshot, extracted);
-    const content = assessContent(snapshot, extracted, { category, product: schema.product });
-    if (semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
+    const content = validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, product: schema.product });
+    if (!validatedFacts && semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
     category = content.category;
     productName = content.productName || productName;
     variant = content.variant || schema.variant || variant;
     currency = content.currency || currency;
-    const semanticFindings = semantic?.version === '1.0.0' && semantic?.status === 'assessed' ? Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured')) : {};
+    const semanticFindings = !validatedFacts && semantic?.version === '1.0.0' && semantic?.status === 'assessed' ? Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured')) : {};
     const observations = { ...schema.findings, ...assessStructure(snapshot, extracted, { schema, content }),
       ...content.findings, ...semanticFindings, ...assessSupport(snapshot, extracted) };
     // Replace legacy observations so unresolved new extraction cannot inherit old credit.
@@ -297,7 +298,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
     category: categories.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,
-    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
+    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
       total: allChecks.length, category: categories.categories.some(c => c.id === category) ? category : null,
       extraction: extracted?.coverage ?? null,

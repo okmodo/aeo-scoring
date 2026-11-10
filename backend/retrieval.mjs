@@ -190,7 +190,7 @@ function robotsAllowed(groups, url, userAgent = 'AEOAuditBot', budget = { work: 
 
 // Inspection uses the final page origin and any robots sitemap declarations.
 // Missing, partial, ambiguous, or exhausted inspection never asserts absence.
-async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
+async function inspectSitemap({ url, declarations, fetchBounded, signal, productPartition = false }) {
   const optional = new AbortController();
   const abort = () => optional.abort();
   signal.addEventListener('abort', abort, { once: true });
@@ -235,6 +235,18 @@ async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
   function hasPage(doc) {
     return doc.locations.some(location => candidate(location)?.href === url.href);
   }
+  function productChildren(doc) {
+    if (!productPartition || new URL(doc.location).pathname !== '/xmlsitemap.php') return null;
+    const children = doc.locations.map(candidate);
+    if (!children.length || children.some(child => !child || child.pathname !== '/xmlsitemap.php' ||
+        child.searchParams.getAll('type').length !== 1 || child.searchParams.getAll('page').length !== 1 ||
+        [...child.searchParams.keys()].some(key => !['type','page'].includes(key)) ||
+        !['products','pages','categories','news'].includes(child.searchParams.get('type')) ||
+        !/^[1-9]\d{0,4}$/.test(child.searchParams.get('page')))) return null;
+    const products = children.filter(child=>child.searchParams.get('type')==='products').map(child=>child.href);
+    return products.length && new Set(products).size===products.length ? products : null;
+  }
+
   try {
     const starts = declarations.length ? declarations : [new URL('/sitemap.xml', url).toString()];
     let complete = true, visitedStarts = 0;
@@ -247,17 +259,19 @@ async function inspectSitemap({ url, declarations, fetchBounded, signal }) {
         if (hasPage(doc)) result.inclusionSource = doc.location;
       } else if (doc.kind === 'sitemapindex') {
         const indexDirectory = new URL('.', doc.location).pathname;
-        const firstChild = doc.locations.find(location => candidate(location)?.pathname.startsWith(indexDirectory));
+        const relevant = productChildren(doc) || doc.locations;
+        const firstChild = relevant.find(location => candidate(location)?.pathname.startsWith(indexDirectory));
         const child = firstChild && await read(firstChild);
-        if (doc.locations.length !== 1 || !child || !usableUrlset(child)) complete = false;
+        if (relevant.length !== 1 || !child || !usableUrlset(child)) complete = false;
         if (child && usableUrlset(child)) {
-          if (doc.locations.length === 1) result.usableSource = child.location;
+          if (relevant.length === 1) result.usableSource = child.location;
           if (hasPage(child)) result.inclusionSource = child.location;
         }
       } else complete = false;
-      if (requests >= 2 || (result.usableSource && result.inclusionSource)) break;
+      if (requests >= 2) break;
     }
     result.complete = complete && visitedStarts === starts.length && !!result.usableSource;
+    if (!result.complete) result.usableSource = null;
     if (defaultAbsent) { result.state = 'absent'; result.url = new URL('/sitemap.xml', url).href; }
     return result;
   } finally {
@@ -326,7 +340,10 @@ async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
       try {
         const response = await fetchBounded(new URL(target), optional.signal);
         if (response.status !== 200 || !/^text\/html(?:\s*;|\s*$)/i.test(response.headers.get('content-type') || '')) { discard(response); continue; }
-        const html = await boundedResponse(response, 128 * 1024, optional.signal, { fatal: true });
+        // Policy templates often exceed 128 KiB before their visible terms.
+        // Keep the same hard source bound as product streaming, and reject any
+        // excess rather than interpreting a partial policy as complete.
+        const html = await boundedResponse(response, 1024 * 1024, optional.signal, { fatal: true });
         if (!Rewriter) continue;
         const rewriter = new Rewriter();
         const accumulator = productHtmlAccumulator(rewriter, { policy: true });
@@ -415,7 +432,11 @@ export async function retrieve(input, options = {}) {
       });
       snapshot.crawlerPolicy = { version: crawlers.version, url: robotsUrl.toString(), httpStatus, observations };
       if (options.observeSitemap === true) {
-        try { snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal }); }
+        try { const html = snapshot.extracted?.productHtml;
+          const associated = html?.structuredRecords?.filter(item=>item.complete && item.record?.['@type']==='Product' &&
+            typeof item.record.name==='string' && item.record.name.trim().replace(/\s+/g,' ')===html.identity?.mainH1);
+          const productPartition = html?.complete === true && html.platform === 'bigcommerce.stencil' && associated?.length === 1;
+          snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal, productPartition }); }
         catch { /* Optional evidence must not fail a completed page retrieval. */ }
       }
       if (options.observeGuides === true) {

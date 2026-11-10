@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Complete product extraction and scoring engine",
-  "state": "Draft only. Native HTML/microdata extraction, conservative scoring paths, point arithmetic and frozen contract examples are implemented. Complete trustworthy automatic real-product scoring remains unfinished; semantic scoring is disabled after failed independent calibration. No merge or deployment.",
+  "state": "Draft PR #22. Native extraction and conservative scoring are implemented; newer content-fact work is recorded under evals/changes/content-facts-runtime. Both model assessment calibration gates remain false. The isolated runtime experiment failed Workers Free CPU limits; no complete real-product scoring pass or production deployment.",
   "decisions": [
     "Preserve Structure /40, Content /60, ungated URL-only audits, no bands and null final scores for missing applicable evidence.",
     "Use bounded native HTMLRewriter extraction, safe same-origin policy retrieval and verified schema records; robots never gates crawling.",
@@ -11,7 +11,7 @@
   ],
   "constraints": [
     "Cloudflare Free only; no paid fallback, resource changes, frontend files, shared dependencies, merge or deployment.",
-    "Project inference reservations capped atomically at 8000 neurons per UTC day; current experimental calibration conservatively accounts for about 6631.65 neurons including two lost captures at reserved maxima.",
+    "Project inference reservations remain capped atomically at 8000 neurons per UTC day. The newer calibration-ledger.json records the conservative carry and all additional observed model usage; do not reuse the historical 6631.65 carry as fresh allowance.",
     "No live inference in CI. Account-wide Free usage can be consumed elsewhere; user confirmed Workers Free after Billing Read was unavailable.",
     "Native runtime replay does not establish production Free CPU compliance."
   ],
@@ -26,9 +26,9 @@
   ],
   "remaining": [
     "Finish and calibrate automatic content assessment before enabling the semantic gate or declaring the scoring engine complete.",
-    "Evaluate source-bound fact extraction with deterministic applicability and partial-credit decisions rather than trusting free-form model grades; any next experiment requires a fresh bounded budget ledger and representative merchant cases.",
+    "Continue source-bound fact extraction calibration and preserve failed observations; the new pipeline computes grades deterministically but has not passed representative live calibration.",
     "Verify complete real-product reports including supporting policies and cross-variant context; current real replay is partial.",
-    "Measure production-like CPU consumption against Workers Free before release.",
+    "Resolve measured Workers Free CPU overruns and remeasure final-source real-product invocations; see the newer runtime-measurements.json and parser performance documentation.",
     "Apply only the project D1 schema addition and configure a project AI binding after an approved separately authorized release; neither has been done.",
     "Preserve the canonical frontend CORS wrapper now merged upstream in backend/public-worker.mjs during any future authorized deployment."
   ],

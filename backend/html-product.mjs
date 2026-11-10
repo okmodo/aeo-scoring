@@ -41,7 +41,7 @@ function related(a, tag = '') {
 }
 function region(tag, a) { return tag === 'main' || a.role?.toLowerCase() === 'main' || /(?:^|\s)https?:\/\/schema\.org\/Product(?:\s|$)/i.test(a.itemtype || '') || /(?:^|\s)(?:productView|product-detail|product-details|product-page)(?:\s|$)/i.test(a.class || ''); }
 export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
-    const result = { complete: true, blocks: [], headings: [], images: [], links: [], identity: { title: null, mainH1: null }, visibility: 'unknown', discoveryLinks: [], otherProductMarkup: false, selectedControls: [], priceCandidates: [], hasVariantControls: false, singleConfiguration: null, structuredRecords: [], unsupportedProductMarkup: false };
+    const result = { complete: true, blocks: [], headings: [], images: [], links: [], identity: { title: null, mainH1: null }, visibility: 'unknown', discoveryLinks: [], otherProductMarkup: false, selectedControls: [], priceCandidates: [], hasVariantControls: false, singleConfiguration: null, structuredRecords: [], unsupportedProductMarkup: false, platform: null };
     const stack = [];
     let exhausted = false;
     let explicitSingle = false;
@@ -123,6 +123,7 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
                 return;
             }
             const tag = (element.tagName || '').toLowerCase(), a = attributes(element), parent = stack.at(-1);
+            if (tag === 'meta' && a.name?.toLowerCase() === 'platform' && a.content === 'bigcommerce.stencil' && stack.some(node=>node.tag==='head')) result.platform = a.content;
             const parentScope = [...stack].reverse().find(frame => frame.microScope)?.microScope;
             const rawBlocked = !!parent?.rawBlocked || discoveryExcluded.test(tag) || /^(?:nav|header|footer|aside)$/.test(tag) || related(a, tag);
             const ownRegion = !parent?.inside && region(tag, a);

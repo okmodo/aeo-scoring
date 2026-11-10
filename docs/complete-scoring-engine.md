@@ -6,11 +6,13 @@ The backend owns retrieval, evidence, rubric arithmetic, category rules, inferen
 
 The isolated public Worker uses its existing public-only egress and validates every product redirect. Retrieval shares an eight-second deadline. Product HTML streams through Cloudflare's native HTMLRewriter with a 1 MiB input limit. The accumulator selects a main or explicit product region and excludes hidden ancestors, script state, navigation, related products and templates. It retains bounded paragraphs, leaf text, headings, images, links, selected controls and explicitly marked current/previous prices. CSS-dependent visibility remains unknown. Neither a stylesheet nor an executable script alone makes otherwise readable HTML unusable.
 
-The native accumulator retains at most 300 observations per collection, 8,192 characters per retained text item, 262,144 retained text characters, 30,000 elements and depth 200. Reaching a relevant bound withholds absence findings. JSON-LD has separate 131,072-character per-script and 262,144-character aggregate allowances, up to 100 retained scripts. Malformed JSON is never repaired into evidence. Product microdata and RDFa are detected but currently prevent a claim that unsupported markup is absent.
+The native accumulator retains at most 300 observations per collection, 8,192 characters per retained text item, 262,144 retained text characters, 30,000 elements and depth 200. Reaching a relevant bound withholds absence findings. JSON-LD has separate 131,072-character per-script and 262,144-character aggregate allowances, up to 100 retained scripts. Malformed JSON is never repaired into evidence. Supported product microdata can contribute structured records; unsupported or incomplete structured representations prevent an absence conclusion.
 
-Robots is optional evidence and discovery input, never permission to audit. Its request is capped at 64 KiB and 500 ms. Sitemap inspection uses at most two same-origin requests, 32 KiB each, within 750 ms. Three fixed guide probes share 500 ms and 8 KiB per file. At most two same-origin linked shipping/returns pages share 750 ms and 128 KiB per response. Supporting requests do not follow redirects or execute instructions. Missing default files, failed requests, unfinished sitemap indexes and verified listings remain distinct observations.
+Robots is optional evidence and discovery input, never permission to audit. Its request is capped at 64 KiB and 500 ms. Sitemap inspection uses at most two same-origin requests, 32 KiB each, within 750 ms. Three fixed guide probes share 500 ms and 8 KiB per file. At most two same-origin linked shipping/returns pages share 750 ms and 1 MiB per response. Supporting requests do not follow redirects or execute instructions. Missing default files, failed requests, unfinished sitemap indexes and verified listings remain distinct observations.
 
 ## Assessment rules
+
+The content-judge details below document the earlier, disabled approach. The current experimental source-bound fact path and its unresolved validation are described in [Source-bound content facts and runtime validation](content-facts-runtime.md).
 
 The configured rubric remains Structure /40 and Content /60. All 40 check IDs have an assessment path. `config/categories.v1.2.json` retains the three existing templates and adds explicit editorial templates for handbags and personal flotation devices. Category inference requires a recognizable product heading. Unsupported categories remain incomplete.
 
@@ -20,7 +22,7 @@ The proposed semantic model is `@cf/openai/gpt-oss-120b`, pinned rather than aut
 
 The live calibration record is in `evals/changes/complete-scoring-engine/calibration-review.md`. Semantic scoring is disabled by `SEMANTIC_CALIBRATION_APPROVED = false` until an independent review establishes an acceptable calibration. An AI binding alone cannot enable it. The release status must follow the actual calibration outcome. A failed or unavailable judge leaves unresolved checks unmeasured. It must never manufacture a numerical final score.
 
-## Free-tier inference budget
+## Earlier semantic inference budget
 
 `semantic_budget` is an additive table in the project's D1 schema. Apply that schema to the project's database only when an authorized release is performed. An atomic reservation caps this application's inference reservations at 8,000 neurons per UTC day. Each request reserves a conservative estimate using UTF-8 input bytes, output limits, pricing of 31,818 input / 68,182 output neurons per million tokens, and framing headroom. Failed, invalid and timed-out requests retain their reservations. There is no paid fallback, automatic model substitution or quota reset. Reservations from old days are pruned after two days.
 

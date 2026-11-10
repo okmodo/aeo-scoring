@@ -370,6 +370,17 @@ test('unrelated multiword and slash user agents do not invalidate ordinary crawl
   assert.ok(snapshot.crawlerPolicy.observations.some(item => item.status === 'disallowed'));
 });
 
+test('policy terms after a large template are read within the product source cap; oversized policies remain unknown', async () => {
+  const policy = '<main><!--' + 'x'.repeat(172 * 1024) + '--><p>Return unworn items within 30 days.</p></main>';
+  const run = html => retrieve('https://example.com/a', { egress: binding({ '/a': page(), '/robots.txt': new Response(''), '/returns': new Response(html, {headers:{'content-type':'text/html'}}) }), observeGuides: true, HTMLRewriter: HtmlTestRewriter, consumeHtml: async () => ({productHtml:{discoveryLinks:[{url:'/returns',text:'Returns'}]}}) });
+  const complete = await run(policy);
+  assert.equal(complete.policies.returns.state, 'read');
+  assert.equal(complete.policies.returns.extraction.blocks[0].text, 'Return unworn items within 30 days.');
+  const excess = await run(policy + 'x'.repeat(1024 * 1024));
+  assert.equal(excess.policies.returns.state, 'failed');
+  assert.equal(excess.policies.returns.extraction, undefined);
+});
+
 test('sitemap absence requires successful inspection of every declared listing within the request budget', async () => {
   const xml = locations => `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(loc=>`<url><loc>${loc}</loc></url>`).join('')}</urlset>`;
   const routes = {
@@ -384,4 +395,73 @@ test('sitemap absence requires successful inspection of every declared listing w
   assert.equal(failed.sitemap.complete,false);assert.equal(failed.sitemap.inclusionSource,null);
   const limited=await retrieve('https://example.com/a',{egress:binding({...routes,'/robots.txt':()=>new Response('Sitemap: https://example.com/one.xml\nSitemap: https://example.com/two.xml\nSitemap: https://example.com/three.xml'),'/two.xml':()=>new Response(xml(['https://example.com/other2']))}),observeSitemap:true});
   assert.equal(limited.sitemap.complete,false);assert.equal(limited.sitemap.inclusionSource,null);
+});
+
+test('verified BigCommerce product scope follows explicitly partitioned relevant sitemap child',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const index=readFileSync(new URL('./fixtures/content-facts/kokatat-index.xml',import.meta.url),'utf8');
+ const products=readFileSync(new URL('./fixtures/content-facts/kokatat-products.xml',import.meta.url),'utf8');
+ const target='https://kokatat.com/naiad-pfd-lvhnai';
+ const state={platform:'bigcommerce.stencil',complete:true,identity:{mainH1:'Naiad Life Vest'},structuredRecords:[{complete:true,record:{'@type':'Product',name:'Naiad Life Vest'}}]};
+ const run=(indexText,childResponse,stateOverride={})=>retrieve(target,{observeSitemap:true,consumeHtml:async snapshot=>{await new Response(snapshot.body).text();return {productHtml:{...state,...stateOverride}};},egress:{fetch:async url=>{
+   const u=new URL(url);
+   if(u.pathname==='/robots.txt')return new Response('Sitemap: https://kokatat.com/xmlsitemap.php');
+   if(u.pathname==='/xmlsitemap.php')return childResponse && u.search ? childResponse() : new Response(indexText,{headers:{'content-type':'application/xml'}});
+   return new Response('<main>Naiad Life Vest</main>',{headers:{'content-type':'text/html'}});
+ }}});
+ const good=await run(index,()=>new Response(products,{headers:{'content-type':'application/xml'}}));
+ assert.equal(good.sitemap.complete,true);assert.equal(good.sitemap.inclusionSource,'https://kokatat.com/xmlsitemap.php?type=products&page=1');
+ const broken=await run(index,()=>new Response(null,{status:503}));assert.equal(broken.sitemap.complete,false);
+ const multi=index.replace('</sitemapindex>','<sitemap><loc>https://kokatat.com/xmlsitemap.php?type=products&amp;page=2</loc></sitemap></sitemapindex>');
+ assert.equal((await run(multi,()=>new Response(products,{headers:{'content-type':'application/xml'}}))).sitemap.complete,false);
+ const unknown=await run(index,()=>new Response(products,{headers:{'content-type':'application/xml'}}),{platform:null});
+ assert.equal(unknown.sitemap.complete,false);
+});
+
+test('all declared sitemap starts must be inspected for usability, while exact inclusion survives a partial scan', async () => {
+  const xml = url => `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${url}</loc></url></urlset>`;
+  const robots = starts => new Response('User-agent: *\nAllow: /\n' + starts.map(name=>`Sitemap: https://example.com/${name}`).join('\n'));
+  const declarations=['first.xml','second.xml'];
+  const make = (second,calls=[]) => retrieve('https://example.com/a',{observeSitemap:true,egress:binding({
+    '/a':page,'/robots.txt':()=>robots(declarations),'/first.xml':()=>new Response(xml('https://example.com/a')),'/second.xml':second,
+  },calls)});
+  const calls=[];
+  const full=await make(()=>new Response(xml('https://example.com/other')),calls);
+  assert.equal(full.sitemap.complete,true);
+  assert.equal(full.sitemap.inclusionSource,'https://example.com/first.xml');
+  assert.ok(full.sitemap.usableSource);
+  assert.ok(calls.some(c=>c.url.endsWith('/second.xml')));
+  for (const failure of [()=>new Response('bad xml'),()=>new Response('',{status:503}),()=>{throw new Error('offline');}]) {
+    const partial=await make(failure);
+    assert.deepEqual(partial.sitemap,{usableSource:null,inclusionSource:'https://example.com/first.xml',complete:false});
+  }
+  const exhausted=await retrieve('https://example.com/a',{observeSitemap:true,egress:binding({
+    '/a':page,'/robots.txt':()=>robots(['first.xml','second.xml','third.xml']),
+    '/first.xml':()=>new Response(xml('https://example.com/a')),'/second.xml':()=>new Response(xml('https://example.com/other')),
+  })});
+  assert.deepEqual(exhausted.sitemap,{usableSource:null,inclusionSource:'https://example.com/first.xml',complete:false});
+});
+
+test('an incomplete sitemap cannot earn full usability even when an exact URL was found', async () => {
+  const {scoreAudit}=await import('./scoring.mjs');
+  const source='https://example.com/first.xml';
+  const snapshot={url:'https://example.com/a',observedAt:'2026-11-09T00:00:00.000Z',sitemap:{usableSource:source,inclusionSource:source,complete:false}};
+  const check=(report,id)=>report.criteria.flatMap(c=>c.subchecks).find(c=>c.id===id);
+  for (const extracted of [null,{productHtml:{complete:false,blocks:[],headings:[],links:[]},coverage:{jsonLdTruncated:false},jsonLd:[]}]) {
+    const report=scoreAudit(snapshot,extracted);
+    assert.equal(check(report,'S6.usable').status,'not_measured');
+    assert.equal(check(report,'S6.inclusion').fraction,1);
+  }
+});
+
+test('a discovered matching child cannot hide a second uninspected declared sitemap', async () => {
+  const calls=[];
+  const index='<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>https://example.com/child.xml</loc></sitemap></sitemapindex>';
+  const child='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/a</loc></url></urlset>';
+  const result=await retrieve('https://example.com/a',{observeSitemap:true,egress:binding({
+    '/a':page,'/robots.txt':()=>new Response('User-agent: *\nAllow: /\nSitemap: https://example.com/index.xml\nSitemap: https://example.com/second.xml'),
+    '/index.xml':()=>new Response(index),'/child.xml':()=>new Response(child),'/second.xml':()=>new Response(child),
+  },calls)});
+  assert.deepEqual(result.sitemap,{usableSource:null,inclusionSource:'https://example.com/child.xml',complete:false});
+  assert.ok(!calls.some(call=>call.url.endsWith('/second.xml')));
 });

@@ -1,7 +1,7 @@
 import { createStore } from './store.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
-import { assessWithSemanticJudge } from './semantic-runner.mjs';
+import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -99,7 +99,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url, semanticEnabled = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-9:semantic-' + (semanticEnabled ? '1' : '0') + ':' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (CONTENT_FACTS_CALIBRATION_APPROVED ? '1' : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -133,9 +133,9 @@ export function createAuditService({
       snapshot = { ...snapshot, observedAt };
       report = scorePage(snapshot, extracted);
       if (AI && extracted.productHtml) {
-        const semantic = await assessWithSemanticJudge({AI,store,now,snapshot,extracted,report});
-        if (semantic.status === 'assessed') report = scorePage(snapshot, extracted, {semantic});
-        else report.coverage.limitations.push(semantic.reason);
+        const contentFacts = await assessWithContentFacts({AI,store,now,snapshot,extracted,report});
+        if (contentFacts.status === 'assessed') report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+        else report.coverage.limitations.push(contentFacts.reason);
       }
     } catch (error) {
       await store.finish(audit.id, {
