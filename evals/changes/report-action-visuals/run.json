@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "report-action-visuals",
+  "recordedAt": "2026-11-10T02:08:35.157Z",
+  "sourceCommit": "d726dfe49407d050f1c7d1413c15a8b64024a989",
+  "sourceDigest": "b0ccbf200290e11a77c58ff3778ec851f6c61966ff0c1f9e918891849669021d",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1084,
+      "outputSha256": "52cf0bbf9179c7e2f97d7e461a8452412518dc127f4278b87ac57143220c0db4"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7917,
+      "outputSha256": "ba7878960d012e20657c1aeac40dbf068f8145dee296735ddb92fe36cf7f8245"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 195,
+      "outputSha256": "14c0d00ebd4568fa34a1c620b428c080c0b3e19aff867c83e9d77d170d16e2d2"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 478,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 478,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 203,
+      "outputSha256": "a3069e4c70747b7e7e7c9ae24aba8cc7a2977047400d63bcef8b36fe9273c9ac"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 398,
+      "outputSha256": "fdeb9c3a360b25c1cc77a9e58dc84b94b8729563f93bc2fb7881d2e13adae458"
+    }
+  ]
+}
