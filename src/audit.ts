@@ -11,13 +11,39 @@ export function auditStatusUrl(path: string): string {
 export function pollDelay(attempt: number): number {
   return Math.min(2000 * 2 ** attempt, 10000);
 }
-export async function requestAudit(url: string, signal: AbortSignal): Promise<Assessment> {
-  return response(await fetch(AUDIT_ORIGIN + AUDITS_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }), signal }));
+export class PreviewPasswordRequired extends Error {
+  constructor() {
+    super('Enter the shared testing password.');
+  }
 }
-export async function getAudit(path: string, signal: AbortSignal): Promise<Assessment> {
-  return response(await fetch(auditStatusUrl(path), { signal }));
+
+function authorizedFetch(url: string, password: string, init: RequestInit) {
+  const headers = new Headers(init.headers);
+  headers.set('Authorization', 'Bearer ' + password);
+  return fetch(url, { ...init, headers, cache: 'no-store', credentials: 'omit', redirect: 'error' });
 }
+
+export async function unlockPreview(password: string, signal: AbortSignal) {
+  const res = await authorizedFetch(AUDIT_ORIGIN + '/api/v1/preview-access', password, { method: 'POST', signal });
+  if (res.status === 401) throw new Error('That password didn’t match. Try again.');
+  if (res.status !== 204) throw new Error('Testing access is unavailable. Try again later.');
+}
+
+export async function requestAudit(url: string, password: string, signal: AbortSignal): Promise<Assessment> {
+  return response(await authorizedFetch(AUDIT_ORIGIN + AUDITS_PATH, password, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+    signal,
+  }));
+}
+
+export async function getAudit(path: string, password: string, signal: AbortSignal): Promise<Assessment> {
+  return response(await authorizedFetch(auditStatusUrl(path), password, { signal }));
+}
+
 async function response(res: Response): Promise<Assessment> {
+  if (res.status === 401) throw new PreviewPasswordRequired();
   const body = await res.json() as Assessment | ErrorResponse;
   if (!res.ok) {
     const problem = (body as ErrorResponse).error;

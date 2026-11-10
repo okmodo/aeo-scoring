@@ -19,6 +19,7 @@ export default defineConfig({
     env: {
       AUDIT_DB: bindings.d1({ id: databaseId }),
       AUDIT_RATE_SECRET: bindings.secret(),
+      AUDIT_PREVIEW_PASSWORD: bindings.secret(),
     },
     triggers: [triggers.scheduled({ schedule: '0 * * * *' })],
     observability: {

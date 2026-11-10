@@ -871,3 +871,33 @@ main > footer {
 }
 
 button:disabled { opacity: .65; cursor: wait; }
+
+.preview-password {
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: 28px;
+  border: 1px solid #d3d1e3;
+  border-radius: 12px;
+  background: #fff;
+  color: #071438;
+}
+.preview-password::backdrop { background: rgb(7 20 56 / 64%); }
+.preview-password form { display: grid; gap: 12px; }
+.preview-password h2 { margin: 0 0 8px; }
+.preview-password input {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #746f8f;
+  border-radius: 4px;
+  font: inherit;
+}
+.preview-password button {
+  padding: 12px;
+  border: 0;
+  border-radius: 4px;
+  background: #071438;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.preview-password [role="alert"] { margin: 0; color: #a52a32; }

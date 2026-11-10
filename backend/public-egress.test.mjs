@@ -54,9 +54,10 @@ test('rejects a redirect with raw backslashes before URL resolution', async () =
 test('public submission rejects reserved example domains before database admission', async () => {
   const response = await publicWorker.fetch(new Request('https://api.example.com/api/v1/audits', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', authorization: 'Bearer test-preview-password' },
     body: JSON.stringify({ url: 'https://shop.example/item' }),
   }), {
+    AUDIT_PREVIEW_PASSWORD: 'test-preview-password',
     AUDIT_DB: { prepare: () => assert.fail('Reserved URL reached database') },
   }, { waitUntil: () => assert.fail('Reserved URL started an audit') });
   assert.equal(response.status, 400);

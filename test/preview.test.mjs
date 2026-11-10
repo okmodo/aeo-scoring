@@ -96,7 +96,9 @@ test("preview component renders at runtime", async () => {
     const html = renderToStaticMarkup(React.createElement(App));
     assert.match(html, /Assess product page/);
     assert.match(html, /Explore sample report/);
-    assert.match(html, /anyone with the report link can view it/);
+    assert.match(html, /<dialog[^>]*aria-labelledby="preview-password-heading"/);
+    assert.match(html, /type="password"/);
+    assert.match(html, /<button type="submit" disabled="">Assess product page/);
   } finally {
     await vite.close();
   }
@@ -210,30 +212,47 @@ test("field-level changes cover the frozen action evidence and appear only with 
 await import('./live-report.test.mjs');
 
 test('live transport restricts report locations and preserves server errors and cancellation', async () => {
-  const { auditStatusUrl, requestAudit, getAudit, pollDelay, AUDIT_ORIGIN } = await import('../src/audit.ts');
+  const { auditStatusUrl, requestAudit, getAudit, pollDelay, unlockPreview, PreviewPasswordRequired, AUDIT_ORIGIN } = await import('../src/audit.ts');
   assert.equal(auditStatusUrl('/api/v1/audits/test-id'), AUDIT_ORIGIN + '/api/v1/audits/test-id');
   for (const path of ['https://example.com/api/v1/audits/x', '//example.com/x', '/api/v1/audits/../secret', '/api/v1/audits/x?token=y']) assert.throws(() => auditStatusUrl(path));
   assert.deepEqual([0, 1, 2, 3, 10].map(pollDelay), [2000, 4000, 8000, 10000, 10000]);
+  const password = 'test-preview-password';
   const original = globalThis.fetch;
   const controller = new AbortController();
   const pending = JSON.parse(readFileSync('contracts/v1/examples/submission-pending.json'));
   try {
     globalThis.fetch = async (url, options) => {
+      assert.equal(url, AUDIT_ORIGIN + '/api/v1/preview-access');
+      assert.equal(options.method, 'POST');
+      assert.equal(options.headers.get('Authorization'), 'Bearer ' + password);
+      assert.equal(options.redirect, 'error');
+      assert.equal(options.body, undefined);
+      return new Response(null, { status: 204 });
+    };
+    await unlockPreview(password, controller.signal);
+    globalThis.fetch = async () => new Response(null, { status: 401 });
+    await assert.rejects(unlockPreview(password, controller.signal), /password didn’t match/);
+    await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), PreviewPasswordRequired);
+    globalThis.fetch = async () => new Response(null, { status: 404 });
+    await assert.rejects(unlockPreview(password, controller.signal), /Testing access is unavailable/);
+    globalThis.fetch = async (url, options) => {
       assert.equal(url, AUDIT_ORIGIN + '/api/v1/audits');
+      assert.equal(options.headers.get('Authorization'), 'Bearer ' + password);
+      assert.equal(options.redirect, 'error');
       assert.equal(options.method, 'POST');
       assert.deepEqual(JSON.parse(options.body), { url: 'https://example.com/product' });
       assert.equal(options.signal, controller.signal);
       return Response.json(pending);
     };
-    assert.deepEqual(await requestAudit('https://example.com/product', controller.signal), pending);
+    assert.deepEqual(await requestAudit('https://example.com/product', password, controller.signal), pending);
     globalThis.fetch = async () => Response.json({ error: { message: 'Please wait', retryAfterSeconds: 60 } }, { status: 429 });
-    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /Please wait.*60 seconds/);
+    await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), /Please wait.*60 seconds/);
     globalThis.fetch = async () => Response.json({ version: '2', status: 'complete' });
-    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /invalid response/);
+    await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), /invalid response/);
     globalThis.fetch = async () => Response.json({ ...pending, statusUrl: 'https://example.com/private' });
-    await assert.rejects(getAudit(pending.statusUrl, controller.signal), /invalid report address/);
+    await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), /invalid report address/);
     controller.abort();
     globalThis.fetch = async (_url, options) => { options.signal.throwIfAborted(); };
-    await assert.rejects(getAudit(pending.statusUrl, controller.signal), { name: 'AbortError' });
+    await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), { name: 'AbortError' });
   } finally { globalThis.fetch = original; }
 });

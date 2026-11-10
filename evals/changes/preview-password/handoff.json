@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "task": "Require one shared testing password for preview audits.",
+  "state": "Frontend and Worker implemented together on codex/preview-password, based on main at 1694917. The existing public deployment is separate.",
+  "decisions": [
+    "Use a native modal and verify one shared password at the public audit Worker. Keep the browser credential in page memory until reload or rejection.",
+    "Protect submissions and report reads with the same credential. Reject missing or incorrect credentials before invoking the audit handler.",
+    "Keep the separate fictional report route available. Use the existing exact preview CORS origin."
+  ],
+  "constraints": [
+    "Provision a cryptographically random shared password of at least 24 random bytes encoded as base64url in the Worker secret AUDIT_PREVIEW_PASSWORD. Keep the password out of source, build assets, logs, and evaluation artifacts.",
+    "The unlock endpoint performs no storage, retrieval or scoring work. Unauthenticated requests can still count as Worker invocations and consume CPU. There is no new guess throttle, so the shared password must have high entropy.",
+    "Existing production allowance controls apply. Main still lacks a production allowance guard. A correct password does not authorize unreserved scoring or bypass admission."
+  ],
+  "completed": [
+    "Independent technical reviewer found no remaining implementation blockers and observed eight passing targeted Worker and egress tests. Browser behavior was separately verified by the implementer against the real handler over loopback.",
+    "The browser rejected an incorrect password, accepted the test password, enabled assessment submission, and prompted again after reload."
+  ],
+  "remaining": [
+    "Pass hosted CI before merge. Before deploying, verify a production allowance guard and headroom for the public Worker. Provision the secret through the Worker secret mechanism and release the paired frontend and Worker.",
+    "Verify the live unlock flow and rejection of direct unauthorized audit calls after release. Never treat a frontend-only deploy as securing the direct API."
+  ],
+  "resumeCommands": ["npm run evaluate -- --change preview-password --base origin/main", "npm run evaluate -- --change preview-password-egress --base origin/main", "npm run ci:gate -- origin/main"]
+}
