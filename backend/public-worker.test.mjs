@@ -5,16 +5,21 @@ import worker from './public-worker.mjs';
 const origin = 'https://aeo-scoring-preview-20261105-kk7.pages.dev';
 const url = 'https://api.example.com/api/v1/audits';
 const id = '123e4567-e89b-42d3-a456-426614174000';
+const password = 'test-preview-password';
+const accessUrl = 'https://api.example.com/api/v1/preview-access';
+const authorized = { Authorization: 'Bearer ' + password };
+const configured = { AUDIT_PREVIEW_PASSWORD: password };
 const ctx = { waitUntil() {} };
 const send = (path, init = {}, env = {}) => worker.fetch(new Request(url + path, init), env, ctx);
 
-test('preflight permits only the preview origin, contract methods and Content-Type without storage', async () => {
+test('preflight permits only the preview origin, contract methods and allowed headers without storage', async () => {
   const env = { get AUDIT_DB() { throw new Error('storage accessed'); } };
-  for (const [path, method, headers] of [['', 'POST', 'Content-Type'], ['/' + id, 'GET', '']]) {
+  for (const [path, method, headers] of [['', 'POST', 'Content-Type, Authorization'], ['/' + id, 'GET', 'Authorization']]) {
     const response = await send(path, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': method, 'Access-Control-Request-Headers': headers } }, env);
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('access-control-allow-origin'), origin);
     assert.equal(response.headers.get('access-control-allow-methods'), method);
+    assert.match(response.headers.get('access-control-allow-headers'), /Authorization/);
     assert.equal(response.headers.get('access-control-allow-credentials'), null);
     assert.equal(response.headers.get('vary'), 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
   }
@@ -22,7 +27,7 @@ test('preflight permits only the preview origin, contract methods and Content-Ty
     { Origin: 'https://evil.example', 'Access-Control-Request-Method': 'POST' },
     { Origin: origin + '.evil.example', 'Access-Control-Request-Method': 'POST' },
     { Origin: origin, 'Access-Control-Request-Method': 'GET' },
-    { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type, authorization' },
+    { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type, x-unexpected' },
   ]) {
     const response = await send('', { method: 'OPTIONS', headers }, env);
     assert.equal(response.status, 403);
@@ -33,10 +38,10 @@ test('preflight permits only the preview origin, contract methods and Content-Ty
 
 test('actual contract responses expose Retry-After only to the exact origin and preserve errors', async () => {
   for (const [path, init, status] of [
-    ['', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: '{}' }, 400],
-    ['/' + id, { headers: { Origin: origin } }, 503],
+    ['', { method: 'POST', headers: { ...authorized, Origin: origin, 'Content-Type': 'application/json' }, body: '{}' }, 400],
+    ['/' + id, { headers: { ...authorized, Origin: origin } }, 503],
   ]) {
-    const response = await send(path, init);
+    const response = await send(path, init, configured);
     assert.equal(response.status, status);
     assert.equal(response.headers.get('access-control-allow-origin'), origin);
     assert.equal(response.headers.get('access-control-expose-headers'), 'Retry-After');
@@ -53,4 +58,44 @@ test('actual contract responses expose Retry-After only to the exact origin and 
   const nonBrowser = await send('', { method: 'OPTIONS' });
   assert.equal(nonBrowser.status, 405);
   assert.equal(nonBrowser.headers.get('allow'), 'POST');
+});
+
+test('unlock verifies the shared password without touching audit storage or allowances', async () => {
+  const env = {
+    ...configured,
+    get AUDIT_DB() { assert.fail('Unlock accessed audit storage'); },
+  };
+  const request = (method, headers) => worker.fetch(new Request(accessUrl, { method, headers }), env, ctx);
+  const preflight = await request('OPTIONS', { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization' });
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+  for (const authorization of [undefined, 'Bearer incorrect-password', 'Basic ' + password]) {
+    const response = await request('POST', { Origin: origin, ...(authorization && { Authorization: authorization }) });
+    assert.equal(response.status, 401);
+    assert.equal(response.headers.get('access-control-allow-origin'), origin);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  const unlocked = await request('POST', { ...authorized, Origin: origin });
+  assert.equal(unlocked.status, 204);
+  assert.equal(await unlocked.text(), '');
+  assert.equal(unlocked.headers.get('cache-control'), 'no-store');
+});
+
+test('direct submissions and report reads fail closed before audit storage', async () => {
+  for (const [path, method] of [['', 'POST'], ['/' + id, 'GET']]) {
+    for (const [secret, headers, expectedStatus] of [
+      [password, {}, 401],
+      [password, { Authorization: 'Bearer incorrect-password' }, 401],
+      [undefined, authorized, 503],
+      ['weak', authorized, 503],
+    ]) {
+      const env = {
+        AUDIT_PREVIEW_PASSWORD: secret,
+        get AUDIT_DB() { assert.fail('Unauthorized request accessed audit storage'); },
+      };
+      const response = await send(path, { method, headers }, env);
+      assert.equal(response.status, expectedStatus);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+    }
+  }
 });

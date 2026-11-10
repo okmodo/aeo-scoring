@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Authenticate the reserved-destination regression fixture.",
+  "state": "The existing reserved-destination regression now supplies a test-only credential to reach the same validation path.",
+  "decisions": ["Preserve the existing 400 invalid_input result and the original assertions against database admission and starting an audit."],
+  "constraints": ["The test-only credential is not a deployment secret. Egress behavior is unchanged."],
+  "completed": ["Independent review and the targeted Worker and egress tests passed."],
+  "remaining": ["Run the source-bound feasibility evaluation and hosted PR checks."],
+  "resumeCommands": ["npm run evaluate -- --change preview-password-egress --base origin/main"]
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "preview-password-egress",
+  "task": "Keep the existing reserved-destination regression exercising the public audit handler after preview authentication is added.",
+  "scope": ["backend/public-egress.test.mjs", "evals/changes/preview-password-egress/**"],
+  "nonGoals": ["Change URL validation, egress behavior or its expected result."],
+  "outcomes": [{"id":"O1","description":"An authenticated request to a reserved destination still returns invalid_input before database use or retrieval.","verification":"automated","evidence":"Existing public egress regression with a test-only shared credential."}],
+  "process": [{"id":"P1","description":"Record the test fixture adjustment before editing it and preserve its original assertions.","verification":"human","evidence":"Git chronology and source review."}],
+  "styleEfficiency": [{"id":"E1","description":"Adjust the authenticated test input only.","verification":"human","evidence":"Diff review."}],
+  "commands": ["npm run test:feasibility"],
+  "exitTest": {"required":false,"reason":"An authentication fixture adjustment does not alter agent workflow or resumability."}
+}

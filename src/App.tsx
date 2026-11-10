@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { total } from "./sample";
 import "./style.css";
-import { getAudit, pollDelay, requestAudit } from "./audit";
+import { getAudit, pollDelay, PreviewPasswordRequired, requestAudit } from "./audit";
+import { PreviewPassword } from "./PreviewPassword";
 import { LiveReport } from "./live-report/LiveReport";
 import type { Assessment } from "../contracts/v1/types";
 export function App() {
@@ -9,6 +10,7 @@ export function App() {
       "entry",
     ),
     [url, setUrl] = useState("");
+  const [password, setPassword] = useState<string | null>(null);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -23,13 +25,14 @@ export function App() {
   }, [screen]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!password) return;
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setError("");
     setSubmitting(true);
     try {
-      let next = await requestAudit(url, request.signal);
+      let next = await requestAudit(url, password, request.signal);
       if (request.signal.aborted) return;
       setAssessment(next);
       setScreen("live");
@@ -42,12 +45,13 @@ export function App() {
           const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
           request.signal.addEventListener("abort", onAbort, { once: true });
         });
-        next = await getAudit(next.statusUrl, request.signal);
+        next = await getAudit(next.statusUrl, password, request.signal);
         if (request.signal.aborted) return;
         setAssessment(next);
       }
     } catch (err) {
       if (!request.signal.aborted) {
+        if (err instanceof PreviewPasswordRequired) setPassword(null);
         setError(err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
         setScreen("entry");
       }
@@ -56,6 +60,7 @@ export function App() {
   function back() { controller.current?.abort(); setSubmitting(false); setScreen("entry"); }
   return (
     <>
+      {password === null && <PreviewPassword onUnlock={setPassword} />}
       {screen !== "live" && <>
       <div className="sample-banner">
         LIVE PRODUCT PAGE ASSESSMENT <span> · </span> A fictional sample is also available below.
@@ -103,8 +108,8 @@ export function App() {
                   <label htmlFor="url">Product page URL
                   </label>
                   <input id="url" type="url" required placeholder="https://example.com/products/your-product" value={url} onChange={(e) => setUrl(e.target.value)} />
-                  <p className="form-note">The URL is sent to our audit service and the page is fetched. Submit only public URLs suitable for an unlisted report; anyone with the report link can view it.</p>
-                  <button type="submit" disabled={submitting}>{submitting ? "Starting assessment…" : "Assess product page"} <span>↗</span>
+                  <p className="form-note">The URL is sent to our audit service and the page is fetched. Submit only public product page URLs. The shared password is required to view the report.</p>
+                  <button type="submit" disabled={submitting || password === null}>{submitting ? "Starting assessment…" : "Assess product page"} <span>↗</span>
                   </button>
                   {error && <p role="alert">{error}</p>}
                 </div>
@@ -208,7 +213,7 @@ export function App() {
                 </details>
                 <details>
                   <summary>What happens to the URL I enter?</summary>
-                  <p>It is sent to the audit service and used to fetch the page. Reports are unlisted; anyone with the report link can view one.</p>
+                  <p>It is sent to the audit service and used to fetch the page. Reports are unlisted and require testing access.</p>
                 </details>
                 <details>
                   <summary>What does the score measure?</summary>

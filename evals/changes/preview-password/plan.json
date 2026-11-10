@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "preview-password",
+  "task": "Require one shared testing password for preview audits.",
+  "scope": ["src/**", "backend/public-worker.mjs", "backend/public-worker.test.mjs", "backend/public-deploy/cloudflare.config.ts", "test/preview.test.mjs", "evals/changes/preview-password/**"],
+  "nonGoals": ["Account login, password recovery, paid service activation, scoring or allowance changes, unrelated Cloudflare resources."],
+  "outcomes": [
+    {"id":"O1","description":"A simple password modal unlocks the frontend only after server verification.","verification":"automated","evidence":"Rendered entry and transport tests exercise the password field, unlock response, rejection and protected audit calls."},
+    {"id":"O2","description":"The public Worker rejects unauthorized submission and report requests before accessing the audit service.","verification":"automated","evidence":"Worker tests exercise missing, incorrect and correct credentials, absent configuration and exact-origin CORS with storage access sentinels."}
+  ],
+  "process": [{"id":"P1","description":"Plan before implementation, pass hosted CI and independent review before merge or deployment, preserve the current allowance safeguards.","verification":"human","evidence":"Commit history, source-bound checks and independent review."}],
+  "styleEfficiency": [{"id":"E1","description":"Use a native modal and one server-side secret, without new dependencies or persistent browser credentials.","verification":"human","evidence":"Source review and modal smoke test."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run lint", "npm run typecheck", "npm run build", "npm run test:preview", "npm run test:feasibility"],
+  "exitTest": {"required":false,"reason":"Preview access control changes neither agent workflow nor its portability or resumability."}
+}
