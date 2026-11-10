@@ -52,20 +52,19 @@ function payloadFor(prepared) {
 export function buildContentFactsRequest(prepared) {
     const payload = payloadFor(prepared);
     const keys = [...new Set(Object.values(payload.allowedKeys).flat())];
-    const kind = { type: 'string', enum: Object.keys(payload.allowedKeys) };
-    const key = { type: 'string', enum: keys };
+    const cite = { type: 'array', items: { type: 'string', enum: payload.observations.map(o => o.id) }, minItems: 1, maxItems: 1 };
     const inspectionKinds = Object.keys(payload.allowedKeys).filter(k => k !== 'claim');
     const inspectionKeys = keys.filter(k => k !== 'claim' && !payload.conditionKeys.includes(k));
     const stringOrNull = { type: ['string', 'null'] };
     const schema = { type: 'object', additionalProperties: false, required: ['facts', 'inspections', 'conditionChecks'], properties: {
         conditionChecks: { type: 'object', additionalProperties: false, required: payload.conditionKeys, properties: Object.fromEntries(payload.conditionKeys.map(id => [id, {type:'string', enum:['absent','unknown']}])) },
-        facts: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['kind', 'key', 'quoteIds'], properties: {
-            kind, key, quoteIds: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 1 },
-            context: { type: 'object', additionalProperties: false, required: ['variant', 'market', 'conditions'], properties: { variant: stringOrNull, market: stringOrNull, conditions: stringOrNull } }
-        } } },
-        inspections: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['kind', 'key', 'scope', 'status'], properties: {
-            kind: { type:'string', enum:inspectionKinds }, key: { type:'string', enum:inspectionKeys }, scope: { type: 'string', enum: ['product', 'shipping', 'returns'] }, status: { type: 'string', enum: ['absent', 'unknown'] }
-        } } }
+        facts: { type: 'array', maxItems: MAX_FACTS, items: { oneOf: Object.entries(payload.allowedKeys).map(([kind, allowed]) => ({ type: 'object', additionalProperties: false, required: ['kind', 'key', 'quoteIds'], properties: {
+            kind: { type:'string', enum:[kind] }, key: { type:'string', enum:allowed }, quoteIds: cite,
+            ...(kind === 'repeated' ? {context: { type: 'object', additionalProperties: false, required: ['variant', 'market', 'conditions'], properties: { variant: stringOrNull, market: stringOrNull, conditions: stringOrNull } }} : {})
+        } })) } },
+        inspections: { type: 'array', maxItems: 300, items: { oneOf: inspectionKinds.map(kind => ({ type: 'object', additionalProperties: false, required: ['kind', 'key', 'scope', 'status'], properties: {
+            kind: { type:'string', enum:[kind] }, key: { type:'string', enum:payload.allowedKeys[kind].filter(k=>inspectionKeys.includes(k)) }, scope: { type: 'string', enum: kind === 'policy' ? ['product','shipping','returns'] : ['product'] }, status: { type: 'string', enum: ['absent', 'unknown'] }
+        } })) } }
     } };
     const modelPayload = { ...payload, observations: payload.observations.map(({id,scope,text}) => ({id,scope,text})) };
     const request = { messages: [{ role: 'system', content: instruction }, { role: 'user', content: JSON.stringify(modelPayload) }], response_format: { type: 'json_schema', json_schema: schema }, temperature: 0, max_tokens: 1536, stream: false };

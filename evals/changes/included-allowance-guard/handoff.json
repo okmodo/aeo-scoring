@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "task": "Implement 60% included-allowance safeguards and continue backend correctness",
+  "state": "Implementation complete for disabled-by-default offline safeguards on codex/complete-scoring-engine; not deployed. Production entry intentionally has no trusted allowance guard, so the proposed build pauses audits with 503 and skips maintenance. Existing live services/frontend untouched. Account-wide $5 guarantee and production activation are NOT established.",
+  "decisions": [
+    "Workers Paid $5 included allowances only; operate at 60% of each verified shared allowance, no paid overages/external APIs/add-ons.",
+    "Use atomic multi-metric SQLite reservations, indexed counters, immutable cycle allocation, idempotency and no refunds; carry storage across cycles and reset AI by UTC day.",
+    "Require independent account evidence acquisition and monotonic reconciliation; verified:true is only an input assertion. Missing evidence must deny work.",
+    "Reserve service/poll/cache and AI work before optional operations; legacy daily-only store authority now always denies. Both calibration gates remain false.",
+    "Proposed project source configs cap CPU at 2000ms and disable observability; no deployment. Structured model output now constrains kind/key pairs and known citation IDs."
+  ],
+  "constraints": [
+    "No frontend/shared dependency changes, unrelated Cloudflare changes, merge, deployment, live model or browser calls.",
+    "Inbound requests and guard operations cost resources before admission; unrelated services share allowances. This cannot promise a fixed account invoice.",
+    "Account billing API returned 403 in prior read-only check; no current trusted allowance evidence. Do not activate from fabricated fixture evidence.",
+    "D1 operation/physical-storage costs, retention/cleanup, trusted reconciliation, ingress protection and representative model calibration remain unproven."
+  ],
+  "completed": [
+    "Immutable plan 38c0711 committed before implementation; Terra agents authored ledger and service integration and independently reviewed working tree.",
+    "Versioned operating ceilings: requests6m/cycle CPU18mms/cycle D1reads15b/writes30m/storage3GB AI6000/day.",
+    "True20-connection SQLite contention tests passed for both request and AI limits, all counters coherent and no partial reservations.",
+    "47 content extraction/grading tests pass; revised protocol constrains role/key relationships and rejects unknown citation IDs without weakening evidence validation.",
+    "Local public and preview Worker builds succeeded; emitted config inspected to confirm cpuMs2000 and disabled logs/traces. No live resources touched."
+  ],
+  "remaining": [
+    "Run source-bound evaluations, fresh-agent exit test for updated AGENTS boundary, exact-commit independent review and hosted CI; keep draft.",
+    "Acquire trusted Billing Read evidence and actual billing cycle; implement/review reconciliation that rejects decreasing cumulative metrics within a period.",
+    "Prove actual D1/ingress/storage/retention bounds and safe account-wide allocation before constructing a production guard or enabling live experiments.",
+    "Finish representative content-model calibration and complete real-page end-to-end validation using explicitly reserved included usage."
+  ],
+  "resumeCommands": [
+    "node --test backend/allowance-store.test.mjs backend/service.test.mjs backend/content-facts-runner.test.mjs backend/semantic-runner.test.mjs",
+    "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs",
+    "npm run evaluate -- --change included-allowance-guard --base origin/main",
+    "npm run evaluate -- --change content-facts-runtime --base origin/main",
+    "npm run evaluate -- --change complete-scoring-engine --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ]
+}

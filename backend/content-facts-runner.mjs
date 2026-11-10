@@ -26,8 +26,8 @@ function contentOutput(output) {
     return output?.choices?.[0]?.message?.content ?? output;
 }
 /** The optional calibration and timer arguments are for internal offline tests only. */
-export async function assessWithContentFacts({ AI, store, now = Date.now, snapshot, extracted, report, calibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED, setTimer = setTimeout, clearTimer = clearTimeout }) {
-    if (!AI?.run || !store?.reserveSemantic) return { status: 'unavailable', reason: 'Content fact assessment is unavailable; unresolved checks remain unmeasured.' };
+export async function assessWithContentFacts({ AI, allowance, now = Date.now, snapshot, extracted, report, calibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED, setTimer = setTimeout, clearTimer = clearTimeout }) {
+    if (!AI?.run || !allowance?.reserve) return { status: 'unavailable', reason: 'Content fact assessment is unavailable; unresolved checks remain unmeasured.' };
     if (!calibrationApproved) return { status: 'unavailable', reason: 'Content fact assessment is awaiting independent calibration; unresolved checks remain unmeasured.' };
     let prepared, input, reserved;
     try {
@@ -40,7 +40,9 @@ export async function assessWithContentFacts({ AI, store, now = Date.now, snapsh
         return { status: 'unavailable', reason: 'Content fact assessment could not prepare a safe bounded request.' };
     }
     try {
-        if (!await store.reserveSemantic({ day: Math.floor(now() / 86_400_000), neurons: reserved })) return { status: 'budget_exhausted', reason: 'The daily content assessment allowance has been reached; unresolved checks remain unmeasured.' };
+        const admission = await allowance.reserve({ id: crypto.randomUUID(), costs: { aiNeurons: reserved }, now: now() });
+        if (admission?.accepted !== true || admission.duplicate !== false)
+            return admission?.reason === 'allowance_exhausted' ? { status: 'budget_exhausted', reason: 'The daily assessment allowance has been reached; unresolved checks remain unmeasured.' } : { status: 'unavailable', reason: 'Assessment budget could not be reserved.' };
     } catch {
         return { status: 'unavailable', reason: 'Content assessment budget could not be reserved.' };
     }

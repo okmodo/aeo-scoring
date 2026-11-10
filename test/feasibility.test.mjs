@@ -175,3 +175,4 @@ await import('../backend/public-worker.test.mjs');
 await import('../backend/content-facts.test.mjs');
 await import('../backend/fact-grading.test.mjs');
 await import('../backend/content-facts-runner.test.mjs');
+await import('../backend/allowance-store.test.mjs');

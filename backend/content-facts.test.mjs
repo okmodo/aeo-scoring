@@ -8,6 +8,18 @@ const comparison = (key,value,id,context = {variant:null,market:null,conditions:
 const decode = (p, facts, inspections = []) => decodeContentFacts(p,buildContentFactsRequest(p),JSON.stringify({facts,inspections}));
 const inspection = (kind,key,status='absent',scope='product') => ({kind,key,scope,status});
 const status = (out,kind,key,scope='product') => out.inspections.find(i=>i.kind===kind && i.key===key && i.scope===scope).status;
+test('provider schema binds keys to their roles and restricts citations to captured observations', () => {
+    const request = buildContentFactsRequest(fixture());
+    const branches = request.response_format.json_schema.properties.facts.items.oneOf;
+    const attribute = branches.find(b=>b.properties.kind.enum[0]==='attribute');
+    const fn = branches.find(b=>b.properties.kind.enum[0]==='function');
+    assert.equal(attribute.properties.key.enum.includes('function'),false);
+    assert.deepEqual(fn.properties.key.enum,['function']);
+    assert.equal(attribute.properties.quoteIds.items.enum.includes('q999999'),false);
+    assert.equal(attribute.properties.quoteIds.items.enum.includes('q3'),true);
+    assert.equal(attribute.properties.context,undefined);
+    assert.ok(branches.find(b=>b.properties.kind.enum[0]==='repeated').properties.context);
+});
 test('bounded JSON-mode request carries source URL, observations and parsed price roles once', () => {
     const p=fixture(), r=buildContentFactsRequest(p), payload=JSON.parse(r.messages[1].content);
     assert.equal(CONTENT_FACTS_MODEL,'@cf/meta/llama-3.3-70b-instruct-fp8-fast');
@@ -159,9 +171,9 @@ test('explicit output contract blocks the observed slash-kind and present-status
     assert.deepEqual(input.allowedKeys.policy,['shipping','returns']);
     assert.ok(input.allowedKeys.attribute.includes('upper'));
     assert.ok(input.allowedKeys.decision.includes('running-fit'));
-    assert.deepEqual(schema.properties.inspections.items.properties.status.enum,['absent','unknown']);
-    assert.ok(schema.properties.facts.items.properties.kind.enum.includes('attribute'));
-    assert.ok(!schema.properties.facts.items.properties.kind.enum.includes('attribute/category attribute ID'));
+    for (const branch of schema.properties.inspections.items.oneOf) assert.deepEqual(branch.properties.status.enum,['absent','unknown']);
+    assert.ok(schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('attribute')));
+    assert.ok(!schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('attribute/category attribute ID')));
     for(const bad of [
       {facts:[{kind:'identity/name',key:'name',quoteIds:['q1']}],inspections:[]},
       {facts:[{kind:'attribute/category attribute ID',key:'upper',quoteIds:['q3']}],inspections:[]},
@@ -240,11 +252,11 @@ test('a shipping charge cannot become a selected merchandise price', async () =>
 
 test('condition checks cannot conflict with claim or conditional inspections', () => {
     const p=fixture(), request=buildContentFactsRequest(p), schema=request.response_format.json_schema;
-    const ins=schema.properties.inspections.items.properties;
+    const ins={kind:{enum:schema.properties.inspections.items.oneOf.flatMap(b=>b.properties.kind.enum)},key:{enum:schema.properties.inspections.items.oneOf.flatMap(b=>b.properties.key.enum)}};
     assert.equal(ins.kind.enum.includes('claim'),false);
     assert.equal(ins.key.enum.includes('claim'),false);
     assert.equal(ins.key.enum.includes('running-limits'),false);
-    assert.equal(schema.properties.facts.items.properties.kind.enum.includes('claim'),true);
+    assert.equal(schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('claim')),true);
     assert.match(request.messages[0].content,/generic softness, comfort, or breathability alone are not material claims/);
     assert.match(request.messages[0].content,/ordinary care alone is not a restricted-care/);
     assert.doesNotMatch(request.messages[0].content,/"kind":"claim","key":"claim","scope":"product","status":"absent"/);

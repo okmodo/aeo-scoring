@@ -42,12 +42,10 @@ export function createStore(db) {
       return created ? { kind: 'created', audit: audit(created, now) } :
         { kind: 'cached', audit: audit(results[3].results[0], now) };
     },
-    async reserveSemantic({ day, neurons }) {
-      if (!Number.isSafeInteger(day) || day < 0 || !Number.isSafeInteger(neurons) || neurons < 1 || neurons > 8000) throw new TypeError('Invalid semantic reservation');
-      const result = await db.prepare(`INSERT INTO semantic_budget (day, reserved_neurons) VALUES (?1, ?2)
-        ON CONFLICT(day) DO UPDATE SET reserved_neurons = semantic_budget.reserved_neurons + excluded.reserved_neurons
-        WHERE semantic_budget.reserved_neurons + excluded.reserved_neurons <= 8000`).bind(day, neurons).run();
-      return result.meta.changes === 1;
+    async reserveSemantic() {
+      // Historical daily-only reservations cannot establish account-wide headroom.
+      // Retain the API fail-closed for callers migrating to the allowance guard.
+      return false;
     },
     async get(id, now) {
       const row = await db.prepare('SELECT * FROM audits WHERE id = ?1 AND expires_at >= ?2').bind(id, now).first();

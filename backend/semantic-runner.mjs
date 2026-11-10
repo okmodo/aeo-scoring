@@ -17,8 +17,8 @@ export function semanticReservation(input) {
         throw new Error('Semantic request exceeds budgeted input');
     return Math.ceil((bytes + 2048) * 31818 / 1000000 + (input.max_output_tokens ?? input.max_tokens) * 68182 / 1000000) + 64;
 }
-export async function assessWithSemanticJudge({ AI, store, now = Date.now, snapshot, extracted, report, calibrationApproved = SEMANTIC_CALIBRATION_APPROVED }) {
-    if (!AI?.run || !store?.reserveSemantic)
+export async function assessWithSemanticJudge({ AI, allowance, now = Date.now, snapshot, extracted, report, calibrationApproved = SEMANTIC_CALIBRATION_APPROVED }) {
+    if (!AI?.run || !allowance?.reserve)
         return { status: 'unavailable', reason: 'Semantic assessment is unavailable; unresolved content checks remain unmeasured.' };
     if (!calibrationApproved)
         return { status: 'unavailable', reason: 'Semantic scoring is awaiting independent calibration. Unresolved content checks remain unmeasured.' };
@@ -31,9 +31,9 @@ export async function assessWithSemanticJudge({ AI, store, now = Date.now, snaps
     let reserved;
     try {
         reserved = semanticReservation(input);
-        const day = Math.floor(now() / 86400000);
-        if (!await store.reserveSemantic({ day, neurons: reserved }))
-            return { status: 'budget_exhausted', reason: 'The daily semantic assessment allowance has been reached. Unresolved checks remain unmeasured.' };
+        const admission = await allowance.reserve({ id: crypto.randomUUID(), costs: { aiNeurons: reserved }, now: now() });
+        if (admission?.accepted !== true || admission.duplicate !== false)
+            return admission?.reason === 'allowance_exhausted' ? { status: 'budget_exhausted', reason: 'The daily assessment allowance has been reached; unresolved checks remain unmeasured.' } : { status: 'unavailable', reason: 'Assessment budget could not be reserved.' };
     }
     catch {
         return { status: 'unavailable', reason: 'Semantic assessment budget could not be reserved.' };

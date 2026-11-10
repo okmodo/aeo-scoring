@@ -1,4 +1,5 @@
 import { createStore } from './store.mjs';
+import { MAX_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
 import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
@@ -8,6 +9,12 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const BODY_LIMIT = 4096;
 const encoding = new TextEncoder();
+// Offline envelopes only. Production remains disabled until actual D1 query,
+// index, rejected-request and account-wide ingress costs have been bounded.
+const REPORT_LIMIT = 256 * 1024;
+const INVOCATION_COSTS = Object.freeze({ requests: 1, cpuMs: MAX_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 10, d1StorageBytes: 512 * 1024 });
+const POLL_COSTS = Object.freeze({ requests: 1, cpuMs: MAX_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 2, d1StorageBytes: 4096 });
+
 
 const MESSAGES = {
   invalid_input: 'Enter a valid public HTTP or HTTPS product-page URL.',
@@ -117,9 +124,20 @@ function retrievalProblem(error) {
 }
 
 export function createAuditService({
-  store, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
+  store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit,
 }) {
+  async function admit(costs) {
+    if (typeof allowance?.reserve !== 'function') return 'unavailable';
+    try {
+      const result = await allowance.reserve({ id: crypto.randomUUID(), costs, now: now() });
+      if (result?.accepted === true && result.duplicate === false) return 'accepted';
+      return result?.accepted === false && result.reason === 'allowance_exhausted' ? 'exhausted' : 'unavailable';
+    } catch { return 'unavailable'; }
+  }
+  function admissionError(result) {
+    return result === 'exhausted' ? errorResponse(429, 'rate_limited') : errorResponse(503, 'service_unavailable');
+  }
   async function run(audit) {
     let snapshot;
     let report;
@@ -133,10 +151,11 @@ export function createAuditService({
       snapshot = { ...snapshot, observedAt };
       report = scorePage(snapshot, extracted);
       if (AI && extracted.productHtml) {
-        const contentFacts = await assessWithContentFacts({AI,store,now,snapshot,extracted,report});
+        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report});
         if (contentFacts.status === 'assessed') report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
         else report.coverage.limitations.push(contentFacts.reason);
       }
+      if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');
     } catch (error) {
       await store.finish(audit.id, {
         status: 'unable_to_assess', error: retrievalProblem(error), completedAt: now(),
@@ -165,6 +184,8 @@ export function createAuditService({
         if (!store || !egress?.fetch || typeof HTMLRewriter !== 'function' || typeof defer !== 'function' ||
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
+        const admission = await admit(INVOCATION_COSTS);
+        if (admission !== 'accepted') return admissionError(admission);
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
@@ -173,7 +194,10 @@ export function createAuditService({
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
         });
         if (result.kind === 'limited') return errorResponse(429, 'rate_limited', result.retryAfter);
-        if (result.kind === 'cached') return json(assessment(result.audit, true), 200);
+        if (result.kind === 'cached') {
+          if (encoding.encode(JSON.stringify(result.audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
+          return json(assessment(result.audit, true), 200);
+        }
         // If persistence becomes unavailable, polling resolves the abandoned lease.
         defer(run(result.audit).catch(() => {}));
         return json(assessment(result.audit), 202, { location: ROUTE + '/' + result.audit.id });
@@ -184,7 +208,10 @@ export function createAuditService({
         const id = path.slice(ROUTE.length + 1);
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return errorResponse(404, 'not_found');
         if (!store) return errorResponse(503, 'service_unavailable');
+        const admission = await admit(POLL_COSTS);
+        if (admission !== 'accepted') return admissionError(admission);
         const audit = await store.get(id, now());
+        if (audit && encoding.encode(JSON.stringify(audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
         return audit ? json(assessment(audit), 200) : errorResponse(404, 'not_found');
       }
 
@@ -209,9 +236,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
 export default {
   fetch: handleAuditRequest,
   async scheduled(_event, env) {
-    const now = Date.now();
-    await createStore(env.AUDIT_DB).prune({
-      now, admissionBefore: Math.floor(now / HOUR) * HOUR, limit: 250,
-    });
+    // Disabled until the D1 and ingress accounting envelope is independently bounded.
+    void env;
   },
 };
