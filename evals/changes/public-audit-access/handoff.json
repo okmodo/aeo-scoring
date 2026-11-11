@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "changeId": "public-audit-access",
+  "decisions": [
+    "User explicitly accepted analytics sampling and reporting lag for the 60% production check.",
+    "CPU stays at 1000ms and existing conservative atomic reservations stay in place.",
+    "A successful empty aggregate is estimated zero, while API failures deny admission.",
+    "Public configuration preserves ungated access. Preview password mode remains supported."
+  ],
+  "state": "Implementation independently reviewed at 1fa2fc9, 21 focused tests passed. Actual account collector with updated token returned all six estimated counters and current subscription period. Production D1 needs the existing allowance schema. Full evaluation and CI pending.",
+  "remaining": [
+    "Complete independent review, all source-bound evaluations and hosted CI.",
+    "Confirm private usage token binding and project database schema.",
+    "Merge PR27 and deploy only the public audit Worker, then verify audit and deployed CPU."
+  ],
+  "replayCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs backend/public-worker.test.mjs",
+    "npm run evaluate -- --change public-audit-access --base origin/main"
+  ],
+  "traceGaps": [
+    "Read-only account probes are summarized without raw responses or secrets. Deployment is outside CI."
+  ]
+}
