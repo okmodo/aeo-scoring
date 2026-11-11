@@ -170,3 +170,21 @@ test('direct submissions and report reads fail closed before audit storage', asy
     }
   }
 });
+
+test('shared access accepts shorter configured credentials while rejecting invalid boundaries', async () => {
+  const unlock = (secret, provided) => worker.fetch(new Request(accessUrl, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + provided },
+  }), {
+    AUDIT_PREVIEW_PASSWORD: secret,
+    get AUDIT_DB() { assert.fail('Password verification accessed audit storage'); },
+  }, ctx);
+  for (const length of [8, 10, 128]) {
+    const secret = 'x'.repeat(length);
+    assert.equal((await unlock(secret, secret)).status, 204);
+    assert.equal((await unlock(secret, 'incorrect')).status, 401);
+  }
+  for (const secret of ['', 'x'.repeat(7), 'x'.repeat(129), 'invalid password']) {
+    assert.equal((await unlock(secret, secret)).status, 503);
+  }
+});

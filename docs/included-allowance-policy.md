@@ -26,7 +26,7 @@ Service submission, polling and cached-report reads require a successful, nondup
 
 ## Production configuration
 
-The Worker requires its project D1 binding, a pinned account and Workers Paid subscription, and the private `AUDIT_USAGE_READ_TOKEN` secret with account-scoped Billing Read and Account Analytics Read. The public configuration explicitly enables ungated audit access and keeps the existing service responses. Missing scope, credentials or usable estimates returns `503 service_unavailable`. Exhausting an allocation returns `429 rate_limited`. Scheduled maintenance remains paused. [Worker setup and access](usage-collector-access.md)
+The Worker requires its project D1 binding, a pinned account and Workers Paid subscription, and the private `AUDIT_USAGE_READ_TOKEN` secret with account-scoped Billing Read and Account Analytics Read. The public configuration requires the shared testing password before audit access. The password is stored in the AUDIT_PREVIEW_PASSWORD Worker secret. Missing scope, credentials or usable estimates returns `503 service_unavailable`. Exhausting an allocation returns `429 rate_limited`. Scheduled maintenance remains paused. [Worker setup and access](usage-collector-access.md)
 
 Account reads verified all six analytics quantities and the current subscription period with the updated token. Production verification must confirm the deployed 1,000 ms CPU limit and exercise the same ledger on D1. Comprehensive model and report calibration remains separate work.
 
