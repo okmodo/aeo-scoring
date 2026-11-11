@@ -83,6 +83,10 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
         return await guard.reserve(request);
       } catch (error) {
         const failure = failureCode(error);
+        const locations = typeof error?.stack === 'string' ? error.stack.split('\n').slice(1)
+          .map(line => line.match(/\bindex\.js:(\d{1,7}):(\d{1,7})\b/))
+          .filter(Boolean).slice(0, 3).map(match => ({ line: Number(match[1]), column: Number(match[2]) })) : [];
+        const diagnostic = locations.length ? { failure, stage, locations } : { failure, stage };
         await db.prepare(`INSERT INTO allowance_receipts
           (account_id, generation, active, subscription_id, observed_at, diagnostic_status, diagnostic_highwater_json)
           VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable', ?4)
@@ -90,7 +94,7 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
             subscription_id = excluded.subscription_id, observed_at = excluded.observed_at,
             diagnostic_status = excluded.diagnostic_status, diagnostic_highwater_json = excluded.diagnostic_highwater_json
           WHERE allowance_receipts.observed_at IS NULL OR allowance_receipts.observed_at <= excluded.observed_at`)
-          .bind(accountId, subscriptionId, now, JSON.stringify({ failure, stage })).run().catch(() => {});
+          .bind(accountId, subscriptionId, now, JSON.stringify(diagnostic)).run().catch(() => {});
         return { accepted: false, reason: 'invalid_evidence' };
       }
     },
