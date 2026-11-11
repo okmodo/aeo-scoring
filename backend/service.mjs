@@ -1,5 +1,5 @@
 import { createStore } from './store.mjs';
-import { MAX_INVOCATION_CPU_MS } from './allowance-policy.mjs';
+import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
 import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
@@ -12,8 +12,8 @@ const encoding = new TextEncoder();
 // Offline envelopes only. Production remains disabled until actual D1 query,
 // index, rejected-request and account-wide ingress costs have been bounded.
 const REPORT_LIMIT = 256 * 1024;
-const INVOCATION_COSTS = Object.freeze({ requests: 1, cpuMs: MAX_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 10, d1StorageBytes: 512 * 1024 });
-const POLL_COSTS = Object.freeze({ requests: 1, cpuMs: MAX_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 2, d1StorageBytes: 4096 });
+const INVOCATION_COSTS = Object.freeze({ requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 10, d1StorageBytes: 512 * 1024 });
+const POLL_COSTS = Object.freeze({ requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 2, d1StorageBytes: 4096 });
 
 
 const MESSAGES = {

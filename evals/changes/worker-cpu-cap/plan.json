@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "worker-cpu-cap",
+  "task": "Set a one-second CPU ceiling on the audit Worker and preserve conservative 60% admission accounting.",
+  "scope": [
+    "backend/allowance-policy.mjs",
+    "backend/service.mjs",
+    "docs/included-allowance-policy.md",
+    "evals/changes/worker-cpu-cap/**"
+  ],
+  "nonGoals": [
+    "No wall-clock timeout changes, frontend changes, unrelated Worker changes, live model calls, replacement of the production code bundle or automatic merge."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Project audit Worker configs use 1,000 CPU ms per invocation and preserve the existing 2,000 ms admission reservation as headroom for Cloudflare enforcement flexibility.",
+      "verification": "automated",
+      "evidence": "Shared settings and local build metadata plus existing admission regressions."
+    },
+    {
+      "id": "O2",
+      "description": "Apply and verify the one-second CPU setting on the existing public audit Worker without replacing its code or bindings.",
+      "verification": "human",
+      "evidence": "Version/settings readback and scope-limited Cloudflare API record; report any API or runtime limitation."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan, source-bound evaluation and independent review on an isolated feature branch.",
+      "verification": "human",
+      "evidence": "Git history, review, handoff and hosted CI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse the existing CPU configuration path and keep elapsed-time retrieval bounds and account budgets intact.",
+      "verification": "human",
+      "evidence": "Small source diff and configuration readback."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Changes a Worker limit and preserves existing admission policy; no agent workflow or continuation change."
+  }
+}

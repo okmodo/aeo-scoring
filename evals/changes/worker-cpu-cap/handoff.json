@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "task": "Cap public audit Worker CPU and persist the configuration in source",
+  "state": "Cloudflare reports cpu_ms=1000 on the active public Worker version. Source change is ready for independent review and PR CI. Production source still lacks verified allowance admission.",
+  "decisions": [
+    "Configure 1000 ms active CPU per invocation. Keep existing network deadlines for stalled retrieval.",
+    "Preserve the 2000 ms CPU reservation as headroom for occasional enforcement overruns. Preserve all 60% account allowance ceilings.",
+    "Update the existing public Worker's limits through the settings endpoint. Leave code uploads and runtime admission activation outside this change."
+  ],
+  "constraints": [
+    "No frontend changes, unrelated services, metered test audits or model calls.",
+    "Cloudflare may allow occasional overruns, and account-wide requests, storage, AI and shared usage remain separately metered. The reservation is not a guaranteed upper bound.",
+    "The live Worker still lacks verified account-wide admission and the current main backend remains paused without an approved evidence source."
+  ],
+  "completed": [
+    "Plan 0205ab8 and source commit 0f5f0d2.",
+    "Local Vite Cloudflare builds with placeholder D1 IDs emitted limits.cpuMs=1000 for both configs. Node assertions exercised POST and GET audit requests with an exhausted allowance. Both returned 429 and reserved 2000 CPU ms in the guard request.",
+    "PATCH /workers/scripts/aeo-audit-public-20261105/settings changed limits.cpu_ms only. Readback confirmed version 3141fc2a-e969-4a97-b838-10aa4189a43d at 100% of traffic with cpu_ms=1000, versus the prior active version 695943c4-b619-4871-bb5e-f03bb9dcad27 with no custom limit. Binding names and types matched."
+  ],
+  "remaining": [
+    "Run required source-bound evaluation and hosted PR CI. Merge only when authorized.",
+    "Verify and wire authoritative usage evidence before activating live 60% admission."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change worker-cpu-cap --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "node --test backend/service.test.mjs backend/allowance-store.test.mjs"
+  ]
+}
