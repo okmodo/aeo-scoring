@@ -54,6 +54,9 @@ test('persists only allowlisted failure codes without credentials or raw provide
   const malformed = setup(async () => { throw new SyntaxError('raw provider payload'); });
   await reserve(malformed.guard, 'd');
   assert.deepEqual(JSON.parse(malformed.sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'analytics_parse_error', stage: 'collect_snapshot' });
+  const receiver = setup(async () => { throw new TypeError('Illegal invocation: raw context'); });
+  await reserve(receiver.guard, 'e');
+  assert.deepEqual(JSON.parse(receiver.sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'analytics_fetch_receiver', stage: 'collect_snapshot' });
 });
 
 test('observed usage and reservations enforce limits', async () => {

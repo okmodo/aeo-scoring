@@ -11,6 +11,19 @@ const validationErrors = new Set([
   'invalid analytics amount', 'analytics amount overflow', 'analytics response unavailable',
   'analytics response too large', 'analytics timeout', 'Invalid analytics snapshot',
 ]);
+function failureCode(error) {
+  const message = error?.message ?? '';
+  if (/^(subscriptions_http_[45]\d\d|analytics_http_[45]\d\d|analytics_authorization_denied)$/.test(message)) return message;
+  if (validationErrors.has(message)) return message.toLowerCase().replaceAll(' ', '_');
+  if (error instanceof SyntaxError) return 'analytics_parse_error';
+  if (error instanceof TypeError) {
+    if (/illegal invocation|incorrect this/i.test(message)) return 'analytics_fetch_receiver';
+    if (/headers?|bytestring|character/i.test(message)) return 'analytics_invalid_header';
+    if (/request context|different request|I\/O/i.test(message)) return 'analytics_request_context';
+    return 'analytics_type_error';
+  }
+  return 'analytics_collection_failed';
+}
 const retainedUsageSql = 'json_object(' + METRICS.map(key => {
   const period = key === 'aiNeurons' ? 'ai_day = excluded.ai_day' :
     'cycle_start = excluded.cycle_start AND cycle_end = excluded.cycle_end';
@@ -69,11 +82,7 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
         stage = 'reserve_allowance';
         return await guard.reserve(request);
       } catch (error) {
-        const failure = /^(subscriptions_http_[45]\d\d|analytics_http_[45]\d\d|analytics_authorization_denied)$/.test(error?.message ?? '')
-          ? error.message : validationErrors.has(error?.message)
-            ? error.message.toLowerCase().replaceAll(' ', '_')
-            : error instanceof TypeError ? 'analytics_type_error'
-              : error instanceof SyntaxError ? 'analytics_parse_error' : 'analytics_collection_failed';
+        const failure = failureCode(error);
         await db.prepare(`INSERT INTO allowance_receipts
           (account_id, generation, active, subscription_id, observed_at, diagnostic_status, diagnostic_highwater_json)
           VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable', ?4)
