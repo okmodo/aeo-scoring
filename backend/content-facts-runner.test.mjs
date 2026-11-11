@@ -96,9 +96,9 @@ async function completeShirtRun(secondOutput) {
     const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
     const {referenceShirtResponse}=await import('./fixtures/content-facts/reference-shirt.mjs');
     const item=(await releaseCases()).find(entry=>entry.id==='basic-tshirts');
-    let calls=0,reservations=0;
+    let calls=0,reservations=0,settled;
     const result=await assessWithContentFacts({...base,snapshot:item.snapshot,extracted:item.extracted,report:{category:'basic-tshirts'},
-        allowance:{reserve:async()=>{reservations++;return {accepted:true,duplicate:false};}},
+        allowance:{reserve:async()=>{reservations++;return {accepted:true,duplicate:false};},settle:async value=>{settled=value;}},
         AI:{run:async(_model,input)=>{
             calls++;
             if(calls===1){
@@ -109,7 +109,7 @@ async function completeShirtRun(secondOutput) {
             assert.equal(calls,2);assert.equal(input.max_tokens,128);
             return secondOutput;
         }}});
-    return {result,calls,reservations,item};
+    return {result,calls,reservations,item,settled};
 }
 test('one focused inspection can finish a complete report within the original reservation', async()=>{
     const {scoreAudit}=await import('./scoring.mjs');
@@ -130,4 +130,36 @@ test('completed bound requires finished provider-root usage within each request 
     const output={usage:{prompt_tokens:10,completion_tokens:20,neurons:200},choices:[{finish_reason:'stop'}]};
     assert.equal(contentFactsCompletedBound(request,output),200);
     for (const altered of [{...output,choices:[]},{...output,choices:[{finish_reason:'stop'},{finish_reason:'stop'}]},{...output,usage:{...output.usage,prompt_tokens:999999}},{...output,usage:{...output.usage,completion_tokens:129}},{...output,usage:{...output.usage,neurons:-1}}]) assert.equal(contentFactsCompletedBound(request,altered),null);
+});
+
+test('settles authenticated usage even when model JSON is invalid, and retains unknown usage', async () => {
+    for (const [output, expected] of [
+        [{response:'invalid',usage:{prompt_tokens:10,completion_tokens:20,neurons:3.1}}, 5],
+        [{response:'invalid',usage:{prompt_tokens:10,completion_tokens:20}}, 5],
+        [{response:'invalid',response_usage:{neurons:1}}, null],
+        [{response:{usage:{neurons:1}}}, null],
+        [{response:'invalid',usage:{prompt_tokens:0,completion_tokens:20,neurons:1}}, null],
+    ]) {
+        let id, settled;
+        const result = await assessWithContentFacts({...base, allowance:{reserve:async r=>{id=r.id;return {accepted:true,duplicate:false};},settle:async r=>{settled=r;}},AI:{run:async()=>output}});
+        assert.equal(result.status,'unavailable');
+        assert.deepEqual(settled, expected === null ? undefined : {id,costs:{aiNeurons:expected}});
+    }
+});
+
+test('a timed-out response arriving later never settles its reservation', async () => {
+    let complete, fire, settlements=0;
+    const result=assessWithContentFacts({...base,allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>settlements++},
+        AI:{run:()=>new Promise(resolve=>{complete=resolve;})},setTimer:fn=>{fire=fn;return 1;},clearTimer:()=>{}});
+    await Promise.resolve(); await Promise.resolve(); fire(); await result;
+    complete({response:'invalid',usage:{prompt_tokens:10,completion_tokens:10,neurons:1}});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(settlements,0);
+});
+
+test('both completed provider calls settle together and unknown follow-up usage retains the full hold', async()=>{
+    const valid=await completeShirtRun({response:'invalid',usage:{prompt_tokens:20,completion_tokens:10,neurons:2.2}});
+    assert.equal(valid.calls,2);assert.equal(valid.settled.costs.aiNeurons,153);
+    const unknown=await completeShirtRun({response:'invalid'});
+    assert.equal(unknown.calls,2);assert.equal(unknown.settled,undefined);
 });

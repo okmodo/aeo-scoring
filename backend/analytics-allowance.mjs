@@ -40,6 +40,7 @@ const retainedUsageSql = 'json_object(' + METRICS.map(key => {
 export function createAnalyticsAllowanceGuard(db, config, { collect = collectAnalyticsUsage } = {}) {
   const guard = createAllowanceGuard(db, config);
   return {
+    settle: request => guard.settle(request),
     async reserve(request) {
       const now = request.now ?? Date.now();
       const { accountId, subscriptionId } = config;

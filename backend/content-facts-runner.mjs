@@ -2,6 +2,7 @@ import { buildSemanticRequest } from './semantic-assessment.mjs';
 import { inspectProductSchema } from './structure-assessment.mjs';
 import { buildContentFactsRequest, decodeContentFacts, buildConditionInspectionRequest, decodeConditionInspection, CONTENT_FACTS_MODEL } from './content-facts.mjs';
 import { assessContentFacts } from './fact-grading.mjs';
+import { providerNeurons } from './allowance-reconciliation.mjs';
 
 // Enable only after independent live calibration and an explicit decision.
 export const CONTENT_FACTS_CALIBRATION_APPROVED = false;
@@ -58,7 +59,7 @@ function contentOutput(output) {
 export async function assessWithContentFacts({ AI, allowance, now = Date.now, snapshot, extracted, report, calibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED, setTimer = setTimeout, clearTimer = clearTimeout }) {
     if (!AI?.run || !allowance?.reserve) return { status: 'unavailable', reason: 'Content fact assessment is unavailable; unresolved checks remain unmeasured.' };
     if (!calibrationApproved) return { status: 'unavailable', reason: 'Content fact assessment is awaiting independent calibration; unresolved checks remain unmeasured.' };
-    let prepared, input, reserved, reservedAt;
+    let prepared, input, reserved, reservedAt, reservationId;
     try {
         prepared = buildSemanticRequest(snapshot, extracted, report, { product: inspectProductSchema(snapshot, extracted).product });
         if (prepared.unsafeInstructions || prepared.payload.coverage.unsafeInstructions) return { status: 'unsafe_content', reason: 'Instruction-like product content prevents a reliable assessment; unresolved checks remain unmeasured.' };
@@ -70,17 +71,21 @@ export async function assessWithContentFacts({ AI, allowance, now = Date.now, sn
     }
     try {
         reservedAt = now();
-        const admission = await allowance.reserve({ id: crypto.randomUUID(), costs: { aiNeurons: reserved }, now: reservedAt });
+        reservationId = crypto.randomUUID();
+        const admission = await allowance.reserve({ id: reservationId, costs: { aiNeurons: reserved }, now: reservedAt });
         if (admission?.accepted !== true || admission.duplicate !== false)
             return admission?.reason === 'allowance_exhausted' ? { status: 'budget_exhausted', reason: 'The daily assessment allowance has been reached; unresolved checks remain unmeasured.' } : { status: 'unavailable', reason: 'Assessment budget could not be reserved.' };
     } catch {
         return { status: 'unavailable', reason: 'Content assessment budget could not be reserved.' };
     }
-    let timer, timedOut = false, assessed;
+    let timer, timedOut = false, assessed, issued = 0;
+    const usages = [];
     try {
         // The AI binding has no cancellation primitive; an expired call retains its reservation.
         const work = async () => {
+            issued++;
             const output = await AI.run(CONTENT_FACTS_MODEL, input);
+            usages.push(providerNeurons(output, 26668, 204805));
             if (timedOut) throw new Error('Content facts timeout');
             const original = contentOutput(output);
             const facts = decodeContentFacts(prepared, input, original, {requireConditionChecks:true});
@@ -95,7 +100,9 @@ export async function assessWithContentFacts({ AI, allowance, now = Date.now, sn
                 assessed.limitation = 'Conditional inspection could not fit within this assessment’s reserved allowance; unresolved checks remain unmeasured.';
                 return assessed;
             }
+            issued++;
             const conditions = await AI.run(CONTENT_FACTS_MODEL, followup);
+            usages.push(providerNeurons(conditions, 26668, 204805));
             if (timedOut) throw new Error('Content facts timeout');
             assessed.facts = decodeConditionInspection(prepared, input, original, contentOutput(conditions));
             return assessed;
@@ -109,5 +116,9 @@ export async function assessWithContentFacts({ AI, allowance, now = Date.now, sn
         return { status: 'unavailable', reason: 'Content fact assessment did not return a supported, grounded result.' };
     } finally {
         if (timer !== undefined) clearTimer(timer);
+        if (!timedOut && issued > 0 && usages.length === issued && usages.every(Number.isSafeInteger)) {
+            const total = usages.reduce((a, b) => a + b, 0);
+            if (Number.isSafeInteger(total)) try { await allowance.settle?.({ id: reservationId, costs: { aiNeurons: total } }); } catch {}
+        }
     }
 }

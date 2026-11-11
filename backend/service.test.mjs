@@ -265,3 +265,16 @@ test('service release flag controls inference and isolates calibrated cache entr
     assert.ok(rows.every(row=>row.status==='incomplete'));
   } finally {globalThis.HTMLRewriter=previous;sqlite.close();}
 });
+
+test('invocation hold settles only after both response and background work finish', async () => {
+  let task, release, reservedId;
+  const settled=[];
+  const handle=createAuditService({allowance:{reserve:async r=>{reservedId=r.id;return {accepted:true,duplicate:false};},settle:async r=>settled.push(r)},
+    store:{reserve:async()=>({kind:'created',audit:fixtureAudit}),finish:async()=>{}},secret:'x'.repeat(32),HTMLRewriter:Rewriter,
+    egress:{fetch:async()=>new Response()},retrievePage:()=>new Promise(resolve=>{release=resolve;}),
+    extractPage:async()=>({coverage:{usable:true}}),scorePage:()=>read('assessment-incomplete').report});
+  const response=await handle(post({url:pending.submittedUrl}),{address,defer:p=>{task=p;}});
+  assert.equal(response.status,202);assert.deepEqual(settled,[]);
+  release({url:pending.submittedUrl});await task;
+  assert.deepEqual(settled,[{id:reservedId}]);
+});

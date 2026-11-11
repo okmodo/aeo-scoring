@@ -132,8 +132,9 @@ export function createAuditService({
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
     try {
-      const result = await allowance.reserve({ id: crypto.randomUUID(), costs, now: now() });
-      if (result?.accepted === true && result.duplicate === false) return 'accepted';
+      const id = crypto.randomUUID();
+      const result = await allowance.reserve({ id, costs, now: now() });
+      if (result?.accepted === true && result.duplicate === false) return { id };
       return result?.accepted === false && result.reason === 'allowance_exhausted' ? 'exhausted' : 'unavailable';
     } catch { return 'unavailable'; }
   }
@@ -176,6 +177,13 @@ export function createAuditService({
 
   return async function handle(request, { defer, address } = {}) {
     const path = new URL(request.url).pathname;
+    let reservationId, requestDone = false, backgroundDone = true, settling = false;
+    async function settleCompleted() {
+      if (!reservationId || !requestDone || !backgroundDone || settling) return;
+      settling = true;
+      // CPU and other invocation costs remain at their conservative upper bounds.
+      try { await allowance.settle?.({ id: reservationId }); } catch {}
+    }
     try {
       if (path === ROUTE) {
         if (request.method !== 'POST') return errorResponse(405, 'method_not_allowed', null, { allow: 'POST' });
@@ -190,7 +198,8 @@ export function createAuditService({
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
         const admission = await admit(INVOCATION_COSTS);
-        if (admission !== 'accepted') return admissionError(admission);
+        if (!admission?.id) return admissionError(admission);
+        reservationId = admission.id;
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
@@ -204,7 +213,11 @@ export function createAuditService({
           return json(assessment(result.audit, true), 200);
         }
         // If persistence becomes unavailable, polling resolves the abandoned lease.
-        defer(run(result.audit).catch(() => {}));
+        backgroundDone = false;
+        defer(run(result.audit).catch(() => {}).finally(async () => {
+          backgroundDone = true;
+          await settleCompleted();
+        }));
         return json(assessment(result.audit), 202, { location: ROUTE + '/' + result.audit.id });
       }
 
@@ -214,7 +227,8 @@ export function createAuditService({
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return errorResponse(404, 'not_found');
         if (!store) return errorResponse(503, 'service_unavailable');
         const admission = await admit(POLL_COSTS);
-        if (admission !== 'accepted') return admissionError(admission);
+        if (!admission?.id) return admissionError(admission);
+        reservationId = admission.id;
         const audit = await store.get(id, now());
         if (audit && encoding.encode(JSON.stringify(audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
         return audit ? json(assessment(audit), 200) : errorResponse(404, 'not_found');
@@ -223,6 +237,9 @@ export function createAuditService({
       return errorResponse(404, 'not_found');
     } catch {
       return errorResponse(503, 'service_unavailable');
+    } finally {
+      requestDone = true;
+      await settleCompleted();
     }
   };
 }

@@ -38,3 +38,12 @@ test('duplicate or unverifiable reservations never authorize semantic inference'
         assert.equal(result.status,'unavailable');
     }
 });
+
+test('settles root usage after a malformed response without affecting the result', async () => {
+    let id, settled;
+    const result=await assessWithSemanticJudge({calibrationApproved:true,snapshot,extracted,report,
+        allowance:{reserve:async r=>{id=r.id;return {accepted:true,duplicate:false};},settle:async r=>{settled=r;throw Error('unavailable');}},
+        AI:{run:async()=>({response:'bad',usage:{prompt_tokens:5,completion_tokens:5,neurons:7.2}})}});
+    assert.equal(result.status,'unavailable');
+    assert.deepEqual(settled,{id,costs:{aiNeurons:8}});
+});
