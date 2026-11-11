@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "id": "analytics-runtime-fix",
+  "task": "Diagnose and fix the production analytics refresh failure while preserving 60% checks and1000msCPU.",
+  "scope": [
+    "backend/analytics-usage.mjs",
+    "backend/analytics-usage.test.mjs",
+    "backend/analytics-allowance.mjs",
+    "backend/analytics-allowance.test.mjs",
+    "evals/changes/analytics-runtime-fix/**"
+  ],
+  "nonGoals": [
+    "Frontend changes, relaxing failed API admission, exposing credentials, unrelated services."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Persist only fixed diagnostic failure codes for production API failures and normalize accidental surrounding credential whitespace.",
+      "verification": "automated",
+      "evidence": "Collector and SQLite tests, bounded production replay."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Backend diagnostics and credential normalization only, without agent workflow changes."
+  }
+}
