@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
 import worker from './public-worker.mjs';
+import { INCLUDED_CEILINGS, METRICS } from './allowance-policy.mjs';
 
 const origin = 'https://aeo-scoring-preview-20261105-kk7.pages.dev';
 const url = 'https://api.example.com/api/v1/audits';
@@ -11,6 +14,45 @@ const authorized = { Authorization: 'Bearer ' + password };
 const configured = { AUDIT_PREVIEW_PASSWORD: password };
 const ctx = { waitUntil() {} };
 const send = (path, init = {}, env = {}) => worker.fetch(new Request(url + path, init), env, ctx);
+
+test('authenticated report reads require current allowance evidence for the pinned billing scope', async () => {
+  const sqlite = new DatabaseSync(':memory:');
+  try {
+    sqlite.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+    const db = { prepare(sql) { return { bind(...args) { const stmt = sqlite.prepare(sql); return {
+      first: async () => stmt.get(...args) ?? null, run: async () => stmt.run(...args),
+    }; } }; } };
+    const accountId = '0123456789abcdef0123456789abcdef';
+    const subscriptionId = 'fixture-subscription';
+    const now = Date.now();
+    const env = { ...configured, AUDIT_DB: db, AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId };
+    const poll = scope => send('/' + id, { headers: authorized }, scope);
+    const usage = Object.fromEntries(METRICS.map(key => [key, 0]));
+    const seedReceipt = (sub, observedAt, amounts) => {
+      const watermarks = Object.fromEntries(METRICS.map(key => [key, observedAt]));
+      sqlite.prepare(`INSERT OR REPLACE INTO allowance_receipts
+        (account_id, subscription_id, generation, active, cycle_start, cycle_end, ai_day, observed_at, usage_json, watermarks_json)
+        VALUES (?, ?, 1, 1, ?, ?, ?, ?, ?, ?)`)
+        .run(accountId, sub, now - 60_000, now + 60_000, new Date(now).toISOString().slice(0,10), observedAt, JSON.stringify(amounts), JSON.stringify(watermarks));
+    };
+    sqlite.prepare('INSERT INTO audits (id,url,cache_key,status,created_at,expires_at) VALUES (?,?,?,?,?,?)')
+      .run(id, 'https://example.com/product', 'fixture', 'pending', now, now + 60_000);
+    assert.equal((await poll(env)).status, 503);
+    seedReceipt('other-subscription', now, usage);
+    assert.equal((await poll(env)).status, 503);
+    seedReceipt(subscriptionId, now - 300_001, usage);
+    assert.equal((await poll(env)).status, 503);
+    seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
+    assert.equal((await poll(env)).status, 429);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 0);
+    seedReceipt(subscriptionId, now, usage);
+    assert.equal((await poll({ ...env, AUDIT_BILLING_SUBSCRIPTION_ID: undefined })).status, 503);
+    const response = await poll(env);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, 'pending');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
+  } finally { sqlite.close(); }
+});
 
 test('preflight permits only the preview origin, contract methods and allowed headers without storage', async () => {
   const env = { get AUDIT_DB() { throw new Error('storage accessed'); } };

@@ -17,3 +17,9 @@ No completeness watermark or guaranteed reporting-lag bound was found in those r
 The local read-only verification interface uses `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_SUBSCRIPTION_ID`, and `CLOUDFLARE_BILLING_READ_TOKEN` in the private process environment, with `--db` pointing to a private local SQLite file in a trusted private directory. Its `--fixture` mode uses frozen wire responses offline and does not contact the API. Keep the database, output and environment private; output includes the account ID.
 
 A read-only probe recorded at 2026-11-10 21:42:30 UTC returned HTTP 403 `credential_not_authorized` for each of the three v1 GET paths above with the then-available credential. This establishes neither the token's exact grants nor the account's endpoint eligibility; supply the documented one-account Billing Read token and verify again only through an explicitly authorized read-only run. Never interpret a denial as zero usage.
+
+## Worker admission wiring
+
+The audit entry point uses `AUDIT_DB` and reads the pinned account and subscription from `AUDIT_BILLING_ACCOUNT_ID` and `AUDIT_BILLING_SUBSCRIPTION_ID`. The public build derives these values from `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_SUBSCRIPTION_ID`. Keep the billing token in the local collector environment. The Worker needs only the pinned identifiers and its D1 binding.
+
+Before rollout, the project database needs the allowance tables and a current receipt from a reviewed source. That source must establish coverage and freshness for all six usage metrics, including account activity outside this Worker. The current collector records diagnostic observations and cannot activate a receipt. An audit starts only after the ledger reserves the request against all applicable ceilings. Missing evidence returns `503` and an exhausted allowance returns `429`.
