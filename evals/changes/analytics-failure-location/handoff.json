@@ -1,24 +1,27 @@
 {
   "version": 1,
-  "task": "Identify the precise live TypeError source location",
-  "state": "PR27 through30 merged/deployed. Production refresh raises TypeError during collection despite receiver/header corrections. Actual local snapshot enabled an audit, so precise source location will isolate remaining cause. Independently reviewed at7c5ecf6 with7 tests passing.",
+  "task": "Fix the reproduced Worker analytics redirect-mode failure",
+  "state": "Native Workers runtime reproduced redirect:error rejection before any API request. Manual mode passes the same native probe and rejects 302 responses. Root fix is b96829d, independently reviewed with no blocking findings.",
   "decisions": [
-    "Persist only numeric index.js locations after the stack first line.",
-    "Retain every admission and CPU control."
+    "Use manual redirects and reject non-success responses before reading data or following destinations.",
+    "Keep all 60% limits, the 1,000 ms CPU setting and existing failure admission rules.",
+    "Register analytics usage and ledger regressions in hosted feasibility checks."
   ],
   "constraints": [
-    "No raw error messages or stacks persisted.",
-    "Frontend and unrelated services excluded."
+    "Native probe uses mock API responses and zero external requests.",
+    "Frontend, dependencies and unrelated services excluded."
   ],
   "completed": [
-    "Private location extraction test confirms sensitive message suppression."
+    "Native runtime confirmed original TypeError and corrected behavior.",
+    "Thirteen focused tests passed, including redirect rejection and secret suppression."
   ],
   "remaining": [
-    "Evaluate, hosted CI, merge/deploy and inspect exact source line.",
-    "Fix the cause and verify automatic production audits."
+    "Complete independent review and both source-bound evaluations, then hosted CI.",
+    "Merge/deploy and verify the Worker refreshes its own account snapshot and serves a real audit."
   ],
   "resumeCommands": [
-    "node --test backend/analytics-allowance.test.mjs",
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs",
+    "node evals/changes/worker-analytics-redirect/native-runtime-probe.mjs",
     "npm run evaluate -- --change analytics-failure-location --base origin/main"
   ]
 }
