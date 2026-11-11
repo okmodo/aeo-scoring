@@ -15,7 +15,7 @@ async function json(fetcher, url, token, body, source = 'subscriptions') {
   const controller = new AbortController();
   let timer;
   const work = async () => {
-    const response = await fetcher(url, { method: body ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
+    const response = await fetcher(url, { method: body ? 'POST' : 'GET', redirect: 'manual', signal: controller.signal,
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
     if (!response.ok) {
