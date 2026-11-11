@@ -41,6 +41,15 @@ test('collection failure denies and retries only after backoff', async () => {
   assert.equal(calls, 2);
 });
 
+test('persists only allowlisted failure codes without credentials or raw provider content', async () => {
+  const { guard, sqlite } = setup(async () => { throw Error('subscriptions_http_403'); });
+  await reserve(guard, 'a');
+  assert.deepEqual(JSON.parse(sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'subscriptions_http_403' });
+  const raw = setup(async () => { throw Error('secret-token and raw provider data'); });
+  await reserve(raw.guard, 'b');
+  assert.deepEqual(JSON.parse(raw.sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'analytics_collection_failed' });
+});
+
 test('observed usage and reservations enforce limits', async () => {
   const { guard } = setup(async ({ now: at }) => snapshot(at, { requests: 9 }));
   assert.equal((await reserve(guard, 'a')).accepted, true);

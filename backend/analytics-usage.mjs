@@ -11,14 +11,18 @@ const QUERY = `query Usage {
   } }
 }`;
 
-async function json(fetcher, url, token, body) {
+async function json(fetcher, url, token, body, source = 'subscriptions') {
   const controller = new AbortController();
   let timer;
   const work = async () => {
     const response = await fetcher(url, { method: body ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}) });
-    if (!response.ok || !response.body?.getReader) throw new Error('analytics response unavailable');
+    if (!response.ok) {
+      void response.body?.cancel().catch(() => {});
+      throw new Error(`${source}_http_${response.status}`);
+    }
+    if (!response.body?.getReader) throw new Error('analytics response unavailable');
     const reader = response.body.getReader(), chunks = [];
     let length = 0;
     while (true) {
@@ -53,6 +57,7 @@ const day = ms => iso(ms).slice(0, 10);
 const timestamp = value => typeof value === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(value) ? Date.parse(value) : NaN;
 
 export async function collectAnalyticsUsage({ accountId, subscriptionId, token, fetch: fetcher = globalThis.fetch, now = Date.now() } = {}) {
+  if (typeof token === 'string') token = token.trim();
   if (!/^[0-9a-f]{32}$/.test(accountId ?? '') || !/^[A-Za-z0-9_-]{1,128}$/.test(subscriptionId ?? '') ||
       typeof token !== 'string' || !token || typeof fetcher !== 'function' || !Number.isSafeInteger(now) || now < 86400000 || now > 8640000000000000) throw new Error('invalid analytics configuration');
   const base = 'https://api.cloudflare.com/client/v4';
@@ -67,7 +72,10 @@ export async function collectAnalyticsUsage({ accountId, subscriptionId, token, 
   const aiDay = day(now);
   const variables = { account: accountId, start: iso(cycleStart), end: iso(now), dayStart: `${aiDay}T00:00:00.000Z`, storageStart: iso(now - 86400000) };
   const query = QUERY.replace(/\$(account|start|end|dayStart|storageStart)\b/g, (_, name) => JSON.stringify(variables[name]));
-  const result = await json(fetcher, `${base}/graphql`, token, { query });
+  const result = await json(fetcher, `${base}/graphql`, token, { query }, 'analytics');
+  if (result?.errors?.some(error => /not authorized|authorization denied|permission/i.test(error?.message ?? ''))) {
+    throw new Error('analytics_authorization_denied');
+  }
   if (!result || !(result.errors === undefined || result.errors === null || Array.isArray(result.errors) && result.errors.length === 0) || !Array.isArray(result.data?.viewer?.accounts) || result.data.viewer.accounts.length !== 1) throw new Error('invalid analytics response');
   const a = result.data.viewer.accounts[0];
   const [requests, cpuUs] = aggregate(a.workers, ['requests', 'cpuTimeUs']);
