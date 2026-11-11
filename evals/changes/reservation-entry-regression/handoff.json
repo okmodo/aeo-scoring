@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "task": "Realistic cumulative-account fixture sequencing",
+  "state": "Only the public Worker test order changed; seven independent tests passed. Full source-bound evaluation and CI pending.",
+  "decisions": [
+    "Preserve cumulative accounting anchors; test healthy admission before same-period exhaustion instead of resetting the counter to zero.",
+    "Keep all status assertions, no-write checks and unchanged admission count after quota denial."
+  ],
+  "constraints": [
+    "No production entry or authentication change.",
+    "Original guard ceilings and frontend remain unchanged."
+  ],
+  "completed": [
+    "Plan3313fcb committed before test edit.",
+    "Independent Terra review approved the narrow test sequencing correction."
+  ],
+  "remaining": [
+    "Source-bound evaluation and hosted CI alongside reservation-reconciliation."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change reservation-entry-regression --base origin/codex/complete-report-assessment"
+  ]
+}
