@@ -56,15 +56,17 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
               JSON.stringify(snapshot.usage), watermarks).run();
         }
         return await guard.reserve(request);
-      } catch {
+      } catch (error) {
+        const failure = /^(subscriptions_http_[45]\d\d|analytics_http_[45]\d\d|analytics_authorization_denied)$/.test(error?.message ?? '')
+          ? error.message : 'analytics_collection_failed';
         await db.prepare(`INSERT INTO allowance_receipts
-          (account_id, generation, active, subscription_id, observed_at, diagnostic_status)
-          VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable')
+          (account_id, generation, active, subscription_id, observed_at, diagnostic_status, diagnostic_highwater_json)
+          VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable', ?4)
           ON CONFLICT(account_id) DO UPDATE SET generation = generation + 1, active = 0,
             subscription_id = excluded.subscription_id, observed_at = excluded.observed_at,
-            diagnostic_status = excluded.diagnostic_status
+            diagnostic_status = excluded.diagnostic_status, diagnostic_highwater_json = excluded.diagnostic_highwater_json
           WHERE allowance_receipts.observed_at IS NULL OR allowance_receipts.observed_at <= excluded.observed_at`)
-          .bind(accountId, subscriptionId, now).run().catch(() => {});
+          .bind(accountId, subscriptionId, now, JSON.stringify({ failure })).run().catch(() => {});
         return { accepted: false, reason: 'invalid_evidence' };
       }
     },

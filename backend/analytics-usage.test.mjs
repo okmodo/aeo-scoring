@@ -28,6 +28,16 @@ test('successful empty aggregates are zero estimates', async () => {
   const r = await collectAnalyticsUsage({ ...config, fetch: fetcher(subscription(), a) });
   assert.deepEqual(Object.values(r.usage), [0, 0, 0, 0, 0, 0]);
 });
+test('normalizes surrounding token whitespace and reports fixed API failure codes', async () => {
+  const original = fetcher();
+  await collectAnalyticsUsage({ ...config, token: ' secret\n', fetch: (url, options) => {
+    assert.equal(options.headers.Authorization, 'Bearer secret');
+    return original(url, options);
+  } });
+  await assert.rejects(collectAnalyticsUsage({ ...config, fetch: async () => new Response('', { status: 403 }) }), /subscriptions_http_403/);
+  await assert.rejects(collectAnalyticsUsage({ ...config, fetch: async url => url.endsWith('/graphql')
+    ? Response.json({ errors: [{ message: 'authorization denied' }] }) : Response.json(subscription()) }), /analytics_authorization_denied/);
+});
 test('rejects incomplete, malformed, erroneous and overflowing responses', async () => {
   const cases = [];
   let s = subscription(); s.result[0].id = 'other'; cases.push(fetcher(s));
