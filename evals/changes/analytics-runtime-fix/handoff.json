@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "task": "Fix and diagnose the deployed analytics refresh failure",
+  "state": "PR27 merged and deployed at cfbf553. Initial audit503 generated analytics_unavailable. Focused normalization and safe diagnostic change independently reviewed at f77a4a0 with10 tests passing.",
+  "decisions": [
+    "Retain all admission checks,60% ceilings and1000msCPU.",
+    "Persist only fixed safe failure codes and keep raw responses/credentials out of logs."
+  ],
+  "constraints": [
+    "Frontend and unrelated services stay out of scope.",
+    "Analytics delay and sampling remain explicitly accepted."
+  ],
+  "completed": [
+    "Actual local collector reads all six metrics with updated account token.",
+    "Production schema applied to existing project database and CPU1000 verified.",
+    "Independent review found no blockers in the runtime diagnostic fix."
+  ],
+  "remaining": [
+    "Run evaluation and hosted CI, merge follow-up and deploy.",
+    "Replay audit and inspect only safe diagnosis if refresh still fails."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs",
+    "npm run evaluate -- --change analytics-runtime-fix --base origin/main"
+  ]
+}
