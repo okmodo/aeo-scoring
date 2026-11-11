@@ -107,8 +107,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (CONTENT_FACTS_CALIBRATION_APPROVED ? '1' : '0') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1' : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -127,7 +127,7 @@ function retrievalProblem(error) {
 
 export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
-  extractPage = extract, scorePage = scoreAudit,
+  extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -153,7 +153,7 @@ export function createAuditService({
       snapshot = { ...snapshot, observedAt };
       report = scorePage(snapshot, extracted);
       if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
-        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report});
+        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report,calibrationApproved:contentCalibrationApproved});
         if (contentFacts.status === 'assessed') {
           report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
           if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
@@ -194,7 +194,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI)),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
         });
@@ -227,7 +227,7 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED } = {}) {
   const db = env.AUDIT_DB;
   const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
   const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;
@@ -241,7 +241,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
         ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })
         : createAllowanceGuard(db, { accountId, subscriptionId })
     ) : undefined,
-    egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),
