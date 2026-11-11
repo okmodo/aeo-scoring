@@ -12,6 +12,15 @@ const password = 'test-preview-password';
 const accessUrl = 'https://api.example.com/api/v1/preview-access';
 const authorized = { Authorization: 'Bearer ' + password };
 const configured = { AUDIT_PREVIEW_PASSWORD: password };
+
+test('explicit public mode admits requests without the preview password', async () => {
+  const env = { AUDIT_PUBLIC_ACCESS: 'enabled' };
+  const unlock = await worker.fetch(new Request('https://worker.example/api/v1/preview-access', { method: 'POST' }), env, {});
+  assert.equal(unlock.status, 204);
+  const response = await send('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, env);
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, 'invalid_input');
+});
 const ctx = { waitUntil() {} };
 const send = (path, init = {}, env = {}) => worker.fetch(new Request(url + path, init), env, ctx);
 
