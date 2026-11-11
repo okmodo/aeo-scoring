@@ -51,6 +51,9 @@ test('persists only allowlisted failure codes without credentials or raw provide
   const invalid = setup(async () => { throw Error('invalid subscription response'); });
   await reserve(invalid.guard, 'c');
   assert.deepEqual(JSON.parse(invalid.sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'invalid_subscription_response', stage: 'collect_snapshot' });
+  const malformed = setup(async () => { throw new SyntaxError('raw provider payload'); });
+  await reserve(malformed.guard, 'd');
+  assert.deepEqual(JSON.parse(malformed.sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), { failure: 'analytics_parse_error', stage: 'collect_snapshot' });
 });
 
 test('observed usage and reservations enforce limits', async () => {

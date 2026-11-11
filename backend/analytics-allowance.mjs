@@ -72,7 +72,8 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
         const failure = /^(subscriptions_http_[45]\d\d|analytics_http_[45]\d\d|analytics_authorization_denied)$/.test(error?.message ?? '')
           ? error.message : validationErrors.has(error?.message)
             ? error.message.toLowerCase().replaceAll(' ', '_')
-            : error instanceof TypeError ? 'analytics_type_error' : 'analytics_collection_failed';
+            : error instanceof TypeError ? 'analytics_type_error'
+              : error instanceof SyntaxError ? 'analytics_parse_error' : 'analytics_collection_failed';
         await db.prepare(`INSERT INTO allowance_receipts
           (account_id, generation, active, subscription_id, observed_at, diagnostic_status, diagnostic_highwater_json)
           VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable', ?4)
