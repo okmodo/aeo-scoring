@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "task": "Align allowance policy with conditional Worker wiring",
+  "state": "Policy describes the wired guard, 503 and 429 behavior, and pending verified evidence for live rollout.",
+  "decisions": [
+    "Link the access guide and keep 60% account allowances and existing cost limits."
+  ],
+  "constraints": [
+    "No live activation or billing configuration change."
+  ],
+  "completed": [
+    "Corrected the outdated statement that the proposed Worker constructs no guard."
+  ],
+  "remaining": [
+    "Verify authoritative usage and D1 operational bounds before rollout."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change allowance-rollout-status --base origin/main"
+  ]
+}

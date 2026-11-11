@@ -15,18 +15,34 @@ const configured = { AUDIT_PREVIEW_PASSWORD: password };
 const ctx = { waitUntil() {} };
 const send = (path, init = {}, env = {}) => worker.fetch(new Request(url + path, init), env, ctx);
 
-test('authenticated report reads require current allowance evidence for the pinned billing scope', async () => {
+test('authenticated submissions and report reads require current allowance evidence for the pinned billing scope', async () => {
   const sqlite = new DatabaseSync(':memory:');
+  const previousRewriter = globalThis.HTMLRewriter;
+  globalThis.HTMLRewriter = class {};
   try {
     sqlite.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
-    const db = { prepare(sql) { return { bind(...args) { const stmt = sqlite.prepare(sql); return {
-      first: async () => stmt.get(...args) ?? null, run: async () => stmt.run(...args),
-    }; } }; } };
+    let auditAdmissions = 0;
+    const db = {
+      prepare(sql) { return { bind(...args) { const stmt = sqlite.prepare(sql); return {
+        first: async () => stmt.get(...args) ?? null, run: async () => stmt.run(...args),
+      }; } }; },
+      async batch() { auditAdmissions++; assert.fail('Denied submission reached audit persistence'); },
+    };
     const accountId = '0123456789abcdef0123456789abcdef';
     const subscriptionId = 'fixture-subscription';
     const now = Date.now();
-    const env = { ...configured, AUDIT_DB: db, AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId };
+    const env = { ...configured, AUDIT_DB: db, AUDIT_RATE_SECRET: 'x'.repeat(32), AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId };
     const poll = scope => send('/' + id, { headers: authorized }, scope);
+    const submit = scope => send('', {
+      method: 'POST',
+      headers: { ...authorized, 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.1' },
+      body: JSON.stringify({ url: 'https://example.com/product' }),
+    }, scope);
+    const expectDenied = async (scope, status) => {
+      assert.equal((await submit(scope)).status, status);
+      assert.equal((await poll(scope)).status, status);
+      assert.equal(auditAdmissions, 0);
+    };
     const usage = Object.fromEntries(METRICS.map(key => [key, 0]));
     const seedReceipt = (sub, observedAt, amounts) => {
       const watermarks = Object.fromEntries(METRICS.map(key => [key, observedAt]));
@@ -37,21 +53,25 @@ test('authenticated report reads require current allowance evidence for the pinn
     };
     sqlite.prepare('INSERT INTO audits (id,url,cache_key,status,created_at,expires_at) VALUES (?,?,?,?,?,?)')
       .run(id, 'https://example.com/product', 'fixture', 'pending', now, now + 60_000);
-    assert.equal((await poll(env)).status, 503);
+    await expectDenied(env, 503);
     seedReceipt('other-subscription', now, usage);
-    assert.equal((await poll(env)).status, 503);
+    await expectDenied(env, 503);
     seedReceipt(subscriptionId, now - 300_001, usage);
-    assert.equal((await poll(env)).status, 503);
+    await expectDenied(env, 503);
     seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
-    assert.equal((await poll(env)).status, 429);
+    await expectDenied(env, 429);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 0);
     seedReceipt(subscriptionId, now, usage);
-    assert.equal((await poll({ ...env, AUDIT_BILLING_SUBSCRIPTION_ID: undefined })).status, 503);
+    await expectDenied({ ...env, AUDIT_BILLING_SUBSCRIPTION_ID: undefined }, 503);
     const response = await poll(env);
     assert.equal(response.status, 200);
     assert.equal((await response.json()).status, 'pending');
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
-  } finally { sqlite.close(); }
+  } finally {
+    if (previousRewriter === undefined) delete globalThis.HTMLRewriter;
+    else globalThis.HTMLRewriter = previousRewriter;
+    sqlite.close();
+  }
 });
 
 test('preflight permits only the preview origin, contract methods and allowed headers without storage', async () => {
