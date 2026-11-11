@@ -65,16 +65,16 @@ END;
 
 -- One atomic statement replaces all six counters from durable reservation history.
 INSERT INTO allowance_pending_v2(account_id, metric, amount)
-SELECT r.account_id, 'requests' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.requests ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
-UNION ALL
-SELECT r.account_id, 'cpuMs' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.cpu_ms ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
-UNION ALL
-SELECT r.account_id, 'd1Reads' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.d1_reads ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
-UNION ALL
-SELECT r.account_id, 'd1Writes' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.d1_writes ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
-UNION ALL
-SELECT r.account_id, 'd1StorageBytes' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.d1_storage_bytes ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
-UNION ALL
-SELECT r.account_id, 'aiNeurons' AS metric, SUM(CASE WHEN s.id IS NULL THEN r.ai_neurons ELSE 0 END) AS amount FROM allowance_reservations r LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id GROUP BY r.account_id
+SELECT r.account_id, m.value,
+  SUM(CASE WHEN s.id IS NOT NULL THEN 0 ELSE CASE m.value
+    WHEN 'requests' THEN r.requests WHEN 'cpuMs' THEN r.cpu_ms
+    WHEN 'd1Reads' THEN r.d1_reads WHEN 'd1Writes' THEN r.d1_writes
+    WHEN 'd1StorageBytes' THEN r.d1_storage_bytes WHEN 'aiNeurons' THEN r.ai_neurons
+  END END)
+FROM allowance_reservations r
+CROSS JOIN json_each('["requests","cpuMs","d1Reads","d1Writes","d1StorageBytes","aiNeurons"]') m
+LEFT JOIN allowance_settlements_v2 s ON s.account_id = r.account_id AND s.id = r.id
+WHERE 1
+GROUP BY r.account_id, m.value
 ON CONFLICT(account_id, metric) DO UPDATE SET amount = excluded.amount;
 INSERT OR IGNORE INTO allowance_migrations_v2 VALUES ('bootstrap');
