@@ -4,6 +4,13 @@ import { collectAnalyticsUsage } from './analytics-usage.mjs';
 
 const FAILURE_BACKOFF_MS = 30_000;
 const maximums = Object.fromEntries(METRICS.map(key => [key, Number.MAX_SAFE_INTEGER]));
+const validationErrors = new Set([
+  'invalid analytics configuration', 'invalid subscription response', 'incomplete subscriptions',
+  'subscription mismatch', 'invalid subscription period', 'invalid analytics response',
+  'invalid analytics aggregate', 'invalid storage aggregate', 'invalid database identity',
+  'invalid analytics amount', 'analytics amount overflow', 'analytics response unavailable',
+  'analytics response too large', 'analytics timeout', 'Invalid analytics snapshot',
+]);
 const retainedUsageSql = 'json_object(' + METRICS.map(key => {
   const period = key === 'aiNeurons' ? 'ai_day = excluded.ai_day' :
     'cycle_start = excluded.cycle_start AND cycle_end = excluded.cycle_end';
@@ -23,6 +30,7 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
     async reserve(request) {
       const now = request.now ?? Date.now();
       const { accountId, subscriptionId } = config;
+      let stage = 'read_snapshot';
       try {
         const previous = await db.prepare('SELECT * FROM allowance_receipts WHERE account_id = ?1')
           .bind(accountId).first();
@@ -35,13 +43,16 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
           age >= 0 && age < MAX_EVIDENCE_AGE_MS && previous.cycle_start <= now && previous.cycle_end > now &&
           previous.ai_day === new Date(now).toISOString().slice(0, 10);
         if (!current) {
+          stage = 'collect_snapshot';
           const snapshot = await collect({ ...config, now });
+          stage = 'validate_snapshot';
           if (snapshot.mode !== 'estimated' || snapshot.observedAt !== now ||
               !Number.isSafeInteger(snapshot.cycleStart) || !Number.isSafeInteger(snapshot.cycleEnd) ||
               snapshot.cycleStart > now || snapshot.cycleEnd <= now ||
               snapshot.aiDay !== new Date(now).toISOString().slice(0, 10) ||
               !validAmounts(snapshot.usage, { max: maximums })) throw new Error('Invalid analytics snapshot');
           const watermarks = JSON.stringify(Object.fromEntries(METRICS.map(key => [key, now])));
+          stage = 'persist_snapshot';
           await db.prepare(`INSERT INTO allowance_receipts
             (account_id, generation, active, subscription_id, cycle_start, cycle_end, ai_day, observed_at,
              usage_json, watermarks_json, diagnostic_status)
@@ -55,10 +66,14 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
             .bind(accountId, subscriptionId, snapshot.cycleStart, snapshot.cycleEnd, snapshot.aiDay, now,
               JSON.stringify(snapshot.usage), watermarks).run();
         }
+        stage = 'reserve_allowance';
         return await guard.reserve(request);
       } catch (error) {
         const failure = /^(subscriptions_http_[45]\d\d|analytics_http_[45]\d\d|analytics_authorization_denied)$/.test(error?.message ?? '')
-          ? error.message : 'analytics_collection_failed';
+          ? error.message : validationErrors.has(error?.message)
+            ? error.message.toLowerCase().replaceAll(' ', '_')
+            : error instanceof TypeError ? 'analytics_type_error'
+              : error instanceof SyntaxError ? 'analytics_parse_error' : 'analytics_collection_failed';
         await db.prepare(`INSERT INTO allowance_receipts
           (account_id, generation, active, subscription_id, observed_at, diagnostic_status, diagnostic_highwater_json)
           VALUES (?1, 1, 0, ?2, ?3, 'analytics_unavailable', ?4)
@@ -66,7 +81,7 @@ export function createAnalyticsAllowanceGuard(db, config, { collect = collectAna
             subscription_id = excluded.subscription_id, observed_at = excluded.observed_at,
             diagnostic_status = excluded.diagnostic_status, diagnostic_highwater_json = excluded.diagnostic_highwater_json
           WHERE allowance_receipts.observed_at IS NULL OR allowance_receipts.observed_at <= excluded.observed_at`)
-          .bind(accountId, subscriptionId, now, JSON.stringify({ failure })).run().catch(() => {});
+          .bind(accountId, subscriptionId, now, JSON.stringify({ failure, stage })).run().catch(() => {});
         return { accepted: false, reason: 'invalid_evidence' };
       }
     },

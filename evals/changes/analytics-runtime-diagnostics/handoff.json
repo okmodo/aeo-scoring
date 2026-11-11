@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "task": "Identify the live Worker refresh failure safely",
+  "state": "PR27 and PR28 merged/deployed. Local collector succeeds. Its actual fresh snapshot was written through the exact receipt SQL and production accepted Kokatat202; that assessment completed with incomplete coverage. Worker refresh failure remains pending precise replay.",
+  "decisions": [
+    "Preserve all 60% ceilings and the 1,000 ms CPU setting.",
+    "Save only controlled validation and stage codes in private D1 diagnostics."
+  ],
+  "constraints": [
+    "No raw error payloads or credentials in logs or responses.",
+    "Frontend and unrelated Cloudflare services excluded."
+  ],
+  "completed": [
+    "The real D1 upsert and audit reservation path succeeded.",
+    "Native Miniflare probe could not reproduce a detached fetch error."
+  ],
+  "remaining": [
+    "Complete evaluation and hosted CI, merge/deploy this diagnostic follow-up.",
+    "Replay the audit, identify the code and fix the remaining collector failure."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs",
+    "npm run evaluate -- --change analytics-runtime-diagnostics --base origin/main"
+  ]
+}
