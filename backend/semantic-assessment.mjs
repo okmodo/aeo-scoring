@@ -27,6 +27,7 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
     const category = categories.categories.find(c => c.id === categoryId) || null;
     const sources = [];
     let bytes = 0, truncated = false;
+    const truncatedScopes = new Set();
     const addGroup = (url, location, blocks, scope) => {
         const parts = [];
         const blockMap = [];
@@ -39,6 +40,7 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
             const size = utf8Size(prefix + value);
             if (bytes + size > MAX_INPUT_BYTES) {
                 truncated = true;
+                truncatedScopes.add(scope);
                 break;
             }
             const start = offset + prefix.length;
@@ -85,7 +87,7 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
     const observedFacts = { priceCandidates, selectedControls, hasVariantControls: html?.hasVariantControls === true ? true : html?.hasVariantControls === false ? false : null };
     const checks = rubric.criteria.filter(c => c.id.startsWith('C')).flatMap(c => c.subchecks).filter(c => directIds.includes(c.id));
     const schema = responseSchema(category);
-    const coverage = { productComplete: html?.complete === true && !unsafeInstructions, policies: policyStates, truncated, unsafeInstructions };
+    const coverage = { productComplete: html?.complete === true && !unsafeInstructions, policies: policyStates, truncated, truncatedScopes: [...truncatedScopes], unsafeInstructions };
     const context = { url: snapshot?.url || null, category: categoryId || null, productName: deterministicReport.productName || identity || null, variant: deterministicReport.variant || null, currency: deterministicReport.currency || null };
     const payload = { version: SEMANTIC_RULE_VERSION, context, coverage, checks, category, observedFacts, sources };
     if (utf8Size(JSON.stringify({ instruction, payload, responseSchema: schema })) > 60 * 1024)

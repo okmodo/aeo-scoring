@@ -26,10 +26,19 @@ function makeObservations(prepared) {
             if (!Number.isInteger(block.start) || !Number.isInteger(block.end) || block.start < 0 || block.end > source.text.length || block.end <= block.start) throw new Error('Invalid source offsets');
             const blockText = source.text.slice(block.start, block.end);
             for (const part of blockText.split(/\n+|(?<=[.!?])\s+/)) {
-                const text = part.trim();
+                let text = part.trim();
                 if (!text) continue;
+                const chunks = [];
+                while (text.length > 1000) {
+                    // Keep every word and do not invent an association across chunks.
+                    const boundary = text.slice(0, 1001).search(/\s+\S*$/);
+                    if (boundary < 1) break;
+                    chunks.push(text.slice(0, boundary));
+                    text = text.slice(boundary).trimStart();
+                }
                 if (text.length > 1000) { omitted.add(source.scope); continue; }
-                observations.push({ id: `q${observations.length + 1}`, sourceId: source.id, scope: source.scope, url: source.url || '', location: block.location, text });
+                chunks.push(text);
+                for (const chunk of chunks) observations.push({ id: `q${observations.length + 1}`, sourceId: source.id, scope: source.scope, url: source.url || '', location: block.location, text: chunk });
             }
         }
     }
@@ -41,8 +50,9 @@ function payloadFor(prepared) {
     const { observations, omitted } = makeObservations(prepared);
     const serializedObserved = JSON.stringify(p.observedFacts || {});
     if (prepared.unsafeInstructions || p.coverage?.unsafeInstructions || p.sources.some(source => ['product', 'shipping', 'returns'].includes(source.scope) && unsafe(source.text || '')) || unsafe(serializedObserved)) throw new Error('Unsafe source instructions');
-    const coverage = { ...p.coverage, productComplete: p.coverage?.productComplete === true && !omitted.has('product') && p.coverage?.truncated !== true, policies: { ...p.coverage?.policies } };
-    for (const scope of ['shipping', 'returns']) if (omitted.has(scope) || p.coverage?.truncated) coverage.policies[scope] = coverage.policies[scope] === 'read' ? 'incomplete' : coverage.policies[scope];
+    const truncatedScope = scope => Array.isArray(p.coverage?.truncatedScopes) ? p.coverage.truncatedScopes.includes(scope) : p.coverage?.truncated === true;
+    const coverage = { ...p.coverage, productComplete: p.coverage?.productComplete === true && !omitted.has('product') && !truncatedScope('product'), policies: { ...p.coverage?.policies } };
+    for (const scope of ['shipping', 'returns']) if (omitted.has(scope) || truncatedScope(scope)) coverage.policies[scope] = coverage.policies[scope] === 'read' ? 'incomplete' : coverage.policies[scope];
     const category = { id: p.category.id, attributes: [...p.category.essentialAttributes, ...p.category.supportingAttributes].map(({id,label}) => ({id,label})), questions: p.category.decisionSupport.map(({id,question,condition}) => ({id,question,...(condition ? {condition} : {})})) };
     const allowedKeys = { ...fixedKeys, attribute: category.attributes.map(a => a.id), decision: category.questions.map(q => q.id) };
     const conditionKeys = ['material_claim', ...p.category.decisionSupport.filter(q => q.applicability === 'conditional').map(q => q.id)];
@@ -279,7 +289,7 @@ export function decodeContentFacts(prepared, request, output, { requireCondition
         const id = JSON.stringify([item.kind, item.key, item.scope]);
         if (reported.has(id)) throw new Error('Duplicate inspection');
         const matches = facts.filter(f => f.kind === item.kind && f.key === item.key && f.quoteIds.some(q => index.get(q).scope === item.scope));
-        const complete = item.scope === 'product' ? payload.coverage.productComplete : payload.coverage.policies?.[item.scope] === 'read' && payload.coverage.truncated !== true && payload.observations.some(q => q.scope === item.scope);
+        const complete = item.scope === 'product' ? payload.coverage.productComplete : payload.coverage.policies?.[item.scope] === 'read' && payload.observations.some(q => q.scope === item.scope);
         const metadataConflict = item.scope === 'product' && item.kind === 'context' && ((item.key === 'price' && (payload.observedFacts.priceCandidates || []).length > 0) || (item.key === 'variant' && ((payload.observedFacts.selectedControls || []).length > 0 || payload.observedFacts.hasVariantControls === true)));
         if (item.status === 'observed' && !matches.length) throw new Error('Observed inspection requires a fact');
         const cue = cueFor(item.kind, item.key);

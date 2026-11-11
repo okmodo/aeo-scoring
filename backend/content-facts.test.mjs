@@ -301,3 +301,61 @@ test('retained rejected v4 response does not borrow a variant from another obser
     adjusted.facts.find(f=>f.kind==='repeated').context.variant=null;
     assert.throws(()=>decodeContentFacts(p,req,adjusted,{requireConditionChecks:true}),/Invalid inspection/);
 });
+
+test('policy truncation does not invalidate complete product or other policy scope', () => {
+    const snap={url:'https://example.test',policies:{shipping:{state:'read',url:'https://example.test/shipping',extraction:{complete:true,blocks:[{text:'x'.repeat(25000),location:'shipping'}]}},returns:{state:'read',url:'https://example.test/returns',extraction:{complete:true,blocks:[{text:'Returns accepted within 30 days.',location:'returns'}]}}}};
+    const prepared=buildSemanticRequest(snap,{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'A simple shirt.',location:'description'}]}},{category:'basic-tshirts'});
+    assert.deepEqual(prepared.payload.coverage.truncatedScopes,['shipping']);
+    const req=buildContentFactsRequest(prepared);
+    const result=decodeContentFacts(prepared,req,{facts:[],inspections:[],conditionChecks:{material_claim:'absent','shirt-limits':'absent'}},{requireConditionChecks:true});
+    assert.equal(result.coverage.productComplete,true);
+    assert.equal(result.coverage.policies.shipping,'incomplete');
+    assert.equal(result.coverage.policies.returns,'read');
+    assert.equal(status(result,'claim','claim'),'absent');
+});
+
+test('frozen release cohort has bounded, unique source expectations and server-scored anchors', async () => {
+    const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    const cases=await releaseCases();
+    assert.equal(new Set(cases.map(c=>c.id)).size,5);
+    for (const c of cases.filter(c=>c.id!=='basic-tshirts')) {
+        assert.ok(new TextEncoder().encode(JSON.stringify(c.request)).length < 15000);
+        const observations=JSON.parse(c.request.messages[1].content).observations;
+        const facts=c.expected.facts.map(f=>{
+            const matches=observations.filter(o=>o.scope===f.scope && o.text===f.text);
+            assert.equal(matches.length,1,`${c.id}: ${f.text}`);
+            return {kind:f.kind,key:f.key,quoteIds:[matches[0].id]};
+        });
+        const conditions=JSON.parse(c.request.messages[1].content).conditionKeys;
+        const output={facts,inspections:[],conditionChecks:Object.fromEntries(conditions.map(k=>[k,'unknown']))};
+        const decoded=decodeContentFacts(c.prepared,c.request,output,{requireConditionChecks:true});
+        const graded=assessContentFacts(c.snapshot,c.extracted,decoded);
+        for (const [id,expected] of Object.entries(c.expected.checks)) {
+            const finding=graded.findings[id];
+            if (typeof expected === 'number') { assert.equal(finding.status,'measured',`${c.id} ${id}`); assert.equal(finding.fraction,expected,`${c.id} ${id}`); }
+            else assert.equal(finding.status,expected,`${c.id} ${id}`);
+        }
+        assert.equal(graded.findings['C5.claim-support'].status,'not_measured');
+    }
+    assert.equal(cases.find(c=>c.id==='basic-tshirts').expected.checks.total,78.125);
+});
+
+test('long observations retain all words without splitting words or inventing complete scope', () => {
+    const paragraph=Array.from({length:260},(_,i)=>`word${i}`).join(' ');
+    const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Shirt',blocks:[{text:paragraph,location:'description'}]}},{category:'basic-tshirts'});
+    const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
+    const chunks=input.observations.filter(o=>o.text.startsWith('word'));
+    assert.ok(chunks.length>1);
+    assert.equal(chunks.map(o=>o.text).join(' '),paragraph);
+    assert.ok(chunks.every(o=>o.text.length<=1000));
+    assert.equal(input.coverage.productComplete,true);
+    const oversized=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Shirt',blocks:[{text:'x'.repeat(1001),location:'description'}]}},{category:'basic-tshirts'});
+    assert.equal(JSON.parse(buildContentFactsRequest(oversized).messages[1].content).coverage.productComplete,false);
+});
+
+test('content fact request rejects genuinely oversized input', () => {
+    const p=fixture();
+    p.payload.sources.push({id:'extra',scope:'product',url:'https://example.test',text:'word '.repeat(13000),blocks:[{start:0,end:65000,location:'description'}]});
+    assert.throws(()=>buildContentFactsRequest(p),/input budget/);
+});

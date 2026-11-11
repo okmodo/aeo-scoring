@@ -19,7 +19,8 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const facts = Array.isArray(dto.facts) ? dto.facts.filter(f=>f.validity==='plausible') : [];
     const category = categories.categories.find(c => c.id === dto.category) || null;
     const coverage = dto.coverage || {};
-    const complete = coverage.productComplete === true && !coverage.truncated && !coverage.unsafeInstructions;
+    const productTruncated = Array.isArray(coverage.truncatedScopes) ? coverage.truncatedScopes.includes('product') : coverage.truncated === true;
+    const complete = coverage.productComplete === true && !productTruncated && !coverage.unsafeInstructions;
     const find = (kind,key) => facts.filter(f => f.kind === kind && f.key === key && usable(f.value));
     const obs = f => (f?.quoteIds || []).map(id => observations.get(id)).filter(Boolean);
     const context = f => f?.value || '';
@@ -158,6 +159,9 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
             if (sub==='C4.compatibility') score=q.id==='shirt-fit' ? /\b(?:close|loose|straight|roomy|room for|fitted|snug|tapered)\b/i.test(t) ? 1 : 0.5 : /\b(?:measure|compare|adjust|around|across|chest|torso|waist|length|width)\b/i.test(t) ? 1 : 0.5;
             if (sub==='C4.limitations') score=/\b(?:not (?:suitable|intended|designed|rated|waterproof)|only (?:suitable|intended|designed|rated)|do not|must not|limit(?:ed)? to|except)\b/i.test(t) ? 1 : 0.5;
             if (sub==='C4.selection') score=/\b(?:measure|compare|choose|select)\b/i.test(t) && (/\b(?:chest|waist|body|foot|feet|capacity|carrying|fit preference)\b/i.test(t)) && (unit.test(t) || /\b(?:fit preference|capacity|carrying need)\b/i.test(t)) ? 1 : 0.5;
+            // A recommendation to consult an unavailable chart is useful but
+            // does not itself relate an offered shoe size to a measurement.
+            if (q.id==='running-selection' && score===1 && !/\b(?:size|width)\s*[:#-]?\s*[\w.-]+[^.!?]{0,100}\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b|\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b[^.!?]{0,100}\b(?:size|width)\s*[:#-]?\s*[\w.-]+/i.test(t)) score=0.5;
             return {questionId:q.id,...measured(score,f)};
         });
         const applicable=entries.filter(e=>e.status==='measured');
@@ -225,5 +229,16 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
         const qualificationInspected=(dto.inspections || []).some(i=>i.kind==='qualification' && i.key==='qualification' && i.scope==='product' && i.status!=='unknown');
         findings['C5.claim-support']=assessed.some(c=>c.fraction===0) && !qualificationInspected ? {...unknown('The inspection did not establish whether support or qualification exists.'),claims:assessed} : measured(assessed.reduce((n,c)=>n+c.fraction,0)/assessed.length,claims[0],{claims:assessed});
     } else if (complete && inspectedAbsent('claim','claim') && !materialClaim.test(productText)) findings['C5.claim-support']={status:'not_applicable',rule:'no_material_claims',justification:'Complete product content contained no identified material claims requiring substantiation.',...scopeEvidence()};
-    return {category:category?.id || null,findings,productName:name?.value || null,variant:null,currency:price?.currency || null,facts:{price:price || null,availability:stock || null,availabilityScope:stock ? stockScope : null,configuration:variantF?.value || config?.value || null}};
+    const controls = dto.observedFacts?.selectedControls || [];
+    const dimensions = controls.filter(c => /^(?:size|colou?r|material|pattern)$/i.test(c.name || '') && typeof c.value === 'string' && c.value.trim() && c.location);
+    // Control values can be opaque IDs; only expose values corroborated by
+    // a source-grounded selected-variant observation.
+    const variantText = find('context','variant').map(context).join(' ');
+    const visibleValue = value => {
+        const escaped = value.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu').test(variantText);
+    };
+    const keys = dimensions.map(c => c.name.toLowerCase().replace('colour','color'));
+    const variant = dimensions.length && new Set(keys).size === keys.length && dimensions.every(c => c.value.length <= 100 && !/[<>\p{Cc}\p{Cf}]/u.test(c.value) && visibleValue(c.value)) ? dimensions.map((c,i) => `${keys[i]}: ${c.value.trim()}`).join(', ').slice(0,160) : null;
+    return {category:category?.id || null,findings,productName:name?.value || null,variant,currency:price?.currency || null,facts:{price:price || null,availability:stock || null,availabilityScope:stock ? stockScope : null,configuration:variantF?.value || config?.value || null}};
 }

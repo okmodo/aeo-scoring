@@ -55,8 +55,24 @@ export function assessContent(snapshot, extracted, { category = null, product = 
     const complete = html.complete === true && blocks.every(b => safe(b.text));
     const name = typeof html.identity === 'string' ? html.identity : html.identity?.mainH1 || html.identity?.title || null;
     const requested = typeof category === 'string' ? category : category?.id;
-    const categoryText = [name, ...blocks.map(b => b.text)].join(' ');
-    const candidate = inferCategory(name || '');
+    const categoryText = [name, product?.description, product?.category, ...blocks.map(b => b.text)].filter(value => typeof value === 'string').join(' ');
+    const nameCandidate = inferCategory(name || '');
+    // Use only product-scoped, safe text and associated Product fields. Avoid
+    // inferring from comparisons or merchandising copy about other products.
+    const descriptions = [product?.description, product?.category, ...blocks.map(b => b.text)]
+        .filter(value => typeof value === 'string' && safe(value) && !negated(value) && !/\b(?:other products?|other items?|pair with|complete the look|you may also like|recommended|shop (?:our|for)|compare(?:d)? (?:to|with))\b/i.test(value));
+    const fallbackMatches = new Set();
+    for (const text of descriptions) {
+        // An individual block may mention more than one supported category.
+        for (const [id, re] of Object.entries({
+            'personal-flotation-devices': /\b(?:pfd|personal flotation device|life (?:vest|jacket))\b/i,
+            'handbags': /\b(?:handbag|crossbody bag|shoulder bag|satchel|tote bag)\b/i,
+            'running-shoes': /\b(?:running shoes?|(?:road|trail)[ -]running shoes?)\b/i,
+            'casual-daypacks': /\b(?:daypack|everyday backpack|casual backpack)\b/i,
+            'basic-tshirts': /\b(?:t-shirt|tee shirt|(?:graphic|everyday|casual|short[ -]sleeve) tee)\b/i
+        })) if (re.test(text)) fallbackMatches.add(id);
+    }
+    const candidate = nameCandidate || (fallbackMatches.size === 1 ? [...fallbackMatches][0] : null);
     const exclusions = {
         'running-shoes': /\b(?:medical|orthop(?:edic|aedic)|therapeutic|protective footwear|safety footwear|steel.toe)\b/i,
         'casual-daypacks': /\b(?:medical|oxygen carrier|technical climbing|child carrier|safety equipment)\b/i,

@@ -205,3 +205,23 @@ test('fit specificity satisfies the attribute while a label without cut guidance
     assert.equal(r.findings['C2.essential'].attributes.find(a=>a.id==='fit').fraction,1);
     assert.equal(r.findings['C4.compatibility'].fraction,0.5);
 });
+
+test('selected variant uses only unambiguous located dimension controls', () => {
+    const d=base();
+    d.observedFacts={selectedControls:[{name:'Size',value:'M',location:'size selector'},{name:'Colour',value:'Navy',location:'color selector'}]};
+    d.observations.push({id:'v',scope:'product',text:'Selected size M and color Navy.',location:'selection'});
+    d.facts.push({kind:'context',key:'variant',value:'Selected size M and color Navy.',quoteIds:['v'],validity:'plausible'});
+    assert.equal(assessContentFacts({}, {}, d).variant,'size: M, color: Navy');
+    d.observedFacts.selectedControls.push({name:'Color',value:'Red',location:'other selector'});
+    assert.equal(assessContentFacts({}, {}, d).variant,null);
+    d.observedFacts.selectedControls=[{name:'Size',value:'M'}];
+    assert.equal(assessContentFacts({}, {}, d).variant,null);
+});
+
+test('shoe selection guidance needs the actual size-to-measurement relationship for full credit', () => {
+    const d=base(); d.category='running-shoes';
+    const text='Measure your foot in inches and compare with the shoe size chart.';
+    d.observations=[{id:'selection',scope:'product',text,location:'description'}];
+    d.facts=[{kind:'decision',key:'running-selection',value:text,quoteIds:['selection'],validity:'plausible'}];
+    assert.equal(assessContentFacts({}, {}, d).findings['C4.selection'].fraction,0.5);
+});
