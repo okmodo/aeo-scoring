@@ -1,5 +1,6 @@
 import test from 'node:test';
 import '../evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs';
+import '../evals/changes/ai-real-validation/runtime-validation-worker.test.mjs';
 import '../backend/allowance-reconciliation.test.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -183,3 +184,5 @@ await import('../backend/usage-reconciliation.test.mjs');
 await import('../backend/usage-collection.test.mjs');
 await import('../backend/analytics-usage.test.mjs');
 await import('../backend/analytics-allowance.test.mjs');
+
+await import('../evals/changes/ai-real-validation/operator-run.test.mjs');

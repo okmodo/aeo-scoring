@@ -490,3 +490,38 @@ test('serialized product-data fragments cannot establish shopper-visible care or
     const decoded=decodeContentFacts(p,req,{facts,inspections:[]});
     assert.ok(decoded.facts.filter(f=>f.method!=='literal_pattern').every(f=>f.validity==='unknown'));
 });
+
+test('care referrals and headings alone are not accepted as care facts', () => {
+    for (const [text, expected] of [
+        ['see general care instructions', 'unknown'],
+        ['Care: see general care instructions.', 'unknown'],
+        ['Care instructions available.', 'unknown'],
+        ['Care instructions', 'unknown'],
+        ['See general care instructions and machine wash cold.', 'plausible']
+    ]) {
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text,location:'description'}]}},{category:'basic-tshirts'});
+        const request=buildContentFactsRequest(p), observation=JSON.parse(request.messages[1].content).observations.find(o=>o.text===text);
+        const decoded=decodeContentFacts(p,request,{facts:[{kind:'attribute',key:'care',quoteIds:[observation.id]}],inspections:[]});
+        assert.equal(decoded.facts.find(f=>f.kind==='attribute' && f.key==='care' && !f.method).validity,expected,text);
+    }
+});
+
+test('policy headings and referrals are not terms, while actual terms remain valid', () => {
+    for (const [text, key, expected] of [
+        ['Shipping & Returns NEED HELP?', 'returns', 'unknown'],
+        ['See our shipping policy', 'shipping', 'unknown'],
+        ['Returns', 'returns', 'unknown'],
+        ['Free returns', 'returns', 'plausible'],
+        ['Returns accepted within 30 days', 'returns', 'plausible'],
+        ['Shipping free over USD 50', 'shipping', 'plausible'],
+        ['Shipping and returns: returns accepted within 30 days', 'returns', 'plausible']
+    ]) {
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text,location:'description'}]}},{category:'basic-tshirts'});
+        const request=buildContentFactsRequest(p), observation=JSON.parse(request.messages[1].content).observations.find(o=>o.text===text);
+        const decoded=decodeContentFacts(p,request,{facts:[{kind:'policy',key,quoteIds:[observation.id]}],inspections:[]});
+        assert.equal(decoded.facts.find(f=>f.kind==='policy' && f.key===key && !f.method).validity,expected,text);
+        const literals=decodeContentFacts(p,request,{facts:[],inspections:[]}).facts.filter(f=>f.kind==='policy' && f.key===key && f.quoteIds.includes(observation.id));
+        if (expected==='unknown') assert.equal(literals.length,0,text);
+        else assert.ok(literals.every(f=>f.validity==='plausible'),text);
+    }
+});

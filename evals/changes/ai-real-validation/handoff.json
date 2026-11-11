@@ -1,0 +1,9 @@
+{
+  "version":1,"task":"Real-page validation and gated AI activation",
+  "state":"PR34 merged into its configured backend release branch atd958954. R6 source checks and private pre-call expectations prepared; no R6 provider call or activation yet.",
+  "decisions":["Preserve60% limits, CPU1000, preview access and unrelated services.","Reject care referrals and policy headings as substantive facts; preserve frozen category outcomes and shirt78.125.","Use the final single permitted provider invocation only after exact-input, quota, CI and control CPU gates pass.","Independently reject unsupported raw proposals even if the decoder prevents scoring them.","Activate only the reviewed release/bundle; incomplete evidence keeps incomplete status and null score."],
+  "constraints":["Frontend and shared dependencies excluded.","All merchant input and raw provider output stay private; commit hashes and sanitized findings only.","Temporary fixed-target Worker and Tail session must be removed after the attempt."],
+  "completed":["MergedPR34 after passingCI and independent review.","Terra source correction and five-category/78.125 offline regression checks pass.","Independent final private request expectations frozen before the call."],
+  "remaining":["Finish independent operator-client review, source-bound evaluation and hosted CI.","Run one bounded real assessment with measured CPU and independent post-call review; preserve failures.","If every release gate passes, enableAI binding plus exactR6 release flag on the project Worker, verify deployed bundle/settings/CORS and normal-service cache reuse.","Record actual outcome, cleanup and handoff without claiming complete reports for incomplete pages."],
+  "resumeCommands":["npm run evaluate -- --change ai-real-validation --base origin/codex/complete-report-assessment","npm run evaluate -- --change ai-validation-ci --base origin/codex/complete-report-assessment"]
+}
