@@ -1,4 +1,6 @@
 import { createStore } from './store.mjs';
+import { createAllowanceGuard } from './allowance-store.mjs';
+import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
 import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
@@ -223,8 +225,19 @@ export function createAuditService({
 }
 
 export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage } = {}) {
+  const db = env.AUDIT_DB;
+  const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
+  const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;
+  const analyticsToken = env.AUDIT_USAGE_READ_TOKEN;
+  const billingScopeConfigured = typeof accountId === 'string' && /^[a-f0-9]{32}$/.test(accountId) &&
+    typeof subscriptionId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(subscriptionId);
   const service = createAuditService({
-    store: env.AUDIT_DB ? createStore(env.AUDIT_DB) : null,
+    store: db ? createStore(db) : null,
+    allowance: db && billingScopeConfigured ? (
+      typeof analyticsToken === 'string' && analyticsToken
+        ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })
+        : createAllowanceGuard(db, { accountId, subscriptionId })
+    ) : undefined,
     egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {

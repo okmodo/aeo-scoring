@@ -31,6 +31,10 @@ function accessError(status, code, message) {
 
 async function handleProtectedRequest(request, env, ctx, path, method) {
   if (request.method === method) {
+    if (env.AUDIT_PUBLIC_ACCESS === 'enabled') {
+      if (path === UNLOCK) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+      return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, retrievePage });
+    }
     const expected = env.AUDIT_PREVIEW_PASSWORD;
     if (typeof expected !== 'string' || !passwordFormat.test(expected)) {
       return accessError(503, 'service_unavailable', 'Testing access is unavailable.');

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "id": "public-audit-access",
+  "task": "Preserve public ungated audit access during the authorized analytics deployment.",
+  "scope": [
+    "backend/public-worker.mjs",
+    "backend/public-worker.test.mjs",
+    "backend/public-deploy/cloudflare.config.ts",
+    "evals/changes/public-audit-access/**"
+  ],
+  "nonGoals": [
+    "Frontend changes or removal of explicitly configured preview password support."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Explicit public access binding enables public audits and preview access endpoint without a password, while preview mode preserves password behavior.",
+      "verification": "automated",
+      "evidence": "Public Worker entry point regressions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Only backend access configuration changes, with no agent workflow or portability changes."
+  }
+}

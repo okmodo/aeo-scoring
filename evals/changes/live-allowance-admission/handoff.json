@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Wire the existing allowance guard into the audit Worker and identify verified live access",
+  "state": "PR 26 merged at 75a44cb. Worker entry point and build bindings are implemented and tested locally. Live rollout is pending current authoritative allowance evidence and project D1 readiness.",
+  "decisions": [
+    "Use the existing D1-backed allowance guard with explicitly pinned account and subscription identifiers.",
+    "Keep the billing credential with the local collector. The Worker reads only its existing D1 binding and billing scope identifiers.",
+    "Preserve 60% ceilings and the 1,000 ms CPU configuration. Missing evidence denies admission."
+  ],
+  "constraints": [
+    "Live account billing reads returned 403. No Billing Read token was available in the local process environment.",
+    "The documented billing collector cannot produce an active receipt. A reviewed source must establish current complete account usage for all required metrics.",
+    "No live changes to Worker code, D1 schema, frontend, billing or unrelated services in this change."
+  ],
+  "completed": [
+    "PR 26 merged after CI passed. Separate plan 7cbc4c1 and implementation 2b762aa.",
+    "28 focused tests passed. Public entry test verified missing, wrong-subscription and stale receipts produce 503, exhausted receipts produce 429, and a fresh synthetic receipt permits polling only after a reservation.",
+    "Local public Worker build with placeholder scope emitted both billing scope bindings and cpuMs=1000.",
+    "Sanitized read-only access probes returned 403 for subscriptions, billable-usage/info and billable-usage. Access instructions recorded in docs/usage-collector-access.md."
+  ],
+  "remaining": [
+    "Complete independent review, source-bound evaluation and hosted CI.",
+    "Provide one-account Billing Read token privately and verify the Workers Paid subscription ID. Test actual source coverage and freshness.",
+    "Verify production D1 schema and cost envelopes, establish a trusted receipt producer, then deploy and smoke-test the gated Worker within verified allowances."
+  ],
+  "resumeCommands": [
+    "node --test backend/public-worker.test.mjs backend/service.test.mjs backend/allowance-store.test.mjs backend/usage-reconciliation.test.mjs",
+    "npm run evaluate -- --change live-allowance-admission --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ]
+}

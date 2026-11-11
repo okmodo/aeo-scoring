@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "analytics-allowance-admission",
+  "task": "Use available account analytics estimates for the 60% admission check under the user-accepted reporting and sampling limitation, keep the 1000 ms CPU cap, and prepare PR27 for authorized merge and production deployment.",
+  "scope": [
+    "AGENTS.md",
+    "backend/analytics-usage.mjs",
+    "backend/analytics-usage.test.mjs",
+    "backend/analytics-allowance.mjs",
+    "backend/analytics-allowance.test.mjs",
+    "backend/allowance-store.mjs",
+    "backend/service.mjs",
+    "backend/public-deploy/cloudflare.config.ts",
+    "backend/public-worker.test.mjs",
+    "docs/included-allowance-policy.md",
+    "docs/usage-collector-access.md",
+    "evals/changes/analytics-allowance-admission/**"
+  ],
+  "nonGoals": [
+    "Frontend or unrelated Cloudflare changes, new paid integrations, claims of exact usage or guaranteed monthly invoice cap."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Freshly collected estimated account metrics and conservative local reservations govern submissions and reads at existing 60% limits. API failures, invalid scope and stale snapshots deny admission.",
+      "verification": "automated",
+      "evidence": "Frozen analytics and SQLite regression tests."
+    },
+    {
+      "id": "O2",
+      "description": "Successful empty analytics rows have explicit estimated-zero semantics and CPU limit remains 1000 ms.",
+      "verification": "automated",
+      "evidence": "Collector tests, live settings and authorized audit verification."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan before implementation, retain former plans unchanged, independent review and hosted CI before authorized merge/deploy.",
+      "verification": "human",
+      "evidence": "Git history, review, run trace and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse the existing atomic reservation ledger and preserve service contracts.",
+      "verification": "human",
+      "evidence": "Independent diff review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Changes application admission policy and data acquisition only, without changing agent workflow or portability."
+  }
+}

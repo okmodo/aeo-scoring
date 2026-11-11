@@ -1,0 +1,7 @@
+# Independent review
+
+Reviewed commit: `1fa2fc9173b3470b45c3368d4622dea2ee9678ef`, compared with `origin/main`.
+
+No blocking code findings identified. The collector rejects failed or malformed responses, applies the explicitly accepted successful-empty-as-zero behavior, and gathers account-level estimates. The wrapper refreshes at the daily and billing-cycle boundaries and retains high-water cumulative estimates within each period. The existing atomic ledger includes account usage and local reservations, carries storage reservations across cycles, and prevents concurrent admissions exceeding the configured allocations. The public-access switch preserves the requested live access while leaving preview authentication available. The deployment configuration retains the 1,000 ms CPU limit. No frontend changes were present in the diff.
+
+Validation: `node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs backend/allowance-store.test.mjs backend/public-worker.test.mjs` passed (21 tests). The change plan was committed in `6129b22` before the reviewed implementation. This review does not replace the required source-bound evaluation, hosted CI, or live verification of provider API schema, token permissions, billing scope, and deployment. Analytics are sampled and delayed as expressly accepted; they do not guarantee an invoice cap. Successful empty responses represent zero estimates under that acceptance. No live API calls or deployments were made in this review.

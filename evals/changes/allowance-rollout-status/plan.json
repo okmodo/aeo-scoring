@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "allowance-rollout-status",
+  "task": "Update the included-allowance policy to reflect conditional Worker guard wiring and the remaining live activation requirements.",
+  "scope": [
+    "docs/included-allowance-policy.md",
+    "evals/changes/allowance-rollout-status/**"
+  ],
+  "nonGoals": [
+    "No production rollout, evidence activation or budget policy change."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Describe current Worker wiring and distinguish it from live activation requirements.",
+      "verification": "human",
+      "evidence": "Independent review of the policy alongside the Worker integration."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Record the documentation scope before editing and run source-bound verification.",
+      "verification": "human",
+      "evidence": "Plan commit and evaluation."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep a single allowance policy and link the access guide.",
+      "verification": "human",
+      "evidence": "Focused documentation diff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Describes runtime activation status without changing agent workflow."
+  }
+}
