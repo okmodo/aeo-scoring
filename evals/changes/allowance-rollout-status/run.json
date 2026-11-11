@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "changeId": "allowance-rollout-status",
+  "recordedAt": "2026-11-11T00:18:11.521Z",
+  "sourceCommit": "071ccad5411a0333dcb716da5da59c1213037792",
+  "sourceDigest": "0d43645a5df40195d79017edb7d8180eea4b9f258e5232d4dfaa0434f9616df8",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 4475,
+      "outputSha256": "43e254c1fce379838c55de33e84e5c89927a042a732ed77ae7b7aa363daad42d"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8790,
+      "outputSha256": "e38f58e162c1bf254cc77021954088658a7113c1dcb8c96340318f83a545e0a5"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 402,
+      "outputSha256": "7189f41eaf576fc7a99158c054a380f2ee8f3fc396282a0757739c8a4ca33625"
+    }
+  ]
+}
