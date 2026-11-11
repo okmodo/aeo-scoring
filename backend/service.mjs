@@ -152,9 +152,12 @@ export function createAuditService({
       if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
       report = scorePage(snapshot, extracted);
-      if (AI && extracted.productHtml) {
+      if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
         const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report});
-        if (contentFacts.status === 'assessed') report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+        if (contentFacts.status === 'assessed') {
+          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+          if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
+        }
         else report.coverage.limitations.push(contentFacts.reason);
       }
       if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');

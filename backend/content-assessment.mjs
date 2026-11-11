@@ -26,6 +26,15 @@ const patterns = {
     approval: /\b(?:USCG|U\.S\. Coast Guard|ISO)\s*(?:approved|approval|certified|certification|\d)/i,
     features: /\b(?:reflective (?:trim|panels?)|adjustable straps?|interior pockets?|rescue (?:belt|harness))\b/i,
 };
+// Literal fallback requires the whole observation to be a carry descriptor.
+export function isExplicitCarry(text) {
+    return typeof text === 'string' && new RegExp(`^(?:${patterns.carry.source})[.!]?$`, 'i').test(text.trim());
+}
+export function isExplicitSize(text) {
+    if (typeof text !== 'string') return false;
+    const value = text.trim().replace(/^selected\s+/i, '').replace(/\s*\((?:US|UK|EU|AU)\)(?=[.!]?$)/i, '').replace(/[.!]$/, '');
+    return new RegExp(`^(?:${patterns.size.source})$`, 'i').test(value);
+}
 function match(blocks, re) { return blocks.find(b => safe(b.text) && !negated(b.text) && re.test(b.text)); }
 function evidence(block, fallback, url) { return { url, location: block?.location || 'product region', excerpt: (block?.text || fallback).slice(0, 500) }; }
 function measured(fraction, block, fallback, url, extra = {}) { return { status: 'measured', fraction, ...evidence(block, fallback, url), ...extra }; }

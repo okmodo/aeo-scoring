@@ -192,7 +192,7 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
                 return;
             stack.push(node);
             // The JSON-LD handler owns this end tag; it releases the shared frame.
-            if (tag === 'script' && (a.type || '').toLowerCase() === 'application/ld+json')
+            if (!policy && tag === 'script' && (a.type || '').toLowerCase() === 'application/ld+json')
                 return;
             if (typeof element.onEndTag !== 'function') {
                 result.complete = false;

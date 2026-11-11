@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assessWithContentFacts, contentFactsReservation, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
+import { assessWithContentFacts, contentFactsReservation, contentFactsFollowupFits, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
 import { CONTENT_FACTS_MODEL } from './content-facts.mjs';
 const snapshot = {url:'https://shop.example/item'};
 const extracted = {jsonLd:[], productHtml:{complete:true,identity:'Acme Everyday T-shirt',blocks:[{text:'Fabric composition: 100% cotton.',location:'details'}]}};
@@ -21,9 +21,9 @@ test('reserves a conservative bound before one model call and validates facts', 
     assert.equal(events[0][1].now,86_400_000);
     assert.equal(events[0][1].costs.aiNeurons,result.reservedNeurons);
     assert.equal(events[1][1],CONTENT_FACTS_MODEL);
-    assert.equal(events[1][2].max_tokens,1536);
+    assert.equal(events[1][2].max_tokens,768);
     const bytes=new TextEncoder().encode(JSON.stringify(events[1][2])).length;
-    assert.equal(result.reservedNeurons,Math.ceil((bytes+2048)*26668/1_000_000+1536*204805/1_000_000)+64);
+    assert.equal(result.reservedNeurons,Math.ceil((bytes+2048)*26668/1_000_000+768*204805/1_000_000)+64);
 });
 test('disabled, unsupported and unsafe assessments do not reserve or call', async () => {
     const allowance={reserve:async()=>assert.fail('Unexpected reservation')};
@@ -62,4 +62,65 @@ test('duplicate or unverifiable reservations never authorize inference', async (
         const result=await assessWithContentFacts({...base,allowance:{reserve:async()=>decision},AI:{run:()=>assert.fail('Unexpected inference')}});
         assert.equal(result.status,'unavailable');
     }
+});
+
+
+test('focused inspection uses only authenticated finished usage within its existing same-day reservation', () => {
+    const first = {messages:['x'.repeat(10000)],max_tokens:1024};
+    const followup = {messages:['short product inspection'],max_tokens:128};
+    const reserved = contentFactsReservation(first);
+    const output = {usage:{prompt_tokens:100,completion_tokens:100,neurons:30},choices:[{finish_reason:'stop'}]};
+    assert.equal(contentFactsFollowupFits(reserved,first,output,followup,86400000,86400001),true);
+    for (const candidate of [{response:{usage:output.usage}}, {...output,usage:{...output.usage,prompt_tokens:0}},
+        {usage:{...output.usage,completion_tokens:1025}}, {usage:{...output.usage,neurons:reserved}},
+        {usage:{...output.usage,neurons:NaN}}, {...output,choices:[{finish_reason:'length'}]}]) {
+        assert.equal(contentFactsFollowupFits(reserved,first,candidate,followup,86400000,86400001),false);
+    }
+    assert.equal(contentFactsFollowupFits(reserved+1,first,output,followup,86400000,86400001),false);
+    assert.equal(contentFactsFollowupFits(reserved,first,output,followup,86400000,172800000),false);
+});
+
+test('a late first response cannot start a focused call after the assessment timeout', async () => {
+    let complete, fire, calls=0;
+    const result=assessWithContentFacts({...base, allowance:{reserve:async()=>({accepted:true,duplicate:false})},
+        AI:{run:()=>{calls++;return new Promise(resolve=>{complete=resolve;});}},
+        setTimer:fn=>{fire=fn;return 1;},clearTimer:()=>{}});
+    await Promise.resolve();await Promise.resolve();
+    fire();assert.equal((await result).status,'unavailable');
+    complete({response:{facts:[],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}},usage:{prompt_tokens:1,completion_tokens:1}});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(calls,1);
+});
+
+async function completeShirtRun(secondOutput) {
+    const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
+    const {referenceShirtResponse}=await import('./fixtures/content-facts/reference-shirt.mjs');
+    const item=(await releaseCases()).find(entry=>entry.id==='basic-tshirts');
+    let calls=0,reservations=0;
+    const result=await assessWithContentFacts({...base,snapshot:item.snapshot,extracted:item.extracted,report:{category:'basic-tshirts'},
+        allowance:{reserve:async()=>{reservations++;return {accepted:true,duplicate:false};}},
+        AI:{run:async(_model,input)=>{
+            calls++;
+            if(calls===1){
+                const reference=referenceShirtResponse(input);
+                return {response:{facts:reference.facts,inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}},
+                    usage:{prompt_tokens:1000,completion_tokens:600,neurons:150},choices:[{finish_reason:'stop'}]};
+            }
+            assert.equal(calls,2);assert.equal(input.max_tokens,128);
+            return secondOutput;
+        }}});
+    return {result,calls,reservations,item};
+}
+test('one focused inspection can finish a complete report within the original reservation', async()=>{
+    const {scoreAudit}=await import('./scoring.mjs');
+    const {result,calls,reservations,item}=await completeShirtRun({response:{conditionChecks:{material_claim:'absent','shirt-limits':'absent'}}});
+    assert.equal(calls,2);assert.equal(reservations,1);assert.equal(result.status,'assessed');
+    const report=scoreAudit(item.snapshot,item.extracted,{validatedFacts:result.facts});
+    assert.equal(report.status,'complete');assert.deepEqual(report.score,{total:78.125,structure:20,content:58.125});
+});
+test('an invalid focused response preserves supported first-stage facts and unknown conditions', async()=>{
+    const {result,calls,reservations}=await completeShirtRun({response:{conditionChecks:{material_claim:'absent'},facts:[]}});
+    assert.equal(calls,2);assert.equal(reservations,1);assert.equal(result.status,'assessed');
+    assert.match(result.limitation,/Conditional inspection/);
+    assert.equal(result.facts.inspections.find(i=>i.kind==='claim'&&i.key==='claim').status,'unknown');
 });
