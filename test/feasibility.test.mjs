@@ -186,3 +186,5 @@ await import('../backend/analytics-usage.test.mjs');
 await import('../backend/analytics-allowance.test.mjs');
 
 await import('../evals/changes/ai-real-validation/operator-run.test.mjs');
+await import('../evals/changes/candidate-fact-validation/synthetic-worker.test.mjs');
+await import('../evals/changes/candidate-fact-validation/synthetic-client.test.mjs');

@@ -35,7 +35,7 @@ const categoryEvidence = {
 const outcomes = {
     'running-shoes': {'C1.explanation':0.5,'C2.essential':1,'C2.supporting':'not_measured','C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
     'casual-daypacks': {'C1.explanation':'not_measured','C2.essential':11/12,'C2.supporting':7/8,'C4.intended-use':0.5,'C4.compatibility':0.5,'C4.selection':0.5},
-    'personal-flotation-devices': {'C1.explanation':0.5,'C2.essential':1,'C2.supporting':'not_measured','C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
+    'personal-flotation-devices': {'C1.explanation':0.5,'C2.essential':1,'C2.supporting':1,'C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
     'handbags': {'C1.explanation':'not_measured','C2.essential':1,'C2.supporting':1,'C4.intended-use':0.5,'C4.compatibility':0.5,'C4.selection':0.5}
 };
 const commonOutcomes = {'C1.identity':1,'C1.configuration':'not_measured','C3.price':1,'C3.availability':1,'C3.shipping':'not_measured','C3.returns':'not_measured','C4.limitations':'not_measured','C5.consistency':'not_measured','C5.claim-support':'not_measured'};

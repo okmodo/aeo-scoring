@@ -11,10 +11,8 @@ const status = (out,kind,key,scope='product') => out.inspections.find(i=>i.kind=
 test('provider schema binds keys to their roles and restricts citations to captured observations', () => {
     const request = buildContentFactsRequest(fixture());
     const branches = request.response_format.json_schema.properties.facts.items.oneOf;
-    const attribute = branches.find(b=>b.properties.kind.enum[0]==='attribute');
-    const fn = branches.find(b=>b.properties.kind.enum[0]==='function');
+    const attribute = branches.find(b=>b.properties.kind.enum[0]==='attribute' && b.properties.key.enum[0]==='upper');
     assert.equal(attribute.properties.key.enum.includes('function'),false);
-    assert.deepEqual(fn.properties.key.enum,['function']);
     assert.equal(attribute.properties.quoteIds.items.enum.includes('q999999'),false);
     assert.equal(attribute.properties.quoteIds.items.enum.includes('q3'),true);
     assert.equal(attribute.properties.context,undefined);
@@ -320,11 +318,12 @@ test('frozen release cohort has bounded, unique source expectations and server-s
     const cases=await releaseCases();
     assert.equal(new Set(cases.map(c=>c.id)).size,5);
     for (const c of cases.filter(c=>c.id!=='basic-tshirts')) {
-        assert.ok(new TextEncoder().encode(JSON.stringify(c.request)).length < 15000);
-        const observations=JSON.parse(c.request.messages[1].content).observations;
+        assert.ok(new TextEncoder().encode(JSON.stringify(c.request)).length <= 60*1024);
+        const {observations,candidates}=JSON.parse(c.request.messages[1].content);
         const facts=c.expected.facts.map(f=>{
             const matches=observations.filter(o=>o.scope===f.scope && o.text===f.text);
             assert.equal(matches.length,1,`${c.id}: ${f.text}`);
+            assert.ok(candidates.some(candidate=>candidate.kind===f.kind && candidate.key===f.key && candidate.ids.includes(matches[0].id)),`${c.id}: ${f.kind}/${f.key} ${f.text}`);
             return {kind:f.kind,key:f.key,quoteIds:[matches[0].id]};
         });
         const conditions=JSON.parse(c.request.messages[1].content).conditionKeys;
@@ -339,6 +338,11 @@ test('frozen release cohort has bounded, unique source expectations and server-s
         assert.equal(graded.findings['C5.claim-support'].status,'not_measured');
     }
     assert.equal(cases.find(c=>c.id==='basic-tshirts').expected.checks.total,78.125);
+    const shirt=cases.find(c=>c.id==='basic-tshirts');
+    const {referenceShirtResponse}=await import('./fixtures/content-facts/reference-shirt.mjs');
+    const payload=JSON.parse(shirt.request.messages[1].content);
+    assert.ok(new TextEncoder().encode(JSON.stringify(shirt.request)).length <= 60*1024);
+    for (const f of referenceShirtResponse(shirt.request).facts) assert.ok(payload.candidates.some(c=>c.kind===f.kind && c.key===f.key && c.ids.includes(f.quoteIds[0])),`shirt: ${f.kind}/${f.key} ${f.quoteIds[0]}`);
 });
 
 test('long observations retain all words without splitting words or inventing complete scope', () => {
@@ -523,5 +527,75 @@ test('policy headings and referrals are not terms, while actual terms remain val
         const literals=decodeContentFacts(p,request,{facts:[],inspections:[]}).facts.filter(f=>f.kind==='policy' && f.key===key && f.quoteIds.includes(observation.id));
         if (expected==='unknown') assert.equal(literals.length,0,text);
         else assert.ok(literals.every(f=>f.validity==='plausible'),text);
+    }
+});
+
+test('candidate schema excludes known unsupported roles and retains supported vest guidance', () => {
+    const texts=['female','$159.00',"Styled for female recreational paddlers, this high-back life vest features articulated, body-mapped panels that accommodate a woman's natural curves.",'see general care instructions','Sizing','Selected size: Medium.'];
+    const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Life Vest',blocks:texts.map(text=>({text,location:'description'}))}},{category:'personal-flotation-devices'});
+    const request=buildContentFactsRequest(p), payload=JSON.parse(request.messages[1].content);
+    const eligible=(kind,key,text)=>payload.candidates.some(c=>c.kind===kind && c.key===key && c.ids.some(id=>payload.observations.find(o=>o.id===id)?.text===text));
+    for (const [kind,key,text] of [['attribute','color',texts[0]],['context','price',texts[1]],['attribute','care',texts[3]],['attribute','size',texts[4]]]) {
+        assert.equal(eligible(kind,key,text),false,text);
+        const id=payload.observations.find(o=>o.text===text).id;
+        assert.equal(decodeContentFacts(p,request,{facts:[{kind,key,quoteIds:[id]}],inspections:[]}).facts.find(f=>!f.method).validity,'unknown');
+    }
+    assert.ok(eligible('attribute','size',texts[5]));
+    assert.ok(eligible('decision','personal-flotation-devices-intended-use',texts[2]));
+    assert.ok(eligible('decision','personal-flotation-devices-compatibility',texts[2]));
+    assert.ok(eligible('function','function',texts[2]));
+    assert.equal(eligible('function','function',texts[0]),false);
+    for (const branch of request.response_format.json_schema.properties.facts.items.oneOf) {
+        assert.equal(branch.properties.key.enum.length,1);
+        assert.ok(branch.properties.quoteIds.items.enum.length);
+    }
+});
+
+test('empty candidates use an empty facts array schema', () => {
+    const p=fixture();
+    p.payload.sources=[];
+    const request=buildContentFactsRequest(p), payload=JSON.parse(request.messages[1].content);
+    assert.deepEqual(payload.candidates,[]);
+    assert.deepEqual(request.response_format.json_schema.properties.facts,{type:'array',maxItems:0});
+});
+
+test('candidate roles exclude navigation and empty labels even if the provider returns them', () => {
+    const texts=['female','Current Stock:','Availability:','X','Facebook Email Print X Pinterest','Sizing','Selected size: 9 US.','This product is in stock.','Measure your chest and compare with the vest size chart.'];
+    const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Life Vest',blocks:texts.map(text=>({text,location:'description'}))}},{category:'personal-flotation-devices'});
+    const req=buildContentFactsRequest(p), payload=JSON.parse(req.messages[1].content);
+    const cases=[['repeated','identity',texts[0]],['context','availability',texts[1]],['repeated','availability',texts[2]],['attribute','size',texts[3]],['attribute','size',texts[4]],['repeated','size',texts[5]],['decision','personal-flotation-devices-selection',texts[5]]];
+    for (const [kind,key,text] of cases) {
+        const id=payload.observations.find(o=>o.text===text).id;
+        assert.equal(payload.candidates.some(c=>c.kind===kind && c.key===key && c.ids.includes(id)),false,`${kind}/${key}: ${text}`);
+        const f={kind,key,quoteIds:[id],...(kind==='repeated'?{context:{variant:null,market:null,conditions:null}}:{})};
+        assert.equal(decodeContentFacts(p,req,{facts:[f],inspections:[]}).facts.find(x=>!x.method).validity,'unknown');
+    }
+    for (const [kind,key,text] of [['attribute','size',texts[6]],['context','availability',texts[7]],['decision','personal-flotation-devices-selection',texts[8]]]) {
+        const id=payload.observations.find(o=>o.text===text).id;
+        assert.ok(payload.candidates.some(c=>c.kind===kind && c.key===key && c.ids.includes(id)),text);
+    }
+});
+
+test('candidate role checks distinguish care, buoyancy and device measurements', () => {
+    const cases=[
+        ['personal-flotation-devices','Buoyancy: 15 lbs.','attribute','weight'],
+        ['personal-flotation-devices','Buoyancy: 15 lbs.','repeated','weight'],
+        ['personal-flotation-devices','Rinse with fresh water.','decision','personal-flotation-devices-intended-use'],
+        ['personal-flotation-devices','Rinse with fresh water.','repeated','suitability'],
+        ['basic-tshirts','Specifications and care','attribute','care'],
+        ['basic-tshirts','Fabric composition: 100% cotton.','attribute','fabric-weight'],
+        ['basic-tshirts','Regular fit through the chest and body.','attribute','garment-measurements'],
+        ['personal-flotation-devices','Buoyancy: 15 lbs.','decision','personal-flotation-devices-limitations'],
+        ['personal-flotation-devices','USCG approved.','decision','personal-flotation-devices-limitations'],
+        ['casual-daypacks','Dimensions: 18 x 12 x 6 inches.','attribute','laptop-size'],
+        ['casual-daypacks','Fits a 13 inch laptop.','attribute','dimensions'],
+        ['handbags','The interior fits a phone measuring 6 inches.','attribute','dimensions']
+    ];
+    for (const [category,text,kind,key] of cases) {
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Product',blocks:[{text,location:'description'}]}},{category});
+        const req=buildContentFactsRequest(p), payload=JSON.parse(req.messages[1].content), id=payload.observations.find(o=>o.text===text).id;
+        assert.equal(payload.candidates.some(c=>c.kind===kind && c.key===key && c.ids.includes(id)),false,`${kind}/${key}: ${text}`);
+        const f={kind,key,quoteIds:[id],...(kind==='repeated'?{context:{variant:null,market:null,conditions:null}}:{})};
+        assert.equal(decodeContentFacts(p,req,{facts:[f],inspections:[]}).facts.find(x=>!x.method).validity,'unknown');
     }
 });
