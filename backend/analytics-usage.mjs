@@ -56,8 +56,8 @@ const iso = ms => new Date(ms).toISOString();
 const day = ms => iso(ms).slice(0, 10);
 const timestamp = value => typeof value === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(value) ? Date.parse(value) : NaN;
 
-export async function collectAnalyticsUsage({ accountId, subscriptionId, token, fetch: fetcher = globalThis.fetch, now = Date.now() } = {}) {
-  if (typeof token === 'string') token = token.trim();
+export async function collectAnalyticsUsage({ accountId, subscriptionId, token, fetch: fetcher = (url, options) => globalThis.fetch(url, options), now = Date.now() } = {}) {
+  if (typeof token === 'string') token = token.replace(/\s/g, '');
   if (!/^[0-9a-f]{32}$/.test(accountId ?? '') || !/^[A-Za-z0-9_-]{1,128}$/.test(subscriptionId ?? '') ||
       typeof token !== 'string' || !token || typeof fetcher !== 'function' || !Number.isSafeInteger(now) || now < 86400000 || now > 8640000000000000) throw new Error('invalid analytics configuration');
   const base = 'https://api.cloudflare.com/client/v4';

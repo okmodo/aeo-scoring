@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "id": "analytics-worker-fetch",
+  "task": "Fix the Worker-only TypeError during analytics collection and complete production audit verification.",
+  "scope": [
+    "backend/analytics-usage.mjs",
+    "backend/analytics-usage.test.mjs",
+    "backend/analytics-allowance.mjs",
+    "backend/analytics-allowance.test.mjs",
+    "evals/changes/analytics-worker-fetch/**"
+  ],
+  "nonGoals": [
+    "Removing the60% gate, increasing CPU, frontend edits, raw errors or secret logging."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Default fetch preserves its Worker receiver, whitespace cannot invalidate its authorization header, and any remaining runtime TypeError is safely classified.",
+      "verification": "automated",
+      "evidence": "Receiver-sensitive fetch regression, token validation tests and bounded production replay."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Runtime API call correction only; no agent workflow or portability change."
+  }
+}
