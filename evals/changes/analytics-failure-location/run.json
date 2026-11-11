@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "changeId": "analytics-failure-location",
+  "recordedAt": "2026-11-11T16:52:59.172Z",
+  "sourceCommit": "fc146ad9fdd72afed298cad182d046e25a989b97",
+  "sourceDigest": "d154407209f90658ff1612065939cbe456965e4be8cd66e5d8c12e2e943d98a3",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 4404,
+      "outputSha256": "d1c67cb2e4cd4a3cb57bcffa39edb257744d4e8710211bc99bde585a35f63b8b"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8080,
+      "outputSha256": "4d99a60b4b00e09ecfcbfea4f223af39d33ed6a5adbaedafd533eb62c5c59504"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 381,
+      "outputSha256": "d92bfce2671d5c3e8189a5a4b3c9e47fa6880217895bcbd18394e031caa0c7b2"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 627,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 590,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 307,
+      "outputSha256": "34ea043124282dde01de8f9595291c11ec8a45458a4c3ad94ae9f165817a5231"
+    }
+  ]
+}
