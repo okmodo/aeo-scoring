@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "changeId": "pfd-care-gold",
+  "recordedAt": "2026-11-11T23:42:21.347Z",
+  "sourceCommit": "70bea32c552baa01ad64bb4bb10077b78cfea02b",
+  "sourceDigest": "e718518aa0f1dcf40f64996f789962bccda72188cf56b8332457639e455d73b7",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run test:feasibility",
+      "exitCode": 0,
+      "durationMs": 2512,
+      "outputSha256": "c164a832c009e5d4f378bf44ca444c6caf57da7ee1ecf18f86b506b26e0c4dce"
+    }
+  ]
+}
