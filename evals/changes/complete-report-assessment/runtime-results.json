@@ -1,0 +1,92 @@
+{
+  "reviewedImplementationCommit": "e3b85c7e5ef2890112f73325b3f16cee423e78c4",
+  "validationBundleSha256": "da3b0d5c05551a8e3fb788a834e6eb0c0e71d78bbce9197ca0cdbd24c7b5767a",
+  "releaseApproval": false,
+  "productionChanged": false,
+  "frontendChanged": false,
+  "temporaryWorkersDeleted": true,
+  "operatorKeyMaterialDeleted": true,
+  "cpuLimitMs": 1000,
+  "cpuTelemetry": {
+    "source": "workersInvocationsAdaptive",
+    "rows": [],
+    "limitation": "No sampled rows returned for the temporary Workers. Configured cap and successful completion do not establish per-invocation measured CPU time."
+  },
+  "nativeProbe": {
+    "externalRequests": 0,
+    "passed": [
+      "authentication",
+      "fixed target",
+      "missing ledger fails closed"
+    ]
+  },
+  "attempts": [
+    {
+      "id": "001",
+      "worker": "aeo-audit-validate-20261111-e3b85c7",
+      "outcome": "connector HTTPS transport returned 403 before a confirmed Worker invocation",
+      "modelCalls": 0,
+      "deleted": true
+    },
+    {
+      "id": "002",
+      "worker": "aeo-audit-validate-20261111-e3b85c7b",
+      "httpStatus": 200,
+      "elapsedMs": 4303,
+      "repeatStatus": 429,
+      "sourceGate": "mismatch",
+      "sourceHash": "db9a9d29e23dffd6e0c720b5d1fe02649986c4639f98ada1c44d707d97ad79ca",
+      "modelCalls": 0,
+      "outcome": "two price-candidate element locations shifted; same 78 observations independently reviewed before next invocation",
+      "deleted": true
+    },
+    {
+      "id": "003",
+      "worker": "aeo-audit-validate-20261111-e3b85c7c",
+      "httpStatus": 200,
+      "elapsedMs": 11846,
+      "repeatStatus": 429,
+      "sourceGate": "matched",
+      "sourceHash": "db9a9d29e23dffd6e0c720b5d1fe02649986c4639f98ada1c44d707d97ad79ca",
+      "modelCalls": 1,
+      "reservedNeurons": 1308,
+      "reportedNeurons": 170.035888671875,
+      "reportStatus": "incomplete",
+      "score": null,
+      "measuredChecks": 20,
+      "totalChecks": 40,
+      "review": "failed: generic care referral wrongly accepted as specific care and scored zero; serialized size chart does not establish selected size",
+      "deleted": true
+    }
+  ],
+  "postflightAdmission": {
+    "accepted": false,
+    "reason": "allowance_exhausted",
+    "aiDay": "2026-11-11",
+    "observedNeurons": 805,
+    "reservedNeurons": 5322,
+    "operatingCeiling": 6000,
+    "note": "Policy conservatively counts observed usage plus retained reservations. No refunds, limit bypass, or additional inference."
+  },
+  "remaining": [
+    "Independent review and full CI for revision 5 corrections",
+    "Fresh source-reviewed real inference when ordinary admission permits",
+    "Final runtime review before any production activation or merge",
+    "Production entry-point and cache verification after approved activation"
+  ],
+  "correction": {
+    "releaseId": "content-facts-2026-11-11-r5",
+    "originalRequestHashVerifiedBeforeReplay": "db9a9d29e23dffd6e0c720b5d1fe02649986c4639f98ada1c44d707d97ad79ca",
+    "oldWireReplay": "care unmeasured, serialized size unknown; old response not applied to remapped observations",
+    "futureRetainedInput": {
+      "sha256": "924c16c7c88a254d6b5405791f9880fe146442706300e1a335cdf85871021318",
+      "observations": 56,
+      "productComplete": false,
+      "uninterpretedScopes": [
+        "product"
+      ],
+      "independentPreModelExpectations": true
+    },
+    "liveRevalidated": false
+  }
+}

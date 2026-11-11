@@ -46,6 +46,8 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     else findings['C1.configuration'] = config ? unknown('Configuration context is ambiguous.') : missing('configuration and included items',complete && inspectedAbsent('configuration','configuration'));
     const attrScore = (id, text) => {
         const t = text.trim();
+        // A pointer to a guide or details is not evidence of the underlying value.
+        if (/^(?:see|refer to|consult|check|view|visit|read)\b/i.test(t)) return null;
         const vague=/\b(?:many|multiple|various|assorted|premium|high.quality|lightweight|heavyweight|variety of|several)\b/i;
         const quantity=/\d+(?:\.\d+)?/;
         const labelValue = label => {
@@ -80,10 +82,10 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
         case 'fabric-weight': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : /\d+(?:\.\d+)?\s*(?:gsm|g\/m[²2])/i.test(t) ? 1 : 0.5;
         case 'garment-measurements': return !quantity.test(t) ? null : /\bchest\b/i.test(t) && /\blength\b/i.test(t) && unit.test(t) && /\b(?:size|selected)\s*[:\-]?\s*\w+/i.test(t) ? 1 : 0.5;
         case 'laptop-size': return !quantity.test(t) ? null : unit.test(t) && /\b(?:diagonal|screen|measur)/i.test(t) ? 1 : 0.5;
-        case 'care': return /\b(?:machine wash|hand wash|wash (?:cold|warm|in)|wipe clean|spot clean|rinse|clean with)\b/i.test(t) ? 1 : /\b(?:care|clean|wash)\b/i.test(t) ? 0 : null;
+        case 'care': return /\b(?:machine wash|hand wash|wash (?:cold|warm|in)|wipe clean|spot clean|rinse|clean with)\b/i.test(t) ? 1 : null;
         case 'material': case 'upper': case 'outsole': {
             const value=labelValue(id==='material' ? 'material|fabric|shell|body' : id);
-            if (value) return /^(?:(?:premium|high.quality|various|assorted)\s+)?(?:materials?|fabric)?[.!\s]*$|^(?:see|unknown)\b/i.test(value) ? 0 : 1;
+            if (value) return /^(?:(?:premium|high.quality|various|assorted)\s+)?(?:materials?|fabric)?[.!\s]*$|^(?:unknown)\b/i.test(value) ? 0 : /^(?:see|refer to|consult|check|view|visit|read)\b/i.test(value) ? null : 1;
             if (/\b(?:nylon|polyester|cotton|leather|foam|neoprene|dyneema)\b/i.test(t)) return 1;
             return vague.test(t) && /\b(?:materials?|fabric|upper|outsole)\b/i.test(t) ? 0 : null;
         }

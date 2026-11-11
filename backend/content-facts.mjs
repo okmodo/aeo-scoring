@@ -180,6 +180,8 @@ export const CONTENT_ROLE_VALIDATION_VERSION = '1.0.0';
 function plausibleRole(f, q, prepared) {
     const text = q.text;
     const category = prepared.payload.category.id;
+    // Serialized data fragments do not establish shopper-visible product text.
+    if (/(?:\\["/]|\\n|[{}]\s*,?\s*\\?")/.test(text)) return false;
     const generic = /\b(?:another|other|different|separate)\s+(?:product|item|shirt|shoe|bag|pack|vest|model|variant)\b|\b(?:generic|general|universal)\s+(?:size|sizing|fit|product)?\s*guides?\b|\b(?:for|applies to)\s+all\s+products\b/i;
     if (generic.test(text)) return false;
     const unrelated = {

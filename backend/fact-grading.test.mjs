@@ -225,3 +225,13 @@ test('shoe selection guidance needs the actual size-to-measurement relationship 
     d.facts=[{kind:'decision',key:'running-selection',value:text,quoteIds:['selection'],validity:'plausible'}];
     assert.equal(assessContentFacts({}, {}, d).findings['C4.selection'].fraction,0.5);
 });
+
+test('attribute referrals and care labels without instructions remain unknown, not zero', () => {
+    for (const [key,text] of [['care','see general care instructions'],['care','Care instructions available.'],['material','Material: see details.'],['size','See size guide.']]) {
+        const d=base(); if (key==='material') d.category='handbags'; d.observations=[{id:'q',scope:'product',text,location:'description'}];
+        d.facts=[{kind:'attribute',key,value:text,quoteIds:['q'],validity:'plausible'}];
+        const result=assessContentFacts({}, {}, d);
+        const entries=[...result.findings['C2.essential'].attributes,...result.findings['C2.supporting'].attributes];
+        assert.equal(entries.find(item=>item.id===key).status,'not_measured',text);
+    }
+});

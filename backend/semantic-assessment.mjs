@@ -21,13 +21,24 @@ const instruction = `Assess only the supplied product and policy evidence agains
 function text(value) { return typeof value === 'string' ? value.trim() : ''; }
 function utf8Size(value) { return new TextEncoder().encode(value).length; }
 /** Prepare bounded, untrusted product and retrieved-policy observations for a judge. */
+// A complete serialized object or array is data, not an ordinary prose observation.
+// Limit parsing work to the existing request budget; oversized blocks already make
+// their scope incomplete through the normal input-budget handling.
+function serializedBlock(value) {
+    if (typeof value !== 'string' || value.length > MAX_INPUT_BYTES) return false;
+    try {
+        let parsed = JSON.parse(value.trim());
+        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+        return parsed !== null && typeof parsed === 'object';
+    } catch { return false; }
+}
 export function buildSemanticRequest(snapshot, extracted, deterministicReport = {}, { product = null } = {}) {
     const html = extracted?.productHtml;
     const categoryId = typeof deterministicReport.category === 'string' ? deterministicReport.category : deterministicReport.category?.id;
     const category = categories.categories.find(c => c.id === categoryId) || null;
     const sources = [];
     let bytes = 0, truncated = false;
-    const truncatedScopes = new Set();
+    const truncatedScopes = new Set(), uninterpretedScopes = new Set();
     const addGroup = (url, location, blocks, scope) => {
         const parts = [];
         const blockMap = [];
@@ -36,6 +47,10 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
             const value = text(block.text);
             if (!value)
                 continue;
+            if (['product', 'shipping', 'returns'].includes(scope) && serializedBlock(value)) {
+                uninterpretedScopes.add(scope);
+                continue;
+            }
             const prefix = parts.length ? '\n' : '';
             const size = utf8Size(prefix + value);
             if (bytes + size > MAX_INPUT_BYTES) {
@@ -62,7 +77,7 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
         policyStates[kind] = policy?.state || 'unknown';
         if (policy?.state === 'read') {
             addGroup(policy.url, `complete ${kind} policy`, policy.extraction?.blocks || [], kind);
-            if (policy.extraction?.complete !== true)
+            if (policy.extraction?.complete !== true || uninterpretedScopes.has(kind))
                 policyStates[kind] = 'incomplete';
         }
     }
@@ -87,7 +102,7 @@ export function buildSemanticRequest(snapshot, extracted, deterministicReport = 
     const observedFacts = { priceCandidates, selectedControls, hasVariantControls: html?.hasVariantControls === true ? true : html?.hasVariantControls === false ? false : null };
     const checks = rubric.criteria.filter(c => c.id.startsWith('C')).flatMap(c => c.subchecks).filter(c => directIds.includes(c.id));
     const schema = responseSchema(category);
-    const coverage = { productComplete: html?.complete === true && !unsafeInstructions, policies: policyStates, truncated, truncatedScopes: [...truncatedScopes], unsafeInstructions };
+    const coverage = { productComplete: html?.complete === true && !unsafeInstructions && !uninterpretedScopes.has('product'), policies: policyStates, truncated, truncatedScopes: [...truncatedScopes], uninterpretedScopes: [...uninterpretedScopes], unsafeInstructions };
     const context = { url: snapshot?.url || null, category: categoryId || null, productName: deterministicReport.productName || identity || null, variant: deterministicReport.variant || null, currency: deterministicReport.currency || null };
     const payload = { version: SEMANTIC_RULE_VERSION, context, coverage, checks, category, observedFacts, sources };
     if (utf8Size(JSON.stringify({ instruction, payload, responseSchema: schema })) > 60 * 1024)

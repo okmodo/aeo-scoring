@@ -12,7 +12,7 @@
   "reservedTotal": 4014,
   "focusedAllocatedWithinShirtReservation": 727,
   "syntheticReplay": "all five frozen expectations pass; shirt 78.125/20/58.125",
-  "realRuntime": "pending",
+  "realRuntime": "failed independent review; see runtime-results.json",
   "attempts": [
     {
       "id": "running-shoes-v1",
@@ -158,5 +158,7 @@
       "elapsedNote": "Per-call wall time not retained by provider wire capture.",
       "requestSha256": null
     }
-  ]
+  ],
+  "actualModelCalls": 9,
+  "productionApproved": false
 }

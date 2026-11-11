@@ -481,3 +481,12 @@ test('retained synthetic model responses replay against all frozen outcomes', as
         }
     }
 });
+
+test('serialized product-data fragments cannot establish shopper-visible care or selected size', () => {
+    const lines=['{\\"productCareCopy\\":\\"Rinse after using, hang to dry.\\"}', 'XL (large)\\n42 - 50\\nOther product\\nSize: Medium.'];
+    const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Life Vest',blocks:lines.map((text,i)=>({text,location:`p${i}`}))}},{category:'personal-flotation-devices'});
+    const req=buildContentFactsRequest(p), obs=JSON.parse(req.messages[1].content).observations;
+    const facts=[{kind:'attribute',key:'care',quoteIds:[obs.find(o=>o.text.includes('productCareCopy')).id]},{kind:'attribute',key:'size',quoteIds:[obs.find(o=>o.text.includes('Other product')).id]}];
+    const decoded=decodeContentFacts(p,req,{facts,inspections:[]});
+    assert.ok(decoded.facts.filter(f=>f.method!=='literal_pattern').every(f=>f.validity==='unknown'));
+});

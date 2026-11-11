@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Complete source-grounded report assessment and validate the release",
-  "state": "Five synthetic actual model responses replay against frozen expectations. Shirt complete score remains 78.125. Real runtime validation and public activation are pending, never implied by the offline result.",
+  "state": "Revision 5 corrects a failed real Kokatat assessment. Synthetic replay passes; live activation is unapproved and PR must remain unmerged pending a new source-reviewed real validation. Existing production Worker and frontend were not changed.",
   "decisions": [
     "Model proposes source IDs and roles; server alone assigns credit. Unknowns remain incomplete.",
     "Preserve first-attempt failures, raw model omissions and revision 3 unknowns; revised pipeline replays the same retained primary responses.",
@@ -18,12 +18,15 @@
     "Terra implementation and independent source adjudication across five categories.",
     "Scoped truncation, long-block chunking, category description fallback, exact literal supplements and conservative grading fixes.",
     "Policy JSON-LD frame repair and narrow maintenance-page rejection.",
-    "Bounded synthetic model calls with account ledger admission and retained failures."
+    "Bounded synthetic model calls with account ledger admission and retained failures.",
+    "Actual fixed-target Worker ran one real inference under CPU1000 and the source hash gate; independent review rejected care referral grading. All temporary Workers and operator key material were removed.",
+    "Corrected referral grading and quarantined serialized observation blocks while preserving unknowns; release ID bumped to r5."
   ],
   "remaining": [
-    "Source-bound full evaluation, final independent review and hosted CI.",
-    "One fixed-target real Kokatat runtime assessment, exact same-invocation input/output review and sampled CPU evidence.",
-    "Merge and activate the reviewed backend only after real release gates pass; verify service/cache/CORS through existing frontend origin and remove temporary Worker."
+    "Finish independent correction review and source-bound CI.",
+    "Preserve the failed real result and reservations. Daily admission currently denies work: observed805+reserved5322 exceeds6000 conservative operating ceiling.",
+    "Prepare and independently review new real input before remaining model invocation (nine of ten used). Wait for ordinary current-day admission; no override.",
+    "Only after successful real calibration and runtime evidence, finalize release review, CI, merge, activate backend preserving current preview access setting, and verify frontend-origin service/cache responses."
   ],
   "resumeCommands": [
     "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs backend/content-facts-runner.test.mjs",
