@@ -433,3 +433,17 @@ test('focused condition inspection validates unknowns, bounds scope, and preserv
     assert.deepEqual(Object.keys(JSON.parse(buildConditionInspectionRequest(p,partial).messages[1].content).definitions),['shirt-limits']);
     assert.throws(()=>decodeConditionInspection(p,first,partial,{conditionChecks:{material_claim:'unknown','shirt-limits':'absent'}}));
 });
+
+test('focused condition prompt asks about supplied assertions and preserves ambiguity', () => {
+    const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'100% cotton. Machine wash cold.',location:'description'}]}},{category:'basic-tshirts'});
+    const original={facts:[],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}};
+    const prompt=buildConditionInspectionRequest(p,original).messages[0].content;
+    assert.match(prompt,/text-presence task, not a judgment about real-world truth/);
+    assert.match(prompt,/no supplied product observation asserts/);
+    assert.match(prompt,/unknown if wording matches the trigger or is ambiguous/);
+    assert.match(prompt,/Ordinary fiber composition is not a performance claim/);
+    assert.match(prompt,/ordinary washing instructions are not a restricted-care or treatment claim/);
+    const decoded=decodeConditionInspection(p,buildContentFactsRequest(p),original,{conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}});
+    assert.equal(status(decoded,'claim','claim'),'unknown');
+    assert.equal(status(decoded,'decision','shirt-limits'),'unknown');
+});

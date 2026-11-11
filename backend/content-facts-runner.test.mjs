@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assessWithContentFacts, contentFactsReservation, contentFactsFollowupFits, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
+import { assessWithContentFacts, contentFactsReservation, contentFactsFollowupFits, contentFactsCompletedBound, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
 import { CONTENT_FACTS_MODEL } from './content-facts.mjs';
 const snapshot = {url:'https://shop.example/item'};
 const extracted = {jsonLd:[], productHtml:{complete:true,identity:'Acme Everyday T-shirt',blocks:[{text:'Fabric composition: 100% cotton.',location:'details'}]}};
@@ -123,4 +123,11 @@ test('an invalid focused response preserves supported first-stage facts and unkn
     assert.equal(calls,2);assert.equal(reservations,1);assert.equal(result.status,'assessed');
     assert.match(result.limitation,/Conditional inspection/);
     assert.equal(result.facts.inspections.find(i=>i.kind==='claim'&&i.key==='claim').status,'unknown');
+});
+
+test('completed bound requires finished provider-root usage within each request cap', () => {
+    const request={messages:['input'],max_tokens:128};
+    const output={usage:{prompt_tokens:10,completion_tokens:20,neurons:200},choices:[{finish_reason:'stop'}]};
+    assert.equal(contentFactsCompletedBound(request,output),200);
+    for (const altered of [{...output,choices:[]},{...output,choices:[{finish_reason:'stop'},{finish_reason:'stop'}]},{...output,usage:{...output.usage,prompt_tokens:999999}},{...output,usage:{...output.usage,completion_tokens:129}},{...output,usage:{...output.usage,neurons:-1}}]) assert.equal(contentFactsCompletedBound(request,altered),null);
 });

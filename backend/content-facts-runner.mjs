@@ -5,6 +5,7 @@ import { assessContentFacts } from './fact-grading.mjs';
 
 // Enable only after independent live calibration and an explicit decision.
 export const CONTENT_FACTS_CALIBRATION_APPROVED = false;
+export const CONTENT_FACTS_RELEASE_ID = 'content-facts-2026-11-11';
 const MAX_INPUT_BYTES = 60 * 1024;
 const MAX_OUTPUT_TOKENS = 2048;
 const TIMEOUT_MS = 20_000;
@@ -22,19 +23,25 @@ export function contentFactsReservation(input) {
 
 // Capacity stays allocated to this one assessment in D1. Only completed,
 // provider-root usage can establish room for one sequential suballocation.
-export function contentFactsFollowupFits(reserved, firstInput, firstOutput, followup, reservedAt, currentTime) {
+export function contentFactsCompletedBound(firstInput, firstOutput) {
     try {
         const usage = firstOutput?.usage;
         const prompt = usage?.prompt_tokens, completion = usage?.completion_tokens;
-        if (reserved !== contentFactsReservation(firstInput) || !Number.isSafeInteger(prompt) || prompt < 1 ||
+        if (!Number.isSafeInteger(prompt) || prompt < 1 ||
             !Number.isSafeInteger(completion) || completion < 1 || completion > firstInput.max_tokens ||
             prompt > new TextEncoder().encode(JSON.stringify(firstInput)).length + 2048 ||
-            !Number.isSafeInteger(reservedAt) || !Number.isSafeInteger(currentTime) || currentTime < reservedAt ||
-            new Date(reservedAt).toISOString().slice(0, 10) !== new Date(currentTime).toISOString().slice(0, 10) ||
-            !Array.isArray(firstOutput.choices) || firstOutput.choices.length !== 1 || firstOutput.choices[0]?.finish_reason !== 'stop') return false;
-        if (usage.neurons !== undefined && (!Number.isFinite(usage.neurons) || usage.neurons < 0)) return false;
-        const consumed = Math.max(neuronBound(prompt + 2048, completion), Math.ceil(usage.neurons ?? 0));
-        return consumed + contentFactsReservation(followup) <= reserved;
+            !Array.isArray(firstOutput.choices) || firstOutput.choices.length !== 1 || firstOutput.choices[0]?.finish_reason !== 'stop') return null;
+        if (usage.neurons !== undefined && (!Number.isFinite(usage.neurons) || usage.neurons < 0)) return null;
+        return Math.max(neuronBound(prompt + 2048, completion), Math.ceil(usage.neurons ?? 0));
+    } catch { return null; }
+}
+export function contentFactsFollowupFits(reserved, firstInput, firstOutput, followup, reservedAt, currentTime) {
+    try {
+        const consumed = contentFactsCompletedBound(firstInput, firstOutput);
+        return consumed !== null && reserved === contentFactsReservation(firstInput) &&
+            Number.isSafeInteger(reservedAt) && Number.isSafeInteger(currentTime) && currentTime >= reservedAt &&
+            new Date(reservedAt).toISOString().slice(0, 10) === new Date(currentTime).toISOString().slice(0, 10) &&
+            consumed + contentFactsReservation(followup) <= reserved;
     } catch { return false; }
 }
 function contentOutput(output) {
