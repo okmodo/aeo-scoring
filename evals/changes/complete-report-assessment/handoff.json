@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Complete source-grounded report assessment and validate the release",
-  "state": "User explicitly requested deployment after the failed-runtime disclosure. Deploy reviewed backend code with AI activation OFF, preserving the already-deployed PR32 preview-password behavior. This does not approve inference calibration or a complete-report claim.",
+  "state": "User-authorized backend code deployed from reviewed source 5c7d0c9. Worker version21b1e96c-21f6-4448-a073-dab3d55f3c85 serves 100% traffic; downloaded code matches tested SHA-256. AI activation remains OFF pending real calibration; PR33 remains draft/unmerged.",
   "decisions": [
     "Model proposes source IDs and roles; server alone assigns credit. Unknowns remain incomplete.",
     "Preserve first-attempt failures, raw model omissions and revision 3 unknowns; revised pipeline replays the same retained primary responses.",
@@ -22,13 +22,13 @@
     "Policy JSON-LD frame repair and narrow maintenance-page rejection.",
     "Bounded synthetic model calls with account ledger admission and retained failures.",
     "Actual fixed-target Worker ran one real inference under CPU1000 and the source hash gate; independent review rejected care referral grading. All temporary Workers and operator key material were removed.",
-    "Corrected referral grading and quarantined serialized observation blocks while preserving unknowns; release ID bumped to r5."
+    "Corrected referral grading and quarantined serialized observation blocks while preserving unknowns; release ID bumped to r5.",
+    "Hosted integration CI passed; backend deployed preserving existing password/access/secrets, CPU1000 and usage admission. Exact downloaded bundle verified. Live frontend CORS204 and unauthorized audit401 confirmed with zero audits started. See deployment.json."
   ],
   "remaining": [
-    "Complete independent integration review, both source-bound evaluations and hosted CI, then deploy this exact inactive-code revision under the user request.",
-    "Verify deployed code hash, CPU1000, secret/access preservation and frontend-origin unauthorized/CORS behavior without starting an audit.",
+    "Complete source-bound documentation evidence and hosted CI after recording this receipt.",
     "Real inference remains unapproved. Keep all reservations; daily admission denies additional runs until a fresh receipt and ordinary current-day allocation permit them.",
-    "Before AI activation, run and independently review the remaining source-bound real validation, complete runtime evidence, CI and release approval."
+    "Before AI activation or complete-report claims, run and independently review the remaining source-bound real validation, complete runtime evidence, CI and release approval."
   ],
   "resumeCommands": [
     "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs backend/content-facts-runner.test.mjs",
