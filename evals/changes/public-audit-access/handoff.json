@@ -13,11 +13,22 @@
     "Confirm private usage token binding and project database schema.",
     "Merge PR27 and deploy only the public audit Worker, then verify audit and deployed CPU."
   ],
-  "replayCommands": [
-    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs backend/public-worker.test.mjs",
-    "npm run evaluate -- --change public-audit-access --base origin/main"
-  ],
   "traceGaps": [
     "Read-only account probes are summarized without raw responses or secrets. Deployment is outside CI."
+  ],
+  "task": "public-audit-access",
+  "constraints": [
+    "All six 60% ceilings and the 1,000 ms CPU limit are preserved.",
+    "Analytics are sampled and delayed under explicit user acceptance.",
+    "Deployment touches only the project Worker and its existing project database."
+  ],
+  "completed": [
+    "Independent review of 1fa2fc9 found no blockers, 21 targeted tests passed.",
+    "Actual updated token successfully collected all six estimated metric values and current cycle.",
+    "All planned commands passed, handoff schema corrected before final PR gate."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs backend/public-worker.test.mjs",
+    "npm run evaluate -- --change public-audit-access --base origin/main"
   ]
 }
