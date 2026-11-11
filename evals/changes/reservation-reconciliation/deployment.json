@@ -1,0 +1,188 @@
+{
+  "sourceCommit": "08aac9f",
+  "bundleSha256": "13a5f4d259a378f94611048183ab703a8ad41a3165f3827ee75af172bb82fc1f",
+  "worker": "aeo-audit-public-20261105",
+  "previousVersion": "21b1e96c-21f6-4448-a073-dab3d55f3c85",
+  "version": "78c573e5-8f93-415b-8d2d-c0b099032734",
+  "percentage": 100,
+  "deployedAt": "2026-11-11T22:31:15.082895Z",
+  "downloadContainsExactBundle": true,
+  "cpuMs": 1000,
+  "ceilingsUnchanged": true,
+  "bindings": [
+    {
+      "name": "AUDIT_BILLING_ACCOUNT_ID",
+      "type": "plain_text"
+    },
+    {
+      "name": "AUDIT_BILLING_SUBSCRIPTION_ID",
+      "type": "plain_text"
+    },
+    {
+      "name": "AUDIT_DB",
+      "type": "d1"
+    },
+    {
+      "name": "AUDIT_PREVIEW_PASSWORD",
+      "type": "secret_text"
+    },
+    {
+      "name": "AUDIT_PUBLIC_ACCESS",
+      "type": "plain_text",
+      "text": "disabled"
+    },
+    {
+      "name": "AUDIT_RATE_SECRET",
+      "type": "secret_text"
+    },
+    {
+      "name": "AUDIT_USAGE_READ_TOKEN",
+      "type": "secret_text"
+    }
+  ],
+  "migration": {
+    "validatedTargets": 7,
+    "statements": 10,
+    "allSuccess": true,
+    "pendingAi": [
+      {
+        "amount": 5322
+      }
+    ],
+    "anchors": [
+      {
+        "count": 0
+      }
+    ],
+    "marker": [
+      {
+        "name": "bootstrap"
+      }
+    ]
+  },
+  "settlement": {
+    "startedAt": "2026-11-11T22:29:19.529Z",
+    "finishedAt": "2026-11-11T22:29:33.624Z",
+    "results": [
+      {
+        "id": "release-calibration-20261111-running-shoes-v1",
+        "neurons": 118,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "release-calibration-20261111-running-shoes-v2",
+        "neurons": 95,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "release-calibration-20261111-casual-daypacks-v2",
+        "neurons": 89,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "release-calibration-20261111-personal-flotation-devices-v2",
+        "neurons": 100,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "release-calibration-20261111-handbags-v2",
+        "neurons": 97,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "release-calibration-20261111-basic-tshirts-v2",
+        "neurons": 139,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      },
+      {
+        "id": "ec28b068-6f5f-4002-9d7d-60b3d40d0685",
+        "neurons": 171,
+        "accepted": true,
+        "duplicate": false,
+        "overrun": false
+      }
+    ],
+    "pendingAi": [
+      {
+        "amount": 0
+      }
+    ],
+    "settledAi": [
+      {
+        "period": "2026-11-11",
+        "amount": 809
+      }
+    ],
+    "originalHistory": [
+      {
+        "ai_neurons": 5322
+      }
+    ],
+    "anchors": [
+      {
+        "count": 0
+      }
+    ]
+  },
+  "admission": {
+    "admitted": {
+      "accepted": true,
+      "duplicate": false
+    },
+    "completed": {
+      "accepted": true,
+      "duplicate": false,
+      "overrun": false
+    },
+    "excess": {
+      "accepted": false,
+      "reason": "allowance_exhausted"
+    },
+    "observedAi": 805,
+    "anchor": [
+      {
+        "baseline": 809,
+        "cutoff": 809
+      }
+    ],
+    "pendingAi": [
+      {
+        "amount": 0
+      }
+    ],
+    "settledAi": [
+      {
+        "amount": 809
+      }
+    ],
+    "modelCalls": 0
+  },
+  "liveHttpVerification": {
+    "preflight": 204,
+    "unauthorized": 401,
+    "frontendOriginPreserved": true,
+    "auditsStarted": 0,
+    "modelCalls": 0
+  },
+  "hostedCi": "https://github.com/okmodo/aeo-scoring/actions/runs/43111906591",
+  "frontendChanged": false,
+  "unrelatedServicesChanged": false,
+  "aiActivationChanged": false,
+  "limitations": [
+    "Account analytics remain estimated and may be delayed.",
+    "Non-AI completion charges retain conservative reservation amounts; CPU is not measured per invocation.",
+    "Authenticated HTTP audit submission was not exercised without the existing private preview password. Real project D1 admission and deployed bundle/access settings were verified; no model was invoked."
+  ]
+}

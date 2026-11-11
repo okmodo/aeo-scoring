@@ -83,7 +83,7 @@ test('day and billing cycle rollover reset usage and preserve storage reservatio
   assert.equal((await reserve(guard, 'a', now, { requests: 10, aiNeurons: 6000, d1StorageBytes: 9 })).accepted, true);
   const next = end;
   assert.equal((await reserve(guard, 'b', next, { requests: 10, aiNeurons: 6000, d1StorageBytes: 2 })).reason, 'allowance_exhausted');
-  assert.equal((await reserve(guard, 'c', next, { requests: 10, aiNeurons: 6000, d1StorageBytes: 1 })).accepted, true);
+  assert.equal((await reserve(guard, 'c', next, { requests: 10, aiNeurons: 6000, d1StorageBytes: 1 })).reason, 'allowance_exhausted');
 });
 
 test('interleaved refreshes retain cumulative high-water estimates', async () => {

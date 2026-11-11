@@ -67,14 +67,15 @@ test('authenticated submissions and report reads require current allowance evide
     await expectDenied(env, 503);
     seedReceipt(subscriptionId, now - 300_001, usage);
     await expectDenied(env, 503);
-    seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
-    await expectDenied(env, 429);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 0);
     seedReceipt(subscriptionId, now, usage);
     await expectDenied({ ...env, AUDIT_BILLING_SUBSCRIPTION_ID: undefined }, 503);
     const response = await poll(env);
     assert.equal(response.status, 200);
     assert.equal((await response.json()).status, 'pending');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
+    seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
+    await expectDenied(env, 429);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
   } finally {
     if (previousRewriter === undefined) delete globalThis.HTMLRewriter;
