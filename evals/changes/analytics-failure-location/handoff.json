@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "task": "Identify the precise live TypeError source location",
+  "state": "PR27 through30 merged/deployed. Production refresh raises TypeError during collection despite receiver/header corrections. Actual local snapshot enabled an audit, so precise source location will isolate remaining cause. Independently reviewed at7c5ecf6 with7 tests passing.",
+  "decisions": [
+    "Persist only numeric index.js locations after the stack first line.",
+    "Retain every admission and CPU control."
+  ],
+  "constraints": [
+    "No raw error messages or stacks persisted.",
+    "Frontend and unrelated services excluded."
+  ],
+  "completed": [
+    "Private location extraction test confirms sensitive message suppression."
+  ],
+  "remaining": [
+    "Evaluate, hosted CI, merge/deploy and inspect exact source line.",
+    "Fix the cause and verify automatic production audits."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-allowance.test.mjs",
+    "npm run evaluate -- --change analytics-failure-location --base origin/main"
+  ]
+}
