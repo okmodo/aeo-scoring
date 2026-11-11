@@ -1,0 +1,523 @@
+{
+  "running-shoes": {
+    "conditionChecks": {
+      "material_claim": "unknown",
+      "running-limits": "unknown"
+    },
+    "facts": [
+      {
+        "kind": "identity",
+        "key": "name",
+        "quoteIds": [
+          "q1"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "upper",
+        "quoteIds": [
+          "q2"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "size",
+        "quoteIds": [
+          "q3"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "width",
+        "quoteIds": [
+          "q4"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "surface",
+        "quoteIds": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "outsole",
+        "quoteIds": [
+          "q6"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "color",
+        "quoteIds": [
+          "q7"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "weight",
+        "quoteIds": [
+          "q8"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "drop",
+        "quoteIds": [
+          "q9"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "closure",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "care",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "running-use",
+        "quoteIds": [
+          "q12"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "running-fit",
+        "quoteIds": [
+          "q13"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "running-selection",
+        "quoteIds": [
+          "q14"
+        ]
+      }
+    ],
+    "inspections": []
+  },
+  "casual-daypacks": {
+    "conditionChecks": {
+      "material_claim": "unknown",
+      "pack-fit": "unknown",
+      "pack-limits": "unknown"
+    },
+    "facts": [
+      {
+        "kind": "attribute",
+        "key": "capacity",
+        "quoteIds": [
+          "q2"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "dimensions",
+        "quoteIds": [
+          "q3"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "material",
+        "quoteIds": [
+          "q4"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "closure",
+        "quoteIds": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "color",
+        "quoteIds": [
+          "q6"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "carry",
+        "quoteIds": [
+          "q7"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "weight",
+        "quoteIds": [
+          "q8"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "compartments",
+        "quoteIds": [
+          "q9"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "care",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "laptop-size",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "pack-use",
+        "quoteIds": [
+          "q12"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "pack-selection",
+        "quoteIds": [
+          "q14"
+        ]
+      }
+    ],
+    "inspections": []
+  },
+  "personal-flotation-devices": {
+    "conditionChecks": {
+      "material_claim": "unknown",
+      "personal-flotation-devices-limitations": "unknown"
+    },
+    "facts": [
+      {
+        "kind": "identity",
+        "key": "name",
+        "quoteIds": [
+          "q1"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "buoyancy",
+        "quoteIds": [
+          "q2"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "size",
+        "quoteIds": [
+          "q3"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "approval",
+        "quoteIds": [
+          "q4"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "material",
+        "quoteIds": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "color",
+        "quoteIds": [
+          "q6"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "closure",
+        "quoteIds": [
+          "q7"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "weight",
+        "quoteIds": [
+          "q8"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "fit",
+        "quoteIds": [
+          "q9"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "care",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "features",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "personal-flotation-devices-intended-use",
+        "quoteIds": [
+          "q12"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "personal-flotation-devices-compatibility",
+        "quoteIds": [
+          "q13"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "personal-flotation-devices-selection",
+        "quoteIds": [
+          "q14"
+        ]
+      }
+    ],
+    "inspections": []
+  },
+  "handbags": {
+    "conditionChecks": {
+      "material_claim": "unknown",
+      "handbags-limitations": "unknown"
+    },
+    "facts": [
+      {
+        "kind": "identity",
+        "key": "name",
+        "quoteIds": [
+          "q1"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "material",
+        "quoteIds": [
+          "q2"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "dimensions",
+        "quoteIds": [
+          "q3"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "closure",
+        "quoteIds": [
+          "q4"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "color",
+        "quoteIds": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "features",
+        "quoteIds": [
+          "q6"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "compartments",
+        "quoteIds": [
+          "q7"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "weight",
+        "quoteIds": [
+          "q8"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "care",
+        "quoteIds": [
+          "q9"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "origin",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "compartments",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "handbags-intended-use",
+        "quoteIds": [
+          "q12"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "handbags-compatibility",
+        "quoteIds": [
+          "q13"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "handbags-selection",
+        "quoteIds": [
+          "q14"
+        ]
+      }
+    ],
+    "inspections": []
+  },
+  "basic-tshirts": {
+    "conditionChecks": {
+      "material_claim": "unknown",
+      "shirt-limits": "unknown"
+    },
+    "facts": [
+      {
+        "kind": "identity",
+        "key": "name",
+        "quoteIds": [
+          "q1"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "fiber",
+        "quoteIds": [
+          "q9"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "fit",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "color",
+        "quoteIds": [
+          "q8"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "sleeve",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "neckline",
+        "quoteIds": [
+          "q11"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "care",
+        "quoteIds": [
+          "q15"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "fabric-weight",
+        "quoteIds": [
+          "q12"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "garment-measurements",
+        "quoteIds": [
+          "q13"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "origin",
+        "quoteIds": [
+          "q14"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "shirt-use",
+        "quoteIds": [
+          "q2"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "shirt-fit",
+        "quoteIds": [
+          "q10"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "shirt-selection",
+        "quoteIds": [
+          "q16"
+        ]
+      }
+    ],
+    "inspections": []
+  },
+  "basic-tshirts-condition-v4": {
+    "conditionChecks": {
+      "material_claim": "absent",
+      "shirt-limits": "absent"
+    }
+  }
+}

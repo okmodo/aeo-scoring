@@ -4,7 +4,7 @@ import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
 import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
-import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
+import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FACTS_RELEASE_ID } from './content-facts-runner.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -108,7 +108,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1' : '0') + ':' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -227,7 +227,7 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID } = {}) {
   const db = env.AUDIT_DB;
   const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
   const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;

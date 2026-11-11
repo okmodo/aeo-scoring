@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "task": "Complete source-grounded report assessment and validate the release",
+  "state": "Five synthetic actual model responses replay against frozen expectations. Shirt complete score remains 78.125. Real runtime validation and public activation are pending, never implied by the offline result.",
+  "decisions": [
+    "Model proposes source IDs and roles; server alone assigns credit. Unknowns remain incomplete.",
+    "Preserve first-attempt failures, raw model omissions and revision 3 unknowns; revised pipeline replays the same retained primary responses.",
+    "One focused condition inspection may fit inside the original reservation using authentic finished usage; no refunds or automatic retries.",
+    "Enable public inference only with the exact reviewed release ID after actual real-product calibration, recording source commit, bundle hash and Worker version together. Material changes require a new ID and cache namespace."
+  ],
+  "constraints": [
+    "Workers Paid included allowances only, account-wide 60% estimated-analytics admission, 1,000 ms CPU.",
+    "No frontend, shared dependency, merchant-site or unrelated Cloudflare service changes.",
+    "Full merchant inputs and provider wire responses remain private; committed model bodies contain synthetic data only.",
+    "Temporary validation Worker is fixed-target, authenticated, durably single-use and removed after the test."
+  ],
+  "completed": [
+    "Terra implementation and independent source adjudication across five categories.",
+    "Scoped truncation, long-block chunking, category description fallback, exact literal supplements and conservative grading fixes.",
+    "Policy JSON-LD frame repair and narrow maintenance-page rejection.",
+    "Bounded synthetic model calls with account ledger admission and retained failures."
+  ],
+  "remaining": [
+    "Source-bound full evaluation, final independent review and hosted CI.",
+    "One fixed-target real Kokatat runtime assessment, exact same-invocation input/output review and sampled CPU evidence.",
+    "Merge and activate the reviewed backend only after real release gates pass; verify service/cache/CORS through existing frontend origin and remove temporary Worker."
+  ],
+  "resumeCommands": [
+    "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs backend/content-facts-runner.test.mjs",
+    "node --test evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs",
+    "npm run evaluate -- --change complete-report-assessment --base origin/main"
+  ]
+}

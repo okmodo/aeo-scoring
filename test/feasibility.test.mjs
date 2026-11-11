@@ -1,4 +1,5 @@
 import test from 'node:test';
+import '../evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { inspectSnapshot, observePhrase, compareSnapshots } from '../scripts/feasibility.mjs';

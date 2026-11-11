@@ -447,3 +447,37 @@ test('focused condition prompt asks about supplied assertions and preserves ambi
     assert.equal(status(decoded,'claim','claim'),'unknown');
     assert.equal(status(decoded,'decision','shirt-limits'),'unknown');
 });
+
+test('retained synthetic model responses replay against all frozen outcomes', async () => {
+    const {readFileSync}=await import('node:fs');
+    const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    const {scoreAudit}=await import('./scoring.mjs');
+    const outputs=JSON.parse(readFileSync(new URL('./fixtures/content-facts/release-model-v2.json',import.meta.url),'utf8'));
+    for (const c of await releaseCases()) {
+        const output=outputs[c.id];
+        const decoded=c.id==='basic-tshirts' ? decodeConditionInspection(c.prepared,c.request,output,outputs['basic-tshirts-condition-v4']) : decodeContentFacts(c.prepared,c.request,output,{requireConditionChecks:true});
+        const graded=assessContentFacts(c.snapshot,c.extracted,decoded);
+        if (c.id==='basic-tshirts') {
+            const {referenceShirtResponse}=await import('./fixtures/content-facts/reference-shirt.mjs');
+            const reference=assessContentFacts(c.snapshot,c.extracted,decodeContentFacts(c.prepared,c.request,referenceShirtResponse(c.request)));
+            assert.equal(Object.keys(reference.findings).length,15);
+            for (const [id,expected] of Object.entries(reference.findings)) {
+                assert.equal(graded.findings[id].status,expected.status,`${c.id} ${id}`);
+                if (expected.status==='measured') assert.equal(graded.findings[id].fraction,expected.fraction,`${c.id} ${id}`);
+            }
+            const report=scoreAudit(c.snapshot,c.extracted,{validatedFacts:decoded});
+            assert.equal(report.status,'complete');
+            assert.equal(report.score.total,c.expected.checks.total);
+            assert.equal(report.score.structure,c.expected.checks.structure);
+            assert.equal(report.score.content,c.expected.checks.content);
+        } else {
+            assert.equal(Object.keys(c.expected.checks).length,15);
+            for (const [id,expected] of Object.entries(c.expected.checks)) {
+                const finding=graded.findings[id];
+                if (typeof expected==='number') { assert.equal(finding.status,'measured',`${c.id} ${id}`); assert.equal(finding.fraction,expected,`${c.id} ${id}`); }
+                else assert.equal(finding.status,expected,`${c.id} ${id}`);
+            }
+        }
+    }
+});
