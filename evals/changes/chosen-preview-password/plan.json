@@ -1,0 +1,15 @@
+{
+ "version":1,
+ "id":"chosen-preview-password",
+ "task":"Enable the shared preview gate with the user's chosen shorter password, held only in a Worker secret.",
+ "scope":["backend/public-worker.mjs","backend/public-worker.test.mjs","backend/public-deploy/cloudflare.config.ts","docs/included-allowance-policy.md","evals/changes/chosen-preview-password/**"],
+ "nonGoals":["Committing the chosen password, scoring changes, allowance policy changes, frontend changes or unrelated services."],
+ "outcomes":[
+  {"id":"O1","description":"Preview authentication accepts configured passwords of 8 through 128 URL-safe characters and rejects incorrect or missing credentials before audit work.","verification":"automated","evidence":"Existing auth regressions plus shorter credential boundary cases."},
+  {"id":"O2","description":"The public release configuration requires the shared password and retains current usage admission and CPU controls.","verification":"human","evidence":"Independent review and post-release checks of unlock and unauthorized audit calls."}
+ ],
+ "process":[{"id":"P1","description":"Commit plan before implementation, obtain independent review and hosted CI before releasing the requested password change.","verification":"human","evidence":"Git chronology and actual command evaluation."}],
+ "styleEfficiency":[{"id":"E1","description":"Make a targeted validation and configuration change using the existing secret binding.","verification":"human","evidence":"Source review."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview","npm run test:feasibility"],
+ "exitTest":{"required":false,"reason":"Shared preview credential configuration does not change agent portability or workflow."}
+}
