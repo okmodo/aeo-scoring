@@ -65,6 +65,18 @@ test('observed usage and reservations enforce limits', async () => {
   assert.equal((await reserve(guard, 'b')).reason, 'allowance_exhausted');
 });
 
+test('keeps only numeric deployed source locations from stack frames', async () => {
+  const { guard, sqlite } = setup(async () => {
+    const error = new TypeError('private token index.js:99:99');
+    error.stack = 'TypeError: private token index.js:99:99\n    at work (index.js:210:14)\n    at secret-url.example/path';
+    throw error;
+  });
+  await reserve(guard, 'a');
+  assert.deepEqual(JSON.parse(sqlite.prepare('SELECT diagnostic_highwater_json FROM allowance_receipts').get().diagnostic_highwater_json), {
+    failure: 'analytics_type_error', stage: 'collect_snapshot', locations: [{ line: 210, column: 14 }],
+  });
+});
+
 test('day and billing cycle rollover reset usage and preserve storage reservations', async () => {
   const end = now + 120000;
   const { guard } = setup(async ({ now: at }) => at < end ? snapshot(at, {}, now - 1000, end) : snapshot(at, {}, end, end + 86400000));

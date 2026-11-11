@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "mode": "local_native_runtime_with_mock_api",
+  "observedBefore": "TypeError: Invalid redirect value, must be one of follow or manual.",
+  "observedAfter": {
+    "passed": true,
+    "externalRequests": 0
+  },
+  "runtimeCompatibilityDate": "2026-11-05",
+  "hostNode": "25.9.0",
+  "ciNode": "24",
+  "replay": "node evals/changes/worker-analytics-redirect/native-runtime-probe.mjs",
+  "limitations": [
+    "This local native probe uses fixtures. Production API access and audit verification remain separate."
+  ]
+}

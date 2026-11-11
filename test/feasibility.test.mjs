@@ -179,3 +179,5 @@ await import('../backend/allowance-store.test.mjs');
 await import('../backend/usage-collector.test.mjs');
 await import('../backend/usage-reconciliation.test.mjs');
 await import('../backend/usage-collection.test.mjs');
+await import('../backend/analytics-usage.test.mjs');
+await import('../backend/analytics-allowance.test.mjs');

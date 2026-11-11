@@ -8,7 +8,8 @@ const subscription = () => ({ success: true, errors: [], result: [{ id: 'sub', c
 const analytics = () => ({ data: { viewer: { accounts: [{ workers: [{ sum: { requests: 12.2, cpuTimeUs: 1001 } }], d1: [{ sum: { rowsRead: 23, rowsWritten: 4 } }], storage: [{ dimensions: { databaseId: 'db' }, max: { databaseSizeBytes: 50 } }, { dimensions: { databaseId: 'db' }, max: { databaseSizeBytes: 30 } }], ai: [{ sum: { totalNeurons: 2.1 } }] }] } } });
 function fetcher(sub = subscription(), data = analytics()) {
   return async (url, options) => {
-    assert.equal(options.redirect, 'error');
+    if (options.redirect === 'error') throw new TypeError('Invalid redirect value, must be follow or manual');
+    assert.equal(options.redirect, 'manual');
     if (url.endsWith('/graphql')) {
       const { query } = JSON.parse(options.body);
       assert.ok(query.includes(config.accountId));
@@ -49,6 +50,16 @@ test('default fetch preserves the global runtime receiver', async () => {
     const result = await collectAnalyticsUsage(config);
     assert.equal(result.mode, 'estimated');
   } finally { globalThis.fetch = previous; }
+});
+test('rejects management API redirects without following them or forwarding credentials', async () => {
+  let calls = 0;
+  await assert.rejects(collectAnalyticsUsage({ ...config, fetch: async (url, options) => {
+    calls++;
+    assert.equal(options.redirect, 'manual');
+    assert.ok(url.startsWith('https://api.cloudflare.com/'));
+    return new Response(null, { status: 302, headers: { location: 'https://untrusted.example/token' } });
+  } }), /subscriptions_http_302/);
+  assert.equal(calls, 1);
 });
 test('rejects incomplete, malformed, erroneous and overflowing responses', async () => {
   const cases = [];

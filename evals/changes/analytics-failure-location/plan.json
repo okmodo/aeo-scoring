@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "id": "analytics-failure-location",
+  "task": "Identify the source line for the remaining production TypeError without retaining error text or credentials.",
+  "scope": [
+    "backend/analytics-allowance.mjs",
+    "backend/analytics-allowance.test.mjs",
+    "evals/changes/analytics-failure-location/**"
+  ],
+  "nonGoals": [
+    "Raw stack/error storage, weakened checks, frontend edits, unrelated services."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Persist only numeric index.js source locations from failed refreshes so the exact deployed operation can be diagnosed.",
+      "verification": "automated",
+      "evidence": "Known frame extraction and unknown sensitive stack suppression regression."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Private runtime diagnostics only, without agent workflow changes."
+  }
+}

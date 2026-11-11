@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Fix the reproduced Worker analytics redirect-mode failure",
+  "state": "Native Workers runtime reproduced redirect:error rejection before any API request. Manual mode passes the same native probe and rejects 302 responses. Root fix is b96829d, independently reviewed with no blocking findings.",
+  "decisions": [
+    "Use manual redirects and reject non-success responses before reading data or following destinations.",
+    "Keep all 60% limits, the 1,000 ms CPU setting and existing failure admission rules.",
+    "Register analytics usage and ledger regressions in hosted feasibility checks."
+  ],
+  "constraints": [
+    "Native probe uses mock API responses and zero external requests.",
+    "Frontend, dependencies and unrelated services excluded."
+  ],
+  "completed": [
+    "Native runtime confirmed original TypeError and corrected behavior.",
+    "Thirteen focused tests passed, including redirect rejection and secret suppression."
+  ],
+  "remaining": [
+    "Complete independent review and both source-bound evaluations, then hosted CI.",
+    "Merge/deploy and verify the Worker refreshes its own account snapshot and serves a real audit."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs",
+    "node evals/changes/worker-analytics-redirect/native-runtime-probe.mjs",
+    "npm run evaluate -- --change worker-analytics-redirect --base origin/main"
+  ]
+}
