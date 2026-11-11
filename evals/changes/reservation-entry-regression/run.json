@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "reservation-entry-regression",
-  "recordedAt": "2026-11-11T22:26:35.819Z",
-  "sourceCommit": "624ed5459c4d2ee3c33989653090197f1fb95d70",
-  "sourceDigest": "37f3799743d0a4f7920eeb2acc11fc9d8b8ad2ac6b99bdcb267f3a8f077d501f",
+  "recordedAt": "2026-11-11T22:33:23.722Z",
+  "sourceCommit": "679c5c817a3b721ea03d776d1da5af7b73293810",
+  "sourceDigest": "53fc3c2c97daae6645a5c7aa36a23f71c9eded5ba70778e32f536fdf3377ba64",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2356,
-      "outputSha256": "82d637b88dc05e869261717187e8b9753f704de87894c0861bd13f520dfee3cc"
+      "durationMs": 2289,
+      "outputSha256": "a0629b80562649e785dca801e75e5bdc1c7773574fe4bfac39f9a44ffa16219e"
     }
   ]
 }
