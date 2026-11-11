@@ -1,0 +1,9 @@
+# Independent review
+
+Reviewed implementation commit `0f5f0d2d7291fd4c0f1f21a12e3a3093811eb01e` against separately committed plan `0205ab8757248c3e0df0f98b24077766c9b96638`. No blocking source finding. Both project configs use the shared `MAX_INVOCATION_CPU_MS`, now 1,000 ms; service submission and polling continue to reserve 2,000 ms per invocation. The 18,000,000 ms operating ceiling and the shared 60% allowance policy remain unchanged. The diff changes no frontend, wall-clock timeout, production activation gate, or unrelated Worker configuration.
+
+[Cloudflare's CPU limits documentation](https://developers.cloudflare.com/workers/platform/limits/#cpu-time) distinguishes CPU time from network waiting and describes flexibility for infrequent overruns. It does not establish a 2,000 ms maximum overrun, so the reservation is an estimate, not a guaranteed account-wide cap. Account-wide evidence, competing usage and activation safeguards remain necessary.
+
+Independent checks on this commit: direct Node assertions verified the 1,000 ms setting, 2,000 ms reservation constant and 18,000,000 ms ceiling; `node --test backend/service.test.mjs backend/allowance-store.test.mjs` passed 16 tests, including paused entry and reservation guard behavior. The coordinator separately reports that both pinned Cloudflare builds emitted `limits.cpuMs = 1000` and a service probe observed 2,000 ms for submission and polling. Those build and service assertions and their records were not independently rerun in this review. The coordinator also reports a settings-only production readback of 1,000 ms; this review made no live account changes and does not independently verify that readback. Source-bound evaluation and hosted CI remain separate requirements.
+
+The exit test is not applicable: the change does not alter agent workflow, portability, memory or continuation. No merge or deployment is authorized by this review.
