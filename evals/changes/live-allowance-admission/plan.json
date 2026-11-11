@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "live-allowance-admission",
+  "task": "Wire the existing 60% allowance guard into the audit Worker entry point and verify live access prerequisites.",
+  "scope": [
+    "backend/service.mjs",
+    "backend/public-deploy/cloudflare.config.ts",
+    "backend/public-worker.test.mjs",
+    "docs/usage-collector-access.md",
+    "evals/changes/live-allowance-admission/**"
+  ],
+  "nonGoals": [
+    "No frontend changes, unrelated services, billing mutations, fabricated active evidence, calibration or deployment without verified account usage."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "The Worker uses the pinned account and subscription and persisted allowance evidence for submission and polling. Missing, stale or exhausted evidence stops audit work.",
+      "verification": "automated",
+      "evidence": "Public entry integration regression using local SQLite and separate synthetic states."
+    },
+    {
+      "id": "O2",
+      "description": "Keep the live CPU limit and 60% ceilings. Identify actual read access and trustworthy source prerequisites before rollout.",
+      "verification": "human",
+      "evidence": "Configuration build, permission probes and review."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan and implementation commits, independent review and hosted PR CI.",
+      "verification": "human",
+      "evidence": "Git, source-bound evaluation, review and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use the existing ledger and fail-closed API responses.",
+      "verification": "human",
+      "evidence": "Focused source diff and tests."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Connects application admission plumbing. The agent workflow and handoff protocol stay the same."
+  }
+}
