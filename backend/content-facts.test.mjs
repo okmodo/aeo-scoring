@@ -122,7 +122,7 @@ test('reference-only output derives literal sentence values and observed inspect
     assert.equal(status(out,'attribute','drop'),'unknown');
     assert.equal(status(out,'claim','claim'),'absent');
     assert.deepEqual(out.facts[1].context,{variant:null,market:null,conditions:null});
-    assert.equal(req.max_tokens,1536);
+    assert.equal(req.max_tokens,768);
 });
 test('claim cues retain quantified performance and environmental and safety claims', () => {
     for (const line of ['Waterproof.', 'Blocks 99% of UV rays.', '30% more breathable.', 'Made from recycled polyester.', 'Certified safe.']) {
@@ -358,4 +358,17 @@ test('content fact request rejects genuinely oversized input', () => {
     const p=fixture();
     p.payload.sources.push({id:'extra',scope:'product',url:'https://example.test',text:'word '.repeat(13000),blocks:[{start:0,end:65000,location:'description'}]});
     assert.throws(()=>buildContentFactsRequest(p),/input budget/);
+});
+
+test('request output cap follows observation count and prompt forbids conflicting filler inspections', () => {
+    const prepared = count => buildSemanticRequest({url:'https://example.test'}, {productHtml:{complete:true,identity:'Acme T-shirt',blocks:Array.from({length:count-1},(_,i)=>({text:`Distinct product observation ${i}.`,location:`p${i}`}))}}, {category:'basic-tshirts'});
+    for (const [count, cap] of [[20,768],[21,1024],[40,1024],[41,1536]]) {
+        const request=buildContentFactsRequest(prepared(count));
+        assert.equal(JSON.parse(request.messages[1].content).observations.length,count);
+        assert.equal(request.max_tokens,cap);
+    }
+    const instruction=buildContentFactsRequest(prepared(2)).messages[0].content;
+    assert.match(instruction,/omit every inspection whose kind and key appear together in facts/);
+    assert.match(instruction,/Use inspections: \[\] when no source-supported absence is established/);
+    assert.match(instruction,/never invent filler inspections/);
 });
