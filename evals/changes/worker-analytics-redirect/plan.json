@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "id": "worker-analytics-redirect",
+  "task": "Fix the reproduced native Workers rejection of fetch redirect:error so production usage refresh and audits work.",
+  "scope": [
+    "backend/analytics-usage.mjs",
+    "backend/analytics-usage.test.mjs",
+    "test/feasibility.test.mjs",
+    "evals/changes/worker-analytics-redirect/**"
+  ],
+  "nonGoals": [
+    "Following management API redirects, weakening admission, frontend edits, dependency changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Use Worker-supported manual redirect mode and reject all redirect responses before reading or forwarding credentials. Ensure analytics regressions run in hosted feasibility checks.",
+      "verification": "automated",
+      "evidence": "Frozen runtime redirect rejection and302 regression, local native-runtime replay and production audit."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Use real evidence and respect permissions.",
+      "verification": "human",
+      "evidence": "Redacted run trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Follow conventions and avoid unnecessary work.",
+      "verification": "human",
+      "evidence": "Review diff, duration, and trace gaps."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Corrects a runtime fetch option and registers existing backend tests; agent workflow unchanged."
+  }
+}
