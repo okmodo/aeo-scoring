@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "task": "Correct the Worker analytics runtime TypeError",
+  "state": "Production diagnostic identified a TypeError during collection. The collector works locally and a locally collected snapshot enabled a production Kokatat assessment. Receiver-preserving fetch and credential whitespace normalization independently reviewed at ab32d6f with11 tests passing.",
+  "decisions": [
+    "Keep the 60% ledger and 1,000 ms CPU limit.",
+    "Preserve the runtime fetch receiver and remove whitespace from copied token strings.",
+    "Fixed receiver, header and request-context codes remain private."
+  ],
+  "constraints": [
+    "No raw error messages or secrets are persisted.",
+    "Frontend and unrelated services excluded."
+  ],
+  "completed": [
+    "Reviewed receiver-sensitive regression and safe failure classification tests."
+  ],
+  "remaining": [
+    "Run full evaluation and hosted CI, merge/deploy, verify automatic refresh and audit."
+  ],
+  "resumeCommands": [
+    "node --test backend/analytics-usage.test.mjs backend/analytics-allowance.test.mjs",
+    "npm run evaluate -- --change analytics-worker-fetch --base origin/main"
+  ]
+}
