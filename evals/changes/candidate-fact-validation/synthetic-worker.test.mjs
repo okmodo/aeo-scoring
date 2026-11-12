@@ -38,6 +38,13 @@ test('enforces one physical call for non-shirt cases and durable one-shot claim'
   assert.deepEqual(f.counts(), { claims: 2, settlements: 1, calls: 1 });
 });
 
+test('accepts a zero-byte body stream before admission', async () => {
+  const f = factory(async () => ({ status: 'unavailable' }));
+  const request = new Request('https://example.test/validate/running-shoes', { method: 'POST', headers: { authorization: `Bearer ${secret}` }, body: new ReadableStream({ start(controller) { controller.close(); } }), duplex: 'half' });
+  assert.equal((await f.worker(request, f.env)).status, 200);
+  assert.equal(f.counts().claims, 1);
+});
+
 test('shirt permits two calls, but primary hash mismatch never reaches provider', async () => {
   const f = factory(async ({ AI }) => { await AI.run('model', input); await AI.run('model', { followup: true }); await AI.run('model', {}).catch(() => {}); return { status: 'assessed' }; });
   const result = await (await f.worker(req('basic-tshirts'), f.env)).json();

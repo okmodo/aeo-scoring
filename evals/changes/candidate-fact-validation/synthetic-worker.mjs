@@ -21,6 +21,23 @@ async function authorized(request, secret) {
   ]);
   return crypto.subtle.timingSafeEqual(actual, expected);
 }
+async function hasEmptyBody(request) {
+  if (!request.body) return true;
+  const reader = request.body.getReader();
+  let timer;
+  try {
+    const read = async () => {
+      for (let chunks = 0; chunks < 16; chunks++) {
+        const { done, value } = await reader.read();
+        if (done) return true;
+        if (value?.byteLength) return false;
+      }
+      return false;
+    };
+    return await Promise.race([read(), new Promise(resolve => { timer = setTimeout(() => resolve(false), 2000); })]);
+  } catch { return false; }
+  finally { clearTimeout(timer); reader.cancel().catch(() => {}); }
+}
 async function loadCases() {
   return (await import('./synthetic-cases.json', { with: { type: 'json' } })).default;
 }
@@ -33,7 +50,7 @@ export function createSyntheticHandler({ cases = loadCases, guard = (db, options
     const url = new URL(request.url), match = /^\/validate\/([a-z-]+)$/.exec(url.pathname);
     if (request.method !== 'POST' || url.search || !match || !ids.has(match[1])) return new Response(null, { status: 404 });
     if (!await authorized(request, env.AUDIT_VALIDATION_SECRET)) return new Response(null, { status: 401 });
-    if (request.body) return new Response(null, { status: 400 });
+    if (!await hasEmptyBody(request)) return new Response(null, { status: 400 });
     const id = match[1], runId = env.RUN_ID;
     if (typeof runId !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(runId) || !env.AUDIT_DB) return new Response(null, { status: 429 });
     let item, allowance, claim;
