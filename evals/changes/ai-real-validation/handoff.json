@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Real-page validation and gated AI activation",
-  "state": "PR34 merged at d958954. R6 closed-failed after its tenth invocation; no AI activation. R7 successor separately planned and not yet called.",
+  "state": "Stopped at user request. PR34 merged; R6 and R7 closed-failed. AI remains off; production unchanged. All temporary resources removed.",
   "decisions": [
     "Preserve60% limits, CPU1000, preview access and unrelated services.",
     "Reject care referrals and policy headings as substantive facts; preserve frozen category outcomes and shirt78.125.",
@@ -17,11 +17,11 @@
     "MergedPR34 after passingCI and independent review.",
     "Terra source correction and five-category/78.125 offline regression checks pass.",
     "Independent final private request expectations frozen before the call.",
-    "R6 actual HTTP200, CPU919ms, cache hit without extra inference; independent semantic review failed and all temporary resources removed."
+    "R6 actual HTTP200, CPU919ms, cache hit without extra inference; independent semantic review failed and all temporary resources removed.",
+    "R7 stopped after one provider invocation on first-case failure, independently reviewed; actual109 neurons settled, pendingAI0, temporary Worker/Tail and credentials deleted."
   ],
   "remaining": [
-    "Validate separately planned candidate-bound R7 under its own frozen protocol; original R6 remains failed.",
-    "Enable AI only if every independent R7 release gate passes; otherwise retain AI-off status."
+    "No active work. Any continuation requires addressing the recorded source-role and recall failures with a separately planned correction; do not retry a failed phase."
   ],
   "resumeCommands": [
     "npm run evaluate -- --change ai-real-validation --base origin/codex/complete-report-assessment",
