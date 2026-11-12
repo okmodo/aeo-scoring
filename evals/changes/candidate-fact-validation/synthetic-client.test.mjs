@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compareFrozen, caseIds } from './synthetic-client.mjs';
+import { compareFrozen, caseIds, captureResponse } from './synthetic-client.mjs';
 import { filterTelemetry, validCpu } from '../ai-real-validation/operator-run.mjs';
 
 test('compares all fifteen frozen findings including status and fraction', () => {
@@ -30,4 +30,11 @@ test('shared telemetry filtering removes secrets and requires primary CPU', () =
   const filtered = filterTelemetry({ event: { request: { url: 'https://example.test/validate/running-shoes?token=secret', headers: { authorization: 'secret' }, cf: { cpuTime: 1 } } }, logs: [{ message: 'secret' }] });
   assert.equal(JSON.stringify(filtered).includes('secret'), false);
   assert.equal(validCpu(filtered, 1000), false);
+});
+
+
+test('persists HTTP status before parsing a bodyless error response', async () => {
+  const saved = [];
+  await assert.rejects(captureResponse(new Response(null, { status: 429 }), 'running-shoes', async record => saved.push({ ...record })), /InvalidResponseJSON/);
+  assert.deepEqual(saved, [{ id: 'running-shoes', status: 429 }]);
 });

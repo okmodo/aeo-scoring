@@ -21,6 +21,13 @@ export function compareFrozen(id, result, expected) {
     return typeof value === 'number' ? actual?.status === 'measured' && actual.fraction === value : actual?.status === value;
   });
 }
+export async function captureResponse(response, id, persist) {
+  const record = { id, status: response.status };
+  await persist(record);
+  try { record.result = await response.json(); } catch { throw new Error('InvalidResponseJSON'); }
+  await persist(record);
+  return record;
+}
 function waitForEvent(events, predicate, timeout) {
   return new Promise((resolve, reject) => {
     const deadline = Date.now() + timeout;
@@ -74,10 +81,11 @@ async function main() {
     for (const [index, id] of caseIds.entries()) {
       const url = new URL(`/validate/${id}`, endpoint), before = events.length;
       const response = await fetch(url, { method: 'POST', headers: { authorization: `Bearer ${secret}` }, redirect: 'manual', signal: AbortSignal.timeout(35000) });
-      const result = await response.json();
-      const record = { id, status: response.status, result };
-      state.cases.push(record);
-      await writeProof(proofPath, state);
+      const record = await captureResponse(response, id, async record => {
+        if (!state.cases.includes(record)) state.cases.push(record);
+        await writeProof(proofPath, state);
+      });
+      const result = record.result;
       if (response.status !== 200 || result.caseId !== id || !compareFrozen(id, result, frozen[index].expected)) throw new Error('CaseMismatch');
       record.telemetry = await waitForEvent(events, event => events.indexOf(event) >= before && event.paths.includes(url.pathname) && validCpu(event), 5000).catch(() => null);
       record.cpuGatePassed = record.telemetry !== null && validCpu(record.telemetry, 1000);
@@ -86,7 +94,7 @@ async function main() {
       console.log(JSON.stringify({ id, status: response.status, cpu: cpuField(record.telemetry), modelCalls: result.modelCalls?.filter(call => call.invoked).length ?? 0, progress: `${index + 1}/${caseIds.length}` }));
     }
   } catch (error) {
-    const known = new Set(['InvalidCases', 'InvalidEnvelope', 'InvalidEndpoint', 'SocketTimeout', 'SocketError', 'ControlUnexpectedStatus', 'TelemetryTimeout', 'CaseMismatch', 'CpuGateFailed']);
+    const known = new Set(['InvalidCases', 'InvalidEnvelope', 'InvalidEndpoint', 'SocketTimeout', 'SocketError', 'ControlUnexpectedStatus', 'TelemetryTimeout', 'CaseMismatch', 'CpuGateFailed', 'InvalidResponseJSON']);
     const name = typeof error?.name === 'string' && /^[A-Za-z]{1,40}$/.test(error.name) ? error.name : 'Error';
     const code = known.has(error?.message) ? error.message : (typeof error?.code === 'string' && /^[A-Z0-9_]{1,40}$/.test(error.code) ? error.code : undefined);
     state.failure = { error: name, ...(code ? { code } : {}) };
