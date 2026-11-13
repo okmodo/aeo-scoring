@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "pfd-care-gold",
-  "recordedAt": "2026-11-13T06:34:13.452Z",
-  "sourceCommit": "f495e29456802c5d05b0969121b324a27a73e362",
-  "sourceDigest": "47facf26e970b42fe83a5518d8db6ded101dcff5f3c05d7a34b72345e9f41188",
+  "recordedAt": "2026-11-13T06:42:59.397Z",
+  "sourceCommit": "bdc9d980f2df99cfa1c87e2ec90ec635b0d14600",
+  "sourceDigest": "d776a2eb68e2e8c5bb277a759aa934fc44520e1ce59648d36918810d23af1ac9",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2989,
-      "outputSha256": "e5feabb39c065c14c4a21e5221d5b3889d59ff4f99ad8c9096b6977f249ff964"
+      "durationMs": 2924,
+      "outputSha256": "f58921a8062f346d6f26ff02d29789e5217dc50402831ac20ac3e6e3dd196c53"
     }
   ]
 }

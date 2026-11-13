@@ -1,1 +1,1 @@
-{"timestamp":"2026-11-13T06:34:10.461Z","tool":"npm","action":"npm run test:feasibility","durationMs":2989,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-13T06:42:56.470Z","tool":"npm","action":"npm run test:feasibility","durationMs":2924,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}

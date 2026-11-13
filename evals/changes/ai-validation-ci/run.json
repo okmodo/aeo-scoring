@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "ai-validation-ci",
-  "recordedAt": "2026-11-13T06:34:07.121Z",
-  "sourceCommit": "f495e29456802c5d05b0969121b324a27a73e362",
-  "sourceDigest": "47facf26e970b42fe83a5518d8db6ded101dcff5f3c05d7a34b72345e9f41188",
+  "recordedAt": "2026-11-13T06:42:53.067Z",
+  "sourceCommit": "bdc9d980f2df99cfa1c87e2ec90ec635b0d14600",
+  "sourceDigest": "d776a2eb68e2e8c5bb277a759aa934fc44520e1ce59648d36918810d23af1ac9",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2878,
-      "outputSha256": "5244d7cefb94d8a2e5ae036d0f5cea394cd3dd0fdc40659596d5d3741551d634"
+      "durationMs": 2993,
+      "outputSha256": "7a6da05710738bd49fafeb1551876cf163ca0edbe90fc4fbea42220f11878864"
     }
   ]
 }
