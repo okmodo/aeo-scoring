@@ -6,13 +6,17 @@ const snapshot = {url:'https://shop.example/item'};
 const extracted = {jsonLd:[], productHtml:{complete:true,identity:'Acme Everyday T-shirt',blocks:[{text:'Fabric composition: 100% cotton.',location:'details'}]}};
 const report = {category:'basic-tshirts'};
 const base = {snapshot,extracted,report,calibrationApproved:true,now:()=>86_400_000};
+const withDecisions = (input, output) => {
+    const candidates=JSON.parse(input.messages[1].content).candidates;
+    return {...output,roleDecisions:Object.fromEntries(candidates.map((c,i)=>[`r${i}`,c.ids.map(id=>output.facts.some(f=>f.kind===c.kind && f.key===c.key && f.quoteIds[0]===id)?'S':'U').join('')]))};
+};
 
 test('reserves a conservative bound before one model call and validates facts', async () => {
     const events=[];
     const result=await assessWithContentFacts({...base,allowance:{reserve:async x=>{events.push(['reserve',x]);return {accepted:true,duplicate:false};}},AI:{run:async (model,input)=>{
         events.push(['run',model,input]);
         const q=JSON.parse(input.messages[1].content).observations.find(q=>q.text==='Fabric composition: 100% cotton.');
-        return {response:JSON.stringify({facts:[{kind:'attribute',key:'fiber',quoteIds:[q.id]}],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}})};
+        return {response:JSON.stringify(withDecisions(input,{facts:[{kind:'attribute',key:'fiber',quoteIds:[q.id]}],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}))};
     }}});
     assert.equal(result.status,'assessed');
     assert.equal(result.facts.facts[0].value,'Fabric composition: 100% cotton.');
@@ -21,9 +25,9 @@ test('reserves a conservative bound before one model call and validates facts', 
     assert.equal(events[0][1].now,86_400_000);
     assert.equal(events[0][1].costs.aiNeurons,result.reservedNeurons);
     assert.equal(events[1][1],CONTENT_FACTS_MODEL);
-    assert.equal(events[1][2].max_tokens,768);
+    assert.equal(events[1][2].max_tokens,2048);
     const bytes=new TextEncoder().encode(JSON.stringify(events[1][2])).length;
-    assert.equal(result.reservedNeurons,Math.ceil((bytes+2048)*26668/1_000_000+768*204805/1_000_000)+64);
+    assert.equal(result.reservedNeurons,Math.ceil((bytes+2048)*26668/1_000_000+2048*204805/1_000_000)+64);
 });
 test('disabled, unsupported and unsafe assessments do not reserve or call', async () => {
     const allowance={reserve:async()=>assert.fail('Unexpected reservation')};
@@ -103,7 +107,7 @@ async function completeShirtRun(secondOutput) {
             calls++;
             if(calls===1){
                 const reference=referenceShirtResponse(input);
-                return {response:{facts:reference.facts,inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}},
+                return {response:withDecisions(input,{facts:reference.facts,inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}),
                     usage:{prompt_tokens:1000,completion_tokens:600,neurons:150},choices:[{finish_reason:'stop'}]};
             }
             assert.equal(calls,2);assert.equal(input.max_tokens,128);

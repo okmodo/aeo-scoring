@@ -120,7 +120,7 @@ test('reference-only output derives literal sentence values and observed inspect
     assert.equal(status(out,'attribute','drop'),'unknown');
     assert.equal(status(out,'claim','claim'),'absent');
     assert.deepEqual(out.facts[1].context,{variant:null,market:null,conditions:null});
-    assert.equal(req.max_tokens,768);
+    assert.equal(req.max_tokens,2048);
 });
 test('claim cues retain quantified performance and environmental and safety claims', () => {
     for (const line of ['Waterproof.', 'Blocks 99% of UV rays.', '30% more breathable.', 'Made from recycled polyester.', 'Certified safe.']) {
@@ -366,7 +366,7 @@ test('content fact request rejects genuinely oversized input', () => {
 
 test('request output cap follows observation count and prompt forbids conflicting filler inspections', () => {
     const prepared = count => buildSemanticRequest({url:'https://example.test'}, {productHtml:{complete:true,identity:'Acme T-shirt',blocks:Array.from({length:count-1},(_,i)=>({text:`Distinct product observation ${i}.`,location:`p${i}`}))}}, {category:'basic-tshirts'});
-    for (const [count, cap] of [[20,768],[21,1024],[40,1024],[41,1536]]) {
+    for (const [count, cap] of [[20,2048],[21,2048],[40,2048],[41,2048]]) {
         const request=buildContentFactsRequest(prepared(count));
         assert.equal(JSON.parse(request.messages[1].content).observations.length,count);
         assert.equal(request.max_tokens,cap);
@@ -597,5 +597,53 @@ test('candidate role checks distinguish care, buoyancy and device measurements',
         assert.equal(payload.candidates.some(c=>c.kind===kind && c.key===key && c.ids.includes(id)),false,`${kind}/${key}: ${text}`);
         const f={kind,key,quoteIds:[id],...(kind==='repeated'?{context:{variant:null,market:null,conditions:null}}:{})};
         assert.equal(decodeContentFacts(p,req,{facts:[f],inspections:[]}).facts.find(x=>!x.method).validity,'unknown');
+    }
+});
+
+test('role-complete responses require each eligible decision and exact supported facts', () => {
+    const p=fixture(), request=buildContentFactsRequest(p), payload=JSON.parse(request.messages[1].content);
+    const q=payload.observations.find(o=>o.text.startsWith('Regular fit around'));
+    const fit=payload.candidates.findIndex(c=>c.kind==='decision' && c.key==='running-fit');
+    const width=payload.candidates.findIndex(c=>c.kind==='attribute' && c.key==='width');
+    assert.ok(fit>=0);
+    assert.equal(width,-1);
+    const decisions=Object.fromEntries(payload.candidates.map((c,i)=>[`r${i}`,'U'.repeat(c.ids.length)]));
+    const set=(role,letter)=>{const c=payload.candidates[role], at=c.ids.indexOf(q.id);assert.ok(at>=0); decisions[`r${role}`]=decisions[`r${role}`].slice(0,at)+letter+decisions[`r${role}`].slice(at+1);};
+    set(fit,'S');
+    const facts=[{kind:'decision',key:'running-fit',quoteIds:[q.id]}];
+    const output={facts,roleDecisions:decisions,inspections:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'}};
+    const decoded=decodeContentFacts(p,request,output,{requireConditionChecks:true,requireRoleDecisions:true});
+    assert.equal(decoded.facts.find(f=>f.kind==='decision' && f.key==='running-fit').validity,'plausible');
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roleDecisions:{...decisions,r0:undefined}},{requireRoleDecisions:true}),/role decision/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,facts:[]},{requireRoleDecisions:true}),/Missing supported/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roleDecisions:{...decisions,extra:'U'}},{requireRoleDecisions:true}),/role decisions/);
+    assert.throws(()=>decodeContentFacts(p,request,{facts,inspections:[],conditionChecks:output.conditionChecks},{requireRoleDecisions:true}),/role decisions/);
+});
+
+test('width support requires an explicit width relation, while fit remains a separate role', () => {
+    for (const [text,supported] of [['Regular fit around the foot with room at the toes.',false],['Width: regular.',true],['Wide width.',true],['Width: 2E.',true],['Width: 10 cm.',true],['Not regular width.',false],['Another shoe has regular width.',false]]) {
+        const p=fixture({blocks:[{text,location:'description'}]}), req=buildContentFactsRequest(p), payload=JSON.parse(req.messages[1].content);
+        const q=payload.observations.find(o=>o.text===text);
+        const fact=decodeContentFacts(p,req,{facts:[{kind:'attribute',key:'width',quoteIds:[q.id]}],inspections:[]}).facts.find(f=>f.kind==='attribute' && f.key==='width');
+        assert.equal(fact.validity,supported?'plausible':'unknown');
+    }
+});
+
+test('all frozen references satisfy the role-complete contract without changing outcomes', async () => {
+    const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
+    const {referenceShirtResponse}=await import('./fixtures/content-facts/reference-shirt.mjs');
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    for (const c of await releaseCases()) {
+        const p=JSON.parse(c.request.messages[1].content);
+        const facts=c.id==='basic-tshirts' ? referenceShirtResponse(c.request).facts : c.expected.facts.map(f=>({kind:f.kind,key:f.key,quoteIds:[p.observations.find(o=>o.scope===f.scope && o.text===f.text).id],...(f.kind==='repeated'?{context:{variant:null,market:null,conditions:null}}:{})}));
+        const roleDecisions=Object.fromEntries(p.candidates.map((r,i)=>[`r${i}`,r.ids.map(id=>facts.some(f=>f.kind===r.kind && f.key===r.key && f.quoteIds[0]===id)?'S':'U').join('')]));
+        const output={facts,roleDecisions,inspections:[],conditionChecks:Object.fromEntries(p.conditionKeys.map(k=>[k,'unknown']))};
+        const decoded=decodeContentFacts(c.prepared,c.request,output,{requireConditionChecks:true,requireRoleDecisions:true});
+        const graded=assessContentFacts(c.snapshot,c.extracted,decoded);
+        if(c.id!=='basic-tshirts') for(const [id,expected] of Object.entries(c.expected.checks)) {
+            assert.equal(graded.findings[id].status,typeof expected==='number'?'measured':expected,`${c.id}: ${id}`);
+            if(typeof expected==='number') assert.equal(graded.findings[id].fraction,expected,`${c.id}: ${id}`);
+        }
+        assert.equal(Object.keys(graded.findings).length,15);
     }
 });
