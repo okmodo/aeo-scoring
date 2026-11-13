@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "state": "Terra source and final frozen requests prepared; independent final review and source-bound CI required. No R9 calls yet; production unchanged.",
+  "state": "R9 closed-failed after one provider invocation returning an error without output/usage. Unknown1004-neuron hold retained; temporary resources removed; production unchanged.",
   "constraints": [
     "R8 is closed-failed; retain historical records and do not retry.",
     "Fixed five cases in order, maximum six synthetic provider calls including the optional normal shirt condition follow-up, then at most one real call only after independent review of every synthetic case.",
@@ -20,10 +20,7 @@
     "Focused61 tests and feasibility pass; strict shape fixes include null context, observed inspection and excluded inspection keys."
   ],
   "remaining": [
-    "Finish independent final source/candidate/protocol review and bind exact final bundle hashes.",
-    "Commit source; evaluate all six plans and require hostedCI before model calls.",
-    "Run boundedR9 with independent source review at each pause; proceed to realpage only if allfive pass.",
-    "Record actual results, settlement, CPU and cleanup, then report readiness without production activation."
+    "No retry of this failed phase. A separately planned provider-schema compatibility correction must preserve strict decoder/source gates and existing unresolved hold."
   ],
   "resumeCommands": [
     "node evals/changes/evidence-slot-extraction/freeze-inputs.mjs",
