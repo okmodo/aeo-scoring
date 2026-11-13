@@ -16,14 +16,12 @@
     "Final independent source/request/bundle review verified ca3bfb synthetic and133571 real bundle bytes; policy guards apply to both scoring modes."
   ],
   "remaining": [
-    "Commit final source and evaluate all applicable change plans, then require hostedCI before inference.",
-    "Run fixed boundedR11 under ordinary admission including unresolvedR9hold, independent raw review after each result and primaryCPU checks.",
-    "Record exact actual outcomes, usage, cleanup and final handoff; no production activation."
+    "No retry of R11. A separately planned deterministic configuration derivation may use explicit selected values independently of model role duplication; source review and current gates remain mandatory."
   ],
   "resumeCommands": [
     "node evals/changes/selected-variant-evidence/freeze-inputs.mjs",
     "node /private/tmp/aeo-r11-build.mjs",
     "npm run test:feasibility"
   ],
-  "state": "Final independent review and refreeze complete after policy parity; current source-bound and hostedCI checks required. No R11 provider invocation; production unchanged."
+  "state": "R11 closed-failed after one case: variant/fit correct, overlapping configuration role omitted. No continuation; production unchanged, temporary resources removed."
 }
