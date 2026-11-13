@@ -89,7 +89,9 @@ test('independently adjudicated full-rubric fixture reconciles complete score, e
         assert.equal(c.subchecks.reduce((n, s) => n + (s.points || 0), 0), c.points);
     assert.equal(report.score.total + report.fixes.reduce((n, f) => n + (f.recoverablePoints || 0), 0), 100);
     const frozen = JSON.parse(readFileSync(new URL('../contracts/v1/examples/assessment-engine-complete.json', import.meta.url)));
-    assert.deepEqual(report, frozen.report);
+    assert.equal(frozen.report.engineVersion, '1.0.0');
+    assert.equal(report.engineVersion, '1.1.0');
+    assert.deepEqual(report, { ...frozen.report, engineVersion: '1.1.0' });
 });
 test('category exclusions and unknown attribute wording never create fabricated negative findings', () => {
     const page = identity => ({ productHtml: { complete: true, identity, blocks: [{ text: 'Fabric composition: linen blend', location: 'main/p' }], headings: [], links: [] }, coverage: { jsonLdTruncated: false }, jsonLd: [] });

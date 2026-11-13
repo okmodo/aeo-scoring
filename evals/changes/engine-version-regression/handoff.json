@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "task": "Preserve the historical semantic report regression while asserting the current engine version",
+  "decisions": [
+    "Retain the historical semantic fixture and its exact 78.125 score; the independent validated-fact oracle score of 80 is a separate case.",
+    "Assert historical version 1.0.0 and current version 1.1.0 explicitly, then compare every report field to the frozen report with only the fixed version overlaid."
+  ],
+  "constraints": [
+    "Do not alter historical fixtures, evidence, score, runtime code or assertion coverage."
+  ],
+  "completed": [
+    "Applied the focused test assertion update; no historical fixture was changed."
+  ],
+  "remaining": [
+    "Complete independent review and the source-bound evaluation and hosted CI."
+  ],
+  "resumeCommands": [
+    "npm run test:feasibility",
+    "npm run evaluate -- --change engine-version-regression --base origin/codex/complete-report-assessment"
+  ],
+  "state": "Implemented explicit historical/current version assertions; all547 feasibility tests pass. Independent review and current source-bound/hosted CI pending."
+}
