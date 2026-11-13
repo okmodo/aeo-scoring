@@ -194,3 +194,7 @@ await import('../evals/changes/role-complete-extraction/synthetic-client.test.mj
 
 await import('../evals/changes/evidence-slot-extraction/synthetic-worker.test.mjs');
 await import('../evals/changes/evidence-slot-extraction/synthetic-client.test.mjs');
+
+await import('../evals/changes/ai-schema-compatibility/synthetic-worker.test.mjs');
+await import('../evals/changes/ai-schema-compatibility/synthetic-client.test.mjs');
+await import('../evals/changes/ai-schema-compatibility/runtime-validation-worker.test.mjs');

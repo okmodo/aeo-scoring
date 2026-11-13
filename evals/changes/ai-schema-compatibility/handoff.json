@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "R10 provider schema compatibility and separately bounded direct-slot validation",
+  "decisions": [
+    "Retain R9 as closed-failed with cause unconfirmed and preserve its unresolved 1004-neuron hold.",
+    "Capture bounded provider errors exclusively in private validation proofs; production errors stay generic.",
+    "Use the fixed five cases and independent per-case review gate, then at most one real case only after all five pass."
+  ],
+  "constraints": [
+    "No retries, replacements, production activation or gold changes; maximum seven physical provider calls including the optional normal shirt condition call.",
+    "Apply normal account allowance admission including unknown holds, preserve settlement evidence and collect primary CPU on failed outcomes.",
+    "Never commit private provider error messages, real snapshots or credentials."
+  ],
+  "completed": [
+    "Separate R10 harness, tests, protocol and unique private paths prepared; historical files retained.",
+    "Final request freeze and single-module gzip bundles, decoded hashes verified; feasibility and focused24 harness tests pass."
+  ],
+  "remaining": [
+    "Complete independent pre-output review, commit source, evaluate all seven plans and require hostedCI.",
+    "Run fixed R10 cases with independent hash-bound review aftereach, real onlyafterallfivepass; record actual usage, CPU, results and cleanup without production activation."
+  ],
+  "resumeCommands": [
+    "node evals/changes/ai-schema-compatibility/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r10-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "Final backend and requests frozen; independent final review and source-bound hosted CI required. No R10 call yet; production unchanged and R9 unknown hold preserved."
+}

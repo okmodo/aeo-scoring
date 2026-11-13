@@ -18,6 +18,7 @@ test('provider schema binds keys to their roles and restricts citations to captu
     assert.equal(slots.properties[upper.roleId].items.enum.includes('q3'),true);
     const repeated=candidates.find(c=>c.kind==='repeated');
     assert.ok(slots.properties[repeated.roleId].items.properties.context);
+    assert.ok(Object.values(slots.properties).every(slot=>!Object.hasOwn(slot,'uniqueItems')));
 });
 test('bounded JSON-mode request carries source URL, observations and parsed price roles once', () => {
     const p=fixture(), r=buildContentFactsRequest(p), payload=JSON.parse(r.messages[1].content);
@@ -659,7 +660,7 @@ test('omitted policy-scope evidence cannot become an absence', () => {
 });
 
 test('repeated slots preserve literal context and reject invented context', () => {
-    const p=fixture(), req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
+    const p=fixture({blocks:[{text:'This product costs USD 99.',location:'a'},{text:'This product costs USD 100.',location:'b'}]}), req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
     const role=input.candidates.find(c=>c.kind==='repeated'&&c.key==='price');
     const id=role.ids[0], text=input.observations.find(o=>o.id===id).text;
     const roles=Object.fromEntries(input.candidates.map(c=>[c.roleId,[]]));
@@ -667,6 +668,9 @@ test('repeated slots preserve literal context and reject invented context', () =
     const output={roles,inspections:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'}};
     const decoded=decodeContentFacts(p,req,output,{requireRoleSlots:true});
     assert.equal(decoded.facts.find(f=>f.kind==='repeated'&&f.key==='price'&&f.quoteIds[0]===id).context.conditions,text);
+    assert.ok(role.ids.length >= 2);
+    roles[role.roleId]=[{id,context:{variant:null,market:null,conditions:text}},{id,context:{variant:null,market:null,conditions:null}}];
+    assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid or duplicate role evidence/);
     roles[role.roleId]=[{id,context:null}];
     assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid comparison context/);
     roles[role.roleId]=[{id,context:{variant:'invented',market:null,conditions:null}}];
