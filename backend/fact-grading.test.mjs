@@ -322,3 +322,25 @@ test('specific negative limitation is assessed when relevant rather than exclude
         assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.limitations'].fraction,1,text);
     }
 });
+
+test('styled product purpose and articulated panels support only their explicit source relationships',()=>{
+    const text="Styled for female recreational paddlers, this high-back life vest features articulated, body-mapped panels that accommodate a woman's natural curves.";
+    const d=base();d.category='personal-flotation-devices';add(d,'identity','name','Acme High Back Life Vest');add(d,'function','function',text);add(d,'attribute','features',text);add(d,'decision','personal-flotation-devices-compatibility',text);
+    const result=assessContentFacts(snapshot,extracted,d);
+    assert.equal(result.findings['C1.explanation'].fraction,1);
+    assert.equal(result.findings['C2.supporting'].attributes.find(a=>a.id==='features').fraction,1);
+    assert.equal(result.findings['C4.compatibility'].fraction,1);
+    assert.equal(result.findings['C4.compatibility'].questions[0].excerpt,text);
+    assert.ok(result.findings['C1.explanation'].evidence.some(e=>e.excerpt===text));
+    assert.equal(result.findings['C2.supporting'].status,'not_measured');
+});
+
+test('relational grading does not upgrade headings, generic panels, unrelated products or disconnected clauses',()=>{
+    for(const text of ['Styled for comfort.','Styled for paddlers but this vest is available.','This vest features style but articulated panels are mentioned.','Styled for paddlers, another vest has articulated panels.','This vest has articulated panels, but a separate vest accommodates body curves.','This vest features articulated panels that accommodate curves in the design.','Articulated panels.','Features: panels.','This vest does not have articulated panels.']) {
+        const d=base();d.category='personal-flotation-devices';add(d,'identity','name','Acme Life Vest');add(d,'function','function',text);add(d,'attribute','features',text);add(d,'decision','personal-flotation-devices-compatibility',text);
+        const result=assessContentFacts(snapshot,extracted,d);
+        assert.notEqual(result.findings['C1.explanation'].fraction,1,text);
+        assert.notEqual(result.findings['C4.compatibility'].fraction,1,text);
+        if (!text.includes('but') && !text.includes('accommodate curves')) assert.notEqual(result.findings['C2.supporting'].attributes.find(a=>a.id==='features').fraction,1,text);
+    }
+});

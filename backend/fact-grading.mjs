@@ -12,6 +12,11 @@ const usable = s => typeof s === 'string' && s.trim().length > 1 && !generic.tes
 const selected = /\b(?:selected|this (?:product|item|shoe|shirt|pack)|one size|single configuration)\b/i;
 const market = /\b(?:US|UK|EU|AU|men's|women's|unisex|adult)\b/i;
 const pricePattern = /(?:\b(USD|EUR|GBP|CAD|AUD)\s*|([$£€]))\s*(\d+(?:\.\d{1,2})?)|\b(\d+(?:\.\d{1,2})?)\s*(USD|EUR|GBP|CAD|AUD)\b/i;
+// These relations stay within one source clause and require an explicit product association.
+const differentProduct = /\b(?:another|other|different|separate)\s+(?:product|item|shoe|vest|shirt|bag|pack|model)\b/i;
+const productPanelFeature = text => !differentProduct.test(text) && text.split(/\b(?:but|however|although)\b/i).some(clause => /\b(?:this|our|the)\s+(?:[\w-]+\s+){0,4}(?:vest|shirt|shoe|bag|pack|daypack|handbag|product|item)\s+(?:features?|has|includes?)\b[^.;!?]{0,100}\b(?:articulated|body[ -]mapped)\b[^.;!?]{0,60}\bpanels?\b/i.test(clause));
+const panelFitRelation = text => text.split(/\b(?:but|however|although)\b/i).some(clause => productPanelFeature(clause) && /\bpanels?\b[^.;!?]{0,80}\baccommodat\w*\b[^.;!?]{0,80}\b(?:wearer|women|woman|body|torso|chest|persons?|people)\b/i.test(clause));
+const styledPurpose = text => !differentProduct.test(text) && text.split(/\b(?:but|however|although)\b/i).some(clause => /\bstyled for\b[^.;!?]{0,80}\b(?:paddlers?|runners?|hikers?|cyclists?|swimmers?|commuters?)\b[^.;!?]{0,80}\b(?:this|our)\s+(?:[\w-]+\s+){0,4}(?:vest|shirt|shoe|bag|pack|daypack|handbag|product|item)\b/i.test(clause));
 const materialClaim = /\b(?:certif(?:ied|ication)|approv(?:ed|al)|clinically|medical|health|safety|safe(?:ty)?|non.toxic|hypoallergenic|waterproof|water.resistant|recycl(?:ed|able)|organic|carbon.neutral|sustainab(?:le|ility)|biodegradable|UV protection|\d+(?:\.\d+)?\s*%\s*(?:more|less|reduction|improv)|\d+(?:\.\d+)?\s*(?:hours?|days?)\s+(?:of|for)\s+(?:protection|performance))\b/i;
 
 export function assessContentFacts(snapshot, extracted, validatedFacts) {
@@ -38,7 +43,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const name = pick('identity','name');
     if (name) findings['C1.identity'] = measured(name.value.trim().split(/\s+/).length >= 3 ? 1 : 0.5,name);
     else findings['C1.identity'] = missing('specific product identity',complete && inspectedAbsent('identity','name'));
-    const purpose = f=>/\b(?:designed|built|made|intended|ideal) for\s+[^.!?]{4,}/i.test(f.value);
+    const purpose = f=>/\b(?:designed|built|made|intended|ideal) for\s+[^.!?]{4,}/i.test(f.value) || styledPurpose(f.value);
     const functions=find('function','function').filter(f=>!negative.test(context(f))).sort((a,b)=>Number(purpose(b))-Number(purpose(a)) || tieBreak(a,b));
     const fn=functions[0];
     if (fn) findings['C1.explanation'] = measured(name && purpose(fn) ? 1 : 0.5,fn,name && purpose(fn) ? {evidence:[ev(name),ev(fn)]} : {});
@@ -102,6 +107,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
                 compartments:/\b(?:main|interior|exterior|zippered|zip)\s+(?:pockets?|compartments?)\b/i, origin:/\b(?:made|manufactured) in\s+[a-z][a-z -]+|\borigin\s*[:=-]\s*[a-z][a-z -]+/i,
                 approval:/\b(?:approved|approval|certified|certification|USCG|coast guard|ISO)\b/i, features:/\b(?:reflective|adjustable|pockets?|harness|straps?)\b/i
             };
+            if (id==='features' && productPanelFeature(t)) return 1;
             if (patterns[id]?.test(t)) return id==='closure' && /\b(?:lining|pocket|strap|handle|trim)\b/i.test(t) && !/\bmain\b/i.test(t) ? 0.5 : 1;
             return vague.test(t) ? 0 : null;
         }
@@ -163,6 +169,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
                 const t=context(f); let score=0.5;
                 if (sub==='C4.intended-use') score=/\b(?:men|women|adults?|children|child|kids|runners?|paddlers?|commuters?|students?|travelers?|shoppers?|users?)\b/i.test(t) && /\b(?:for|use|wear|running|paddling|travel|commut)/i.test(t) ? 1 : 0.5;
                 if (sub==='C4.compatibility') score=q.id==='shirt-fit' ? /\b(?:close|loose|straight|roomy|room for|fitted|snug|tapered)\b/i.test(t) || /\b(?:regular|relaxed|slim)\s+fit\b[^.!?]{0,40}\b(?:through|across|around)\b[^.!?]{0,40}\b(?:chest|body|torso|waist)\b/i.test(t) ? 1 : 0.5 : /\b(?:measure|compare|adjust|around|across|chest|torso|waist|length|width)\b/i.test(t) ? 1 : 0.5;
+                if (q.id==='personal-flotation-devices-compatibility' && panelFitRelation(t)) score=1;
                 if (q.id==='handbags-compatibility' && /\bfits?\b/i.test(t) && /\b(?:phone|tablet|device|laptop)\b/i.test(t) && /\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b/i.test(t)) score=1;
                 if (sub==='C4.limitations') score=/\b(?:not (?:suitable|intended|designed|rated|waterproof|for|safe)|only (?:suitable|intended|designed|rated)|do not|must not|limit(?:ed)? to|except)\b/i.test(t) ? 1 : 0.5;
                 if (sub==='C4.selection') {
