@@ -19,7 +19,7 @@
   "independentReview": "failed",
   "failure": "Raw context/variant r5 cites q14 chart guidance without an actual variant; decoder also accepted it. Independent per-case gate denied continuation.",
   "primaryCpuMs": 69,
-  "providerNeurons": 94.279,
+  "providerNeurons": 94.2792739868164,
   "settledNeurons": 95,
   "priorUnknownR9HoldPreserved": 1004,
   "laterCasesRun": 0,
