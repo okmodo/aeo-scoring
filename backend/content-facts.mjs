@@ -171,6 +171,17 @@ function merchandisePrice(q, prepared) {
     const amount = text.match(/\d+(?:\.\d+)?/);
     return Boolean(amount && (prepared.payload.observedFacts?.priceCandidates || []).some(c => c.role === 'current' && c.location === q.location && Number(c.amount) === Number(amount[0])));
 }
+// A choice must name a value; shopper instructions and guide labels alone do not.
+function concreteChoice(text) {
+    const value = /\b(?:selected\s+)?(?:size|colou?r|width|variant|style|model|option|configuration)\s*[:=]\s*([^.;!?]+)/ig;
+    for (const match of text.matchAll(value)) {
+        if (!/^(?:select|choose|pick|measure|compare|see|view|check|consult|refer|guide|chart|options?|sizes?|colou?rs?|variants?|unknown|n\/a)\b/i.test(match[1].trim()) && /[a-z0-9]/i.test(match[1])) return true;
+    }
+    return /\bselected\s+(?:size|colou?r|width|variant|style|model)\s+(?!(?:chart|guide|options?|sizes?|colou?rs?|variants?)\b)(?:[a-z0-9][a-z0-9-]*)\b/i.test(text) || isExplicitSize(text);
+}
+function includedConfiguration(text) {
+    return /\b(?:includes?|contains?|comes with)\s+(?:(?:one|a|an|\d+)\s+)?(?:t.shirts?|shirts?|shoes?|pairs?|packs?|bags?|vests?|items?|products?|straps?|handles?|accessor(?:y|ies))\b/i.test(text);
+}
 // These checks only reject recognizable role mismatches; "plausible" is not
 // a guarantee that a semantic relation or product association is correct.
 export const CONTENT_ROLE_VALIDATION_VERSION = '1.0.0';
@@ -208,6 +219,7 @@ function plausibleRole(f, q, prepared) {
     if ((f.kind === 'context' || f.kind === 'repeated') && f.key === 'price') return merchandisePrice(q, prepared);
     if ((f.kind === 'context' || f.kind === 'repeated') && f.key === 'availability') return /\b(?:in stock|out of stock|sold out|pre.?order|back.?order|currently unavailable|available (?:now|for (?:purchase|pre.?order)))\b/i.test(text);
     if ((f.kind === 'attribute' || f.kind === 'repeated') && f.key === 'weight' && /^\s*buoyancy\s*[:=-]/i.test(text)) return false;
+    if (f.kind === 'repeated' && ['weight','material'].includes(f.key) && /^\s*fabric\s+weight\s*[:=-]/i.test(text)) return false;
     if ((f.kind === 'attribute' || f.kind === 'repeated') && f.key === 'care') return /\b(?:machine wash|hand wash|wash (?:cold|warm|in)|wipe clean|spot clean|rinse|clean with)\b/i.test(text);
     if (f.kind === 'attribute' && f.key === 'width') return !/\b(?:no|not|never|without|neither|cannot|can't|isn't|is not)\b/i.test(text) && /\b(?:regular|standard|wide|narrow)\s+width\b|\bwidth\s*[:=-]\s*(?:regular|standard|wide|narrow|(?:[2-6]?[a-e]{1,2})|\d+(?:\.\d+)?\s*(?:mm|cm|in(?:ches)?))\b/i.test(text);
     if (f.kind === 'attribute' && f.key === 'laptop-size') return /\b(?:laptop|notebook|computer|tablet|device)\b/i.test(text) && /\b\d+(?:\.\d+)?\s*(?:in(?:ch(?:es)?)?|cm|mm)\b/i.test(text);
@@ -215,9 +227,11 @@ function plausibleRole(f, q, prepared) {
     if (f.kind === 'attribute' && f.key === 'garment-measurements') return /\b\d+(?:\.\d+)?\s*(?:in(?:ch(?:es)?)?|cm|mm)\b/i.test(text) && /\b(?:garment|chest|waist|length|width|measurement)\b/i.test(text);
     if (f.kind === 'attribute' && f.key === 'fabric-weight') return /\b(?:weight|gsm|g\/m[²2]|density)\b/i.test(text);
     if ((f.kind === 'repeated' && f.key === 'suitability' || f.kind === 'decision' && (f.key.endsWith('-use') || f.key.endsWith('-intended-use'))) && /^\s*(?:rinse|wash|clean|wipe|dry|launder)\b/i.test(text)) return false;
-    if (f.kind === 'configuration') return /\b(?:select(?:ed)?|configuration|size|colou?r|variant|option|includes?|one|pair|set|quantity)\b/i.test(text);
+    if (f.kind === 'configuration') return concreteChoice(text) || includedConfiguration(text);
+    if (f.kind === 'context' && f.key === 'variant') return /\b(?:selected\s+(?:size|colou?r|width|variant|style|model|option|configuration)\b|model\s*[:=])/i.test(text) && concreteChoice(text);
+    if (f.kind === 'attribute' && f.key === 'fiber' && /\b(?:fabric|material)\s+weight\b/i.test(text) && !/\b(?:cotton|polyester|nylon|wool|elastane|spandex|viscose|rayon|linen|silk|hemp)\b/i.test(text)) return false;
     if (f.kind === 'attribute' && f.key === 'fiber') return /\b(?:cotton|polyester|nylon|wool|elastane|spandex|viscose|rayon|linen|silk|hemp|fiber|fibre|fabric|composition|blend)\b/i.test(text) && !/\b(?:discount|sale|off|save)\b/i.test(text);
-    if (f.kind === 'attribute' && f.key === 'fit') return /\b(?:fit|fitted|slim|regular|loose|relaxed|cut|silhouette)\b/i.test(text);
+    if (f.kind === 'attribute' && f.key === 'fit') return /\b(?:fitted|slim|regular|loose|relaxed|roomy|snug|straight|tapered|adjustable)\b/i.test(text) && /\b(?:fit|fitted|cut|silhouette|chest|body|torso|waist)\b/i.test(text);
     if ((f.kind === 'attribute' || f.kind === 'repeated') && f.key === 'size') return isExplicitSize(text) || isExplicitSize(text.replace(/\s+(?:US|UK|EU|AU)(?=[.!]?$)/i,'')) || /\b(?:size|sizing|chest|waist|hip|length)\b[^.!?]{0,35}\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b/i.test(text);
     if (f.kind === 'policy') {
         // Navigation labels and referrals do not supply policy terms.
@@ -225,8 +239,11 @@ function plausibleRole(f, q, prepared) {
         if (f.key === 'shipping' && /\breturns?\b/i.test(text) && !/\b(?:deliver\w*|dispatch\w*|ships?|shipping\s+(?:is|costs?|takes?|fees?|rates?|within|to))\b/i.test(text)) return false;
         return roleCues[f.key].test(text);
     }
+    if ((f.kind === 'decision' && (f.key.endsWith('-fit') || f.key.endsWith('-compatibility'))) && /\b(?:measure|compare|chart|guide|choose|select)\b/i.test(text) && !/\b(?:regular|relaxed|slim|loose|roomy|snug|fitted|tapered|adjustable|adjust|fits|compatible|accommodat\w*|around|across)\b/i.test(text)) return false;
+    if ((f.kind === 'repeated' && f.key === 'suitability' || f.kind === 'decision' && (f.key.endsWith('-use') || f.key.endsWith('-intended-use'))) && /\b(?:measure\w*|compare|chart|guide|choose|select(?:ed)?)\b/i.test(text) && !/\b(?:men|women|adult|child|kids|runners?|paddlers?|commuters?|students?|travelers?|wear|running|paddling|travel|casual|everyday)\b/i.test(text)) return false;
     if (f.kind === 'decision' && (f.key === 'shirt-fit' || f.key.endsWith('-compatibility'))) return /\b(?:fit|fits|compatible|width|wide|narrow|size|shape|cut|torso|chest|laptop|device|carry|strap)\b|\bbody.mapped\b.*\baccommodat\w*\b.*\bcurves\b/i.test(text);
     if (f.kind === 'decision' && f.key === 'personal-flotation-devices-limitations' && /\b(?:buoyancy|uscg|certif\w*|approv\w*)\b/i.test(text) && !/\b(?:not|no|never|without|except|only|limit\w*|restrict\w*|avoid|unless)\b/i.test(text)) return false;
+    if (f.kind === 'decision' && f.key.endsWith('-selection') && /^\s*fabric\s+weight\s*[:=-]/i.test(text)) return false;
     if (f.kind === 'decision' && f.key.endsWith('-selection') && /^(?:(?:see|view|read|consult|check)\s+(?:our\s+|the\s+)?)?(?:size|sizing|fit)(?:\s+(?:guide|chart|information))?\s*[:.!?]?$/i.test(text.trim())) return false;
     const cue = cueFor(f.kind, f.key);
     return Boolean(cue && cue.test(text));

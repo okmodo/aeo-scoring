@@ -130,16 +130,16 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     else findings['C3.availability']=stockF ? unknown('Availability wording is ambiguous.') : missing('availability',complete && inspectedAbsent('context','availability'));
     for (const kind of ['shipping','returns']) {
         const fs=find('policy',kind), t=fs.map(context).join(' '), policy=snapshot?.policies?.[kind];
-        const link=(extracted?.productHtml?.links || []).concat(extracted?.productHtml?.discoveryLinks || []).some(l=>new RegExp(kind==='shipping'?'shipping|delivery':'return|refund','i').test(`${l.text} ${l.url}`));
-        const policyComplete = coverage.policies?.[kind] === 'read' || coverage.policies?.[kind] === true || coverage.policies?.[kind]?.complete === true;
-        const canConclude = complete && (!link || policyComplete) && policy?.state !== 'failed';
+        const policyComplete = policy?.state === 'read' && (coverage.policies?.[kind] === 'read' || coverage.policies?.[kind] === true || coverage.policies?.[kind]?.complete === true) && !(coverage.truncatedScopes || []).includes(kind) && !(coverage.uninterpretedScopes || []).includes(kind) && !(coverage.truncated === true && !Array.isArray(coverage.truncatedScopes));
+        // An empty or missing link list does not prove discovery was complete.
+        const canConclude = complete && policyComplete;
         const terms = kind==='shipping' ? [/\b(?:ship|ships|shipping|deliver|delivery)\s+(?:to|within)\b/i,/\b(?:free shipping|shipping (?:cost|fee|rate)|calculated at checkout|shipping is free)\b/i,/\b(?:delivery|deliver(?:ed|s)?|arriv(?:al|es?))[^.]{0,60}\b\d+\s*(?:(?:to|-|–)\s*\d+\s*)?(?:business )?days?\b/i] : [/\b(?:unused|unworn|unopened|original condition|eligible items?)\b/i,/\b(?:within|up to)\s*\d+\s*days?\b/i,/\b(?:final sale|original packaging|return shipping|refund(?:ed|s)? (?:to|go)|restocking fee)\b/i];
         const n=terms.filter(re=>re.test(t)).length;
         const policyTerms=terms.map((re,index)=>({term:index,found:re.test(t),evidence:fs.filter(f=>re.test(context(f))).map(ev)}));
         if (n===3) findings[`C3.${kind}`]=measured(1,fs[0],{policyTerms});
         else if (n && canConclude) findings[`C3.${kind}`]=measured(0.5,fs[0],{policyTerms});
         else if (n) findings[`C3.${kind}`]=unknown(`The linked ${kind} policy has not been fully inspected.`);
-        else findings[`C3.${kind}`]=missing(`${kind} terms`,canConclude && inspectedAbsent('policy',kind,'product') && (!link || inspectedAbsent('policy',kind,kind)));
+        else findings[`C3.${kind}`]=missing(`${kind} terms`,canConclude && fs.length === 0 && inspectedAbsent('policy',kind,'product') && inspectedAbsent('policy',kind,kind));
     }
     if (category) for (const sub of ['C4.intended-use','C4.compatibility','C4.limitations','C4.selection']) {
         const qs=category.decisionSupport.filter(q=>q.subcheckId===sub);

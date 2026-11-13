@@ -478,7 +478,9 @@ test('retained synthetic model responses replay against all frozen outcomes', as
             assert.equal(report.score.content,c.expected.checks.content);
         } else {
             assert.equal(Object.keys(c.expected.checks).length,15);
-            for (const [id,expected] of Object.entries(c.expected.checks)) {
+            for (const [id,currentExpected] of Object.entries(c.expected.checks)) {
+                // Retained historical output omitted the newly source-reviewed configuration roles.
+                const expected=id==='C1.configuration' ? 'not_measured' : currentExpected;
                 const finding=graded.findings[id];
                 if (typeof expected==='number') { assert.equal(finding.status,'measured',`${c.id} ${id}`); assert.equal(finding.fraction,expected,`${c.id} ${id}`); }
                 else assert.equal(finding.status,expected,`${c.id} ${id}`);
@@ -675,4 +677,48 @@ test('repeated slots preserve literal context and reject invented context', () =
     assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid comparison context/);
     roles[role.roleId]=[{id,context:{variant:'invented',market:null,conditions:null}}];
     assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid comparison context/);
+});
+
+test('variant and configuration roles require actual choices across categories', () => {
+    for (const category of ['running-shoes','casual-daypacks','personal-flotation-devices','handbags','basic-tshirts']) {
+        const texts=['Measure your foot and compare with the size chart.','Select your size.','Size: see the guide.','Selected size chart.','Selected size: Medium; compare the chart.','Color: Navy.','Includes one bag.','Width: regular.'];
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Product',blocks:texts.map((text,i)=>({text,location:`p${i}`}))}},{category});
+        const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
+        const id=text=>input.observations.find(o=>o.text===text).id;
+        const eligible=(kind,key,text)=>input.candidates.some(c=>c.kind===kind && c.key===key && c.ids.includes(id(text)));
+        for(const text of texts.slice(0,4)) for(const [kind,key] of [['configuration','configuration'],['context','variant']]) {
+            assert.equal(eligible(kind,key,text),false,`${category} ${text}`);
+            const f=decodeContentFacts(p,req,{facts:[{kind,key,quoteIds:[id(text)]}],inspections:[]}).facts.find(x=>!x.method);
+            assert.equal(f.validity,'unknown');
+        }
+        for(const text of texts.slice(4,6)) assert.equal(eligible('configuration','configuration',text),true,`${category} ${text}`);
+        assert.equal(eligible('context','variant',texts[4]),true);
+        assert.equal(eligible('context','variant',texts[5]),false);
+        assert.equal(eligible('configuration','configuration',texts[6]),true);
+        assert.equal(eligible('context','variant',texts[6]),false);
+        assert.equal(eligible('context','variant',texts[7]),false);
+    }
+});
+
+test('guide and fabric weight wording do not masquerade as unrelated values', () => {
+    const cases=[['basic-tshirts','Garment measurements for selected Medium: chest 100 cm, length 70 cm.','decision','shirt-use'],['basic-tshirts','Garment measurements for selected Medium: chest 100 cm, length 70 cm.','repeated','suitability'],['running-shoes','Measure your foot in inches and compare with the shoe size chart.','decision','running-fit'],['personal-flotation-devices','Measure your chest and compare it with the vest size chart.','decision','personal-flotation-devices-compatibility'],['basic-tshirts','Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference.','attribute','fit'],['basic-tshirts','Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference.','decision','shirt-fit'],['basic-tshirts','Fabric weight: 180 gsm.','attribute','fiber'],['basic-tshirts','Fabric weight: 180 gsm.','repeated','material'],['basic-tshirts','Fabric weight: 180 gsm.','repeated','weight']];
+    for(const [category,text,kind,key] of cases) {
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Product',blocks:[{text,location:'description'}]}},{category});
+        const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content), id=input.observations.find(o=>o.text===text).id;
+        assert.equal(input.candidates.some(c=>c.kind===kind&&c.key===key&&c.ids.includes(id)),false,`${kind}/${key}`);
+    }
+});
+
+test('policy absence inspections require a complete retrieved scope, independent of empty link lists',()=>{
+    const html={productHtml:{complete:true,identity:'Acme Shirt',blocks:[{text:'Cotton shirt.',location:'description'}],links:[]}};
+    const both=[inspection('policy','shipping','absent','product'),inspection('policy','shipping','absent','shipping')];
+    for(const policy of [undefined,{state:'failed'}, {state:'read',extraction:{complete:false,blocks:[{text:'Contact us.',location:'policy'}]}}]) {
+        const p=buildSemanticRequest({url:'https://example.test',policies:{shipping:policy}},html,{category:'basic-tshirts'});
+        const result=decodeContentFacts(p,buildContentFactsRequest(p),{facts:[],inspections:both});
+        assert.equal(status(result,'policy','shipping','shipping'),'unknown');
+    }
+    const p=buildSemanticRequest({url:'https://example.test',policies:{shipping:{state:'read',extraction:{complete:true,blocks:[{text:'Contact us.',location:'policy'}]}}}},html,{category:'basic-tshirts'});
+    const result=decodeContentFacts(p,buildContentFactsRequest(p),{facts:[],inspections:both});
+    assert.equal(status(result,'policy','shipping','product'),'absent');
+    assert.equal(status(result,'policy','shipping','shipping'),'absent');
 });

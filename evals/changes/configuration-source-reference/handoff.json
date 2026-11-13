@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "task": "Independent partial-configuration source adjudication",
+  "state": "Independent final pre-output review and final freeze complete; source-bound evaluations and hostedCI required. No R11 provider invocation or production change yet.",
+  "decisions": [
+    "Keep every historical failure, raw source gate and scoring weight unchanged.",
+    "Separate exact deterministic reference regression from narrowly predeclared source/inspection-bound live alternatives.",
+    "Treat unknown policy discovery or linked coverage as incomplete, not confirmed absence.",
+    "Keep all source observations, unknowns, 60% allowances, CPU1000 and R9 unresolvedhold."
+  ],
+  "constraints": [
+    "No live output may inform this reference adjudication.",
+    "No frontend, dependency, production activation or unrelated service change.",
+    "Independent per-case raw source review remains required before any next model call."
+  ],
+  "completed": [
+    "Plan5d2b843 preceded four non-shirt source-fact/outcome corrections; independent full-source review supports0.5 configuration and preserves shirt78.125.",
+    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs."
+  ],
+  "remaining": [
+    "Commit source, run current evaluations for all ten plans and require hostedCI.",
+    "Run boundedR11 with actual independent per-case source review, normal admission includingR9hold, and primaryCPU verification.",
+    "Record actual outcomes, usage, cleanup and final handoff without production activation."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change configuration-source-reference --base origin/codex/complete-report-assessment",
+    "npm run test:feasibility"
+  ]
+}

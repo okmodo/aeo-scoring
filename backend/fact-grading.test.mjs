@@ -235,3 +235,33 @@ test('attribute referrals and care labels without instructions remain unknown, n
         assert.equal(entries.find(item=>item.id===key).status,'not_measured',text);
     }
 });
+
+test('policy absence requires verified complete product and policy scopes',()=>{
+    for(const kind of ['shipping','returns']) {
+        const d=base(); absent(d,'policy',kind,'product');absent(d,'policy',kind,kind);
+        const check=`C3.${kind}`;
+        for(const html of [{},{links:[]},{links:[],discoveryLinks:[]}]) {
+            const missing={url:snapshot.url,policies:{}};
+            assert.equal(assessContentFacts(missing,{productHtml:html},d).findings[check].status,'not_measured');
+        }
+        for(const state of ['failed','unknown','incomplete']) {
+            const snap={...snapshot,policies:{...snapshot.policies,[kind]:{state}}};
+            assert.equal(assessContentFacts(snap,extracted,d).findings[check].status,'not_measured');
+        }
+        d.coverage.truncatedScopes=[kind];
+        assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].status,'not_measured');
+        d.coverage.truncatedScopes=[];d.coverage.uninterpretedScopes=[kind];
+        assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].status,'not_measured');
+        d.coverage.uninterpretedScopes=[];
+        assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].fraction,0);
+        d.inspections=d.inspections.filter(i=>i.scope!==kind);
+        assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].status,'not_measured');
+    }
+});
+
+test('complete policy terms on the product remain measurable without a retrieved policy',()=>{
+    const d=base();d.coverage.policies.shipping='unknown';
+    add(d,'policy','shipping','We ship to the United States. Shipping is free on this order. Delivery takes 3 to 5 business days.');
+    const r=assessContentFacts({url:snapshot.url,policies:{}},{productHtml:{}},d);
+    assert.equal(r.findings['C3.shipping'].fraction,1);
+});

@@ -198,3 +198,9 @@ await import('../evals/changes/evidence-slot-extraction/synthetic-client.test.mj
 await import('../evals/changes/ai-schema-compatibility/synthetic-worker.test.mjs');
 await import('../evals/changes/ai-schema-compatibility/synthetic-client.test.mjs');
 await import('../evals/changes/ai-schema-compatibility/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/selected-variant-evidence/synthetic-worker.test.mjs');
+await import('../evals/changes/selected-variant-evidence/synthetic-client.test.mjs');
+await import('../evals/changes/selected-variant-evidence/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/source-aware-live-references/compare.test.mjs');
