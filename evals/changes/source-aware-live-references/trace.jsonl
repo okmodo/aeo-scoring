@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-13T04:22:07.886Z","tool":"npm","action":"npm run test:feasibility","durationMs":2555,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
