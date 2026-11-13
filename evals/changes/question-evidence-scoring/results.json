@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "phase": "R13",
+  "status": "closed_failed",
+  "reason": "Independent source review found an unsupported raw running-fit assignment on the first synthetic case, despite all fifteen frozen findings matching. The review gate stopped the sequence; no later case or real validation was called.",
+  "syntheticCasesAttempted": 1,
+  "providerInvocations": 1,
+  "firstCase": {
+    "id": "running-shoes",
+    "httpStatus": 200,
+    "assessmentStatus": "assessed",
+    "frozenFindingsMatched": 15,
+    "rawSourceReview": "failed: running-fit cited selected size without evidence of fit",
+    "primaryCpuMs": 43,
+    "resultSha256": "ee96f19d5f35d766e917ff05025595ae722ed9492ed0105d12389df39157a086",
+    "privateProofSha256": "41bf1a9e87331779dfed37bad5003a31e02296d72c7b83114eb0921cc207aa78"
+  },
+  "accounting": {
+    "source": "operator-verified allowance ledger and provider usage",
+    "aiReservationId": "3e47e588-6fe2-423b-bd64-408f6e51a64b",
+    "reservedNeurons": 1069,
+    "actualNeurons": 128.5917,
+    "settledNeurons": 129,
+    "infrastructureReservation": "settled at reserved bounds; accepted",
+    "priorR9UnknownHoldNeurons": 1004
+  },
+  "cleanup": {
+    "source": "operator verification",
+    "temporaryWorkerDeletedAndAbsenceVerified": true,
+    "tailDeleted": true,
+    "privateKeyAndEnvelopeDeleted": true
+  },
+  "productionActivated": false,
+  "rawOutputLocation": "private proof only; not included in public artifacts"
+}
