@@ -6,9 +6,9 @@ const snapshot = {url:'https://shop.example/item'};
 const extracted = {jsonLd:[], productHtml:{complete:true,identity:'Acme Everyday T-shirt',blocks:[{text:'Fabric composition: 100% cotton.',location:'details'}]}};
 const report = {category:'basic-tshirts'};
 const base = {snapshot,extracted,report,calibrationApproved:true,now:()=>86_400_000};
-const withDecisions = (input, output) => {
+const withSlots = (input, output) => {
     const candidates=JSON.parse(input.messages[1].content).candidates;
-    return {...output,roleDecisions:Object.fromEntries(candidates.map((c,i)=>[`r${i}`,c.ids.map(id=>output.facts.some(f=>f.kind===c.kind && f.key===c.key && f.quoteIds[0]===id)?'S':'U').join('')]))};
+    return {roles:Object.fromEntries(candidates.map(c=>[c.roleId,output.facts.filter(f=>f.kind===c.kind && f.key===c.key).map(f=>c.kind==='repeated'?{id:f.quoteIds[0],...(f.context?{context:f.context}:{})}:f.quoteIds[0])])),inspections:output.inspections,conditionChecks:output.conditionChecks};
 };
 
 test('reserves a conservative bound before one model call and validates facts', async () => {
@@ -16,7 +16,7 @@ test('reserves a conservative bound before one model call and validates facts', 
     const result=await assessWithContentFacts({...base,allowance:{reserve:async x=>{events.push(['reserve',x]);return {accepted:true,duplicate:false};}},AI:{run:async (model,input)=>{
         events.push(['run',model,input]);
         const q=JSON.parse(input.messages[1].content).observations.find(q=>q.text==='Fabric composition: 100% cotton.');
-        return {response:JSON.stringify(withDecisions(input,{facts:[{kind:'attribute',key:'fiber',quoteIds:[q.id]}],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}))};
+        return {response:JSON.stringify(withSlots(input,{facts:[{kind:'attribute',key:'fiber',quoteIds:[q.id]}],inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}))};
     }}});
     assert.equal(result.status,'assessed');
     assert.equal(result.facts.facts[0].value,'Fabric composition: 100% cotton.');
@@ -107,7 +107,7 @@ async function completeShirtRun(secondOutput) {
             calls++;
             if(calls===1){
                 const reference=referenceShirtResponse(input);
-                return {response:withDecisions(input,{facts:reference.facts,inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}),
+                return {response:withSlots(input,{facts:reference.facts,inspections:[],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}}),
                     usage:{prompt_tokens:1000,completion_tokens:600,neurons:150},choices:[{finish_reason:'stop'}]};
             }
             assert.equal(calls,2);assert.equal(input.max_tokens,128);

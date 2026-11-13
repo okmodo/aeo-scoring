@@ -191,3 +191,6 @@ await import('../evals/changes/candidate-fact-validation/synthetic-client.test.m
 
 await import('../evals/changes/role-complete-extraction/synthetic-worker.test.mjs');
 await import('../evals/changes/role-complete-extraction/synthetic-client.test.mjs');
+
+await import('../evals/changes/evidence-slot-extraction/synthetic-worker.test.mjs');
+await import('../evals/changes/evidence-slot-extraction/synthetic-client.test.mjs');

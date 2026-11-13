@@ -10,13 +10,14 @@ const inspection = (kind,key,status='absent',scope='product') => ({kind,key,scop
 const status = (out,kind,key,scope='product') => out.inspections.find(i=>i.kind===kind && i.key===key && i.scope===scope).status;
 test('provider schema binds keys to their roles and restricts citations to captured observations', () => {
     const request = buildContentFactsRequest(fixture());
-    const branches = request.response_format.json_schema.properties.facts.items.oneOf;
-    const attribute = branches.find(b=>b.properties.kind.enum[0]==='attribute' && b.properties.key.enum[0]==='upper');
-    assert.equal(attribute.properties.key.enum.includes('function'),false);
-    assert.equal(attribute.properties.quoteIds.items.enum.includes('q999999'),false);
-    assert.equal(attribute.properties.quoteIds.items.enum.includes('q3'),true);
-    assert.equal(attribute.properties.context,undefined);
-    assert.ok(branches.find(b=>b.properties.kind.enum[0]==='repeated').properties.context);
+    const candidates=JSON.parse(request.messages[1].content).candidates;
+    const slots=request.response_format.json_schema.properties.roles;
+    const upper=candidates.find(c=>c.kind==='attribute' && c.key==='upper');
+    assert.deepEqual(slots.required,candidates.map(c=>c.roleId));
+    assert.equal(slots.properties[upper.roleId].items.enum.includes('q999999'),false);
+    assert.equal(slots.properties[upper.roleId].items.enum.includes('q3'),true);
+    const repeated=candidates.find(c=>c.kind==='repeated');
+    assert.ok(slots.properties[repeated.roleId].items.properties.context);
 });
 test('bounded JSON-mode request carries source URL, observations and parsed price roles once', () => {
     const p=fixture(), r=buildContentFactsRequest(p), payload=JSON.parse(r.messages[1].content);
@@ -170,8 +171,8 @@ test('explicit output contract blocks the observed slash-kind and present-status
     assert.ok(input.allowedKeys.attribute.includes('upper'));
     assert.ok(input.allowedKeys.decision.includes('running-fit'));
     for (const branch of schema.properties.inspections.items.oneOf) assert.deepEqual(branch.properties.status.enum,['absent','unknown']);
-    assert.ok(schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('attribute')));
-    assert.ok(!schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('attribute/category attribute ID')));
+    assert.ok(input.candidates.some(c=>c.kind==='attribute'));
+    assert.ok(!input.candidates.some(c=>c.kind==='attribute/category attribute ID'));
     for(const bad of [
       {facts:[{kind:'identity/name',key:'name',quoteIds:['q1']}],inspections:[]},
       {facts:[{kind:'attribute/category attribute ID',key:'upper',quoteIds:['q3']}],inspections:[]},
@@ -254,9 +255,9 @@ test('condition checks cannot conflict with claim or conditional inspections', (
     assert.equal(ins.kind.enum.includes('claim'),false);
     assert.equal(ins.key.enum.includes('claim'),false);
     assert.equal(ins.key.enum.includes('running-limits'),false);
-    assert.equal(schema.properties.facts.items.oneOf.some(b=>b.properties.kind.enum.includes('claim')),true);
+    assert.ok(JSON.parse(request.messages[1].content).allowedKeys.claim.includes('claim'));
     assert.match(request.messages[0].content,/generic softness, comfort, or breathability alone are not material claims/);
-    assert.match(request.messages[0].content,/ordinary care alone is not a restricted-care/);
+    assert.match(request.messages[0].content,/[Oo]rdinary care alone is not a restricted-care/);
     assert.doesNotMatch(request.messages[0].content,/"kind":"claim","key":"claim","scope":"product","status":"absent"/);
     const contradictory={facts:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'},inspections:[{kind:'claim',key:'claim',scope:'product',status:'absent'}]};
     assert.throws(()=>decodeContentFacts(p,request,contradictory,{requireConditionChecks:true}),/Conflicting condition inspection/);
@@ -372,9 +373,8 @@ test('request output cap follows observation count and prompt forbids conflictin
         assert.equal(request.max_tokens,cap);
     }
     const instruction=buildContentFactsRequest(prepared(2)).messages[0].content;
-    assert.match(instruction,/omit every inspection whose kind and key appear together in facts/);
+    assert.match(instruction,/Omit uninspected entries and entries for roles with evidence/);
     assert.match(instruction,/Use inspections: \[\] when no source-supported absence is established/);
-    assert.match(instruction,/never invent filler inspections/);
 });
 
 test('literal heading identity and laptop fit require exact scoped positive evidence', () => {
@@ -545,9 +545,9 @@ test('candidate schema excludes known unsupported roles and retains supported ve
     assert.ok(eligible('decision','personal-flotation-devices-compatibility',texts[2]));
     assert.ok(eligible('function','function',texts[2]));
     assert.equal(eligible('function','function',texts[0]),false);
-    for (const branch of request.response_format.json_schema.properties.facts.items.oneOf) {
-        assert.equal(branch.properties.key.enum.length,1);
-        assert.ok(branch.properties.quoteIds.items.enum.length);
+    for (const candidate of payload.candidates) {
+        assert.ok(candidate.roleId && candidate.label && candidate.ids.length);
+        assert.ok(request.response_format.json_schema.properties.roles.properties[candidate.roleId]);
     }
 });
 
@@ -556,7 +556,7 @@ test('empty candidates use an empty facts array schema', () => {
     p.payload.sources=[];
     const request=buildContentFactsRequest(p), payload=JSON.parse(request.messages[1].content);
     assert.deepEqual(payload.candidates,[]);
-    assert.deepEqual(request.response_format.json_schema.properties.facts,{type:'array',maxItems:0});
+    assert.deepEqual(request.response_format.json_schema.properties.roles,{type:'object',additionalProperties:false,required:[],properties:{}});
 });
 
 test('candidate roles exclude navigation and empty labels even if the provider returns them', () => {
@@ -600,24 +600,23 @@ test('candidate role checks distinguish care, buoyancy and device measurements',
     }
 });
 
-test('role-complete responses require each eligible decision and exact supported facts', () => {
+test('role slots require each role and only eligible unique IDs', () => {
     const p=fixture(), request=buildContentFactsRequest(p), payload=JSON.parse(request.messages[1].content);
     const q=payload.observations.find(o=>o.text.startsWith('Regular fit around'));
-    const fit=payload.candidates.findIndex(c=>c.kind==='decision' && c.key==='running-fit');
-    const width=payload.candidates.findIndex(c=>c.kind==='attribute' && c.key==='width');
-    assert.ok(fit>=0);
-    assert.equal(width,-1);
-    const decisions=Object.fromEntries(payload.candidates.map((c,i)=>[`r${i}`,'U'.repeat(c.ids.length)]));
-    const set=(role,letter)=>{const c=payload.candidates[role], at=c.ids.indexOf(q.id);assert.ok(at>=0); decisions[`r${role}`]=decisions[`r${role}`].slice(0,at)+letter+decisions[`r${role}`].slice(at+1);};
-    set(fit,'S');
-    const facts=[{kind:'decision',key:'running-fit',quoteIds:[q.id]}];
-    const output={facts,roleDecisions:decisions,inspections:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'}};
-    const decoded=decodeContentFacts(p,request,output,{requireConditionChecks:true,requireRoleDecisions:true});
-    assert.equal(decoded.facts.find(f=>f.kind==='decision' && f.key==='running-fit').validity,'plausible');
-    assert.throws(()=>decodeContentFacts(p,request,{...output,roleDecisions:{...decisions,r0:undefined}},{requireRoleDecisions:true}),/role decision/);
-    assert.throws(()=>decodeContentFacts(p,request,{...output,facts:[]},{requireRoleDecisions:true}),/Missing supported/);
-    assert.throws(()=>decodeContentFacts(p,request,{...output,roleDecisions:{...decisions,extra:'U'}},{requireRoleDecisions:true}),/role decisions/);
-    assert.throws(()=>decodeContentFacts(p,request,{facts,inspections:[],conditionChecks:output.conditionChecks},{requireRoleDecisions:true}),/role decisions/);
+    const fit=payload.candidates.find(c=>c.kind==='decision' && c.key==='running-fit');
+    assert.ok(fit && fit.ids.includes(q.id));
+    assert.ok(!payload.candidates.some(c=>c.kind==='attribute' && c.key==='width' && c.ids.includes(q.id)));
+    const roles=Object.fromEntries(payload.candidates.map(c=>[c.roleId,[]]));
+    roles[fit.roleId]=[q.id];
+    const output={roles,inspections:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'}};
+    assert.equal(decodeContentFacts(p,request,output,{requireConditionChecks:true,requireRoleSlots:true}).facts.find(f=>f.kind==='decision' && f.key==='running-fit').validity,'plausible');
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roles:{...roles,[fit.roleId]:undefined}},{requireRoleSlots:true}),/role slot/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roles:{...roles,[fit.roleId]:[q.id,q.id]}},{requireRoleSlots:true}),/role evidence|role slot/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roles:{...roles,[fit.roleId]:['q999']}},{requireRoleSlots:true}),/role evidence/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,roles:{...roles,extra:[]}},{requireRoleSlots:true}),/role slots/);
+    assert.throws(()=>decodeContentFacts(p,request,{facts:[],inspections:[],conditionChecks:output.conditionChecks},{requireRoleSlots:true}),/role slots/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,inspections:[{kind:'decision',key:'running-fit',scope:'product',status:'observed'}]},{requireRoleSlots:true}),/Invalid slot inspection status/);
+    assert.throws(()=>decodeContentFacts(p,request,{...output,inspections:[{kind:'decision',key:'running-limits',scope:'product',status:'unknown'}]},{requireRoleSlots:true}),/Invalid slot inspection key/);
 });
 
 test('width support requires an explicit width relation, while fit remains a separate role', () => {
@@ -636,9 +635,9 @@ test('all frozen references satisfy the role-complete contract without changing 
     for (const c of await releaseCases()) {
         const p=JSON.parse(c.request.messages[1].content);
         const facts=c.id==='basic-tshirts' ? referenceShirtResponse(c.request).facts : c.expected.facts.map(f=>({kind:f.kind,key:f.key,quoteIds:[p.observations.find(o=>o.scope===f.scope && o.text===f.text).id],...(f.kind==='repeated'?{context:{variant:null,market:null,conditions:null}}:{})}));
-        const roleDecisions=Object.fromEntries(p.candidates.map((r,i)=>[`r${i}`,r.ids.map(id=>facts.some(f=>f.kind===r.kind && f.key===r.key && f.quoteIds[0]===id)?'S':'U').join('')]));
-        const output={facts,roleDecisions,inspections:[],conditionChecks:Object.fromEntries(p.conditionKeys.map(k=>[k,'unknown']))};
-        const decoded=decodeContentFacts(c.prepared,c.request,output,{requireConditionChecks:true,requireRoleDecisions:true});
+        const roles=Object.fromEntries(p.candidates.map(r=>[r.roleId,facts.filter(f=>f.kind===r.kind && f.key===r.key).map(f=>r.kind==='repeated'?{id:f.quoteIds[0],...(f.context?{context:f.context}:{})}:f.quoteIds[0])]));
+        const output={roles,inspections:[],conditionChecks:Object.fromEntries(p.conditionKeys.map(k=>[k,'unknown']))};
+        const decoded=decodeContentFacts(c.prepared,c.request,output,{requireConditionChecks:true,requireRoleSlots:true});
         const graded=assessContentFacts(c.snapshot,c.extracted,decoded);
         if(c.id!=='basic-tshirts') for(const [id,expected] of Object.entries(c.expected.checks)) {
             assert.equal(graded.findings[id].status,typeof expected==='number'?'measured':expected,`${c.id}: ${id}`);
@@ -646,4 +645,30 @@ test('all frozen references satisfy the role-complete contract without changing 
         }
         assert.equal(Object.keys(graded.findings).length,15);
     }
+});
+
+test('omitted policy-scope evidence cannot become an absence', () => {
+    const snap={url:'https://example.test',policies:{shipping:{state:'read',url:'https://example.test/shipping',extraction:{complete:true,blocks:[{text:'Shipping takes 3 days.',location:'policy'}]}}}};
+    const p=buildSemanticRequest(snap,{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'Shipping is free.',location:'product'}]}},{category:'basic-tshirts'});
+    const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content), role=input.candidates.find(c=>c.kind==='policy'&&c.key==='shipping');
+    const product=role.ids.find(id=>input.observations.find(o=>o.id===id).scope==='product');
+    const roles=Object.fromEntries(input.candidates.map(c=>[c.roleId,[]]));roles[role.roleId]=[product];
+    const result=decodeContentFacts(p,req,{roles,inspections:[{kind:'policy',key:'shipping',scope:'shipping',status:'absent'}],conditionChecks:{material_claim:'unknown','shirt-limits':'unknown'}},{requireRoleSlots:true});
+    assert.equal(status(result,'policy','shipping','product'),'observed');
+    assert.notEqual(status(result,'policy','shipping','shipping'),'absent');
+});
+
+test('repeated slots preserve literal context and reject invented context', () => {
+    const p=fixture(), req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
+    const role=input.candidates.find(c=>c.kind==='repeated'&&c.key==='price');
+    const id=role.ids[0], text=input.observations.find(o=>o.id===id).text;
+    const roles=Object.fromEntries(input.candidates.map(c=>[c.roleId,[]]));
+    roles[role.roleId]=[{id,context:{variant:null,market:null,conditions:text}}];
+    const output={roles,inspections:[],conditionChecks:{material_claim:'unknown','running-limits':'unknown'}};
+    const decoded=decodeContentFacts(p,req,output,{requireRoleSlots:true});
+    assert.equal(decoded.facts.find(f=>f.kind==='repeated'&&f.key==='price'&&f.quoteIds[0]===id).context.conditions,text);
+    roles[role.roleId]=[{id,context:null}];
+    assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid comparison context/);
+    roles[role.roleId]=[{id,context:{variant:'invented',market:null,conditions:null}}];
+    assert.throws(()=>decodeContentFacts(p,req,output,{requireRoleSlots:true}),/Invalid comparison context/);
 });

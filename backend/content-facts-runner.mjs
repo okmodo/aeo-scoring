@@ -6,7 +6,7 @@ import { providerNeurons } from './allowance-reconciliation.mjs';
 
 // Enable only after independent live calibration and an explicit decision.
 export const CONTENT_FACTS_CALIBRATION_APPROVED = false;
-export const CONTENT_FACTS_RELEASE_ID = 'content-facts-2026-11-12-r8';
+export const CONTENT_FACTS_RELEASE_ID = 'content-facts-2026-11-12-r9';
 const MAX_INPUT_BYTES = 60 * 1024;
 const MAX_OUTPUT_TOKENS = 2048;
 const TIMEOUT_MS = 20_000;
@@ -88,7 +88,7 @@ export async function assessWithContentFacts({ AI, allowance, now = Date.now, sn
             usages.push(providerNeurons(output, 26668, 204805));
             if (timedOut) throw new Error('Content facts timeout');
             const original = contentOutput(output);
-            const facts = decodeContentFacts(prepared, input, original, {requireConditionChecks:true,requireRoleDecisions:true});
+            const facts = decodeContentFacts(prepared, input, original, {requireConditionChecks:true,requireRoleSlots:true});
             assessed = { status: 'assessed', facts, model: CONTENT_FACTS_MODEL, reservedNeurons: reserved };
             const findings = assessContentFacts(snapshot, extracted, facts).findings;
             const unresolved = Object.entries(findings).filter(([, finding]) => finding.status === 'not_measured').map(([id]) => id);
