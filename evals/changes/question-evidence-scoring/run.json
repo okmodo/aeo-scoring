@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "question-evidence-scoring",
-  "recordedAt": "2026-11-13T05:59:15.679Z",
-  "sourceCommit": "ed9b3b9d4cf6c875fe42e357cb2f85fc20ae564a",
-  "sourceDigest": "abae3a11db8ba752a51e3ab76cb677dd413cf9f9100c01ad75b5753ed3357d9c",
+  "recordedAt": "2026-11-13T06:36:40.593Z",
+  "sourceCommit": "f495e29456802c5d05b0969121b324a27a73e362",
+  "sourceDigest": "47facf26e970b42fe83a5518d8db6ded101dcff5f3c05d7a34b72345e9f41188",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,56 +15,56 @@
     {
       "command": "npm run check",
       "exitCode": 0,
-      "durationMs": 8343,
-      "outputSha256": "5ab00d5a85d4044cf62e325e3cac0f06e8a75fc545a510e118fa53e1879e25a6"
+      "durationMs": 8733,
+      "outputSha256": "ef51724afe13829555b936f84c6a7511ae24cafe4edc46a2bc6eea5ee3f6e0e3"
     },
     {
       "command": "npm test",
       "exitCode": 0,
-      "durationMs": 8160,
-      "outputSha256": "dc4672d1cc8ade45ef58510edbeb441102caebb43673cc4d41fe44961fbbbb92"
+      "durationMs": 8308,
+      "outputSha256": "292196dc97f31ce1b2128fb9d036ba8dd712f8caf7eff420f79621b2776ca3d5"
     },
     {
       "command": "npm run test:exit",
       "exitCode": 0,
-      "durationMs": 396,
-      "outputSha256": "fc1fd8c5ab77fb9f047da2b1f310c2864863f83a953a18413b8baea505b1ea35"
+      "durationMs": 398,
+      "outputSha256": "0a39c035d080f009049b706ec98d864eba5aa6d16d11a8dd9a2d1f32aa5aed1d"
     },
     {
       "command": "npm run test:foundations",
       "exitCode": 0,
-      "durationMs": 223,
-      "outputSha256": "92af41fc5d48ce01e20bb3d39cf1848d8915aaf145dba92cad7304225327b79e"
+      "durationMs": 225,
+      "outputSha256": "543bec4525d4bee67c008bc9676b0d62ae969003e7656429efd6d78fbd89ed19"
     },
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2943,
-      "outputSha256": "321d94272eecbd73a3b9801bab7103d4681ecee13430269621957accec014c59"
+      "durationMs": 3028,
+      "outputSha256": "090e97b050aa2858d1d35cd9104b7351b642b5b040eaf06e77bb1b35939a7a9c"
     },
     {
       "command": "npm run test:preview",
       "exitCode": 0,
-      "durationMs": 681,
-      "outputSha256": "7424ba24f75a26222840d951b1bfa9c7d27a08b57a42ff70cc6612a528e04333"
+      "durationMs": 703,
+      "outputSha256": "bc794c85c5d410b176e2e7d90018ef2f2cfbea38dcd4ff03081432d1a18c4fc9"
     },
     {
       "command": "npm run lint",
       "exitCode": 0,
-      "durationMs": 462,
+      "durationMs": 510,
       "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
     },
     {
       "command": "npm run typecheck",
       "exitCode": 0,
-      "durationMs": 579,
+      "durationMs": 587,
       "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
     },
     {
       "command": "npm run build",
       "exitCode": 0,
-      "durationMs": 265,
-      "outputSha256": "651a5aa51a598aa459f67991b6c3250e56330192623a54a997ad68651c4b91d0"
+      "durationMs": 267,
+      "outputSha256": "6114518ee57df2178f00ec81b3382254baf87319c4b376c7b686828371c51cbf"
     }
   ]
 }
