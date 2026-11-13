@@ -219,3 +219,6 @@ await import('../evals/changes/selected-question-evidence/synthetic-worker.test.
 await import('../evals/changes/selected-question-evidence/synthetic-client.test.mjs');
 await import('../evals/changes/selected-question-evidence/runtime-validation-worker.test.mjs');
 await import('../evals/changes/selected-question-evidence/compare.test.mjs');
+
+await import('../evals/changes/final-grader-runtime/runtime-validation-worker.test.mjs');
+await import('../evals/changes/final-grader-runtime/telemetry.test.mjs');

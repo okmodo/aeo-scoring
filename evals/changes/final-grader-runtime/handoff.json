@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Isolate corrected calibrated AI cache identity and validate final source once in the native runtime",
+  "decisions": [
+    "Keep R14 synthetic and real outcomes and the corrected offline replay as historical evidence; do not retry their cases.",
+    "Use one distinct R15 exact-source real invocation after review and hosted CI, with calibrated AI cache identity content-facts-2026-11-12-r15; the uncalibrated cache namespace is unchanged.",
+    "Calibration remains disabled in production and no production activation is authorized."
+  ],
+  "constraints": [
+    "At most one physical provider invocation, no retries or alternate source; normal account admission includes the unresolved R9 hold.",
+    "Require primary CPU at most 1000 ms, actual settlement, same-ID cache hit without additional AI and one-shot duplicate denial.",
+    "Retain raw outputs and credentials privately; independent review must verify meaningful model evidence, grades, citations and truthful incomplete/null status."
+  ],
+  "completed": [
+    "Prepared separate R15 private client, one-shot wrapper, tests, captured-source request freeze and direct/compressed bundle; no R15 calls or deployment."
+  ],
+  "remaining": [
+    "Independent reviewer must verify final source, exact request and bundle; complete all current source-bound evaluations and hosted CI before the one authorized validation.",
+    "If run, record actual usage, CPU, cache, review and cleanup; do not activate production."
+  ],
+  "resumeCommands": [
+    "node evals/changes/final-grader-runtime/freeze-input.mjs",
+    "node /private/tmp/aeo-r15-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "R15 exact-source request and bundle frozen for independent review; no R15 provider call or deployment. Current evaluations and hosted CI remain pending."
+}
