@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "source-aware-live-references",
-  "recordedAt": "2026-11-13T05:47:04.796Z",
-  "sourceCommit": "9fd5723c571ba89d0628ba589740d1f3a576130d",
-  "sourceDigest": "10dfaf457663301ec86ced0936b140f30f5a8e26c3a8475ae82ea09b9078d857",
+  "recordedAt": "2026-11-13T05:58:27.784Z",
+  "sourceCommit": "ed9b3b9d4cf6c875fe42e357cb2f85fc20ae564a",
+  "sourceDigest": "abae3a11db8ba752a51e3ab76cb677dd413cf9f9100c01ad75b5753ed3357d9c",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2807,
-      "outputSha256": "bfc96ee13b52005d0caafdd40931105f97ec4c557eb8aa43d71e4a2bd0b769f6"
+      "durationMs": 3074,
+      "outputSha256": "3c7ee2e23c2adddf5d36bfe810403e34687ad1dbd80ccdab1b17199f33264ed3"
     }
   ]
 }

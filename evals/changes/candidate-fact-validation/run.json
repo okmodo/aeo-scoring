@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "candidate-fact-validation",
-  "recordedAt": "2026-11-13T05:45:27.294Z",
-  "sourceCommit": "9fd5723c571ba89d0628ba589740d1f3a576130d",
-  "sourceDigest": "10dfaf457663301ec86ced0936b140f30f5a8e26c3a8475ae82ea09b9078d857",
+  "recordedAt": "2026-11-13T05:56:48.709Z",
+  "sourceCommit": "ed9b3b9d4cf6c875fe42e357cb2f85fc20ae564a",
+  "sourceDigest": "abae3a11db8ba752a51e3ab76cb677dd413cf9f9100c01ad75b5753ed3357d9c",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2807,
-      "outputSha256": "7f5becda40fe7d5f3269711cc8608edd977295e3375978086f2c20c6adbd6792"
+      "durationMs": 2939,
+      "outputSha256": "2e77718815009526f422da22370e23794eff101b9264b87e7755e4948f523127"
     }
   ]
 }
