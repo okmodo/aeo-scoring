@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "changeId": "engine-version-regression",
+  "recordedAt": "2026-11-13T05:47:55.074Z",
+  "sourceCommit": "9fd5723c571ba89d0628ba589740d1f3a576130d",
+  "sourceDigest": "10dfaf457663301ec86ced0936b140f30f5a8e26c3a8475ae82ea09b9078d857",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run test:feasibility",
+      "exitCode": 0,
+      "durationMs": 2799,
+      "outputSha256": "70079853ec69629fdbe60302bfe1978c195058fdb9d8821c618b115bebabcb26"
+    }
+  ]
+}

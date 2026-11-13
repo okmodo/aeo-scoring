@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "fallback-policy-coverage",
-  "recordedAt": "2026-11-13T04:46:16.990Z",
-  "sourceCommit": "d8a5b876d3fc703fddfcf396a7cf33ccf48fd4f0",
-  "sourceDigest": "7fdc2adaac7cabca1eeeee86c0d300b782e1bb1a201b86add107facbf51091a1",
+  "recordedAt": "2026-11-13T05:47:07.796Z",
+  "sourceCommit": "9fd5723c571ba89d0628ba589740d1f3a576130d",
+  "sourceDigest": "10dfaf457663301ec86ced0936b140f30f5a8e26c3a8475ae82ea09b9078d857",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run test:feasibility",
       "exitCode": 0,
-      "durationMs": 2721,
-      "outputSha256": "e5b92eb8a973d455b95a9fe9fcc3edb7a7e7b319f0d8de59ddc5dd6e4b6cd03a"
+      "durationMs": 2772,
+      "outputSha256": "b2dd40f40e0467a38a1a7474ad003080d878f1cc47ab2c2caab9552eace9516e"
     }
   ]
 }
