@@ -1,0 +1,35 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-12-r10",
+  "sourceCommit": "106acdf",
+  "evaluatedHead": "2d9637a1c97ed15076e5ae157c7b86be2f73cc59",
+  "hostedCI": {
+    "run": 43361303339,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r10s-20261112-a1",
+  "version": "a5be57cd-af8f-4735-bd4a-32e63b0d5d73",
+  "bundleSha256": "75c4f07f333e58e22ff6c0dfd4f35d65ed735ee444f44c720eed28dc6bb90d39",
+  "proofSha256": "6cef8ae760e43aad60158e50eeaac3afd2f42116299a0d78ce2f9a8e28bcb33e",
+  "providerInvocations": 1,
+  "case": "running-shoes",
+  "httpStatus": 200,
+  "assessment": "assessed",
+  "all15FrozenFindingsMatch": true,
+  "independentReview": "failed",
+  "failure": "Raw context/variant r5 cites q14 chart guidance without an actual variant; decoder also accepted it. Independent per-case gate denied continuation.",
+  "primaryCpuMs": 69,
+  "providerNeurons": 94.2792739868164,
+  "settledNeurons": 95,
+  "priorUnknownR9HoldPreserved": 1004,
+  "laterCasesRun": 0,
+  "realCallRun": false,
+  "productionChanged": false,
+  "cleanup": {
+    "workerDeleted": true,
+    "tailDeleted": true,
+    "credentialsDeleted": true
+  },
+  "cpuCapMs": 1000,
+  "operatingFraction": 0.6
+}

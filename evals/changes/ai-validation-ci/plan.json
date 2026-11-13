@@ -1,0 +1,9 @@
+{
+  "version":1,"id":"ai-validation-ci","task":"Register final activation-harness offline regressions in the existing hosted feasibility suite.",
+  "scope":["test/feasibility.test.mjs","evals/changes/ai-validation-ci/**"],
+  "nonGoals":["Workflow or dependency changes, live model calls in CI, scoring expectation changes, frontend edits."],
+  "outcomes":[{"id":"O1","description":"Hosted CI runs the exact-input, one-call, cache, authentication and hold-settlement regressions for the final validation harness.","verification":"automated","evidence":"Registered offline test import and feasibility suite."}],
+  "process":[{"id":"P1","description":"Commit registration plan before changing the test entry and independently review the import.","verification":"human","evidence":"Git chronology and Terra review."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse existing CI without new scripts or packages.","verification":"human","evidence":"Single test import and source-bound evaluation."}],
+  "commands":["npm run test:feasibility"],"exitTest":{"required":false,"reason":"Offline test registration does not change agent portability or workflow."}
+}

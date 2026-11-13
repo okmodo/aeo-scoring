@@ -1,0 +1,3 @@
+# Independent source adjudication
+
+The fixture states “Rinse with fresh water.” The PFD care anchor awards full credit for a specific cleaning or care instruction, so this fact meets that anchor. Its other supporting fixture facts—20 oz weight, adjustable fit, and adjustable straps—meet their respective full anchors. With all four accepted, C2.supporting is 1.0. The earlier not-measured result reflected the decoder's missing rinse cue; the old R6 result remains historical and failed. This narrowly documented correction changes no weight, category anchor, other expected outcome or unsupported-proposal threshold.

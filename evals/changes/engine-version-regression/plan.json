@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "id": "engine-version-regression",
+  "task": "Advance current engine version assertion while preserving the historical semantic report fixture and exact full-report regression.",
+  "scope": [
+    "backend/complete-engine.test.mjs",
+    "evals/changes/engine-version-regression/**"
+  ],
+  "nonGoals": [
+    "No historical fixture, score, evidence, assertion scope, rubric, workflow, frontend, dependency, budget, CPU or runtime changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Assert fixed current engineVersion 1.1.0 and full report equality to historical fixture overlaid only with this fixed expected version. Preserve exact legacy semantic score 78.125, independently of the separate validated-facts oracle 80.",
+      "verification": "automated",
+      "evidence": "Exact full report assertion and feasibility suite."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan alone before test edit; Terra implementation and independent review establish version is the sole changed field.",
+      "verification": "human",
+      "evidence": "Git chronology, actual failure inspection and independent review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use two explicit assertions without fixture mutation, skipped checks or dynamic expectation from actual output.",
+      "verification": "human",
+      "evidence": "Focused test diff."
+    }
+  ],
+  "commands": [
+    "npm run test:feasibility"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "A fixed version assertion does not alter agent portability or resumability."
+  }
+}

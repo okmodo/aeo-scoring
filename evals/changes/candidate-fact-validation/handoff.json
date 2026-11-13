@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Candidate-bound extraction and separate R7 validation",
+  "state": "Stopped at user request. PR34 merged; R6 and R7 closed-failed. AI remains off; production unchanged. All temporary resources removed.",
+  "decisions": [
+    "Preserve all prior failures and do not change the original ten-call experiment.",
+    "Bind each role's quote IDs to eligible candidates while retaining full observations and unknown completeness.",
+    "Freeze five actual runner-prepared synthetic cases; optional normal shirt follow-up plus one real call totals at most seven provider invocations.",
+    "Keep all15 reference checks, with only the independently adjudicated PFD care correction; shirt78.125 unchanged.",
+    "Keep60% limits, CPU1000, preview access, frontend and unrelated services unchanged."
+  ],
+  "constraints": [
+    "Zero unsupported raw-proposal threshold; no retries, replacement cases or empty-facts pass.",
+    "Independent inclusion/exclusion and actual-output review before activation.",
+    "All live models pass normal allowance admission; temporary resources and private credentials cleaned up."
+  ],
+  "completed": [
+    "Plan ae9eb2b committed before candidate implementation.",
+    "Separate gold scope644ab7f committed before the one PFD reference correction.",
+    "Backend and harness offline checks pass; final source and candidate review in progress.",
+    "R7 stopped after one provider invocation on first-case failure, independently reviewed; actual109 neurons settled, pendingAI0, temporary Worker/Tail and credentials deleted."
+  ],
+  "remaining": [
+    "No active work. Any continuation requires addressing the recorded source-role and recall failures with a separately planned correction; do not retry a failed phase."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change candidate-fact-validation --base origin/codex/complete-report-assessment",
+    "npm run evaluate -- --change pfd-care-gold --base origin/codex/complete-report-assessment"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "priorProofSha256": "312a3b2b7954cf867276d199066f4c89bfe0aaf57847da91391124d79420bacc",
+  "requestHash": "41bd86578b9b4c97dd99f55963393a4413f39b4dd358b21203551429f2c8bc9a",
+  "reservationNeurons": 993,
+  "bytes": 17058,
+  "releaseId": "content-facts-2026-11-12-r15",
+  "calibrationApproved": false,
+  "privatePath": "/private/tmp/aeo-ai-r15-real-case-final.json"
+}

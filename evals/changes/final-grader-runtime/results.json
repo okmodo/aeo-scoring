@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "phase": "R15",
+  "status": "validation_passed",
+  "scope": "One independently reviewed exact-source real validation of the corrected grader; not production activation or a completed product score.",
+  "requestSha256": "41bd86578b9b4c97dd99f55963393a4413f39b4dd358b21203551429f2c8bc9a",
+  "privateProofSha256": "507e796674d67239236f27fd7f71d677a5a775ddd061277dc1e94dbfaf14d58e",
+  "runtime": {
+    "httpStatus": 200,
+    "primaryCpuMs": 489,
+    "providerInvocations": 1,
+    "assessmentStatus": "incomplete",
+    "score": null,
+    "measuredChecks": 27,
+    "totalChecks": 40,
+    "cache": { "hit": true, "sameId": true, "noAdditionalAI": true },
+    "duplicateStatus": 429
+  },
+  "independentReview": {
+    "sourceRolesAndCitations": "passed; meaningful supported model evidence and literals independently reviewed",
+    "correctedFindings": { "C1.explanation": 1, "S1.description": 1, "C4.compatibility": 1, "C2.features": 1 }
+  },
+  "accounting": {
+    "source": "operator-verified provider usage and ledger",
+    "actualNeurons": 118.716339,
+    "settledNeurons": 119,
+    "reservedNeurons": 993,
+    "settlementId": "05508c93-e4ff-4d7d-9fef-b1d601d4083f",
+    "settledAtEpochMs": 1794552003263,
+    "infrastructureReservationId": "ai-r15-validation-infra-20261112-a1",
+    "infrastructureSettlement": "accepted",
+    "priorR9UnknownHoldNeurons": 1004
+  },
+  "cleanup": {
+    "source": "operator verification",
+    "temporaryWorkerAndTailDeletedAndAbsenceVerified": true,
+    "privateKeyAndEnvelopeAbsent": true
+  },
+  "productionActivated": false,
+  "productionState": "Existing worker remains unchanged with CPU cap 1000 and AI disabled.",
+  "rawOutput": "Private proof only; not included in public artifacts."
+}

@@ -319,3 +319,48 @@ test('bounded HTML preserves observed candidates and independent evidence withou
     assert.ok(report.coverage.limitations.some(s => s.includes('limit')));
   }
 });
+
+test('current product assessment identifies its scoring engine revision',()=>{
+  const report=scoreAudit(snapshot,{jsonLd:[],productHtml:{complete:true,identity:'Acme T-shirt',blocks:[]}});
+  assert.equal(report.engineVersion,'1.1.0');
+});
+
+test('fallback scoring leaves policy absence unmeasured when policy discovery is unknown', () => {
+  const input={jsonLd:[],productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'A cotton shirt.',location:'description'}],links:[]}};
+  const report=scoreAudit(snapshot,input,{category:'basic-tshirts'});
+  const policy=report.criteria.find(c=>c.id==='C3').subchecks.filter(s=>['C3.shipping','C3.returns'].includes(s.id));
+  assert.equal(policy.length,2);
+  assert.ok(policy.every(s=>s.status==='not_measured' && s.points===null));
+  assert.equal(report.status,'incomplete');
+  assert.equal(report.score,null);
+  const readPolicy={state:'read',url:'https://shop.example/shipping',extraction:{complete:true,blocks:[]}};
+  const readReport=scoreAudit({...snapshot,policies:{shipping:readPolicy}},input,{category:'basic-tshirts'});
+  assert.equal(readReport.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.shipping').fraction,0);
+  const incompleteReport=scoreAudit({...snapshot,policies:{shipping:readPolicy}},{...input,productHtml:{...input.productHtml,complete:false}},{category:'basic-tshirts'});
+  assert.equal(incompleteReport.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.shipping').status,'not_measured');
+});
+
+test('question score cites the actual strong proposition rather than an earlier unrelated value',()=>{
+  const weak='Capacity: 20 liters.', strong='Choose 20 liters for a small daily load.';
+  const observations=[{id:'a',scope:'product',location:'capacity',text:weak},{id:'b',scope:'product',location:'guidance',text:strong}];
+  const facts=observations.map(o=>({kind:'decision',key:'pack-selection',value:o.text,quoteIds:[o.id],validity:'plausible'}));
+  const validatedFacts={category:'casual-daypacks',coverage:{productComplete:true,policies:{}},observations,facts,inspections:[]};
+  const report=scoreAudit(snapshot,{productHtml:{complete:true,identity:'Acme Daypack',blocks:[]}}, {validatedFacts});
+  const check=report.criteria.find(c=>c.id==='C4').subchecks.find(c=>c.id==='C4.selection');
+  assert.equal(check.fraction,1);
+  const evidence=report.evidence.filter(e=>check.evidenceIds.includes(e.id));
+  assert.ok(evidence.some(e=>e.excerpt.includes(strong)));
+  assert.ok(!evidence.some(e=>e.excerpt.includes(weak)));
+});
+
+test('full configuration score cites both selected choice and locally included item',()=>{
+  for(const reverse of [false,true]) {
+    const observations=[{id:'a',scope:'product',sourceId:'s1',location:'details',text:'Selected size: Medium.'},{id:'b',scope:'product',sourceId:'s1',location:'details',text:'Includes one shirt.'}];
+    const facts=observations.map(o=>({kind:'configuration',key:'configuration',value:o.text,quoteIds:[o.id],validity:'plausible'}));
+    const report=scoreAudit(snapshot,{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[]}}, {validatedFacts:{category:'basic-tshirts',coverage:{productComplete:true,policies:{}},observations,facts:reverse?facts.reverse():facts,inspections:[]}});
+    const check=report.criteria.find(c=>c.id==='C1').subchecks.find(c=>c.id==='C1.configuration');
+    assert.equal(check.fraction,1);
+    const ev=report.evidence.filter(e=>check.evidenceIds.includes(e.id)).map(e=>e.excerpt);
+    assert.ok(ev.some(e=>e.includes('Selected size: Medium.')));assert.ok(ev.some(e=>e.includes('Includes one shirt.')));
+  }
+});

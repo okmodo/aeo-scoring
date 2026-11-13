@@ -1,8 +1,20 @@
+import { explicitSelectedConfiguration, hasIncludedPhysicalItem } from './selected-configuration.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 export const CONTENT_RULE_VERSION = '1.0.0';
 const unknown = (reason = 'The evidence does not establish this assessment.') => ({ status: 'not_measured', reason });
 const negated = text => /\b(?:not|no|never|without|neither|doesn.t|isn.t|cannot|can.t)\b/i.test(text);
 const safe = text => !/\b(?:ignore (?:all )?(?:previous |prior )?instructions|disregard (?:all )?(?:previous |prior )?instructions|say fit|system prompt|assistant|score (?:this|the)|give (?:full|maximum) (?:credit|points))\b/i.test(text);
+export const hasAmbiguousPolicyCue = (kind,text) => (kind === 'shipping' ? /\b(?:ship\w*|deliver\w*|dispatch\w*|freight|transit|orders?|purchases?|exclusions?)\b/i : /\b(?:return\w*|refund\w*|exchange\w*|store credit|final|sales?|orders?|purchases?|exclusions?)\b/i).test(text);
+// A cue prevents an absence conclusion; it does not establish that a claim is true.
+export function hasQuestionConditionCue(id, text) {
+    const value=String(text || '');
+    if (id==='pack-fit') return /\blaptop\s+(?:compartment|sleeve|pocket)\b/i.test(value);
+    if (id==='shirt-limits') return /\b(?:special (?:fabric )?(?:treatment|finish)|treated (?:fabric|material)|dry clean only|wash only|do not (?:wash|bleach|iron|tumble dry))\b/i.test(value);
+    if (id==='pack-limits') return /\b(?:waterproof|water.resistan\w*|weatherproof|weather protection|impact protection|shock.resistan\w*|protect(?:ion|ive)|not (?:suitable|designed|intended|rated|approved|for)[^.!?]{0,35}(?:rain|weather|water|impact))\b/i.test(value);
+    if (id==='personal-flotation-devices-limitations') return /\b(?:whitewater|waterproof|water.resistan\w*|impact protection|use.limit\w*|not (?:suitable|designed|intended|rated|approved|safe|for)|no (?:flotation|protection)|only (?:suitable|designed|intended|rated|approved|safe|for)|except|limited to|restrict\w*)\b/i.test(value);
+    if (id==='running-limits' || id==='handbags-limitations') return /\b(?:waterproof|water.resistan\w*|impact protection|surface restriction|not (?:suitable|designed|intended|rated|approved|for)|only (?:suitable|designed|intended|rated|approved|for)|except|limited to|restrict\w*)\b/i.test(value);
+    return true;
+}
 const patterns = {
     size: /\b(?:size|sizes)\s*[:\-]\s*(?:[\w./-]+(?:\s*[,/]\s*[\w./-]+)*)/i,
     width: /\b(?:width\s*[:\-]\s*(?:regular|standard|wide|narrow|[A-E]{1,2})|(?:regular|standard|wide|narrow) width)\b/i,
@@ -110,9 +122,11 @@ export function assessContent(snapshot, extracted, { category = null, product = 
         set('C1.explanation', /\b(?:designed|built|made) for\s+[^.]{5,}/i.test(description.text) && /\b(?:features?|provides?|helps?|keeps?|holds?|protects?|carries?)\b/i.test(description.text) ? 1 : 0.5, description, '', {});
     else
         absent('C1.explanation', 'a product explanation');
-    const config = match(blocks, /\b(?:includes?|included|comes with)\s+(?:a |an |one |the )?\w+/i);
+    const selectedConfig = complete && !snapshot?.htmlLimited && !html.truncated && !html.uninterpreted ? blocks.find(b=>explicitSelectedConfiguration(b.text,html.selectedControls || [])) : null;
+    const includedConfig = blocks.find(b=>safe(b.text) && hasIncludedPhysicalItem(b.text));
+    const config = selectedConfig || includedConfig;
     if (config)
-        set('C1.configuration', /\b(?:selected|one size|single configuration)\b/i.test(config.text) && /\b(?:includes?|included|comes with)\b/i.test(config.text) ? 1 : 0.5, config, '');
+        set('C1.configuration', selectedConfig && selectedConfig === includedConfig ? 1 : 0.5, config, '');
     else
         absent('C1.configuration', 'configuration and included items');
     if (selected && complete)
@@ -171,10 +185,13 @@ export function assessContent(snapshot, extracted, { category = null, product = 
             const b = all.find(x => terms.some(re => re.test(x.text)));
             set(id, present === 3 ? 1 : 0.5, b, '', { ...(pb.includes(b) ? { url: policy.url } : {}), policyTerms: terms.map((re, i) => ({ term: i, found: re.test(combined), evidence: all.filter(x => re.test(x.text)).map(x => evidence(x, '', pb.includes(x) ? policy.url : url)) })) });
         }
-        else if (policy?.state === 'read' && policy.extraction.complete && !pb.length)
-            set(id, 0, null, `Inspected ${kind} policy; it contained no readable terms.`, { url: policy.url });
-        else if (complete && !inline.length && !((html.links || []).concat(html.discoveryLinks || [])).some(l => new RegExp(kind === 'shipping' ? 'shipping|delivery' : 'return|refund', 'i').test(`${l.text} ${l.url}`)) && policy?.state !== 'failed')
-            absent(id, kind);
+        else {
+            const policyBlocks = policy?.extraction?.blocks;
+            const policyComplete = policy?.state === 'read' && policy.extraction?.complete === true && Array.isArray(policyBlocks) && policyBlocks.every(b => typeof b?.text === 'string' && safe(b.text)) && !policy.extraction?.truncated && !policy.extraction?.uninterpreted;
+            const productComplete = complete && html.blocks.every(b => typeof b?.text === 'string' && safe(b.text)) && (html.headings || []).every(b => typeof b?.text === 'string' && safe(b.text)) && !snapshot?.htmlLimited && !html.truncated && !html.uninterpreted;
+            if (productComplete && policyComplete && policyBlocks.every(b => !b.text.trim()) && !blocks.some(b => hasAmbiguousPolicyCue(kind,b.text)))
+                set(id, 0, null, `Inspected product and ${kind} policy; no terms found.`, { url: policy.url });
+        }
     }
     if (selected && complete)
         for (const subcheck of ['C4.intended-use', 'C4.compatibility', 'C4.limitations', 'C4.selection']) {
@@ -183,8 +200,7 @@ export function assessContent(snapshot, extracted, { category = null, product = 
             for (const q of qs) {
                 let trigger = true;
                 if (q.applicability === 'conditional') {
-                    const condition = q.id === 'pack-fit' ? /\blaptop (?:compartment|sleeve|pocket)\b/i : q.id === 'shirt-limits' ? /\b(?:treated|treatment|special finish|dry clean only|wash only)\b/i : /\b(?:waterproof|water.resistant|impact protection|surface restriction|certified for|safety rated)\b/i;
-                    trigger = Boolean(match(blocks, condition));
+                    trigger = blocks.some(b=>safe(b.text) && hasQuestionConditionCue(q.id,b.text));
                 }
                 if (!trigger) {
                     assessed.push({ questionId: q.id, status: 'not_measured', reason: 'The condition may be expressed in wording this rule cannot interpret.', ...evidence(null, `Could not determine condition: ${q.condition}`, url) });
@@ -206,8 +222,8 @@ export function assessContent(snapshot, extracted, { category = null, product = 
                         fraction = q.id === 'pack-fit' ? (/\b(?:measure|compare)\b/i.test(found.text) ? 1 : 0.5) : q.id === 'shirt-fit' ? (/\b(?:close|loose|straight|roomy|room|fitted|snug|relaxed through)\b/i.test(found.text) ? 1 : 0.5) : /\b(?:across|around|on the body|shoulder|chest|torso|waist|length|width|adjust)\b/i.test(found.text) ? 1 : 0.5;
                 }
                 if (subcheck === 'C4.limitations') {
-                    const relevant = q.id === 'shirt-limits' ? /\b(?:fabric|treatment|care|wash|bleach|iron|dry)\b/i : /\b(?:water|rain|impact|surface|protection|certification|safety)\b/i;
-                    found = blocks.find(b => safe(b.text) && relevant.test(b.text) && /\b(?:not (?:suitable|intended|designed|rated) for|only (?:suitable|intended|designed|rated) for|water.resistant (?:up to|but not)|do not (?:bleach|iron|tumble dry))\b/i.test(b.text));
+                    const relevant = q.id === 'shirt-limits' ? /\b(?:fabric|treatment|care|wash|bleach|iron|dry)\b/i : /\b(?:water|waterproof|water.resistan\w*|whitewater|rain|impact|surface|protection|certification|safety|safe)\b/i;
+                    found = blocks.find(b => safe(b.text) && relevant.test(b.text) && /\b(?:not waterproof|not for|not (?:suitable|intended|designed|rated|safe) for|only (?:suitable|intended|designed|rated) for|water.resistant (?:up to|but not)|do not (?:bleach|iron|tumble dry))\b/i.test(b.text));
                     if (found)
                         fraction = 1;
                 }

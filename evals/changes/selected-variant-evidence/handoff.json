@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "R11 selected variant evidence correction and separately bounded validation",
+  "decisions": [
+    "R10 is closed-failed: the first result met frozen grade but included unsupported variant context; do not retry it.",
+    "Keep provider diagnostics in private validation proofs and require independent source review after every case."
+  ],
+  "constraints": [
+    "Preserve all prior failures and the unresolved R9 1004-neuron hold; normal allowance admission includes existing holds.",
+    "Fixed five cases, optional normal shirt condition call and one real call only after all five pass; maximum seven provider calls, no retries or replacements.",
+    "Reference corrections require the separately planned and independently reviewed configuration-source-reference change before output; preserve other reviewed checks and the shirt score, CPU limit and production activation status; never commit private provider messages, snapshots or credentials."
+  ],
+  "completed": [
+    "Prepared separate R11 clients, wrappers, protocol, review gate and tests; no live calls or deployment.",
+    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs.",
+    "Final independent source/request/bundle review verified ca3bfb synthetic and133571 real bundle bytes; policy guards apply to both scoring modes."
+  ],
+  "remaining": [
+    "No retry of R11. A separately planned deterministic configuration derivation may use explicit selected values independently of model role duplication; source review and current gates remain mandatory."
+  ],
+  "resumeCommands": [
+    "node evals/changes/selected-variant-evidence/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r11-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "R11 closed-failed after one case: variant/fit correct, overlapping configuration role omitted. No continuation; production unchanged, temporary resources removed."
+}

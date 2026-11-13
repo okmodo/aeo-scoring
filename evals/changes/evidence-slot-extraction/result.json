@@ -1,0 +1,36 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-12-r9",
+  "sourceCommit": "5477086",
+  "evaluatedHead": "3b59ecc82375ecde916694f0cf710c336124c718",
+  "hostedCI": {
+    "run": 43360237907,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r9s-20261112-a1",
+  "version": "74f2f03c-6380-4cb1-b640-74613157c384",
+  "bundleSha256": "7d5f798c25d282e4623fa10b1370793a81cc14d276fd7549c6340fa4a842b280",
+  "proofSha256": "480896925ff054d02cdba4c922065b554e8025672011f52de30f1434edb54b1a",
+  "providerInvocations": 1,
+  "case": "running-shoes",
+  "httpStatus": 200,
+  "assessment": "unavailable",
+  "failure": "Provider threw before returning output; harness retained sanitized Provider error only. No semantic result or usage returned.",
+  "cause": "Unconfirmed schema-compatibility hypothesis: uniqueItems keyword appears in provider schema; error detail unavailable in this historical output.",
+  "primaryCpuMs": 30,
+  "elapsedMs": 1329,
+  "reservedNeurons": 1004,
+  "providerUsage": null,
+  "aiHoldRetained": true,
+  "laterCasesRun": 0,
+  "realCallRun": false,
+  "productionChanged": false,
+  "cleanup": {
+    "workerDeleted": true,
+    "tailDeleted": true,
+    "credentialsDeleted": true
+  },
+  "packagePreflight": "An initial compressed-artifact hash mismatch aborted before any upload or model call; repackaged exact reviewed bundle then matched upload hash.",
+  "cpuCapMs": 1000,
+  "operatingFraction": 0.6
+}

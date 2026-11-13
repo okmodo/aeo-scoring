@@ -1,0 +1,762 @@
+{
+  "version": 1,
+  "basis": "Independent canonical source adjudication; conditional alternatives require separately frozen proof rules.",
+  "cases": [
+    {
+      "id": "running-shoes",
+      "sourceHash": "cd083fb0fde4329c975d91a6b995212f404bc539e341b85cb12d5b7a1021ba6b",
+      "findings": {
+        "C1.identity": 1,
+        "C1.explanation": 1,
+        "C1.configuration": 0.5,
+        "C2.essential": 1,
+        "C2.supporting": 0.875,
+        "C3.price": 1,
+        "C3.availability": 1,
+        "C3.shipping": "not_measured",
+        "C3.returns": "not_measured",
+        "C4.intended-use": 1,
+        "C4.compatibility": 1,
+        "C4.limitations": "not_measured",
+        "C4.selection": 0.5,
+        "C5.consistency": "not_measured",
+        "C5.claim-support": "not_measured"
+      },
+      "requiredFacts": [
+        {
+          "kind": "identity",
+          "key": "name",
+          "scope": "product",
+          "text": "Acme Road Running Shoes"
+        },
+        {
+          "kind": "attribute",
+          "key": "upper",
+          "scope": "product",
+          "text": "Upper: nylon."
+        },
+        {
+          "kind": "context",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "context",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected size: 9 US."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "size",
+          "scope": "product",
+          "text": "Selected size: 9 US."
+        },
+        {
+          "kind": "attribute",
+          "key": "width",
+          "scope": "product",
+          "text": "Width: regular."
+        },
+        {
+          "kind": "attribute",
+          "key": "surface",
+          "scope": "product",
+          "text": "Road running surface."
+        },
+        {
+          "kind": "attribute",
+          "key": "outsole",
+          "scope": "product",
+          "text": "Outsole: rubber."
+        },
+        {
+          "kind": "attribute",
+          "key": "color",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "weight",
+          "scope": "product",
+          "text": "Weight: 10 oz."
+        },
+        {
+          "kind": "attribute",
+          "key": "drop",
+          "scope": "product",
+          "text": "Heel-to-toe drop: 8 mm."
+        },
+        {
+          "kind": "attribute",
+          "key": "closure",
+          "scope": "product",
+          "text": "Lace closure."
+        },
+        {
+          "kind": "attribute",
+          "key": "care",
+          "scope": "product",
+          "text": "Hand wash cold."
+        },
+        {
+          "kind": "decision",
+          "key": "running-use",
+          "scope": "product",
+          "text": "This running shoe is designed for adult road runners."
+        },
+        {
+          "kind": "decision",
+          "key": "running-fit",
+          "scope": "product",
+          "text": "Regular fit around the foot with room at the toes."
+        },
+        {
+          "kind": "decision",
+          "key": "running-selection",
+          "scope": "product",
+          "text": "Measure your foot in inches and compare with the shoe size chart."
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "This running shoe is designed for adult road runners."
+        }
+      ]
+    },
+    {
+      "id": "casual-daypacks",
+      "sourceHash": "58ce8b6df3a4a3ddddc32989c422fd87148dcf541153e8321d2fee149babfe9d",
+      "findings": {
+        "C1.identity": 1,
+        "C1.explanation": 1,
+        "C1.configuration": 0.5,
+        "C2.essential": 0.9166666666666666,
+        "C2.supporting": 0.875,
+        "C3.price": 1,
+        "C3.availability": 1,
+        "C3.shipping": "not_measured",
+        "C3.returns": "not_measured",
+        "C4.intended-use": 1,
+        "C4.compatibility": 0.5,
+        "C4.limitations": "not_measured",
+        "C4.selection": 1,
+        "C5.consistency": "not_measured",
+        "C5.claim-support": "not_measured"
+      },
+      "requiredFacts": [
+        {
+          "kind": "identity",
+          "key": "name",
+          "scope": "product",
+          "text": "Acme Everyday Daypack"
+        },
+        {
+          "kind": "attribute",
+          "key": "capacity",
+          "scope": "product",
+          "text": "Capacity: 20 liters."
+        },
+        {
+          "kind": "context",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "context",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "dimensions",
+          "scope": "product",
+          "text": "Dimensions: 18 x 12 x 6 inches."
+        },
+        {
+          "kind": "attribute",
+          "key": "material",
+          "scope": "product",
+          "text": "Material: nylon."
+        },
+        {
+          "kind": "attribute",
+          "key": "closure",
+          "scope": "product",
+          "text": "Zipper closure."
+        },
+        {
+          "kind": "attribute",
+          "key": "color",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "carry",
+          "scope": "product",
+          "text": "Adjustable shoulder straps."
+        },
+        {
+          "kind": "attribute",
+          "key": "weight",
+          "scope": "product",
+          "text": "Weight: 12 oz."
+        },
+        {
+          "kind": "attribute",
+          "key": "compartments",
+          "scope": "product",
+          "text": "Interior pocket."
+        },
+        {
+          "kind": "attribute",
+          "key": "care",
+          "scope": "product",
+          "text": "Wipe clean."
+        },
+        {
+          "kind": "attribute",
+          "key": "laptop-size",
+          "scope": "product",
+          "text": "Fits a 13 inch laptop."
+        },
+        {
+          "kind": "decision",
+          "key": "pack-use",
+          "scope": "product",
+          "text": "This daypack is designed for adults carrying everyday items."
+        },
+        {
+          "kind": "decision",
+          "key": "pack-fit",
+          "scope": "product",
+          "text": "The laptop sleeve fits a 13 inch laptop."
+        },
+        {
+          "kind": "decision",
+          "key": "pack-selection",
+          "scope": "product",
+          "text": "Choose 20 liters for a small daily load."
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "This daypack is designed for adults carrying everyday items."
+        }
+      ]
+    },
+    {
+      "id": "personal-flotation-devices",
+      "sourceHash": "916408b34234529116a347c16e246abade07b25845f8dae21813efdd16e7dbed",
+      "findings": {
+        "C1.identity": 1,
+        "C1.explanation": 1,
+        "C1.configuration": 0.5,
+        "C2.essential": 1,
+        "C2.supporting": 1,
+        "C3.price": 1,
+        "C3.availability": 1,
+        "C3.shipping": "not_measured",
+        "C3.returns": "not_measured",
+        "C4.intended-use": 1,
+        "C4.compatibility": 1,
+        "C4.limitations": "not_measured",
+        "C4.selection": 1,
+        "C5.consistency": "not_measured",
+        "C5.claim-support": 0.5
+      },
+      "requiredFacts": [
+        {
+          "kind": "identity",
+          "key": "name",
+          "scope": "product",
+          "text": "Acme River Life Vest"
+        },
+        {
+          "kind": "attribute",
+          "key": "buoyancy",
+          "scope": "product",
+          "text": "Buoyancy: 15 lbs."
+        },
+        {
+          "kind": "context",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "context",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected size: Medium US."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "size",
+          "scope": "product",
+          "text": "Selected size: Medium US."
+        },
+        {
+          "kind": "attribute",
+          "key": "approval",
+          "scope": "product",
+          "text": "USCG approved."
+        },
+        {
+          "kind": "attribute",
+          "key": "material",
+          "scope": "product",
+          "text": "Material: nylon."
+        },
+        {
+          "kind": "attribute",
+          "key": "color",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "closure",
+          "scope": "product",
+          "text": "Buckle closure."
+        },
+        {
+          "kind": "attribute",
+          "key": "weight",
+          "scope": "product",
+          "text": "Weight: 20 oz."
+        },
+        {
+          "kind": "attribute",
+          "key": "fit",
+          "scope": "product",
+          "text": "Adjustable fit."
+        },
+        {
+          "kind": "attribute",
+          "key": "care",
+          "scope": "product",
+          "text": "Rinse with fresh water."
+        },
+        {
+          "kind": "attribute",
+          "key": "features",
+          "scope": "product",
+          "text": "Adjustable straps."
+        },
+        {
+          "kind": "decision",
+          "key": "personal-flotation-devices-intended-use",
+          "scope": "product",
+          "text": "This life vest is designed for adult paddlers."
+        },
+        {
+          "kind": "decision",
+          "key": "personal-flotation-devices-compatibility",
+          "scope": "product",
+          "text": "Adjust the straps for a snug fit around the torso."
+        },
+        {
+          "kind": "decision",
+          "key": "personal-flotation-devices-selection",
+          "scope": "product",
+          "text": "Measure your chest and compare it with the vest size chart."
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "This life vest is designed for adult paddlers."
+        },
+        {
+          "kind": "claim",
+          "key": "claim",
+          "scope": "product",
+          "text": "USCG approved."
+        }
+      ]
+    },
+    {
+      "id": "handbags",
+      "sourceHash": "77e1208a9afe3474342cd7a6a853d3f7d908caa8ffd739a11bcf22ade6042d18",
+      "findings": {
+        "C1.identity": 1,
+        "C1.explanation": 1,
+        "C1.configuration": 0.5,
+        "C2.essential": 0.9166666666666666,
+        "C2.supporting": 1,
+        "C3.price": 1,
+        "C3.availability": 1,
+        "C3.shipping": "not_measured",
+        "C3.returns": "not_measured",
+        "C4.intended-use": 1,
+        "C4.compatibility": 1,
+        "C4.limitations": "not_measured",
+        "C4.selection": 1,
+        "C5.consistency": "not_measured",
+        "C5.claim-support": "not_measured"
+      },
+      "requiredFacts": [
+        {
+          "kind": "identity",
+          "key": "name",
+          "scope": "product",
+          "text": "Acme Leather Handbag"
+        },
+        {
+          "kind": "attribute",
+          "key": "material",
+          "scope": "product",
+          "text": "Material: leather."
+        },
+        {
+          "kind": "context",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "context",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "dimensions",
+          "scope": "product",
+          "text": "Dimensions: 10 x 8 x 4 inches."
+        },
+        {
+          "kind": "attribute",
+          "key": "closure",
+          "scope": "product",
+          "text": "Zipper closure."
+        },
+        {
+          "kind": "attribute",
+          "key": "color",
+          "scope": "product",
+          "text": "Selected color: blue."
+        },
+        {
+          "kind": "attribute",
+          "key": "carry",
+          "scope": "product",
+          "text": "Adjustable shoulder strap."
+        },
+        {
+          "kind": "attribute",
+          "key": "compartments",
+          "scope": "product",
+          "text": "Interior pocket."
+        },
+        {
+          "kind": "attribute",
+          "key": "weight",
+          "scope": "product",
+          "text": "Weight: 12 oz."
+        },
+        {
+          "kind": "attribute",
+          "key": "care",
+          "scope": "product",
+          "text": "Wipe clean."
+        },
+        {
+          "kind": "attribute",
+          "key": "origin",
+          "scope": "product",
+          "text": "Made in Portugal."
+        },
+        {
+          "kind": "attribute",
+          "key": "features",
+          "scope": "product",
+          "text": "Interior pockets."
+        },
+        {
+          "kind": "decision",
+          "key": "handbags-intended-use",
+          "scope": "product",
+          "text": "This handbag is designed for adults carrying daily essentials."
+        },
+        {
+          "kind": "decision",
+          "key": "handbags-compatibility",
+          "scope": "product",
+          "text": "The interior fits a phone measuring 6 inches."
+        },
+        {
+          "kind": "decision",
+          "key": "handbags-selection",
+          "scope": "product",
+          "text": "Choose the 10 inch bag for a small daily load."
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "This handbag is designed for adults carrying daily essentials."
+        }
+      ]
+    },
+    {
+      "id": "basic-tshirts",
+      "sourceHash": "aab588cc6eff2107a70d1ec9b65571f50655ce92845d75a4034c2aef0112be97",
+      "findings": {
+        "C1.identity": 1,
+        "C1.explanation": 1,
+        "C1.configuration": 1,
+        "C2.essential": 1,
+        "C2.supporting": 1,
+        "C3.price": 1,
+        "C3.availability": 1,
+        "C3.shipping": 1,
+        "C3.returns": 1,
+        "C4.intended-use": 1,
+        "C4.compatibility": 1,
+        "C4.limitations": "not_applicable",
+        "C4.selection": 1,
+        "C5.consistency": 1,
+        "C5.claim-support": "not_applicable"
+      },
+      "requiredFacts": [
+        {
+          "kind": "identity",
+          "key": "name",
+          "scope": "product",
+          "text": "Acme Everyday T-shirt"
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "This everyday T-shirt is designed for adult men and women for casual daily wear."
+        },
+        {
+          "kind": "function",
+          "key": "function",
+          "scope": "product",
+          "text": "Its soft cotton fabric provides breathable comfort."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Selected configuration: Medium, US sizing, Navy."
+        },
+        {
+          "kind": "configuration",
+          "key": "configuration",
+          "scope": "product",
+          "text": "Includes one T-shirt."
+        },
+        {
+          "kind": "attribute",
+          "key": "size",
+          "scope": "product",
+          "text": "Selected size: Medium (US)."
+        },
+        {
+          "kind": "attribute",
+          "key": "color",
+          "scope": "product",
+          "text": "Selected color: Navy."
+        },
+        {
+          "kind": "attribute",
+          "key": "fiber",
+          "scope": "product",
+          "text": "Fabric composition: 100% cotton."
+        },
+        {
+          "kind": "attribute",
+          "key": "fit",
+          "scope": "product",
+          "text": "Regular fit through the chest and body."
+        },
+        {
+          "kind": "attribute",
+          "key": "sleeve",
+          "scope": "product",
+          "text": "Short sleeves and a crew neckline."
+        },
+        {
+          "kind": "attribute",
+          "key": "neckline",
+          "scope": "product",
+          "text": "Short sleeves and a crew neckline."
+        },
+        {
+          "kind": "attribute",
+          "key": "fabric-weight",
+          "scope": "product",
+          "text": "Fabric weight: 180 gsm."
+        },
+        {
+          "kind": "attribute",
+          "key": "garment-measurements",
+          "scope": "product",
+          "text": "Garment measurements for selected Medium: chest 100 cm, length 70 cm."
+        },
+        {
+          "kind": "attribute",
+          "key": "origin",
+          "scope": "product",
+          "text": "Made in Portugal."
+        },
+        {
+          "kind": "attribute",
+          "key": "care",
+          "scope": "product",
+          "text": "Machine wash cold with like colors."
+        },
+        {
+          "kind": "context",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "context",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "policy",
+          "key": "shipping",
+          "scope": "shipping",
+          "text": "We ship to the United States."
+        },
+        {
+          "kind": "policy",
+          "key": "shipping",
+          "scope": "shipping",
+          "text": "Shipping is free on this order."
+        },
+        {
+          "kind": "policy",
+          "key": "shipping",
+          "scope": "shipping",
+          "text": "Delivery takes 3 to 5 business days."
+        },
+        {
+          "kind": "policy",
+          "key": "returns",
+          "scope": "returns",
+          "text": "Unused and unworn items may be returned within 30 days in their original packaging."
+        },
+        {
+          "kind": "policy",
+          "key": "returns",
+          "scope": "returns",
+          "text": "The customer pays return shipping."
+        },
+        {
+          "kind": "policy",
+          "key": "returns",
+          "scope": "returns",
+          "text": "Refunds go to the original payment method."
+        },
+        {
+          "kind": "decision",
+          "key": "shirt-use",
+          "scope": "product",
+          "text": "This everyday T-shirt is designed for adult men and women for casual daily wear."
+        },
+        {
+          "kind": "decision",
+          "key": "shirt-fit",
+          "scope": "product",
+          "text": "Regular fit through the chest and body."
+        },
+        {
+          "kind": "decision",
+          "key": "shirt-selection",
+          "scope": "product",
+          "text": "Measure your chest in cm and compare with the garment chart."
+        },
+        {
+          "kind": "decision",
+          "key": "shirt-selection",
+          "scope": "product",
+          "text": "Choose Medium for a 100 cm chest garment measurement, allowing room for your fit preference."
+        },
+        {
+          "kind": "repeated",
+          "key": "price",
+          "scope": "product",
+          "text": "This product costs USD 25.00."
+        },
+        {
+          "kind": "repeated",
+          "key": "price",
+          "scope": "product",
+          "text": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+        },
+        {
+          "kind": "repeated",
+          "key": "availability",
+          "scope": "product",
+          "text": "This product is in stock."
+        },
+        {
+          "kind": "repeated",
+          "key": "availability",
+          "scope": "product",
+          "text": "Selected Medium Navy T-shirt: USD 25.00, in stock."
+        }
+      ],
+      "score": {
+        "total": 80,
+        "structure": 20,
+        "content": 60
+      }
+    }
+  ]
+}

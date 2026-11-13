@@ -1,0 +1,8 @@
+{
+  "version":1,"task":"Hosted final-harness regression coverage","state":"Registered both offline harness and operator tests in existing feasibility suite; no live calls in CI.",
+  "decisions":["Reuse existing scripts and dependencies; manual WebSocket import is deferred until actual operator execution."],
+  "constraints":["No workflow, frontend or dependency changes."],
+  "completed":["Plan committed before the registration change."],
+  "remaining":["Independent review and source-bound feasibility/hosted CI."],
+  "resumeCommands":["npm run evaluate -- --change ai-validation-ci --base origin/codex/complete-report-assessment"]
+}

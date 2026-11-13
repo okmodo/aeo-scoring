@@ -33,12 +33,12 @@ const categoryEvidence = {
 // Frozen server outcomes for the cited proposals below, with unknown conditions.
 // The review notes record independent source-level disagreements and limitations.
 const outcomes = {
-    'running-shoes': {'C1.explanation':0.5,'C2.essential':1,'C2.supporting':'not_measured','C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
-    'casual-daypacks': {'C1.explanation':'not_measured','C2.essential':11/12,'C2.supporting':7/8,'C4.intended-use':0.5,'C4.compatibility':0.5,'C4.selection':0.5},
-    'personal-flotation-devices': {'C1.explanation':0.5,'C2.essential':1,'C2.supporting':'not_measured','C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
-    'handbags': {'C1.explanation':'not_measured','C2.essential':1,'C2.supporting':1,'C4.intended-use':0.5,'C4.compatibility':0.5,'C4.selection':0.5}
+    'running-shoes': {'C1.explanation':1,'C2.essential':1,'C2.supporting':0.875,'C4.intended-use':1,'C4.compatibility':1,'C4.selection':0.5},
+    'casual-daypacks': {'C1.explanation':1,'C2.essential':11/12,'C2.supporting':7/8,'C4.intended-use':1,'C4.compatibility':0.5,'C4.selection':1},
+    'personal-flotation-devices': {'C1.explanation':1,'C2.essential':1,'C2.supporting':1,'C4.intended-use':1,'C4.compatibility':1,'C4.selection':1,'C5.claim-support':0.5},
+    'handbags': {'C1.explanation':1,'C2.essential':11/12,'C2.supporting':1,'C4.intended-use':1,'C4.compatibility':1,'C4.selection':1}
 };
-const commonOutcomes = {'C1.identity':1,'C1.configuration':'not_measured','C3.price':1,'C3.availability':1,'C3.shipping':'not_measured','C3.returns':'not_measured','C4.limitations':'not_measured','C5.consistency':'not_measured','C5.claim-support':'not_measured'};
+const commonOutcomes = {'C1.identity':1,'C1.configuration':0.5,'C3.price':1,'C3.availability':1,'C3.shipping':'not_measured','C3.returns':'not_measured','C4.limitations':'not_measured','C5.consistency':'not_measured','C5.claim-support':'not_measured'};
 const commonPrice='This product costs USD 25.00.';
 const commonStock='This product is in stock.';
 function prepareCase(def) {
@@ -49,11 +49,11 @@ function prepareCase(def) {
     const prepared=buildSemanticRequest(snapshot,extracted,{category:def.id});
     const request=buildContentFactsRequest(prepared);
     return {id:def.id,snapshot,extracted,prepared,request,expected:{
-        facts:[{kind:'identity',key:'name',scope:'product',text:def.name},{kind:def.role[0],key:def.role[1],scope:'product',text:def.detail},{kind:'context',key:'price',scope:'product',text:commonPrice},{kind:'context',key:'availability',scope:'product',text:commonStock},...extra.attributes.map(([key,text])=>({kind:'attribute',key,scope:'product',text})),...extra.decisions.map(([key,text])=>({kind:'decision',key,scope:'product',text}))],
+        facts:[{kind:'identity',key:'name',scope:'product',text:def.name},{kind:def.role[0],key:def.role[1],scope:'product',text:def.detail},{kind:'context',key:'price',scope:'product',text:commonPrice},{kind:'context',key:'availability',scope:'product',text:commonStock},...extra.attributes.filter(([key])=>['size','color'].includes(key)).map(([,text])=>({kind:'configuration',key:'configuration',scope:'product',text})),...extra.attributes.map(([key,text])=>({kind:'attribute',key,scope:'product',text})),...extra.decisions.map(([key,text])=>({kind:'decision',key,scope:'product',text})),{kind:'function',key:'function',scope:'product',text:extra.decisions[0][1]},...(def.id==='personal-flotation-devices' ? [{kind:'claim',key:'claim',scope:'product',text:'USCG approved.'}] : [])],
         // Omission or unknown is not an assertion of absence.
         absent:[], unknown:['conditional triggers and claim support'], checks:{...commonOutcomes,...outcomes[def.id]},
-        justification:'Source sentences in facts identify each proposed role. Conditional checks are unknown; missing configuration, policy and comparison evidence remains unmeasured. Category pools and question fractions reflect the documented server anchors, not model scores.',
-        overall:'incomplete: configuration, policies, conditional limitations, consistency or claim support remain unmeasured'
+        justification:'Source sentences in facts identify each proposed role. Selected size and color are partial configuration evidence. Conditional checks are unknown; missing policy and comparison evidence remains unmeasured. Category pools and question fractions reflect the documented server anchors, not model scores.',
+        overall:'incomplete: policies, conditional limitations, consistency or claim support remain unmeasured'
     }};
 }
 export async function releaseCases() {
@@ -62,7 +62,7 @@ export async function releaseCases() {
     const extracted=await extract(snapshot,{HTMLRewriter:HtmlTestRewriter});
     const prepared=buildSemanticRequest(snapshot,extracted,{category:'basic-tshirts',currency:'USD'});
     const shirt={id:'basic-tshirts',snapshot,extracted,prepared,request:buildContentFactsRequest(prepared),expected:{
-        reference:'reference-shirt.mjs',absent:['shirt-limits','material_claim'],checks:{total:78.125,structure:20,content:58.125},overall:'complete'
+        reference:'reference-shirt.mjs',absent:['shirt-limits','material_claim'],checks:{total:80,structure:20,content:60},overall:'complete'
     }};
     return [...definitions.map(prepareCase),shirt];
 }

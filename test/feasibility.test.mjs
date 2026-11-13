@@ -1,5 +1,6 @@
 import test from 'node:test';
 import '../evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs';
+import '../evals/changes/ai-real-validation/runtime-validation-worker.test.mjs';
 import '../backend/allowance-reconciliation.test.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -183,3 +184,41 @@ await import('../backend/usage-reconciliation.test.mjs');
 await import('../backend/usage-collection.test.mjs');
 await import('../backend/analytics-usage.test.mjs');
 await import('../backend/analytics-allowance.test.mjs');
+
+await import('../evals/changes/ai-real-validation/operator-run.test.mjs');
+await import('../evals/changes/candidate-fact-validation/synthetic-worker.test.mjs');
+await import('../evals/changes/candidate-fact-validation/synthetic-client.test.mjs');
+
+await import('../evals/changes/role-complete-extraction/synthetic-worker.test.mjs');
+await import('../evals/changes/role-complete-extraction/synthetic-client.test.mjs');
+
+await import('../evals/changes/evidence-slot-extraction/synthetic-worker.test.mjs');
+await import('../evals/changes/evidence-slot-extraction/synthetic-client.test.mjs');
+
+await import('../evals/changes/ai-schema-compatibility/synthetic-worker.test.mjs');
+await import('../evals/changes/ai-schema-compatibility/synthetic-client.test.mjs');
+await import('../evals/changes/ai-schema-compatibility/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/selected-variant-evidence/synthetic-worker.test.mjs');
+await import('../evals/changes/selected-variant-evidence/synthetic-client.test.mjs');
+await import('../evals/changes/selected-variant-evidence/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/source-aware-live-references/compare.test.mjs');
+
+await import('../evals/changes/explicit-configuration-extraction/synthetic-worker.test.mjs');
+await import('../evals/changes/explicit-configuration-extraction/synthetic-client.test.mjs');
+await import('../evals/changes/explicit-configuration-extraction/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/question-evidence-scoring/synthetic-worker.test.mjs');
+await import('../evals/changes/question-evidence-scoring/synthetic-client.test.mjs');
+await import('../evals/changes/question-evidence-scoring/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/question-evidence-scoring/compare.test.mjs');
+
+await import('../evals/changes/selected-question-evidence/synthetic-worker.test.mjs');
+await import('../evals/changes/selected-question-evidence/synthetic-client.test.mjs');
+await import('../evals/changes/selected-question-evidence/runtime-validation-worker.test.mjs');
+await import('../evals/changes/selected-question-evidence/compare.test.mjs');
+
+await import('../evals/changes/final-grader-runtime/runtime-validation-worker.test.mjs');
+await import('../evals/changes/final-grader-runtime/telemetry.test.mjs');

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "task": "R13 question-specific source evidence and independently adjudicated scoring validation",
+  "decisions": [
+    "R12 is closed-failed after the first case passed and the second contained unsupported guidance assignments and misleading combined citation; never retry it.",
+    "Canonical source oracle and seven proof-bound alternatives independently approved before any R13 output.",
+    "Preserve raw model outputs, deterministic supplements and all contributing citations independently; describe success as hybrid-system evidence.",
+    "The current shirt reference is80.0 (20+60) under the source-correct fit anchor; former78.125 remains historical, weights unchanged.",
+    "Product-level material/closure context and purpose anchors follow independent pre-output adjudication; PFD named USCG reference is observedpartial0.5, not verifiedapproval.",
+    "Seven proof-bound conditional alternatives only, no PFDno-claimNA or pack-fitNA.",
+    "Existing engineVersion string becomes1.1.0; APIv1, rubricVersion and presentation files unchanged.",
+    "Do not retry or replace the failed R13 case; a future experiment requires a separately planned correction."
+  ],
+  "constraints": [
+    "Fixed five cases with per-case independent source gate, at most one normal shirt follow-up and one real call after all five pass; maximum seven provider calls with no retries or substitutions.",
+    "No scoring weight, model, CPU1000, account 60% limit or production activation change. Retain unresolved R9 hold and all prior failures.",
+    "Never commit private provider errors, real snapshots or credentials. The real case needs meaningful supported model evidence beyond literals."
+  ],
+  "completed": [
+    "Independent lead+Terra canonical full-source oracle agreed before anyR13 output, with exact filehash and source rationale.",
+    "540+ feasibility tests and focused scoring/evidence tests pass on provisional finalsource; versionconstant scoring39tests pass.",
+    "One running-shoes synthetic invocation completed with all 15 findings matching and CPU 43 ms, but independent raw-source review failed; the review gate stopped the phase.",
+    "Operator verified actual AI usage 128.5917 neurons settled at 129 against the 1069 reservation, infrastructure settlement accepted, and temporary Worker, Tail, key and envelope removed."
+  ],
+  "remaining": [
+    "Independent post-call review and source-bound evidence/hosted CI as applicable; no further R13 calls.",
+    "Retain the unresolved R9 1004-neuron hold and all earlier failures; any continuation needs a separately planned change."
+  ],
+  "resumeCommands": [
+    "npm run test:feasibility"
+  ],
+  "state": "R13 closed-failed after one synthetic call. Independent review rejected an unsupported raw running-fit assignment; no later cases or real call. Temporary resources and credentials removed; production unchanged."
+}

@@ -1,0 +1,44 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-12-r12",
+  "implementation": "9d4b037",
+  "evaluatedHead": "93e9f043d887ca16a168de735f946102188b0a74",
+  "hostedCI": {
+    "run": 43367806463,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r12s-20261112-a1",
+  "version": "1ca3df36-7b3d-4a2c-8cf7-185feb8d2afa",
+  "bundleSha256": "5c36aadfade97367ab92e3f76cd24bc14a2b77290233cf7a4dd367f7192f2e8b",
+  "proofSha256": "2e4f582089d751bd35faef05cecc2f85805dad6b310e87ac47bb9eeb685a808f",
+  "providerInvocations": 2,
+  "cases": [
+    {
+      "id": "running-shoes",
+      "cpuMs": 66,
+      "providerNeurons": 93.300048828125,
+      "settledNeurons": 94,
+      "sourceReview": "passed-hybrid",
+      "result": "all15 findings and source pass; configuration source-derived, raw model omission retained"
+    },
+    {
+      "id": "casual-daypacks",
+      "cpuMs": 56,
+      "providerNeurons": 97.9305648803711,
+      "settledNeurons": 98,
+      "sourceReview": "failed",
+      "result": "unsupported raw capacity/weight as choosing guidance; C4.selection mismatch and misleading aggregated evidence"
+    }
+  ],
+  "priorUnknownR9HoldPreserved": 1004,
+  "laterCasesRun": 0,
+  "realCallRun": false,
+  "productionChanged": false,
+  "cleanup": {
+    "workerDeleted": true,
+    "tailDeleted": true,
+    "credentialsDeleted": true
+  },
+  "cpuCapMs": 1000,
+  "operatingFraction": 0.6
+}
