@@ -319,3 +319,18 @@ test('bounded HTML preserves observed candidates and independent evidence withou
     assert.ok(report.coverage.limitations.some(s => s.includes('limit')));
   }
 });
+
+test('fallback scoring leaves policy absence unmeasured when policy discovery is unknown', () => {
+  const input={jsonLd:[],productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'A cotton shirt.',location:'description'}],links:[]}};
+  const report=scoreAudit(snapshot,input,{category:'basic-tshirts'});
+  const policy=report.criteria.find(c=>c.id==='C3').subchecks.filter(s=>['C3.shipping','C3.returns'].includes(s.id));
+  assert.equal(policy.length,2);
+  assert.ok(policy.every(s=>s.status==='not_measured' && s.points===null));
+  assert.equal(report.status,'incomplete');
+  assert.equal(report.score,null);
+  const readPolicy={state:'read',url:'https://shop.example/shipping',extraction:{complete:true,blocks:[]}};
+  const readReport=scoreAudit({...snapshot,policies:{shipping:readPolicy}},input,{category:'basic-tshirts'});
+  assert.equal(readReport.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.shipping').fraction,0);
+  const incompleteReport=scoreAudit({...snapshot,policies:{shipping:readPolicy}},{...input,productHtml:{...input.productHtml,complete:false}},{category:'basic-tshirts'});
+  assert.equal(incompleteReport.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.shipping').status,'not_measured');
+});

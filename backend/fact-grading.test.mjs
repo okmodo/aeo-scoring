@@ -253,7 +253,8 @@ test('policy absence requires verified complete product and policy scopes',()=>{
         d.coverage.truncatedScopes=[];d.coverage.uninterpretedScopes=[kind];
         assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].status,'not_measured');
         d.coverage.uninterpretedScopes=[];
-        assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].fraction,0);
+        const emptySnap={...snapshot,policies:{...snapshot.policies,[kind]:{state:'read',extraction:{complete:true,blocks:[]}}}};
+        assert.equal(assessContentFacts(emptySnap,extracted,d).findings[check].fraction,0);
         d.inspections=d.inspections.filter(i=>i.scope!==kind);
         assert.equal(assessContentFacts(snapshot,extracted,d).findings[check].status,'not_measured');
     }

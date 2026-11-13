@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Proof-bound live references and verified policy absence",
-  "state": "Independent final pre-output review and final freeze complete; source-bound evaluations and hostedCI required. No R11 provider invocation or production change yet.",
+  "state": "Final independent review and refreeze complete after policy parity; current source-bound and hostedCI checks required. No R11 provider invocation; production unchanged.",
   "decisions": [
     "Keep every historical failure, raw source gate and scoring weight unchanged.",
     "Separate exact deterministic reference regression from narrowly predeclared source/inspection-bound live alternatives.",
@@ -15,12 +15,13 @@
   ],
   "completed": [
     "Plan54a059c preceded policy-scope guard and live acceptance changes; independent all15-by-five source table and five allowed alternatives recorded before any R11 output.",
-    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs."
+    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs.",
+    "Final independent source/request/bundle review verified ca3bfb synthetic and133571 real bundle bytes; policy guards apply to both scoring modes."
   ],
   "remaining": [
-    "Commit source, run current evaluations for all ten plans and require hostedCI.",
-    "Run boundedR11 with actual independent per-case source review, normal admission includingR9hold, and primaryCPU verification.",
-    "Record actual outcomes, usage, cleanup and final handoff without production activation."
+    "Commit final source and evaluate all applicable change plans, then require hostedCI before inference.",
+    "Run fixed boundedR11 under ordinary admission including unresolvedR9hold, independent raw review after each result and primaryCPU checks.",
+    "Record exact actual outcomes, usage, cleanup and final handoff; no production activation."
   ],
   "resumeCommands": [
     "npm run evaluate -- --change source-aware-live-references --base origin/codex/complete-report-assessment",

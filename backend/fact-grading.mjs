@@ -1,3 +1,4 @@
+import { hasAmbiguousPolicyCue } from './content-assessment.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 
 const ids = ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.compatibility','C4.limitations','C4.selection','C5.consistency','C5.claim-support'];
@@ -133,13 +134,15 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
         const policyComplete = policy?.state === 'read' && (coverage.policies?.[kind] === 'read' || coverage.policies?.[kind] === true || coverage.policies?.[kind]?.complete === true) && !(coverage.truncatedScopes || []).includes(kind) && !(coverage.uninterpretedScopes || []).includes(kind) && !(coverage.truncated === true && !Array.isArray(coverage.truncatedScopes));
         // An empty or missing link list does not prove discovery was complete.
         const canConclude = complete && policyComplete;
+        // A cue miss in readable policy text is not proof that terms are absent.
+        const emptyPolicy = Array.isArray(policy?.extraction?.blocks) && policy.extraction.blocks.every(b=>typeof b?.text === 'string' && !b.text.trim()) && ![...observations.values()].some(o=>o.scope===kind && typeof o.text==='string' && o.text.trim());
         const terms = kind==='shipping' ? [/\b(?:ship|ships|shipping|deliver|delivery)\s+(?:to|within)\b/i,/\b(?:free shipping|shipping (?:cost|fee|rate)|calculated at checkout|shipping is free)\b/i,/\b(?:delivery|deliver(?:ed|s)?|arriv(?:al|es?))[^.]{0,60}\b\d+\s*(?:(?:to|-|–)\s*\d+\s*)?(?:business )?days?\b/i] : [/\b(?:unused|unworn|unopened|original condition|eligible items?)\b/i,/\b(?:within|up to)\s*\d+\s*days?\b/i,/\b(?:final sale|original packaging|return shipping|refund(?:ed|s)? (?:to|go)|restocking fee)\b/i];
         const n=terms.filter(re=>re.test(t)).length;
         const policyTerms=terms.map((re,index)=>({term:index,found:re.test(t),evidence:fs.filter(f=>re.test(context(f))).map(ev)}));
         if (n===3) findings[`C3.${kind}`]=measured(1,fs[0],{policyTerms});
         else if (n && canConclude) findings[`C3.${kind}`]=measured(0.5,fs[0],{policyTerms});
         else if (n) findings[`C3.${kind}`]=unknown(`The linked ${kind} policy has not been fully inspected.`);
-        else findings[`C3.${kind}`]=missing(`${kind} terms`,canConclude && fs.length === 0 && inspectedAbsent('policy',kind,'product') && inspectedAbsent('policy',kind,kind));
+        else findings[`C3.${kind}`]=missing(`${kind} terms`,canConclude && emptyPolicy && !hasAmbiguousPolicyCue(kind,productText) && fs.length === 0 && inspectedAbsent('policy',kind,'product') && inspectedAbsent('policy',kind,kind));
     }
     if (category) for (const sub of ['C4.intended-use','C4.compatibility','C4.limitations','C4.selection']) {
         const qs=category.decisionSupport.filter(q=>q.subcheckId===sub);

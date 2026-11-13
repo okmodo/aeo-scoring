@@ -549,7 +549,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe shipping in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             },
             {
               "id": "C3.returns",
@@ -559,7 +559,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe returns in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             }
           ]
         },
@@ -2829,7 +2829,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe shipping in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             },
             {
               "id": "C3.returns",
@@ -2839,7 +2839,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe returns in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             }
           ]
         },
@@ -5130,7 +5130,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe shipping in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             },
             {
               "id": "C3.returns",
@@ -5140,7 +5140,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe returns in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             }
           ]
         },
@@ -7494,7 +7494,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe shipping in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             },
             {
               "id": "C3.returns",
@@ -7504,7 +7504,7 @@
               "fraction": null,
               "points": null,
               "evidenceIds": [],
-              "reason": "The product text may describe returns in wording this rule cannot interpret."
+              "reason": "The evidence does not establish this assessment."
             }
           ]
         },

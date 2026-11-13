@@ -3,6 +3,7 @@ export const CONTENT_RULE_VERSION = '1.0.0';
 const unknown = (reason = 'The evidence does not establish this assessment.') => ({ status: 'not_measured', reason });
 const negated = text => /\b(?:not|no|never|without|neither|doesn.t|isn.t|cannot|can.t)\b/i.test(text);
 const safe = text => !/\b(?:ignore (?:all )?(?:previous |prior )?instructions|disregard (?:all )?(?:previous |prior )?instructions|say fit|system prompt|assistant|score (?:this|the)|give (?:full|maximum) (?:credit|points))\b/i.test(text);
+export const hasAmbiguousPolicyCue = (kind,text) => (kind === 'shipping' ? /\b(?:ship\w*|deliver\w*|dispatch\w*|freight|transit|orders?|purchases?|exclusions?)\b/i : /\b(?:return\w*|refund\w*|exchange\w*|store credit|final|sales?|orders?|purchases?|exclusions?)\b/i).test(text);
 const patterns = {
     size: /\b(?:size|sizes)\s*[:\-]\s*(?:[\w./-]+(?:\s*[,/]\s*[\w./-]+)*)/i,
     width: /\b(?:width\s*[:\-]\s*(?:regular|standard|wide|narrow|[A-E]{1,2})|(?:regular|standard|wide|narrow) width)\b/i,
@@ -171,10 +172,13 @@ export function assessContent(snapshot, extracted, { category = null, product = 
             const b = all.find(x => terms.some(re => re.test(x.text)));
             set(id, present === 3 ? 1 : 0.5, b, '', { ...(pb.includes(b) ? { url: policy.url } : {}), policyTerms: terms.map((re, i) => ({ term: i, found: re.test(combined), evidence: all.filter(x => re.test(x.text)).map(x => evidence(x, '', pb.includes(x) ? policy.url : url)) })) });
         }
-        else if (policy?.state === 'read' && policy.extraction.complete && !pb.length)
-            set(id, 0, null, `Inspected ${kind} policy; it contained no readable terms.`, { url: policy.url });
-        else if (complete && !inline.length && !((html.links || []).concat(html.discoveryLinks || [])).some(l => new RegExp(kind === 'shipping' ? 'shipping|delivery' : 'return|refund', 'i').test(`${l.text} ${l.url}`)) && policy?.state !== 'failed')
-            absent(id, kind);
+        else {
+            const policyBlocks = policy?.extraction?.blocks;
+            const policyComplete = policy?.state === 'read' && policy.extraction?.complete === true && Array.isArray(policyBlocks) && policyBlocks.every(b => typeof b?.text === 'string' && safe(b.text)) && !policy.extraction?.truncated && !policy.extraction?.uninterpreted;
+            const productComplete = complete && html.blocks.every(b => typeof b?.text === 'string' && safe(b.text)) && (html.headings || []).every(b => typeof b?.text === 'string' && safe(b.text)) && !snapshot?.htmlLimited && !html.truncated && !html.uninterpreted;
+            if (productComplete && policyComplete && policyBlocks.every(b => !b.text.trim()) && !blocks.some(b => hasAmbiguousPolicyCue(kind,b.text)))
+                set(id, 0, null, `Inspected product and ${kind} policy; no terms found.`, { url: policy.url });
+        }
     }
     if (selected && complete)
         for (const subcheck of ['C4.intended-use', 'C4.compatibility', 'C4.limitations', 'C4.selection']) {

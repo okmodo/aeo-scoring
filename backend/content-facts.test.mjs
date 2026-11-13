@@ -722,3 +722,34 @@ test('policy absence inspections require a complete retrieved scope, independent
     assert.equal(status(result,'policy','shipping','product'),'absent');
     assert.equal(status(result,'policy','shipping','shipping'),'absent');
 });
+
+test('unrecognized readable policy cannot become zero through claimed absence', async()=>{
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    const {scoreAudit}=await import('./scoring.mjs');
+    const snapshot={url:'https://example.test',policies:{returns:{state:'read',url:'https://example.test/returns',extraction:{complete:true,blocks:[{text:'All purchases are final.',location:'policy'}]}}}};
+    const extracted={productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'Cotton shirt.',location:'description'}],links:[]}};
+    const p=buildSemanticRequest(snapshot,extracted,{category:'basic-tshirts'}), req=buildContentFactsRequest(p);
+    const decoded=decodeContentFacts(p,req,{facts:[],inspections:[inspection('policy','returns','absent','product'),inspection('policy','returns','absent','returns')]});
+    assert.equal(assessContentFacts(snapshot,extracted,decoded).findings['C3.returns'].status,'not_measured');
+    const report=scoreAudit(snapshot,extracted,{validatedFacts:decoded});
+    assert.equal(report.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.returns').status,'not_measured');
+    const fallback=scoreAudit(snapshot,extracted,{category:'basic-tshirts'});
+    assert.equal(fallback.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.returns').status,'not_measured');
+});
+
+test('implicit product policy wording cannot become zero with an empty linked policy', async()=>{
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    const {scoreAudit}=await import('./scoring.mjs');
+    const snapshot={url:'https://example.test',policies:{returns:{state:'read',url:'https://example.test/returns',extraction:{complete:true,blocks:[]}}}};
+    const extracted={productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'All purchases are final.',location:'description'}],links:[]}};
+    const p=buildSemanticRequest(snapshot,extracted,{category:'basic-tshirts'}), req=buildContentFactsRequest(p);
+    const decoded=decodeContentFacts(p,req,{facts:[],inspections:[inspection('policy','returns','absent','product'),inspection('policy','returns','absent','returns')]});
+    assert.equal(status(decoded,'policy','returns','product'),'absent');
+    // Simulate retained assertions in both scopes to verify the grader guard independently.
+    decoded.inspections.find(i=>i.kind==='policy'&&i.key==='returns'&&i.scope==='returns').status='absent';
+    assert.equal(assessContentFacts(snapshot,extracted,decoded).findings['C3.returns'].status,'not_measured');
+    for(const options of [{validatedFacts:decoded},{category:'basic-tshirts'}]) {
+        const result=scoreAudit(snapshot,extracted,options);
+        assert.equal(result.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.returns').status,'not_measured');
+    }
+});

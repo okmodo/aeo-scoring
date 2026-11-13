@@ -12,17 +12,18 @@
   ],
   "completed": [
     "Prepared separate R11 clients, wrappers, protocol, review gate and tests; no live calls or deployment.",
-    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs."
+    "Independent final review rebuilt allsix requests, direct/gzip bundles and proof-bound manifest; policy, required-fact and all15 shirt checks reviewed before outputs.",
+    "Final independent source/request/bundle review verified ca3bfb synthetic and133571 real bundle bytes; policy guards apply to both scoring modes."
   ],
   "remaining": [
-    "Commit source, run current evaluations for all ten plans and require hostedCI.",
-    "Run boundedR11 with actual independent per-case source review, normal admission includingR9hold, and primaryCPU verification.",
-    "Record actual outcomes, usage, cleanup and final handoff without production activation."
+    "Commit final source and evaluate all applicable change plans, then require hostedCI before inference.",
+    "Run fixed boundedR11 under ordinary admission including unresolvedR9hold, independent raw review after each result and primaryCPU checks.",
+    "Record exact actual outcomes, usage, cleanup and final handoff; no production activation."
   ],
   "resumeCommands": [
     "node evals/changes/selected-variant-evidence/freeze-inputs.mjs",
     "node /private/tmp/aeo-r11-build.mjs",
     "npm run test:feasibility"
   ],
-  "state": "Independent final pre-output review and final freeze complete; source-bound evaluations and hostedCI required. No R11 provider invocation or production change yet."
+  "state": "Final independent review and refreeze complete after policy parity; current source-bound and hostedCI checks required. No R11 provider invocation; production unchanged."
 }
