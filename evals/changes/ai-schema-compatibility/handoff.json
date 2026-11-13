@@ -16,13 +16,12 @@
     "Final request freeze and single-module gzip bundles, decoded hashes verified; feasibility and focused24 harness tests pass."
   ],
   "remaining": [
-    "Complete independent pre-output review, commit source, evaluate all seven plans and require hostedCI.",
-    "Run fixed R10 cases with independent hash-bound review aftereach, real onlyafterallfivepass; record actual usage, CPU, results and cleanup without production activation."
+    "No retry of R10. A separately planned variant-evidence correction must exclude guide-only text while retaining actual values and reference recall."
   ],
   "resumeCommands": [
     "node evals/changes/ai-schema-compatibility/freeze-inputs.mjs",
     "node /private/tmp/aeo-r10-build.mjs",
     "npm run test:feasibility"
   ],
-  "state": "Final backend and requests frozen; independent final review and source-bound hosted CI required. No R10 call yet; production unchanged and R9 unknown hold preserved."
+  "state": "R10 closed-failed after one case: all15 checks and CPU passed, but unsupported chart-as-variant failed source review. No continuation; production unchanged, temporary resources removed."
 }
