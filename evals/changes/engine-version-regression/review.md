@@ -1,0 +1,5 @@
+# Independent review
+
+Independently reconstructed the historical complete semantic-judgment report from its original source, support and judgment fixtures and recursively compared every field to the frozen contract example. The sole difference is `engineVersion`: historical `1.0.0`, current `1.1.0`. Both reports retain score 78.125 and C4 compatibility 0.5 because this test deliberately supplies the historical semantic judgments. The independently adjudicated current validated-facts reference with shirt total 80.0 is a different test path; changing this fixture's historical score would be incorrect.
+
+The revised test explicitly asserts both fixed version values and compares the entire current report with the unchanged historical fixture overlaid only with the fixed current version. It does not derive expectations from the actual report, skip assertions, alter the fixture or relax scores/evidence. The plan was committed separately before the test edit. Independently ran `npm run test:feasibility`: 547 tests passed. Current source-bound evaluation and hosted CI still need to run against the final committed head. No model call was made for this review.

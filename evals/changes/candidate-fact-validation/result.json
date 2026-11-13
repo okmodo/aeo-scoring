@@ -1,0 +1,51 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-11-r7",
+  "sourceCommit": "6d159a8",
+  "evaluatedHead": "84f024854ebe4eabbb43fe1ef39e7fdfcb920690",
+  "hostedCI": {
+    "run": 43125497347,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r7s-20261112-a2",
+  "version": "fa591466-3b34-477e-808c-164eeceaaef0",
+  "bundleSha256": "1d5cfc255d3742eb4c223cefbf7395d559ccb3a9d476431434d4a7fc1a8a1cd5",
+  "privateProofSha256": "865f367bd2f55ceff3a5e6d4476d6c5011a3336fca33e03d4e5dc065f371fdd9",
+  "providerInvocations": 1,
+  "firstCase": "running-shoes",
+  "httpStatus": 200,
+  "failure": [
+    "C4.compatibility missed frozen full-credit outcome",
+    "Raw fit statement incorrectly proposed as width"
+  ],
+  "laterCasesRun": 0,
+  "realPageCallRun": false,
+  "aiActivated": false,
+  "cpu": {
+    "capMs": 1000,
+    "controlMs": 0,
+    "primaryMeasured": false,
+    "reason": "Client stopped on frozen outcome mismatch before waiting for primary telemetry; no CPU pass claimed."
+  },
+  "usage": {
+    "reservedNeurons": 824,
+    "providerReportedNeurons": 108.47477722167969,
+    "settledNeurons": 109,
+    "pendingNeurons": 0,
+    "settlementVerifiedInD1": true
+  },
+  "cleanup": {
+    "temporaryWorkerDeleted": true,
+    "absenceVerified": true,
+    "ephemeralTailDeleted": true,
+    "privateKeyAndEnvelopeDeleted": true,
+    "completedInfrastructureReservationsSettledAtOriginalConservativeBounds": true
+  },
+  "production": {
+    "unchanged": true,
+    "aiEnabled": false,
+    "cpuCapMs": 1000,
+    "operatingAllowanceFraction": 0.6
+  },
+  "nextStep": "Stopped at user request. Requires a separately planned substantive correction and new independent validation; do not retry this failed phase."
+}

@@ -1,0 +1,13 @@
+{
+  "originalReviewedSource": "85143fa96c67dcb8557b5392266119a0ab6796c5",
+  "originalHostedCI": "https://github.com/okmodo/aeo-scoring/actions/runs/43110998817",
+  "attempts": [
+    {"attempt":1,"outcome":"Cloudflare API returned an error; its text was not retained before a response-parser failure. A read-only check found no v2 tables."},
+    {"attempt":2,"outcome":"Reproduced Cloudflare D1 HTTP400 code7500: too many terms in compound SELECT. Subsequent read-only check found no v2 tables; original holds remain unchanged."}
+  ],
+  "correction":"Replace six UNION ALL bootstrap terms with one SELECT using json_each and CASE. This preserves a single atomic history recomputation and does not assume REST batch atomicity.",
+  "readOnlyProductionPreview":{"passed":true,"pendingAiNeurons":5322,"metricRows":6,"v2Tables":0},
+  "modelCalls":0,
+  "productionWorkerChanged":false,
+  "note":"Local SQLite/native runtime success did not establish the production compound SELECT limit. The corrected migration requires renewed review and CI before application."
+}

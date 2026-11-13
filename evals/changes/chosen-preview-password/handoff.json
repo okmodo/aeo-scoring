@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Enable the user's chosen shared preview password.",
+ "state":"Minimal authentication and release-configuration change on codex/shared-password-length, based on 08856f7.",
+ "decisions":["Allow 8 through 128 URL-safe characters so the explicitly chosen password can be provisioned as a secret.","Disable the explicit public-access bypass in the public release configuration."],
+ "constraints":["The actual password must stay in the Cloudflare secret and out of source, evaluation artifacts and build assets.","Preserve the current D1, billing scope, usage-read secret, 60% analytics admission, 1,000 ms CPU setting and disabled observability.","The existing unauthenticated Worker ingress and guessing limitations remain. The user expressly chose the shorter credential."],
+ "completed":["Independent source reviewer found no blockers and ran seven passing Worker tests. No chosen password value was placed in source."],
+ "remaining":["Pass source-bound evaluation and hosted CI, then release the reviewed Worker and provision the chosen secret.","Verify no-password and wrong-password requests are rejected, the chosen password unlocks the public modal, and usage admission remains enabled."],
+ "resumeCommands":["npm run evaluate -- --change chosen-preview-password --base origin/main","npm run ci:gate -- origin/main"]
+}

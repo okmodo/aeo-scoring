@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "task": "Complete source-grounded report assessment and validate the release",
+  "state": "User-authorized backend code deployed from reviewed source 5c7d0c9. Worker version21b1e96c-21f6-4448-a073-dab3d55f3c85 serves 100% traffic; downloaded code matches tested SHA-256. AI activation remains OFF pending real calibration; PR33 remains draft/unmerged.",
+  "decisions": [
+    "Model proposes source IDs and roles; server alone assigns credit. Unknowns remain incomplete.",
+    "Preserve first-attempt failures, raw model omissions and revision 3 unknowns; revised pipeline replays the same retained primary responses.",
+    "One focused condition inspection may fit inside the original reservation using authentic finished usage; no refunds or automatic retries.",
+    "Enable public inference only with the exact reviewed release ID after actual real-product calibration, recording source commit, bundle hash and Worker version together. Material changes require a new ID and cache namespace.",
+    "The latest explicit user deployment request authorizes the inactive backend code release. Keep AUDIT_AI absent and AUDIT_CONTENT_RELEASE absent until real validation passes; retain the existing preview access setting and secret bindings.",
+    "Integrate the already-deployed chosen-password branch into the backend release to preserve 8–128 character preview authentication; no frontend change."
+  ],
+  "constraints": [
+    "Workers Paid included allowances only, account-wide 60% estimated-analytics admission, 1,000 ms CPU.",
+    "No frontend, shared dependency, merchant-site or unrelated Cloudflare service changes.",
+    "Full merchant inputs and provider wire responses remain private; committed model bodies contain synthetic data only.",
+    "Temporary validation Worker is fixed-target, authenticated, durably single-use and removed after the test."
+  ],
+  "completed": [
+    "Terra implementation and independent source adjudication across five categories.",
+    "Scoped truncation, long-block chunking, category description fallback, exact literal supplements and conservative grading fixes.",
+    "Policy JSON-LD frame repair and narrow maintenance-page rejection.",
+    "Bounded synthetic model calls with account ledger admission and retained failures.",
+    "Actual fixed-target Worker ran one real inference under CPU1000 and the source hash gate; independent review rejected care referral grading. All temporary Workers and operator key material were removed.",
+    "Corrected referral grading and quarantined serialized observation blocks while preserving unknowns; release ID bumped to r5.",
+    "Hosted integration CI passed; backend deployed preserving existing password/access/secrets, CPU1000 and usage admission. Exact downloaded bundle verified. Live frontend CORS204 and unauthorized audit401 confirmed with zero audits started. See deployment.json."
+  ],
+  "remaining": [
+    "Complete source-bound documentation evidence and hosted CI after recording this receipt.",
+    "Real inference remains unapproved. Keep all reservations; daily admission denies additional runs until a fresh receipt and ordinary current-day allocation permit them.",
+    "Before AI activation or complete-report claims, run and independently review the remaining source-bound real validation, complete runtime evidence, CI and release approval."
+  ],
+  "resumeCommands": [
+    "node --test backend/content-facts.test.mjs backend/fact-grading.test.mjs backend/content-facts-runner.test.mjs",
+    "node --test evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs",
+    "npm run evaluate -- --change complete-report-assessment --base origin/main"
+  ]
+}

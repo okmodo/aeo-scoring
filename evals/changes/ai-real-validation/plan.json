@@ -1,0 +1,15 @@
+{
+  "version":1,"id":"ai-real-validation",
+  "task":"Complete the remaining source-bound real-page validation and activate AI scoring only after independent release gates pass.",
+  "scope":["backend/content-facts.mjs","backend/content-facts.test.mjs","backend/content-facts-runner.mjs","backend/content-facts-runner.test.mjs","docs/report-release-validation.md","docs/content-facts-runtime.md","evals/changes/ai-real-validation/**"],
+  "nonGoals":["Frontend, dependency, rubric weight or access-setting changes; unrelated Cloudflare services; higher60% allowances or CPU above1000ms; extra automatic model retries; invented completeness or absence."],
+  "outcomes":[
+    {"id":"O1","description":"Referral-only attribute evidence is rejected as unknown while actual applicable care instructions and existing frozen category outcomes remain supported.","verification":"automated","evidence":"Decoder regressions, five-category actual-response replay and unchanged shirt78.125."},
+    {"id":"O2","description":"The final permitted real model assessment uses exact pre-reviewed source/request bytes, current ordinary allowance admission, the native Worker lifecycle and independent review of accepted roles and absences.","verification":"human","evidence":"Frozen private expectations and source hashes, bounded temporary Worker evidence, actual provider usage and settlement, sanitized review and runtime record. Prior failures remain retained; overall cohort model-call ceiling remains ten."},
+    {"id":"O3","description":"Activate only the reviewed AI release after successful validation, preserving CPU1000,60% admission, preview access, secrets and v1 service/report semantics including truthful incomplete and unable statuses.","verification":"human","evidence":"Independent release decision, hostedCI, exact deployed bundle/bindings, same-report cache/status verification and cleanup."}
+  ],
+  "process":[{"id":"P1","description":"Commit this plan and any prompt clarification before affected calls, use Terra implementation and independent review, and complete source-bound checks and hostedCI before activation.","verification":"human","evidence":"Git chronology, genuine evaluation records, request/model hashes, review and handoff."}],
+  "styleEfficiency":[{"id":"E1","description":"Keep the correction narrow and reuse the normal service/allowance machinery; never consume a live model merely to test cache or errors.","verification":"human","evidence":"Targeted diff, one-shot harness, frozen call count and no frontend/dependency changes."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"Scoring evidence validation and release activation do not change agent portability or workflow."}
+}

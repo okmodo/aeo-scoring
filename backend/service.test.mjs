@@ -227,3 +227,54 @@ test('worker production entry and scheduled maintenance remain paused', async ()
     await worker.scheduled({},env);
   } finally { globalThis.HTMLRewriter = previous; }
 });
+
+test('service release flag controls inference and isolates calibrated cache entries', async () => {
+  const {DatabaseSync}=await import('node:sqlite');
+  const {handleAuditRequest}=await import('./service.mjs');
+  const {CONTENT_FACTS_RELEASE_ID}=await import('./content-facts-runner.mjs');
+  const {createTestAllowanceGuard}=await import('./allowance-store.test-helper.mjs');
+  const {METRICS}=await import('./allowance-policy.mjs');
+  const sqlite=new DatabaseSync(':memory:');
+  sqlite.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
+  const db={prepare(sql){return {bind(...args){
+    const stmt=sqlite.prepare(sql);
+    return {query:/^\s*SELECT\b/i.test(sql),run:async()=>({meta:{changes:Number(stmt.run(...args).changes)}}),first:async()=>stmt.get(...args)??null,
+      all:async()=>({results:stmt.all(...args)})};
+  }};},async batch(items){const result=[];for(const item of items) result.push(item.query ? await item.all() : await item.run());return result;}};
+  const now=Date.now(), account='a'.repeat(32), usage=Object.fromEntries(METRICS.map(key=>[key,0]));
+  const evidence={verified:true,accountId:account,observedAt:now,cycleStart:now-1000,cycleEnd:now+3600000,aiDay:new Date(now).toISOString().slice(0,10),usage};
+  await createTestAllowanceGuard(db,{accountId:account,evidence}).reserve({id:'seed',costs:{requests:1},now});
+  let modelCalls=0, task;
+  const env={AUDIT_DB:db,AUDIT_BILLING_ACCOUNT_ID:account,AUDIT_BILLING_SUBSCRIPTION_ID:'fixture-subscription',AUDIT_RATE_SECRET:'x'.repeat(32),AUDIT_AI:{run:async()=>{modelCalls++;throw new Error('offline stub');}}};
+  const options={egress:{fetch:async()=>assert.fail('unexpected egress')},retrievePage:async url=>({url,extracted:{coverage:{usable:true},productHtml:{complete:true,identity:'Acme Road Running Shoes',blocks:[{text:'Upper: nylon.',location:'description'}],links:[]},jsonLd:[]}})};
+  const submit=async body=>{task=null;const req=new Request(target,{method:'POST',headers:{'content-type':'application/json','cf-connecting-ip':address},body:JSON.stringify(body)});const response=await handleAuditRequest(req,env,{waitUntil:p=>{task=p;}},options);if(task) await task;return response;};
+  const previous=globalThis.HTMLRewriter;globalThis.HTMLRewriter=Rewriter;
+  try {
+    const rejected=await submit({url:pending.submittedUrl,AUDIT_CONTENT_RELEASE:CONTENT_FACTS_RELEASE_ID});
+    assert.equal(rejected.status,400);assert.equal(modelCalls,0);
+    assert.equal((await submit({url:pending.submittedUrl})).status,202);
+    assert.equal(modelCalls,0);
+    env.AUDIT_CONTENT_RELEASE='wrong';
+    assert.equal((await submit({url:pending.submittedUrl})).status,200);
+    assert.equal(modelCalls,0);
+    env.AUDIT_CONTENT_RELEASE=CONTENT_FACTS_RELEASE_ID;
+    assert.equal((await submit({url:pending.submittedUrl})).status,202);
+    assert.equal(modelCalls,1);
+    const rows=sqlite.prepare('SELECT cache_key,status FROM audits ORDER BY created_at').all();
+    assert.equal(rows.length,2);assert.notEqual(rows[0].cache_key,rows[1].cache_key);
+    assert.ok(rows.every(row=>row.status==='incomplete'));
+  } finally {globalThis.HTMLRewriter=previous;sqlite.close();}
+});
+
+test('invocation hold settles only after both response and background work finish', async () => {
+  let task, release, reservedId;
+  const settled=[];
+  const handle=createAuditService({allowance:{reserve:async r=>{reservedId=r.id;return {accepted:true,duplicate:false};},settle:async r=>settled.push(r)},
+    store:{reserve:async()=>({kind:'created',audit:fixtureAudit}),finish:async()=>{}},secret:'x'.repeat(32),HTMLRewriter:Rewriter,
+    egress:{fetch:async()=>new Response()},retrievePage:()=>new Promise(resolve=>{release=resolve;}),
+    extractPage:async()=>({coverage:{usable:true}}),scorePage:()=>read('assessment-incomplete').report});
+  const response=await handle(post({url:pending.submittedUrl}),{address,defer:p=>{task=p;}});
+  assert.equal(response.status,202);assert.deepEqual(settled,[]);
+  release({url:pending.submittedUrl});await task;
+  assert.deepEqual(settled,[{id:reservedId}]);
+});

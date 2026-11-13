@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "R10 provider schema compatibility and separately bounded direct-slot validation",
+  "decisions": [
+    "Retain R9 as closed-failed with cause unconfirmed and preserve its unresolved 1004-neuron hold.",
+    "Capture bounded provider errors exclusively in private validation proofs; production errors stay generic.",
+    "Use the fixed five cases and independent per-case review gate, then at most one real case only after all five pass."
+  ],
+  "constraints": [
+    "No retries, replacements, production activation or gold changes; maximum seven physical provider calls including the optional normal shirt condition call.",
+    "Apply normal account allowance admission including unknown holds, preserve settlement evidence and collect primary CPU on failed outcomes.",
+    "Never commit private provider error messages, real snapshots or credentials."
+  ],
+  "completed": [
+    "Separate R10 harness, tests, protocol and unique private paths prepared; historical files retained.",
+    "Final request freeze and single-module gzip bundles, decoded hashes verified; feasibility and focused24 harness tests pass."
+  ],
+  "remaining": [
+    "No retry of R10. A separately planned variant-evidence correction must exclude guide-only text while retaining actual values and reference recall."
+  ],
+  "resumeCommands": [
+    "node evals/changes/ai-schema-compatibility/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r10-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "R10 closed-failed after one case: all15 checks and CPU passed, but unsupported chart-as-variant failed source review. No continuation; production unchanged, temporary resources removed."
+}

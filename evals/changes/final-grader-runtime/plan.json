@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "final-grader-runtime",
+  "task": "Isolate corrected scoring caches and validate final corrected source once in the native Worker runtime.",
+  "scope": [
+    "backend/content-facts-runner.mjs",
+    "backend/content-facts-runner.test.mjs",
+    "docs/final-grader-runtime.md",
+    "evals/changes/final-grader-runtime/**",
+    "test/feasibility.test.mjs"
+  ],
+  "nonGoals": [
+    "No algorithm, rubric, weight, model, frontend, dependency, access, 60% limits, CPU1000, production activation or unrelatedservice changes. No rewriting any R14 or prior output. No failed-case retries or alternative URLs."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Change the unactivated content release/cache identity to content-facts-2026-11-12-r15 so corrected reports cannot reuse prior experimental cached grading. Preserve production approval false and access controls.",
+      "verification": "automated",
+      "evidence": "Explicit new release ID assertion, unchanged fail-closed approval/admission, service cache regressions."
+    },
+    {
+      "id": "O2",
+      "description": "After final current source checks, hostedCI and independent request/bundle review, admit one R15 exact-input Kokatat call against the final grader. No more than one physical provider invocation and no retries or substitutions. Capture actual source/model evidence, primaryCPU<=1000, settlement and cachedsameID withoutadditionalAI; independently verify finalgrade/citations. Missing sourcechecks still meanincomplete/null.",
+      "verification": "human",
+      "evidence": "Frozen request41bd86578b9b4c97dd99f55963393a4413f39b4dd358b21203551429f2c8bc9a, finalbundlehash, normal60%admission includingR9hold, actualCPU/cache/providerusage/cleanup andindependentreview. ControlledfiveR14passes andnewgraderofflineexactreplay remain distinct prior evidence."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan alone before sourcechange. Terraengineering andindependentreview; maxonecallonlyafterCI. KeepR14allrawpasses andcorrectedofflinegrading history intact; no productionactivation.",
+      "verification": "human",
+      "evidence": "Gitchronology, currentevaluations/hostedCI, independentfinalsource/rawreview, verifiedsettlementsandcleanup."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing boundedvalidation protocol andfixedsource ratherthanrepeatfivepassed controlledcases; minimalreleasecacheversion bump andonefinalnativemeasurement.",
+      "verification": "human",
+      "evidence": "Focusedconstant/testdiff, uniqueprivatepaths/runID, strict onecallguard andexactrequest."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Cache identity and native app validation do not change agent portability or resumability."
+  }
+}

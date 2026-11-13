@@ -4,7 +4,7 @@ import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
 import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit } from './scoring.mjs';
-import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED } from './content-facts-runner.mjs';
+import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FACTS_RELEASE_ID } from './content-facts-runner.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -107,8 +107,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (CONTENT_FACTS_CALIBRATION_APPROVED ? '1' : '0') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -127,13 +127,14 @@ function retrievalProblem(error) {
 
 export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
-  extractPage = extract, scorePage = scoreAudit,
+  extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
     try {
-      const result = await allowance.reserve({ id: crypto.randomUUID(), costs, now: now() });
-      if (result?.accepted === true && result.duplicate === false) return 'accepted';
+      const id = crypto.randomUUID();
+      const result = await allowance.reserve({ id, costs, now: now() });
+      if (result?.accepted === true && result.duplicate === false) return { id };
       return result?.accepted === false && result.reason === 'allowance_exhausted' ? 'exhausted' : 'unavailable';
     } catch { return 'unavailable'; }
   }
@@ -152,9 +153,12 @@ export function createAuditService({
       if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
       report = scorePage(snapshot, extracted);
-      if (AI && extracted.productHtml) {
-        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report});
-        if (contentFacts.status === 'assessed') report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+      if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
+        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report,calibrationApproved:contentCalibrationApproved});
+        if (contentFacts.status === 'assessed') {
+          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+          if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
+        }
         else report.coverage.limitations.push(contentFacts.reason);
       }
       if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');
@@ -173,6 +177,13 @@ export function createAuditService({
 
   return async function handle(request, { defer, address } = {}) {
     const path = new URL(request.url).pathname;
+    let reservationId, requestDone = false, backgroundDone = true, settling = false;
+    async function settleCompleted() {
+      if (!reservationId || !requestDone || !backgroundDone || settling) return;
+      settling = true;
+      // CPU and other invocation costs remain at their conservative upper bounds.
+      try { await allowance.settle?.({ id: reservationId }); } catch {}
+    }
     try {
       if (path === ROUTE) {
         if (request.method !== 'POST') return errorResponse(405, 'method_not_allowed', null, { allow: 'POST' });
@@ -187,11 +198,12 @@ export function createAuditService({
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
         const admission = await admit(INVOCATION_COSTS);
-        if (admission !== 'accepted') return admissionError(admission);
+        if (!admission?.id) return admissionError(admission);
+        reservationId = admission.id;
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI)),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
         });
@@ -201,7 +213,11 @@ export function createAuditService({
           return json(assessment(result.audit, true), 200);
         }
         // If persistence becomes unavailable, polling resolves the abandoned lease.
-        defer(run(result.audit).catch(() => {}));
+        backgroundDone = false;
+        defer(run(result.audit).catch(() => {}).finally(async () => {
+          backgroundDone = true;
+          await settleCompleted();
+        }));
         return json(assessment(result.audit), 202, { location: ROUTE + '/' + result.audit.id });
       }
 
@@ -211,7 +227,8 @@ export function createAuditService({
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return errorResponse(404, 'not_found');
         if (!store) return errorResponse(503, 'service_unavailable');
         const admission = await admit(POLL_COSTS);
-        if (admission !== 'accepted') return admissionError(admission);
+        if (!admission?.id) return admissionError(admission);
+        reservationId = admission.id;
         const audit = await store.get(id, now());
         if (audit && encoding.encode(JSON.stringify(audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
         return audit ? json(assessment(audit), 200) : errorResponse(404, 'not_found');
@@ -220,11 +237,14 @@ export function createAuditService({
       return errorResponse(404, 'not_found');
     } catch {
       return errorResponse(503, 'service_unavailable');
+    } finally {
+      requestDone = true;
+      await settleCompleted();
     }
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID } = {}) {
   const db = env.AUDIT_DB;
   const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
   const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;
@@ -238,7 +258,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
         ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })
         : createAllowanceGuard(db, { accountId, subscriptionId })
     ) : undefined,
-    egress, allowsProduct, normalizeUrl, retrievePage, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),

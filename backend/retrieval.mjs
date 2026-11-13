@@ -3,6 +3,7 @@
 import { robotsPathMatch, ROBOTS_MATCH_MAX_WORK } from './robots-path.mjs';
 import { productHtmlAccumulator } from './html-product.mjs';
 import { parseSitemap } from './sitemap-parser.mjs';
+import { inspectProductSchema } from './structure-assessment.mjs';
 import crawlers from '../config/crawlers.v1.json' with { type: 'json' };
 
 const scoredBots = Object.values(crawlers.scoring).flatMap(group => group.botIds)
@@ -555,6 +556,17 @@ export async function extract(snapshot, options = {}) {
     result.labelEvidence = { ...result.productHtml.identity };
     result.title = result.productHtml.identity.title || '';
     result.coverage.usable ||= result.productHtml.blocks.length > 0 || result.productHtml.headings.length > 0;
+  }
+  // An exact interstitial heading (or title when no heading exists) is not a
+  // product. Require complete, unambiguous markup inspection so a real Product
+  // with the same name or URL is never rejected by this heuristic.
+  const heading = result.productHtml.identity?.mainH1;
+  const label = (heading || result.productHtml.identity?.title || '').normalize('NFKC').replace(/[’‘]/g, "'").trim();
+  const interstitial = /^(?:we(?:'re| are) working on it|under maintenance|site (?:is )?under maintenance|access denied|checking your browser|just a moment)[.!…]*$/i.test(label);
+  if (interstitial && !snapshot.htmlLimited) {
+    const schema = inspectProductSchema(snapshot, result);
+    if (schema.complete && !schema.product && !schema.ambiguous && !schema.malformed)
+      result.coverage.usable = false;
   }
   return result;
 }

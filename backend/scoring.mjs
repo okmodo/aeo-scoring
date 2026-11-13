@@ -294,7 +294,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
       content: criteria.filter(c => c.pillar === 'content').reduce((sum, c) => sum + c.points, 0)
     } : null,
     earnedPoints: reference.earnedPoints, rubricVersion: rubric.version,
-    ...(extracted?.productHtml ? {engineVersion:'1.0.0',categoryVersion:categories.version} : {}),
+    ...(extracted?.productHtml ? {engineVersion:'1.1.0',categoryVersion:categories.version} : {}),
     category: categories.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,

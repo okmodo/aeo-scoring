@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "selected-variant-evidence",
+  "task": "Require concrete product variant evidence rather than chart or guide instructions, preserving direct-slot validation and rerunning the independently bounded release gate.",
+  "scope": [
+    "backend/content-facts.mjs",
+    "backend/content-facts.test.mjs",
+    "backend/content-facts-runner.mjs",
+    "backend/content-facts-runner.test.mjs",
+    "backend/fact-grading.mjs",
+    "backend/fact-grading.test.mjs",
+    "backend/fixtures/content-facts/**",
+    "backend/content-facts-release.mjs",
+    "backend/content-facts-release.test.mjs",
+    "test/feasibility.test.mjs",
+    "docs/content-facts-runtime.md",
+    "docs/selected-variant-evidence.md",
+    "evals/changes/selected-variant-evidence/**"
+  ],
+  "nonGoals": [
+    "No source-gate or frozen scoring expectation changes, no model switch, frontend, dependency, production activation, billing threshold or CPU change. Retain every closed failed phase and the unresolved1004-neuron R9hold."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Variant/configuration evidence requires source-supported actual product choices or included configuration values. Guide, measurement and selection instructions alone cannot qualify. Apply support checks consistently to candidates and decoder without narrowing broad absence cues or removing observations; preserve genuine selected context, negation, multiple observations and all frozen reference facts.",
+      "verification": "automated",
+      "evidence": "Positive, negative, omitted role, wrong-role, multi-role and cross-category regression cases; all frozen reference roles retained and request/output/reservation bounds measured."
+    },
+    {
+      "id": "O2",
+      "description": "Independently inspect all included/excluded candidate roles and static definitions against source before a distinct R11 phase. Freeze exact requests and unchanged15 outcomes/shirt78.125. Run fixedfive once in order with independent raw review after each, zero unsupported roles, thenonereal onlyafterallfive pass.",
+      "verification": "human",
+      "evidence": "Frozen canonical hashes before any call, original source reference outcomes, source-level independent pre/post-call reviews and all failed outputs retained."
+    },
+    {
+      "id": "O3",
+      "description": "Only after allfive independently pass, perform one exact-source Kokatat call with primary CPU<=1000, cache without inference, normal admission and actual settlement; report readiness without production activation.",
+      "verification": "human",
+      "evidence": "At most seven physical provider invocations: five fixed primary synthetic calls, one optional normal shirt condition call, then one real call. No retries of model failures, no replacement cases, actual primary CPU including failed cases when available, D1 settlement and cleanup records."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this plan before implementation, retain R10 closed-failed despite all15 grade match, use Terra implementation and independent review, and require source-bound/hostedCI checks before calls. Enforce ordinary60% admission including unresolvedholds and capCPU1000. Maximum7 physical invocations; no failed-case retries/replacements, preserve actual usage and cleanup records.",
+      "verification": "human",
+      "evidence": "Git chronology, trace limitations, actual provider invocations and usage, independent source review, account receipt and exact temporary Worker bundle/settings. Temporary resources and credentials removed after validation."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Correct an observed semantic eligibility error, not the evaluation gold or source threshold. Retain raw slots and private diagnostics, unknown scopes and all rejected evidence. Independently identify other provably false guide-as-value candidate inclusions before calls without hiding true partial evidence. No output repair, new paid integration or production change.",
+      "verification": "human",
+      "evidence": "Focused diff, all raw proposals reviewed separately from decoder/literal supplements, input/token/CPU bounds and source-preserving handoff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This change concerns fact extraction and its bounded release experiment, not agent portability, memory or resumability."
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "temperature": 0,
+  "primaryReservationsNeurons": [
+    791,
+    620,
+    625,
+    630,
+    621,
+    727
+  ],
+  "reservedTotal": 4014,
+  "focusedAllocatedWithinShirtReservation": 727,
+  "syntheticReplay": "all five frozen expectations pass; shirt 78.125/20/58.125",
+  "realRuntime": "failed independent review; see runtime-results.json",
+  "attempts": [
+    {
+      "id": "running-shoes-v1",
+      "wireSha256": "535800b67be4ec4a9c4c0f068cdbd7a2c4d1ccdb4e96044df71015315499802f",
+      "createdAt": "2026-11-11T20:00:11.000Z",
+      "usage": {
+        "prompt_tokens": 1169,
+        "completion_tokens": 420,
+        "total_tokens": 1589,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 117.1927490234375
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "b5eb792419db0e94dd97e2e740096d27525e54255c54f66d3b221ebf376fe418"
+    },
+    {
+      "id": "running-shoes-v2",
+      "wireSha256": "6c6ddee51d04a3e2a45b1d42fb5cb19fff2407c7a3f9b6ab9968add5c4c34f9f",
+      "createdAt": "2026-11-11T20:09:09.000Z",
+      "usage": {
+        "prompt_tokens": 1050,
+        "completion_tokens": 327,
+        "total_tokens": 1377,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 94.97239685058594
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "ac189fcd150ac2492740a5834c11593abb12a2529ac9c4e0fcb73d0ede414abf"
+    },
+    {
+      "id": "casual-daypacks-v2",
+      "wireSha256": "b96c926e33ebc17fc76d0e6e7e1231c44ba3b2276faee49e1258c21eb725945e",
+      "createdAt": "2026-11-11T20:11:21.000Z",
+      "usage": {
+        "prompt_tokens": 1076,
+        "completion_tokens": 294,
+        "total_tokens": 1370,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 88.90718078613281
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "8122e9093fd85b7e8836983394e0fcf8baa3950f9cdbfde5d7bdd920513ebe12"
+    },
+    {
+      "id": "personal-flotation-devices-v2",
+      "wireSha256": "64ab6785958307bee53c89b41ae99e1ef9d5bcf110c9b435e41fafc80040e0c1",
+      "createdAt": "2026-11-11T20:15:08.000Z",
+      "usage": {
+        "prompt_tokens": 1068,
+        "completion_tokens": 347,
+        "total_tokens": 1415,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 99.54852294921875
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "4a51f8117b463c10607f850ed7f21019c7a7dd3f2ad0e814bc18029dcda661bf"
+    },
+    {
+      "id": "handbags-v2",
+      "wireSha256": "fffeb2e080c53f9d1b1dfbcede437f047ffef01754a625dbdf884be3ec279723",
+      "createdAt": "2026-11-11T20:15:30.000Z",
+      "usage": {
+        "prompt_tokens": 1033,
+        "completion_tokens": 337,
+        "total_tokens": 1370,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 96.56709289550781
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "958b69e676f3e571531335a857b480c2a9e2d42d38efdb620d71379ef17f1b00"
+    },
+    {
+      "id": "basic-tshirts-v2",
+      "wireSha256": "d6ca8ccdd8d3ec30f3074ad901768c8325974716f47e3ca421cbc6e9bca3392a",
+      "createdAt": "2026-11-11T20:18:01.000Z",
+      "usage": {
+        "prompt_tokens": 1337,
+        "completion_tokens": 313,
+        "total_tokens": 1650,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 99.75874328613281
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": "7108c46a2f32cfdc0067f6aa1b212d5cb0ef7490a3783d0142504bf9dfe88222"
+    },
+    {
+      "id": "basic-tshirts-focused-v3",
+      "wireSha256": "5185d683bf925f0aca3d5c523463e3f4c172a33f3a1a42a9c92a6e61cad37f28",
+      "createdAt": "2026-11-11T20:38:19.000Z",
+      "usage": {
+        "prompt_tokens": 522,
+        "completion_tokens": 20,
+        "total_tokens": 542,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 18.016630172729492
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": null
+    },
+    {
+      "id": "basic-tshirts-focused-v4",
+      "wireSha256": "162ab3dc69b9e3358e7936fad8e9052e735bf1b1a9886e525b61f43530d1789b",
+      "createdAt": "2026-11-11T20:48:44.000Z",
+      "usage": {
+        "prompt_tokens": 564,
+        "completion_tokens": 22,
+        "total_tokens": 586,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "neurons": 19.546283721923828
+      },
+      "finishReason": "stop",
+      "elapsedMs": null,
+      "elapsedNote": "Per-call wall time not retained by provider wire capture.",
+      "requestSha256": null
+    }
+  ],
+  "actualModelCalls": 9,
+  "productionApproved": false
+}

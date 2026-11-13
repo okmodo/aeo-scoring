@@ -1,0 +1,129 @@
+{
+  "synthetic": [
+    {
+      "id": "running-shoes",
+      "requestHash": "63b7245da3bbb045ecaee3e2996bd62f609ea72a358ad923cf9be859743e60a6",
+      "reservationNeurons": 989,
+      "bytes": 16897
+    },
+    {
+      "id": "casual-daypacks",
+      "requestHash": "68fa6be7662855012a6356117733ad644a44e39a1c33d01b47268b94db82a7ad",
+      "reservationNeurons": 981,
+      "bytes": 16607
+    },
+    {
+      "id": "personal-flotation-devices",
+      "requestHash": "c6f1d9c64d216dfe3b8456ec0ab0c87085b3d91e55b958c6a3e1bdaf00faad46",
+      "reservationNeurons": 1002,
+      "bytes": 17364
+    },
+    {
+      "id": "handbags",
+      "requestHash": "b8e092db2f442a5875f45674303da321538aff3cbce0fb75f15281bd7bf49caf",
+      "reservationNeurons": 968,
+      "bytes": 16114
+    },
+    {
+      "id": "basic-tshirts",
+      "requestHash": "b61684636cc9588205dc7bd439d545e9f0a14b602f33b028d95ad8b14854fb5f",
+      "reservationNeurons": 1027,
+      "bytes": 18297
+    }
+  ],
+  "real": {
+    "privatePath": "/private/tmp/aeo-ai-r12-real-case-final.json",
+    "requestHash": "75c694446903baff3321175eb24d2dbb861a6886159c16aad23599352d422934",
+    "reservationNeurons": 938,
+    "bytes": 14987,
+    "candidates": [
+      {
+        "roleId": "r0",
+        "kind": "identity",
+        "key": "name",
+        "ids": [
+          "q1",
+          "q30"
+        ],
+        "label": "identity: name"
+      },
+      {
+        "roleId": "r1",
+        "kind": "function",
+        "key": "function",
+        "ids": [
+          "q14"
+        ],
+        "label": "function: function"
+      },
+      {
+        "roleId": "r2",
+        "kind": "context",
+        "key": "price",
+        "ids": [
+          "q5"
+        ],
+        "label": "context: price"
+      },
+      {
+        "roleId": "r3",
+        "kind": "repeated",
+        "key": "identity",
+        "ids": [
+          "q1",
+          "q30"
+        ],
+        "label": "repeated: identity"
+      },
+      {
+        "roleId": "r4",
+        "kind": "repeated",
+        "key": "price",
+        "ids": [
+          "q5"
+        ],
+        "label": "repeated: price"
+      },
+      {
+        "roleId": "r5",
+        "kind": "repeated",
+        "key": "suitability",
+        "ids": [
+          "q14",
+          "q25",
+          "q26"
+        ],
+        "label": "repeated: suitability"
+      },
+      {
+        "roleId": "r6",
+        "kind": "attribute",
+        "key": "features",
+        "ids": [
+          "q14"
+        ],
+        "label": "Features"
+      },
+      {
+        "roleId": "r7",
+        "kind": "decision",
+        "key": "personal-flotation-devices-intended-use",
+        "ids": [
+          "q14",
+          "q25",
+          "q26"
+        ],
+        "label": "What use and audience is this Personal flotation devices intended for?"
+      },
+      {
+        "roleId": "r8",
+        "kind": "decision",
+        "key": "personal-flotation-devices-compatibility",
+        "ids": [
+          "q14"
+        ],
+        "label": "What fit or compatibility characteristics are described?"
+      }
+    ]
+  }
+}

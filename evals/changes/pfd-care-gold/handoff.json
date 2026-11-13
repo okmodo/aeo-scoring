@@ -1,0 +1,8 @@
+{
+  "version":1,"task":"Evidence-backed PFD care reference correction","state":"Independent source review supports1.0 for C2.supporting after the existing rinse instruction is recognized; no model output used to choose the value.",
+  "decisions":["Preserve the old reference and R6 failure historically; change only this one expectation, no weights or anchors."],
+  "constraints":["Shirt78.125 and all other category expected values remain fixed."],
+  "completed":["Plan644ab7f committed before fixture edit; Terra adjudication matched category care anchor."],
+  "remaining":["Full source-bound checks and independent R7 validation."],
+  "resumeCommands":["npm run evaluate -- --change pfd-care-gold --base origin/codex/complete-report-assessment"]
+}

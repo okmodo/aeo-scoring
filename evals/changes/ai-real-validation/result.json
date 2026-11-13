@@ -1,0 +1,18 @@
+{
+  "release":"content-facts-2026-11-11-r6",
+  "cohortStatus":"closed-failed",
+  "totalCohortProviderInvocations":10,
+  "additionalProviderInvocationsPermitted":0,
+  "activationApproved":false,
+  "primaryRequestSha256":"11dc42a67b2ffe808cfa56045e007a1177342c521944cc74ffe48171da445475",
+  "validationBundleSha256":"ee956956d2518e4220424e9e99eab68627e509946b21b0d84220dc102e95a2df",
+  "cpuMs":919,"cpuLimitMs":1000,"wallMs":17249,"outcome":"ok",
+  "reportStatus":"incomplete","score":null,"measuredChecks":20,"totalChecks":40,
+  "cache":{"status":200,"hit":true,"sameId":true,"additionalProviderCalls":0},
+  "repeatHttpStatus":429,
+  "settlement":{"reservedNeurons":937,"providerReportedNeurons":81.42881774902344,"settledNeurons":82,"pendingAi":0,"accountedAiTotal":891},
+  "failure":"Unsupported raw size, care, color and previous-price roles; a size heading was also accepted by the decoder. Supported proposals only duplicated deterministic identity/current-price facts.",
+  "cleanup":{"temporaryWorkerDeleted":true,"tailDeleted":true,"localCredentialsDeleted":true},
+  "productionAiEnabled":false,
+  "note":"Runtime/CPU/cache success does not make the semantic validation pass. This failed cohort is closed permanently; no calls or failures are reclassified. Any material successor algorithm requires a separate plan, fixed inputs and strict independent validation before inference or activation."
+}

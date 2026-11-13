@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Isolate corrected calibrated AI cache identity and validate final source once in the native runtime",
+  "decisions": [
+    "Keep R14 synthetic and real outcomes and the corrected offline replay as historical evidence; do not retry their cases.",
+    "Use one distinct R15 exact-source real invocation after review and hosted CI, with calibrated AI cache identity content-facts-2026-11-12-r15; the uncalibrated cache namespace is unchanged.",
+    "Calibration remains disabled in production and no production activation is authorized.",
+    "R15 used its one permitted provider call; no retries or production activation."
+  ],
+  "constraints": [
+    "At most one physical provider invocation, no retries or alternate source; normal account admission includes the unresolved R9 hold.",
+    "Require primary CPU at most 1000 ms, actual settlement, same-ID cache hit without additional AI and one-shot duplicate denial.",
+    "Retain raw outputs and credentials privately; independent review must verify meaningful model evidence, grades, citations and truthful incomplete/null status."
+  ],
+  "completed": [
+    "R15 exact-source real invocation independently reviewed: raw roles, meaningful model evidence, literals, corrected findings and citations passed.",
+    "Runtime HTTP 200, primary CPU 489 ms, incomplete/null report with 27 of 40 measured, same-ID cache hit without additional AI and duplicate 429.",
+    "Operator verified 118.716339 actual neurons settled at 119 against 993 reserved, accepted infrastructure settlement, deletion of temporary Worker and Tail, and absent credentials."
+  ],
+  "remaining": [
+    "Run final current source-bound evaluations and hosted CI; do not activate production or merge as part of this task."
+  ],
+  "resumeCommands": [
+    "npm run test:feasibility"
+  ],
+  "state": "R15 independently reviewed exact-source native validation passed, with incomplete/null 27-of-40 report. Actual usage and cleanup verified; production unchanged. Final source-bound evaluations and hosted CI remain."
+}
