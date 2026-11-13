@@ -1,5 +1,5 @@
 import { associatedConfigurationItems } from './selected-configuration.mjs';
-import { hasAmbiguousPolicyCue } from './content-assessment.mjs';
+import { hasAmbiguousPolicyCue, hasQuestionConditionCue } from './content-assessment.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 
 const ids = ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.compatibility','C4.limitations','C4.selection','C5.consistency','C5.claim-support'];
@@ -13,7 +13,6 @@ const selected = /\b(?:selected|this (?:product|item|shoe|shirt|pack)|one size|s
 const market = /\b(?:US|UK|EU|AU|men's|women's|unisex|adult)\b/i;
 const pricePattern = /(?:\b(USD|EUR|GBP|CAD|AUD)\s*|([$£€]))\s*(\d+(?:\.\d{1,2})?)|\b(\d+(?:\.\d{1,2})?)\s*(USD|EUR|GBP|CAD|AUD)\b/i;
 const materialClaim = /\b(?:certif(?:ied|ication)|approv(?:ed|al)|clinically|medical|health|safety|safe(?:ty)?|non.toxic|hypoallergenic|waterproof|water.resistant|recycl(?:ed|able)|organic|carbon.neutral|sustainab(?:le|ility)|biodegradable|UV protection|\d+(?:\.\d+)?\s*%\s*(?:more|less|reduction|improv)|\d+(?:\.\d+)?\s*(?:hours?|days?)\s+(?:of|for)\s+(?:protection|performance))\b/i;
-const positiveCondition = /\b(?:waterproof|water.resistant|impact protection|surface restriction|certified for|safety rated|special (?:fabric )?treatment|treated fabric|dry clean only|wash only|laptop (?:compartment|sleeve|pocket))\b/i;
 
 export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const dto = validatedFacts || {};
@@ -26,6 +25,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const find = (kind,key) => facts.filter(f => f.kind === kind && f.key === key && usable(f.value));
     const obs = f => (f?.quoteIds || []).map(id => observations.get(id)).filter(Boolean);
     const context = f => f?.value || '';
+    const tieBreak = (a,b) => context(a).localeCompare(context(b)) || JSON.stringify(a.quoteIds || []).localeCompare(JSON.stringify(b.quoteIds || []));
     const productText = [...observations.values()].filter(o=>o.scope==='product').map(o=>o.text).join(' ');
     const ev = f => { const o = obs(f)[0]; return {url: o?.url || (o?.scope === 'shipping' || o?.scope === 'returns' ? snapshot?.policies?.[o.scope]?.url : snapshot?.url), location:o?.location || 'inspected product content', excerpt:(o?.text || 'Inspected complete product content.').slice(0,500)}; };
     const firstProductObservation=[...observations.values()].find(o=>o.scope==='product');
@@ -38,14 +38,16 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const name = pick('identity','name');
     if (name) findings['C1.identity'] = measured(name.value.trim().split(/\s+/).length >= 3 ? 1 : 0.5,name);
     else findings['C1.identity'] = missing('specific product identity',complete && inspectedAbsent('identity','name'));
-    const fn = pick('function','function');
-    const fnText=find('function','function').map(context).join(' ');
-    if (fn && !negative.test(fnText)) findings['C1.explanation'] = measured(/\b(?:designed|built|made|ideal|used) for\b/i.test(fnText) && /\b(?:features?|provides?|helps?|keeps?|holds?|protects?|carries?|offers?|is (?:a|an))\b/i.test(fnText) ? 1 : 0.5,fn);
-    else findings['C1.explanation'] = fn ? unknown('The product explanation has ambiguous or negative context.') : missing('product explanation',complete && inspectedAbsent('function','function'));
-    const config = pick('configuration','configuration');
-    const configText=find('configuration','configuration').map(context).join(' ');
-    if (config && !negative.test(configText)) findings['C1.configuration'] = measured(find('configuration','configuration').some(a=>selected.test(a.value) && find('configuration','configuration').some(b=>associatedConfigurationItems(obs(a)[0],obs(b)[0],[...observations.values()]))) ? 1 : 0.5,config);
-    else findings['C1.configuration'] = config ? unknown('Configuration context is ambiguous.') : missing('configuration and included items',complete && inspectedAbsent('configuration','configuration'));
+    const purpose = f=>/\b(?:designed|built|made|intended|ideal) for\s+[^.!?]{4,}/i.test(f.value);
+    const functions=find('function','function').filter(f=>!negative.test(context(f))).sort((a,b)=>Number(purpose(b))-Number(purpose(a)) || tieBreak(a,b));
+    const fn=functions[0];
+    if (fn) findings['C1.explanation'] = measured(name && purpose(fn) ? 1 : 0.5,fn,name && purpose(fn) ? {evidence:[ev(name),ev(fn)]} : {});
+    else findings['C1.explanation'] = find('function','function').length ? unknown('The product explanation has ambiguous or negative context.') : missing('product explanation',complete && inspectedAbsent('function','function'));
+    const configurations=find('configuration','configuration').filter(f=>!negative.test(context(f))).sort(tieBreak);
+    const config=configurations[0];
+    const pair=configurations.flatMap(a=>selected.test(a.value) ? configurations.filter(b=>associatedConfigurationItems(obs(a)[0],obs(b)[0],[...observations.values()])).map(b=>[a,b]) : [])[0];
+    if (config) findings['C1.configuration'] = pair ? measured(1,pair[0],{evidence:[ev(pair[0]),ev(pair[1])]}) : measured(0.5,config);
+    else findings['C1.configuration'] = find('configuration','configuration').length ? unknown('Configuration context is ambiguous.') : missing('configuration and included items',complete && inspectedAbsent('configuration','configuration'));
     const attrScore = (id, text) => {
         const t = text.trim();
         // A pointer to a guide or details is not evidence of the underlying value.
@@ -79,7 +81,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
             return unit.test(t) && (category.id !== 'running-shoes' || /\b(?:per shoe|per pair|each shoe)\b/i.test(t) && /\bsize\s*\w+/i.test(t)) ? 1 : 0.5;
         }
         case 'capacity': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : /\b\d+(?:\.\d+)?\s*(?:l|lit(?:er|re)s?)\b/i.test(t) ? 1 : 0.5;
-        case 'dimensions': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : (/(?:\d+(?:\.\d+)?\s*(?:x|×)\s*){2}\d+(?:\.\d+)?/i.test(t) || /\bheight\b/i.test(t) && /\bwidth\b/i.test(t) && /\bdepth\b/i.test(t)) && unit.test(t) && (category.id !== 'casual-daypacks' || /\b(?:external|exterior|outside)\b/i.test(t)) ? 1 : 0.5;
+        case 'dimensions': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : (/(?:\d+(?:\.\d+)?\s*(?:x|×)\s*){2}\d+(?:\.\d+)?/i.test(t) || /\bheight\b/i.test(t) && /\bwidth\b/i.test(t) && /\bdepth\b/i.test(t)) && unit.test(t) && (!['casual-daypacks','handbags'].includes(category.id) || /\bheight\b/i.test(t) && /\bwidth\b/i.test(t) && /\bdepth\b/i.test(t)) && (category.id !== 'casual-daypacks' || /\b(?:external|exterior|outside)\b/i.test(t)) ? 1 : 0.5;
         case 'drop': case 'buoyancy': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : unit.test(t) ? 1 : 0.5;
         case 'fabric-weight': return !quantity.test(t) ? (vague.test(t) ? 0 : null) : /\d+(?:\.\d+)?\s*(?:gsm|g\/m[²2])/i.test(t) ? 1 : 0.5;
         case 'garment-measurements': return !quantity.test(t) ? null : /\bchest\b/i.test(t) && /\blength\b/i.test(t) && unit.test(t) && /\b(?:size|selected)\s*[:\-]?\s*\w+/i.test(t) ? 1 : 0.5;
@@ -87,6 +89,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
         case 'care': return /\b(?:machine wash|hand wash|wash (?:cold|warm|in)|wipe clean|spot clean|rinse|clean with)\b/i.test(t) ? 1 : null;
         case 'material': case 'upper': case 'outsole': {
             const value=labelValue(id==='material' ? 'material|fabric|shell|body' : id);
+            if (value && id==='material' && /\b(?:lining|pocket|strap|handle|trim|panel)\b/i.test(t) && !/\b(?:main|body|shell)\b/i.test(t)) return 0.5;
             if (value) return /^(?:(?:premium|high.quality|various|assorted)\s+)?(?:materials?|fabric)?[.!\s]*$|^(?:unknown)\b/i.test(value) ? 0 : /^(?:see|refer to|consult|check|view|visit|read)\b/i.test(value) ? null : 1;
             if (/\b(?:nylon|polyester|cotton|leather|foam|neoprene|dyneema)\b/i.test(t)) return 1;
             return vague.test(t) && /\b(?:materials?|fabric|upper|outsole)\b/i.test(t) ? 0 : null;
@@ -95,11 +98,11 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
             const patterns = {
                 width:/\b(?:regular|standard|wide|narrow)\s+width\b|\bwidth\s*[:=-]\s*(?:regular|standard|wide|narrow|[a-e]{1,2})\b/i, surface:/\b(?:road|trail|track|pavement)\b/i,
                 fit:/\b(?:regular|relaxed|slim|loose|fitted|adjustable)\s+fit\b|\bfit\s*[:=-]\s*(?:regular|relaxed|slim|loose|fitted|adjustable)\b/i, sleeve:/\b(?:short|long)[ -]sleeves?\b|\bsleeveless\b/i, neckline:/\b(?:crew|v|scoop|round)[ -]?(?:neck|neckline)\b/i,
-                closure:/\b(?:zip(?:per)?|buttons?|buckle|snaps?|drawstring)\b/i, carry:/\b(?:adjustable|padded|removable|shoulder|crossbody|top)\s+(?:straps?|handles?)\b/i,
+                closure:/\b(?:zip(?:per)?|buttons?|buckle|snaps?|drawstring|lace[sd]?)\b/i, carry:/\b(?:adjustable|padded|removable|shoulder|crossbody|top)\s+(?:straps?|handles?)\b/i,
                 compartments:/\b(?:main|interior|exterior|zippered|zip)\s+(?:pockets?|compartments?)\b/i, origin:/\b(?:made|manufactured) in\s+[a-z][a-z -]+|\borigin\s*[:=-]\s*[a-z][a-z -]+/i,
                 approval:/\b(?:approved|approval|certified|certification|USCG|coast guard|ISO)\b/i, features:/\b(?:reflective|adjustable|pockets?|harness|straps?)\b/i
             };
-            if (patterns[id]?.test(t)) return 1;
+            if (patterns[id]?.test(t)) return id==='closure' && /\b(?:lining|pocket|strap|handle|trim)\b/i.test(t) && !/\bmain\b/i.test(t) ? 0.5 : 1;
             return vague.test(t) ? 0 : null;
         }
         }
@@ -150,25 +153,29 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
         const conditions=[];
         const entries=qs.map(q=>{
             if (q.applicability==='conditional') {
-                const condition=q.id==='pack-fit' ? /\blaptop (?:compartment|sleeve|pocket)\b/i : q.id==='shirt-limits' ? /\b(?:special (?:fabric )?treatment|treated fabric|dry clean only|wash only)\b/i : positiveCondition;
-                const clauses=productText.split(/[.;!\n]+|\bbut\b/i);
-                const triggered=clauses.some(clause=>condition.test(clause) && !/\b(?:no|not|without|never|does not|isn't|is not)\b[^,;]{0,45}$/i.test(clause.slice(0,clause.search(condition))));
+                const triggered=hasQuestionConditionCue(q.id,productText);
                 if (!triggered && complete && inspectedAbsent('decision',q.id)) { conditions.push({questionId:q.id,condition:q.condition,status:'absent',evidence:'Complete product content inspected.',location:'product content',method:'raw'}); return {questionId:q.id,status:'not_applicable',reason:'The conditional trigger was absent in complete product content.',...ev(null)}; }
                 if (!triggered) return {questionId:q.id,...unknown('The conditional trigger cannot be excluded without complete inspection.')};
             }
-            const f=pick('decision',q.id);
-            if (!f) return {questionId:q.id,...missing(q.question,complete && inspectedAbsent('decision',q.id))};
-            const decisionFacts=find('decision',q.id);
-            const t=decisionFacts.filter(x=>q.id!=='shirt-fit' || /\b(?:fit|garment|shirt|chest|body|torso|waist)\b/i.test(x.value)).map(context).join(' '); let score=0.5;
-            if (sub!=='C4.limitations' && negative.test(t)) return {questionId:q.id,...unknown('The guidance has negative or ambiguous scope.'),...ev(f)};
-            if (sub==='C4.intended-use') score=/\b(?:men|women|adult|child|kids|runners?|paddlers?|commuters?|students?|travelers?|shoppers?|users?)\b/i.test(t) && /\b(?:for|use|wear|running|paddling|travel|commut)/i.test(t) ? 1 : 0.5;
-            if (sub==='C4.compatibility') score=q.id==='shirt-fit' ? /\b(?:close|loose|straight|roomy|room for|fitted|snug|tapered)\b/i.test(t) ? 1 : 0.5 : /\b(?:measure|compare|adjust|around|across|chest|torso|waist|length|width)\b/i.test(t) ? 1 : 0.5;
-            if (sub==='C4.limitations') score=/\b(?:not (?:suitable|intended|designed|rated|waterproof)|only (?:suitable|intended|designed|rated)|do not|must not|limit(?:ed)? to|except)\b/i.test(t) ? 1 : 0.5;
-            if (sub==='C4.selection') score=/\b(?:measure|compare|choose|select)\b/i.test(t) && (/\b(?:chest|waist|body|foot|feet|capacity|carrying|fit preference)\b/i.test(t)) && (unit.test(t) || /\b(?:fit preference|capacity|carrying need)\b/i.test(t)) ? 1 : 0.5;
-            // A recommendation to consult an unavailable chart is useful but
-            // does not itself relate an offered shoe size to a measurement.
-            if (q.id==='running-selection' && score===1 && !/\b(?:size|width)\s*[:#-]?\s*[\w.-]+[^.!?]{0,100}\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b|\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b[^.!?]{0,100}\b(?:size|width)\s*[:#-]?\s*[\w.-]+/i.test(t)) score=0.5;
-            return {questionId:q.id,...measured(score,f)};
+            const candidates=find('decision',q.id).filter(x=>q.id!=='shirt-fit' || /\b(?:fit|garment|shirt|chest|body|torso|waist)\b/i.test(x.value));
+            if (!candidates.length) return {questionId:q.id,...missing(q.question,complete && q.applicability!=='conditional' && inspectedAbsent('decision',q.id))};
+            const assessed=candidates.filter(f=>sub==='C4.limitations' || !negative.test(context(f))).map(f=>{
+                const t=context(f); let score=0.5;
+                if (sub==='C4.intended-use') score=/\b(?:men|women|adults?|children|child|kids|runners?|paddlers?|commuters?|students?|travelers?|shoppers?|users?)\b/i.test(t) && /\b(?:for|use|wear|running|paddling|travel|commut)/i.test(t) ? 1 : 0.5;
+                if (sub==='C4.compatibility') score=q.id==='shirt-fit' ? /\b(?:close|loose|straight|roomy|room for|fitted|snug|tapered)\b/i.test(t) || /\b(?:regular|relaxed|slim)\s+fit\b[^.!?]{0,40}\b(?:through|across|around)\b[^.!?]{0,40}\b(?:chest|body|torso|waist)\b/i.test(t) ? 1 : 0.5 : /\b(?:measure|compare|adjust|around|across|chest|torso|waist|length|width)\b/i.test(t) ? 1 : 0.5;
+                if (q.id==='handbags-compatibility' && /\bfits?\b/i.test(t) && /\b(?:phone|tablet|device|laptop)\b/i.test(t) && /\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b/i.test(t)) score=1;
+                if (sub==='C4.limitations') score=/\b(?:not (?:suitable|intended|designed|rated|waterproof|for|safe)|only (?:suitable|intended|designed|rated)|do not|must not|limit(?:ed)? to|except)\b/i.test(t) ? 1 : 0.5;
+                if (sub==='C4.selection') {
+                    if (!/\b(?:measure|compare|choose|select|recommend|consider|size guide|sizing guide|fit guide|size chart|sizing chart)\b/i.test(t)) return null;
+                    score=/\b(?:measure|compare|choose|select)\b/i.test(t) && /\b(?:chest|waist|body|foot|feet|capacity|carrying|fit preference)\b/i.test(t) && (unit.test(t) || /\b(?:fit preference|capacity|carrying need)\b/i.test(t)) ? 1 : 0.5;
+                    if (/\b(?:choose|select|recommend)\b/i.test(t) && /\b\d+(?:\.\d+)?\s*(?:lit(?:er|re)s?|l|in(?:ch(?:es)?)?|cm)\b/i.test(t) && /\b(?:small|large|daily|everyday|work|travel)\b[^.!?]{0,40}\b(?:load|items?|essentials?|carry|use)\b/i.test(t)) score=1;
+                    if (q.id==='personal-flotation-devices-selection' && /\bmeasure\b/i.test(t) && /\b(?:chest|waist|body)\b/i.test(t) && /\b(?:compare|chart)\b/i.test(t)) score=1;
+                    if (q.id==='running-selection' && score===1 && !/\b(?:size|width)\s*[:#-]?\s*[\w.-]+[^.!?]{0,100}\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b|\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|cm|mm)\b[^.!?]{0,100}\b(?:size|width)\s*[:#-]?\s*[\w.-]+/i.test(t)) score=0.5;
+                }
+                return {f,score};
+            }).filter(Boolean).sort((a,b)=>b.score-a.score || tieBreak(a.f,b.f));
+            if (!assessed.length) return {questionId:q.id,...unknown('The proposed evidence does not establish this guidance.'),...ev(candidates[0])};
+            return {questionId:q.id,...measured(assessed[0].score,assessed[0].f)};
         });
         const applicable=entries.filter(e=>e.status==='measured');
         if (entries.some(e=>e.status==='not_measured')) findings[sub]={...unknown('A category question or its condition could not be assessed.'),questions:entries};
@@ -230,7 +237,8 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
             const subject=norm(f.value).match(productType)?.[0];
             const relevant=quals.filter(q=>{const other=norm(q.value).match(productType)?.[0];return matching.some(re=>re.test(q.value)) && norm(q.value)!==norm(f.value) && !(subject && other && subject!==other);});
             const support=relevant.some(q=>/\b(?:ISO|ASTM|ANSI|USCG|EN)\s*[\w.-]*\d[\w.-]*\b/i.test(q.value) && /\b(?:tested|certified|approved|rated|meets?)\b/i.test(q.value) || /\b(?:limited to|only (?:in|for|when|up to)|up to \d|except (?:when|for)|not (?:suitable|designed|intended) for)\b/i.test(q.value));
-            return {fraction:support?1:0,...ev(f),support:relevant.map(ev)};
+            const namedApproval=/\b(?:USCG|U\.S\. Coast Guard)\s+approved\b/i.test(f.value);
+            return {fraction:support?1:namedApproval?0.5:0,...ev(f),support:relevant.map(ev)};
         });
         const qualificationInspected=(dto.inspections || []).some(i=>i.kind==='qualification' && i.key==='qualification' && i.scope==='product' && i.status!=='unknown');
         findings['C5.claim-support']=assessed.some(c=>c.fraction===0) && !qualificationInspected ? {...unknown('The inspection did not establish whether support or qualification exists.'),claims:assessed} : measured(assessed.reduce((n,c)=>n+c.fraction,0)/assessed.length,claims[0],{claims:assessed});

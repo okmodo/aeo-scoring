@@ -120,7 +120,7 @@ test('one focused inspection can finish a complete report within the original re
     const {result,calls,reservations,item}=await completeShirtRun({response:{conditionChecks:{material_claim:'absent','shirt-limits':'absent'}}});
     assert.equal(calls,2);assert.equal(reservations,1);assert.equal(result.status,'assessed');
     const report=scoreAudit(item.snapshot,item.extracted,{validatedFacts:result.facts});
-    assert.equal(report.status,'complete');assert.deepEqual(report.score,{total:78.125,structure:20,content:58.125});
+    assert.equal(report.status,'complete');assert.deepEqual(report.score,{total:80,structure:20,content:60});
 });
 test('an invalid focused response preserves supported first-stage facts and unknown conditions', async()=>{
     const {result,calls,reservations}=await completeShirtRun({response:{conditionChecks:{material_claim:'absent'},facts:[]}});

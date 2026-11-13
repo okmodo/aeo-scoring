@@ -123,3 +123,10 @@ test('fallback recognizes selected configuration as partial and requires actual 
     assert.notEqual(assess('Selected size: Medium.',{complete:false}).status,'measured');
     assert.notEqual(assess('Selected size: Medium.',{selectedControls:[{name:'Size',value:'Large'}]}).status,'measured');
 });
+
+test('fallback recognizes specific negative protective limitations',()=>{
+    for(const [category,identity,text] of [['casual-daypacks','Acme Daypack','This pack is not waterproof.'],['personal-flotation-devices','Acme Life Vest','Not for whitewater.'],['personal-flotation-devices','Acme Life Vest','Not safe for children.']]) {
+        const result=assessContent({url:'https://example.test'},{productHtml:{complete:true,identity,blocks:[{text,location:'description'}]}},{category});
+        assert.equal(result.findings['C4.limitations'].fraction,1,text);
+    }
+});

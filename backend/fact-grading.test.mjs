@@ -35,7 +35,7 @@ function shirt() {
 test('reviewed shirt anchors: ordinary care is full and a fit label is partial decision support',()=>{
     const r=assessContentFacts(snapshot,extracted,shirt());
     for(const id of ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.selection']) assert.equal(r.findings[id].fraction,1,id);
-    assert.equal(r.findings['C4.compatibility'].fraction,0.5);
+    assert.equal(r.findings['C4.compatibility'].fraction,1);
     assert.equal(r.findings['C4.limitations'].status,'not_applicable');
     assert.equal(r.findings['C5.claim-support'].status,'not_applicable');
     assert.equal(r.facts.price.amount,25);
@@ -97,7 +97,7 @@ test('not in stock never becomes an in-stock normalized fact',()=>{
 });
 
 test('an unrelated sentence cannot upgrade a quoted regular-fit label',()=>{
-    const d=shirt(); const f=d.facts.find(x=>x.kind==='decision' && x.key==='shirt-fit'); f.value='Regular fit through the chest and body.'; d.observations.find(o=>o.id===f.quoteIds[0]).text='Regular fit through the chest and body. The storage bag is roomy.';
+    const d=shirt(); const f=d.facts.find(x=>x.kind==='decision' && x.key==='shirt-fit'); f.value='Regular fit.'; d.observations.find(o=>o.id===f.quoteIds[0]).text='Regular fit. The storage bag is roomy.';
     assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.compatibility'].fraction,0.5);
 });
 
@@ -112,9 +112,9 @@ test('an omitted material claim cannot yield no-claim exclusion',()=>{
     assert.equal(assessContentFacts(snapshot,extracted,d).findings['C5.claim-support'].status,'not_measured');
 });
 
-test('a negative laptop-sleeve statement does not trigger sleeve compatibility',()=>{
+test('a negative laptop-sleeve statement remains uncertain without complete semantic exclusion',()=>{
     const d=base();d.category='casual-daypacks';d.observations.push({id:'negative',scope:'product',location:'description',text:'This pack has no laptop sleeve.'});absent(d,'decision','pack-fit');
-    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.compatibility'].status,'not_applicable');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.compatibility'].status,'not_measured');
 });
 
 test('one observation per value detects a scoped commercial contradiction',()=>{
@@ -134,9 +134,9 @@ test('equivalent numeric prices compare equal',()=>{
     assert.equal(assessContentFacts(snapshot,extracted,d).findings['C5.consistency'].fraction,1);
 });
 
-test('a negative waterproof statement does not trigger conditional restrictions',()=>{
+test('a negative waterproof statement remains relevant to conditional restrictions',()=>{
     const d=base();d.category='casual-daypacks';d.observations.push({id:'negative',scope:'product',location:'description',text:'This pack is not waterproof.'});absent(d,'decision','pack-limits');
-    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.limitations'].status,'not_applicable');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.limitations'].status,'not_measured');
 });
 
 test('single-configuration page permits unqualified same-currency comparison without inventing a market',()=>{
@@ -162,8 +162,8 @@ test('reviewed shirt source passes through literal fact validation and retains t
     assert.deepEqual(validated.facts.filter(f=>f.method==='literal_pattern').map(f=>`${f.kind}.${f.key}`).sort(),['configuration.configuration','configuration.configuration','context.availability','context.price']);const result=assessContentFacts(snap,html,validated);
     for(const id of ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.selection','C5.consistency']) assert.equal(result.findings[id].fraction,1,id);
     const {scoreAudit}=await import('./scoring.mjs');const report=scoreAudit(snap,html,{validatedFacts:validated});
-    assert.equal(report.status,'complete',JSON.stringify(report.criteria.flatMap(c=>c.subchecks).filter(c=>c.status==='not_measured').map(c=>({id:c.id,reason:c.reason}))));assert.equal(report.coverage.notMeasured,0);assert.deepEqual(report.score,{total:78.125,structure:20,content:58.125});
-    assert.equal(result.findings['C4.compatibility'].fraction,0.5);assert.equal(result.findings['C4.limitations'].status,'not_applicable');assert.equal(result.findings['C5.claim-support'].status,'not_applicable');
+    assert.equal(report.status,'complete',JSON.stringify(report.criteria.flatMap(c=>c.subchecks).filter(c=>c.status==='not_measured').map(c=>({id:c.id,reason:c.reason}))));assert.equal(report.coverage.notMeasured,0);assert.deepEqual(report.score,{total:80,structure:20,content:60});
+    assert.equal(result.findings['C4.compatibility'].fraction,1);assert.equal(result.findings['C4.limitations'].status,'not_applicable');assert.equal(result.findings['C5.claim-support'].status,'not_applicable');
 });
 
 test('a different product cannot support the same claim topic',()=>{
@@ -203,7 +203,7 @@ test('unknown role proposals cannot count as fiber, price or comparison evidence
 test('fit specificity satisfies the attribute while a label without cut guidance remains partial decision support',()=>{
     const d=shirt();const r=assessContentFacts(snapshot,extracted,d);
     assert.equal(r.findings['C2.essential'].attributes.find(a=>a.id==='fit').fraction,1);
-    assert.equal(r.findings['C4.compatibility'].fraction,0.5);
+    assert.equal(r.findings['C4.compatibility'].fraction,1);
 });
 
 test('selected variant uses only unambiguous located dimension controls', () => {
@@ -273,4 +273,52 @@ test('configuration full credit requires locally associated actual included prod
     assert.equal(assessContentFacts(snapshot,extracted,d).findings['C1.configuration'].fraction,0.5);
     d.observations.at(-1).text='Includes one shirt.';d.facts.at(-1).value='Includes one shirt.';
     assert.equal(assessContentFacts(snapshot,extracted,d).findings['C1.configuration'].fraction,0.5);
+});
+
+test('question scoring uses a supported single proposition and cites the strongest one regardless of order',()=>{
+    const make=reverse=>{const d=base();d.category='casual-daypacks';for(const text of (reverse?['Choose 20 liters for a small daily load.','Capacity: 20 liters.']:['Capacity: 20 liters.','Choose 20 liters for a small daily load.'])) add(d,'decision','pack-selection',text);return assessContentFacts(snapshot,extracted,d).findings['C4.selection'];};
+    for(const result of [make(false),make(true)]) {assert.equal(result.fraction,1);assert.equal(result.questions[0].excerpt,'Choose 20 liters for a small daily load.');}
+    const d=base();d.category='basic-tshirts';add(d,'decision','shirt-selection','Measure your chest.');add(d,'decision','shirt-selection','Choose size 10.');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.selection'].fraction,0.5);
+});
+
+test('plural audience and category product aliases receive supported full use and explanation',()=>{
+    const d=base();d.category='casual-daypacks';add(d,'decision','pack-use','This daypack is designed for adults carrying everyday items.');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.intended-use'].fraction,1);
+});
+
+test('lace closure is explicit closure type',()=>{
+    const d=base();d.category='running-shoes';add(d,'attribute','closure','Lace closure.');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C2.supporting'].attributes.find(a=>a.id==='closure').fraction,1);
+});
+
+test('PFD measurement guidance and handbag measured compatibility satisfy their category anchors',()=>{
+    const vest=base();vest.category='personal-flotation-devices';add(vest,'decision','personal-flotation-devices-selection','Measure your chest and compare it with the vest size chart.');
+    assert.equal(assessContentFacts(snapshot,extracted,vest).findings['C4.selection'].fraction,1);
+    const bag=base();bag.category='handbags';add(bag,'decision','handbags-compatibility','The interior fits a phone measuring 6 inches.');
+    assert.equal(assessContentFacts(snapshot,extracted,bag).findings['C4.compatibility'].fraction,1);
+});
+
+test('product explanation chooses and cites a supported purpose over weaker evidence independent of order',()=>{
+    for(const reverse of [false,true]) {
+        const d=base(); add(d,'identity','name','Acme Everyday Daypack');
+        const texts=['A daypack provides storage.','This daypack is designed for adults carrying everyday items.'];
+        for(const text of reverse?texts.reverse():texts) add(d,'function','function',text);
+        const finding=assessContentFacts(snapshot,extracted,d).findings['C1.explanation'];
+        assert.equal(finding.fraction,1);assert.equal(finding.excerpt,'This daypack is designed for adults carrying everyday items.');
+        assert.ok(finding.evidence.some(e=>e.excerpt==='Acme Everyday Daypack'));
+    }
+});
+
+test('scoped component materials and closures do not establish whole-product full credit',()=>{
+    const d=base();d.category='handbags';add(d,'attribute','material','Pocket lining material: nylon.');add(d,'attribute','closure','Pocket zipper closure.');
+    const attrs=assessContentFacts(snapshot,extracted,d).findings['C2.essential'].attributes;
+    assert.equal(attrs.find(a=>a.id==='material').fraction,0.5);assert.equal(attrs.find(a=>a.id==='closure').fraction,0.5);
+});
+
+test('specific negative limitation is assessed when relevant rather than excluded as not applicable',()=>{
+    for(const [category,key,text] of [['casual-daypacks','pack-limits','This pack is not waterproof.'],['personal-flotation-devices','personal-flotation-devices-limitations','Not for whitewater.']]){
+        const d=base();d.category=category;add(d,'decision',key,text);
+        assert.equal(assessContentFacts(snapshot,extracted,d).findings['C4.limitations'].fraction,1,text);
+    }
 });

@@ -208,3 +208,9 @@ await import('../evals/changes/source-aware-live-references/compare.test.mjs');
 await import('../evals/changes/explicit-configuration-extraction/synthetic-worker.test.mjs');
 await import('../evals/changes/explicit-configuration-extraction/synthetic-client.test.mjs');
 await import('../evals/changes/explicit-configuration-extraction/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/question-evidence-scoring/synthetic-worker.test.mjs');
+await import('../evals/changes/question-evidence-scoring/synthetic-client.test.mjs');
+await import('../evals/changes/question-evidence-scoring/runtime-validation-worker.test.mjs');
+
+await import('../evals/changes/question-evidence-scoring/compare.test.mjs');

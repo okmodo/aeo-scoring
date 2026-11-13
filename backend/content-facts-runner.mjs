@@ -6,7 +6,7 @@ import { providerNeurons } from './allowance-reconciliation.mjs';
 
 // Enable only after independent live calibration and an explicit decision.
 export const CONTENT_FACTS_CALIBRATION_APPROVED = false;
-export const CONTENT_FACTS_RELEASE_ID = 'content-facts-2026-11-12-r12';
+export const CONTENT_FACTS_RELEASE_ID = 'content-facts-2026-11-12-r13';
 const MAX_INPUT_BYTES = 60 * 1024;
 const MAX_OUTPUT_TOKENS = 2048;
 const TIMEOUT_MS = 20_000;

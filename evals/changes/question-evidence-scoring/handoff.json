@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "task": "R13 question-specific source evidence and independently adjudicated scoring validation",
+  "decisions": [
+    "R12 is closed-failed after the first case passed and the second contained unsupported guidance assignments and misleading combined citation; never retry it.",
+    "Canonical source oracle and seven proof-bound alternatives independently approved before any R13 output.",
+    "Preserve raw model outputs, deterministic supplements and all contributing citations independently; describe success as hybrid-system evidence.",
+    "The current shirt reference is80.0 (20+60) under the source-correct fit anchor; former78.125 remains historical, weights unchanged.",
+    "Product-level material/closure context and purpose anchors follow independent pre-output adjudication; PFD named USCG reference is observedpartial0.5, not verifiedapproval.",
+    "Seven proof-bound conditional alternatives only, no PFDno-claimNA or pack-fitNA.",
+    "Existing engineVersion string becomes1.1.0; APIv1, rubricVersion and presentation files unchanged."
+  ],
+  "constraints": [
+    "Fixed five cases with per-case independent source gate, at most one normal shirt follow-up and one real call after all five pass; maximum seven provider calls with no retries or substitutions.",
+    "No scoring weight, model, CPU1000, account 60% limit or production activation change. Retain unresolved R9 hold and all prior failures.",
+    "Never commit private provider errors, real snapshots or credentials. The real case needs meaningful supported model evidence beyond literals."
+  ],
+  "completed": [
+    "Prepared separate R13 harness, comparator scaffold, per-case review gate, private paths, and tests; no live calls or deployment.",
+    "Independent lead+Terra canonical full-source oracle agreed before anyR13 output, with exact filehash and source rationale.",
+    "540+ feasibility tests and focused scoring/evidence tests pass on provisional finalsource; versionconstant scoring39tests pass."
+  ],
+  "remaining": [
+    "Commit independently reviewed source and run current source-bound evaluations and hosted CI.",
+    "Run boundedR13, independent raw+literal review aftereach case before next; real onlyafterallfive pass.",
+    "Record actual results, settlements, CPU/cache andcleanup; preserveunknownR9hold and allhistoricalfailures, no productionactivation."
+  ],
+  "resumeCommands": [
+    "node evals/changes/question-evidence-scoring/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r13-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "Final engine1.1 source, frozen oracle, requests, bundles and manifest independently reviewed before output. Source commit, current evaluations and hosted CI are next; no R13 provider call or production change."
+}

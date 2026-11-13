@@ -5,6 +5,16 @@ const unknown = (reason = 'The evidence does not establish this assessment.') =>
 const negated = text => /\b(?:not|no|never|without|neither|doesn.t|isn.t|cannot|can.t)\b/i.test(text);
 const safe = text => !/\b(?:ignore (?:all )?(?:previous |prior )?instructions|disregard (?:all )?(?:previous |prior )?instructions|say fit|system prompt|assistant|score (?:this|the)|give (?:full|maximum) (?:credit|points))\b/i.test(text);
 export const hasAmbiguousPolicyCue = (kind,text) => (kind === 'shipping' ? /\b(?:ship\w*|deliver\w*|dispatch\w*|freight|transit|orders?|purchases?|exclusions?)\b/i : /\b(?:return\w*|refund\w*|exchange\w*|store credit|final|sales?|orders?|purchases?|exclusions?)\b/i).test(text);
+// A cue prevents an absence conclusion; it does not establish that a claim is true.
+export function hasQuestionConditionCue(id, text) {
+    const value=String(text || '');
+    if (id==='pack-fit') return /\blaptop\s+(?:compartment|sleeve|pocket)\b/i.test(value);
+    if (id==='shirt-limits') return /\b(?:special (?:fabric )?(?:treatment|finish)|treated (?:fabric|material)|dry clean only|wash only|do not (?:wash|bleach|iron|tumble dry))\b/i.test(value);
+    if (id==='pack-limits') return /\b(?:waterproof|water.resistan\w*|weatherproof|weather protection|impact protection|shock.resistan\w*|protect(?:ion|ive)|not (?:suitable|designed|intended|rated|approved|for)[^.!?]{0,35}(?:rain|weather|water|impact))\b/i.test(value);
+    if (id==='personal-flotation-devices-limitations') return /\b(?:whitewater|waterproof|water.resistan\w*|impact protection|use.limit\w*|not (?:suitable|designed|intended|rated|approved|safe|for)|no (?:flotation|protection)|only (?:suitable|designed|intended|rated|approved|safe|for)|except|limited to|restrict\w*)\b/i.test(value);
+    if (id==='running-limits' || id==='handbags-limitations') return /\b(?:waterproof|water.resistan\w*|impact protection|surface restriction|not (?:suitable|designed|intended|rated|approved|for)|only (?:suitable|designed|intended|rated|approved|for)|except|limited to|restrict\w*)\b/i.test(value);
+    return true;
+}
 const patterns = {
     size: /\b(?:size|sizes)\s*[:\-]\s*(?:[\w./-]+(?:\s*[,/]\s*[\w./-]+)*)/i,
     width: /\b(?:width\s*[:\-]\s*(?:regular|standard|wide|narrow|[A-E]{1,2})|(?:regular|standard|wide|narrow) width)\b/i,
@@ -190,8 +200,7 @@ export function assessContent(snapshot, extracted, { category = null, product = 
             for (const q of qs) {
                 let trigger = true;
                 if (q.applicability === 'conditional') {
-                    const condition = q.id === 'pack-fit' ? /\blaptop (?:compartment|sleeve|pocket)\b/i : q.id === 'shirt-limits' ? /\b(?:treated|treatment|special finish|dry clean only|wash only)\b/i : /\b(?:waterproof|water.resistant|impact protection|surface restriction|certified for|safety rated)\b/i;
-                    trigger = Boolean(match(blocks, condition));
+                    trigger = blocks.some(b=>safe(b.text) && hasQuestionConditionCue(q.id,b.text));
                 }
                 if (!trigger) {
                     assessed.push({ questionId: q.id, status: 'not_measured', reason: 'The condition may be expressed in wording this rule cannot interpret.', ...evidence(null, `Could not determine condition: ${q.condition}`, url) });
@@ -213,8 +222,8 @@ export function assessContent(snapshot, extracted, { category = null, product = 
                         fraction = q.id === 'pack-fit' ? (/\b(?:measure|compare)\b/i.test(found.text) ? 1 : 0.5) : q.id === 'shirt-fit' ? (/\b(?:close|loose|straight|roomy|room|fitted|snug|relaxed through)\b/i.test(found.text) ? 1 : 0.5) : /\b(?:across|around|on the body|shoulder|chest|torso|waist|length|width|adjust)\b/i.test(found.text) ? 1 : 0.5;
                 }
                 if (subcheck === 'C4.limitations') {
-                    const relevant = q.id === 'shirt-limits' ? /\b(?:fabric|treatment|care|wash|bleach|iron|dry)\b/i : /\b(?:water|rain|impact|surface|protection|certification|safety)\b/i;
-                    found = blocks.find(b => safe(b.text) && relevant.test(b.text) && /\b(?:not (?:suitable|intended|designed|rated) for|only (?:suitable|intended|designed|rated) for|water.resistant (?:up to|but not)|do not (?:bleach|iron|tumble dry))\b/i.test(b.text));
+                    const relevant = q.id === 'shirt-limits' ? /\b(?:fabric|treatment|care|wash|bleach|iron|dry)\b/i : /\b(?:water|waterproof|water.resistan\w*|whitewater|rain|impact|surface|protection|certification|safety|safe)\b/i;
+                    found = blocks.find(b => safe(b.text) && relevant.test(b.text) && /\b(?:not waterproof|not for|not (?:suitable|intended|designed|rated|safe) for|only (?:suitable|intended|designed|rated) for|water.resistant (?:up to|but not)|do not (?:bleach|iron|tumble dry))\b/i.test(b.text));
                     if (found)
                         fraction = 1;
                 }
