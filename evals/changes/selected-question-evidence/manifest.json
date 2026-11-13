@@ -1,0 +1,92 @@
+[
+  {
+    "caseId": "running-shoes",
+    "sourceHash": "cd083fb0fde4329c975d91a6b995212f404bc539e341b85cb12d5b7a1021ba6b",
+    "alternatives": [
+      {
+        "check": "C4.limitations",
+        "conditionKey": "running-limits",
+        "inspectionKind": "decision",
+        "inspectionKey": "running-limits",
+        "status": "not_applicable",
+        "rule": "category_conditions_absent"
+      },
+      {
+        "check": "C5.claim-support",
+        "conditionKey": "material_claim",
+        "inspectionKind": "claim",
+        "inspectionKey": "claim",
+        "status": "not_applicable",
+        "rule": "no_material_claims"
+      }
+    ],
+    "requestHash": "88f221dad8b2f514acd23d2fc45b741ebd6374466f68cc22734389950613f088"
+  },
+  {
+    "caseId": "casual-daypacks",
+    "sourceHash": "58ce8b6df3a4a3ddddc32989c422fd87148dcf541153e8321d2fee149babfe9d",
+    "alternatives": [
+      {
+        "check": "C5.claim-support",
+        "conditionKey": "material_claim",
+        "inspectionKind": "claim",
+        "inspectionKey": "claim",
+        "status": "not_applicable",
+        "rule": "no_material_claims"
+      },
+      {
+        "check": "C4.limitations",
+        "conditionKey": "pack-limits",
+        "inspectionKind": "decision",
+        "inspectionKey": "pack-limits",
+        "status": "not_applicable",
+        "rule": "category_conditions_absent"
+      }
+    ],
+    "requestHash": "b5392f31930947da166801f748620258fcc2edff1fefe944ba20a137ccd25c02"
+  },
+  {
+    "caseId": "personal-flotation-devices",
+    "sourceHash": "916408b34234529116a347c16e246abade07b25845f8dae21813efdd16e7dbed",
+    "alternatives": [
+      {
+        "check": "C4.limitations",
+        "conditionKey": "personal-flotation-devices-limitations",
+        "inspectionKind": "decision",
+        "inspectionKey": "personal-flotation-devices-limitations",
+        "status": "not_applicable",
+        "rule": "category_conditions_absent"
+      }
+    ],
+    "requestHash": "8b442cabe612bcf3d8b5dd737720a82e8074bb3fa3cd8ca62b996ce866c7f50c"
+  },
+  {
+    "caseId": "handbags",
+    "sourceHash": "77e1208a9afe3474342cd7a6a853d3f7d908caa8ffd739a11bcf22ade6042d18",
+    "alternatives": [
+      {
+        "check": "C4.limitations",
+        "conditionKey": "handbags-limitations",
+        "inspectionKind": "decision",
+        "inspectionKey": "handbags-limitations",
+        "status": "not_applicable",
+        "rule": "category_conditions_absent"
+      },
+      {
+        "check": "C5.claim-support",
+        "conditionKey": "material_claim",
+        "inspectionKind": "claim",
+        "inspectionKey": "claim",
+        "status": "not_applicable",
+        "rule": "no_material_claims"
+      }
+    ],
+    "requestHash": "2f9c078399718370eed33d0ef5b2fd13718bc1d21dfa01f8782884e061200c2d"
+  },
+  {
+    "caseId": "basic-tshirts",
+    "sourceHash": "aab588cc6eff2107a70d1ec9b65571f50655ce92845d75a4034c2aef0112be97",
+    "alternatives": [],
+    "requestHash": "26a1c29d48a54df650b711158a525a502aa706d8e98f056ddefa8817e7353c1a"
+  }
+]

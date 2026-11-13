@@ -846,3 +846,38 @@ test('independently absent pack and PFD limitation triggers can yield conditiona
         assert.equal(assessContentFacts({}, {}, result).findings['C4.limitations'].status,'not_applicable');
     }
 });
+
+test('selected values alone are not shopper-question evidence across all categories',()=>{
+    const categories=['running-shoes','casual-daypacks','personal-flotation-devices','handbags','basic-tshirts'];
+    const texts=['Selected size: 9 US.','Selected color: blue.','Selected configuration: Medium, Navy.','Selected size: 2XL.'];
+    for(const category of categories){
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Product',blocks:texts.map((text,i)=>({text,location:`p${i}`}))}},{category});
+        const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content);
+        for(const text of texts){
+            const id=input.observations.find(o=>o.text===text).id;
+            if(text!=='Selected size: 2XL.') assert.ok(input.candidates.some(c=>c.kind==='configuration'&&c.ids.includes(id)),`${category} ${text}`);
+            for(const key of input.allowedKeys.decision){
+                assert.equal(input.candidates.some(c=>c.kind==='decision'&&c.key===key&&c.ids.includes(id)),false,`${category} ${key} ${text}`);
+                const f=decodeContentFacts(p,req,{facts:[{kind:'decision',key,quoteIds:[id]}],inspections:[]}).facts.find(f=>!f.method);
+                assert.equal(f.validity,'unknown',`${category} ${key} ${text}`);
+            }
+        }
+    }
+});
+
+test('selected values with independent fit and selection evidence remain eligible',()=>{
+    const cases=[
+        ['running-shoes','running-fit','Selected size: 9 US; regular fit around the foot.'],
+        ['running-shoes','running-fit','Selected size: 9 US; width: regular.'],
+        ['running-shoes','running-fit','Selected size: 9 US; foot measures 27 cm.'],
+        ['running-shoes','running-selection','Selected size: 9 US; measure your foot and compare the size chart.'],
+        ['personal-flotation-devices','personal-flotation-devices-compatibility','Selected size: Medium; adjustable fit around the torso.'],
+        ['basic-tshirts','shirt-fit','Selected size: Medium; relaxed fit through the chest.'],
+        ['basic-tshirts','shirt-selection','Selected size: Medium; compare your chest measurement to the chart.']
+    ];
+    for(const [category,key,text] of cases){
+        const p=buildSemanticRequest({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme Product',blocks:[{text,location:'description'}]}},{category});
+        const req=buildContentFactsRequest(p), input=JSON.parse(req.messages[1].content), id=input.observations.find(o=>o.text===text).id;
+        assert.ok(input.candidates.some(c=>c.kind==='decision'&&c.key===key&&c.ids.includes(id)),`${key}: ${text}`);
+    }
+});

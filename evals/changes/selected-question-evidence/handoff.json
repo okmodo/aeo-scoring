@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "R14 selected-value question eligibility and independently bounded validation",
+  "decisions": [
+    "R13 is closed-failed after an unsupported selected-size fit assignment; never retry or reclassify it.",
+    "Reuse unchanged R13 canonical source oracle and seven source-bound alternatives, with separately frozen R14 requests and manifest.",
+    "Review raw model roles and deterministic literals separately; success describes the bounded hybrid system."
+  ],
+  "constraints": [
+    "Fixed five cases, per-case independent gate, optional normal shirt follow-up and one real case only after all five pass; maximum seven physical calls, no retries or replacements.",
+    "Preserve all required source facts, exact 15 findings, shirt 80, existing model, CPU1000, 60% admission and unresolved R9 hold; production activation is not authorized.",
+    "Keep provider error messages, raw outputs, real snapshots and credentials private; real case requires meaningful supported nonliteral model evidence."
+  ],
+  "completed": [
+    "Prepared separate R14 clients, comparator, freeze, private paths and tests without touching R13 history; no R14 live calls or deployments.",
+    "Final engineer guard and frozen request/bundle validation complete; 584 feasibility tests pass."
+  ],
+  "remaining": [
+    "Final independent frozenartifact review, then source commit, source-bound evaluations and hosted CI.",
+    "Bounded R14 cohort and independent per-case raw/literal source gates, real onlyafterallfivepass; record actualsettlement CPU/cache andcleanup."
+  ],
+  "resumeCommands": [
+    "node evals/changes/selected-question-evidence/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r14-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "Narrow selected-only question guard implemented; R14 requests and bundles frozen,584feasibility tests pass. Final independent verification, source commit, evaluations andhostedCI pending; noR14calls orproductionchange."
+}

@@ -250,6 +250,16 @@ function plausibleRole(f, q, prepared) {
         if (f.key === 'shipping' && /\breturns?\b/i.test(text) && !/\b(?:deliver\w*|dispatch\w*|ships?|shipping\s+(?:is|costs?|takes?|fees?|rates?|within|to))\b/i.test(text)) return false;
         return roleCues[f.key].test(text);
     }
+    // A selected value alone identifies a choice, not an answer to a shopper question.
+    // Keep mixed observations when they independently answer that particular question.
+    if (f.kind === 'decision' && /^\s*selected\s+(?:size|colou?r|configuration)\b(?:\s*[:=-]|\s+)/i.test(text)) {
+        let substantive = false;
+        if (f.key.endsWith('-fit') || f.key.endsWith('-compatibility')) substantive = /\b(?:fit|fits|fitted|fitting|compatible|width|wide|narrow|snug|roomy|room|shape|profile|adjust\w*|across|around)\b/i.test(text) || /\b(?:foot|feet|chest|waist|body|torso|garment)\b/i.test(text) && /\b\d+(?:\.\d+)?\s*(?:mm|cm|in(?:ch(?:es)?)?)\b/i.test(text);
+        else if (f.key.endsWith('-selection')) substantive = /\b(?:choose|select|measure|compare|recommend|consider|chart|guide)\b/i.test(text.replace(/^\s*selected\b/i,''));
+        else if (f.key.endsWith('-use') || f.key.endsWith('-intended-use')) substantive = /\b(?:men|women|adults?|children|kids|runners?|paddlers?|commuters?|travelers?|running|paddling|travel|casual|everyday)\b/i.test(text);
+        else if (f.key.endsWith('-limits') || f.key.endsWith('-limitations')) substantive = hasQuestionConditionCue(f.key,text);
+        if (!substantive) return false;
+    }
     if ((f.kind === 'decision' && (f.key.endsWith('-fit') || f.key.endsWith('-compatibility'))) && /\b(?:measure|compare|chart|guide|choose|select)\b/i.test(text) && !/\b(?:regular|relaxed|slim|loose|roomy|snug|fitted|tapered|adjustable|adjust|fits|compatible|accommodat\w*|around|across)\b/i.test(text)) return false;
     if ((f.kind === 'repeated' && f.key === 'suitability' || f.kind === 'decision' && (f.key.endsWith('-use') || f.key.endsWith('-intended-use'))) && /\b(?:measure\w*|compare|chart|guide|choose|select(?:ed)?)\b/i.test(text) && !/\b(?:men|women|adult|child|kids|runners?|paddlers?|commuters?|students?|travelers?|wear|running|paddling|travel|casual|everyday)\b/i.test(text)) return false;
     if (f.kind === 'decision' && (f.key === 'shirt-fit' || f.key.endsWith('-compatibility'))) return /\b(?:fit|fits|compatible|width|wide|narrow|size|shape|cut|torso|chest|laptop|device|carry|strap)\b|\bbody.mapped\b.*\baccommodat\w*\b.*\bcurves\b/i.test(text);

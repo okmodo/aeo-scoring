@@ -214,3 +214,8 @@ await import('../evals/changes/question-evidence-scoring/synthetic-client.test.m
 await import('../evals/changes/question-evidence-scoring/runtime-validation-worker.test.mjs');
 
 await import('../evals/changes/question-evidence-scoring/compare.test.mjs');
+
+await import('../evals/changes/selected-question-evidence/synthetic-worker.test.mjs');
+await import('../evals/changes/selected-question-evidence/synthetic-client.test.mjs');
+await import('../evals/changes/selected-question-evidence/runtime-validation-worker.test.mjs');
+await import('../evals/changes/selected-question-evidence/compare.test.mjs');
