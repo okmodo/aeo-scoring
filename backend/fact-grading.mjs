@@ -1,3 +1,4 @@
+import { associatedConfigurationItems } from './selected-configuration.mjs';
 import { hasAmbiguousPolicyCue } from './content-assessment.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 
@@ -43,7 +44,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     else findings['C1.explanation'] = fn ? unknown('The product explanation has ambiguous or negative context.') : missing('product explanation',complete && inspectedAbsent('function','function'));
     const config = pick('configuration','configuration');
     const configText=find('configuration','configuration').map(context).join(' ');
-    if (config && !negative.test(configText)) findings['C1.configuration'] = measured(selected.test(configText) && /\b(?:includes?|included|comes with|contains?)\b/i.test(configText) ? 1 : 0.5,config);
+    if (config && !negative.test(configText)) findings['C1.configuration'] = measured(find('configuration','configuration').some(a=>selected.test(a.value) && find('configuration','configuration').some(b=>associatedConfigurationItems(obs(a)[0],obs(b)[0],[...observations.values()]))) ? 1 : 0.5,config);
     else findings['C1.configuration'] = config ? unknown('Configuration context is ambiguous.') : missing('configuration and included items',complete && inspectedAbsent('configuration','configuration'));
     const attrScore = (id, text) => {
         const t = text.trim();

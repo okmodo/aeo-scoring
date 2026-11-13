@@ -1,3 +1,4 @@
+import { explicitSelectedConfiguration } from './selected-configuration.mjs';
 import { isExplicitCarry, isExplicitSize } from './content-assessment.mjs';
 
 /** Source-bound observations for content assessment. Model-assigned roles are proposals,
@@ -30,7 +31,12 @@ function makeObservations(prepared) {
         for (const block of source.blocks) {
             if (!Number.isInteger(block.start) || !Number.isInteger(block.end) || block.start < 0 || block.end > source.text.length || block.end <= block.start) throw new Error('Invalid source offsets');
             const blockText = source.text.slice(block.start, block.end);
+            let cursor = block.start;
             for (const part of blockText.split(/\n+|(?<=[.!?])\s+/)) {
+                const partStart = source.text.indexOf(part,cursor);
+                if (partStart < 0 || partStart + part.length > block.end) throw new Error('Invalid observation offsets');
+                cursor = partStart + part.length;
+                let chunkCursor = partStart;
                 let text = part.trim();
                 if (!text) continue;
                 const chunks = [];
@@ -43,7 +49,12 @@ function makeObservations(prepared) {
                 }
                 if (text.length > 1000) { omitted.add(source.scope); continue; }
                 chunks.push(text);
-                for (const chunk of chunks) observations.push({ id: `q${observations.length + 1}`, sourceId: source.id, scope: source.scope, url: source.url || '', location: block.location, text: chunk });
+                for (const chunk of chunks) {
+                    const start=source.text.indexOf(chunk,chunkCursor);
+                    if (start < 0 || start + chunk.length > block.end) throw new Error('Invalid observation offsets');
+                    chunkCursor=start+chunk.length;
+                    observations.push({ id: `q${observations.length + 1}`, sourceId: source.id, scope: source.scope, url: source.url || '', location: block.location, start, end:chunkCursor, text: chunk });
+                }
             }
         }
     }
@@ -326,6 +337,7 @@ export function decodeContentFacts(prepared, request, output, { requireCondition
             continue;
         }
         if (q.scope !== 'product') continue;
+        if (payload.coverage.productComplete && explicitSelectedConfiguration(t,payload.observedFacts?.selectedControls || [])) addLiteral('configuration','configuration',q);
         if (payload.allowedKeys.attribute.includes('carry') && isExplicitCarry(t)) addLiteral('attribute','carry',q);
         if (payload.allowedKeys.attribute.includes('size') && isExplicitSize(t)) addLiteral('attribute','size',q);
         if (q.location === 'product heading' && typeof prepared.payload.context?.productName === 'string' && t === prepared.payload.context.productName.trim()) addLiteral('identity','name',q);
@@ -333,7 +345,7 @@ export function decodeContentFacts(prepared, request, output, { requireCondition
         if (/\b(?:this|our)\b[^.!?]{0,50}\b(?:shirt|shoe|sneaker|pack|bag|vest|product|item)\b[^.!?]{0,50}\b(?:designed|built|made|intended)\s+for\b/i.test(t)) addLiteral('function','function',q);
         const prev = obs[i-1];
         if (prev?.sourceId === q.sourceId && prev.location === q.location && facts.some(f=>f.kind==='function' && f.validity==='plausible' && f.quoteIds[0]===prev.id) && /^its\s+[^.!?]{0,50}\b(?:fabric|material)\b[^.!?]{0,40}\bprovides?\b/i.test(t)) addLiteral('function','function',q);
-        if (/\bselected\s+configuration\s*[:=-]/i.test(t) || (/^includes?\s+(?:one|a|an|1)\s+(?:t.shirt|shirt|shoe|pair|pack|bag|vest)\b/i.test(t) && prev?.sourceId===q.sourceId && prev.location===q.location && /\bselected\s+configuration\s*[:=-]/i.test(prev.text))) addLiteral('configuration','configuration',q);
+        if (payload.coverage.productComplete && /^includes?\s+(?:one|a|an|1)\s+(?:t.shirt|shirt|shoe|pair|pack|bag|vest)\b/i.test(t) && prev?.sourceId===q.sourceId && prev.location===q.location && explicitSelectedConfiguration(prev.text,payload.observedFacts?.selectedControls || [])) addLiteral('configuration','configuration',q);
         const selectedCommercial = /\b(?:this\s+(?:product|item)|selected\s+[^.!?]{1,80}(?:shirt|shoe|pack|bag|vest|item|product))\b/i.test(t);
         if (merchandisePrice(q, prepared)) {
             addLiteral('context','price',q); addLiteral('repeated','price',q);

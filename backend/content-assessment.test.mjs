@@ -114,3 +114,12 @@ test('fallback policy absence requires safe complete product and retrieved polic
         assert.equal(score(implicit).status,'not_measured');
     }
 });
+
+test('fallback recognizes selected configuration as partial and requires actual local included items for full credit',()=>{
+    const assess=(text,extra={})=>assessContent({url:'https://example.test'},{productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text,location:'description'}],...extra}}).findings['C1.configuration'];
+    assert.equal(assess('Selected size: Medium; compare the chart.').fraction,0.5);
+    assert.equal(assess('Selected size: Medium; guide includes one shirt.').fraction,0.5);
+    assert.equal(assess('Selected size: Medium; includes one shirt.').fraction,1);
+    assert.notEqual(assess('Selected size: Medium.',{complete:false}).status,'measured');
+    assert.notEqual(assess('Selected size: Medium.',{selectedControls:[{name:'Size',value:'Large'}]}).status,'measured');
+});

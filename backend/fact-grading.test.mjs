@@ -159,7 +159,7 @@ test('reviewed shirt source passes through literal fact validation and retains t
     assert.equal(output.facts.length,31);
     const validated=decodeContentFacts(prepared,request,output);
     assert.equal(validated.facts.filter(f=>f.validity==='plausible' && f.method!=='literal_pattern').length,31,JSON.stringify(validated.facts.filter(f=>f.validity!=='plausible').map(f=>({kind:f.kind,key:f.key,value:f.value}))));
-    assert.deepEqual(validated.facts.filter(f=>f.method==='literal_pattern').map(f=>`${f.kind}.${f.key}`).sort(),['context.availability','context.price']);const result=assessContentFacts(snap,html,validated);
+    assert.deepEqual(validated.facts.filter(f=>f.method==='literal_pattern').map(f=>`${f.kind}.${f.key}`).sort(),['configuration.configuration','configuration.configuration','context.availability','context.price']);const result=assessContentFacts(snap,html,validated);
     for(const id of ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.selection','C5.consistency']) assert.equal(result.findings[id].fraction,1,id);
     const {scoreAudit}=await import('./scoring.mjs');const report=scoreAudit(snap,html,{validatedFacts:validated});
     assert.equal(report.status,'complete',JSON.stringify(report.criteria.flatMap(c=>c.subchecks).filter(c=>c.status==='not_measured').map(c=>({id:c.id,reason:c.reason}))));assert.equal(report.coverage.notMeasured,0);assert.deepEqual(report.score,{total:78.125,structure:20,content:58.125});
@@ -265,4 +265,12 @@ test('complete policy terms on the product remain measurable without a retrieved
     add(d,'policy','shipping','We ship to the United States. Shipping is free on this order. Delivery takes 3 to 5 business days.');
     const r=assessContentFacts({url:snapshot.url,policies:{}},{productHtml:{}},d);
     assert.equal(r.findings['C3.shipping'].fraction,1);
+});
+
+test('configuration full credit requires locally associated actual included product',()=>{
+    const d=base();add(d,'configuration','configuration','Selected size: Medium.');
+    add(d,'configuration','configuration','A customer review includes one shirt.');
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C1.configuration'].fraction,0.5);
+    d.observations.at(-1).text='Includes one shirt.';d.facts.at(-1).value='Includes one shirt.';
+    assert.equal(assessContentFacts(snapshot,extracted,d).findings['C1.configuration'].fraction,0.5);
 });

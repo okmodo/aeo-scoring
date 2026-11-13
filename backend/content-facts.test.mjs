@@ -478,9 +478,8 @@ test('retained synthetic model responses replay against all frozen outcomes', as
             assert.equal(report.score.content,c.expected.checks.content);
         } else {
             assert.equal(Object.keys(c.expected.checks).length,15);
-            for (const [id,currentExpected] of Object.entries(c.expected.checks)) {
-                // Retained historical output omitted the newly source-reviewed configuration roles.
-                const expected=id==='C1.configuration' ? 'not_measured' : currentExpected;
+            for (const [id,expected] of Object.entries(c.expected.checks)) {
+                // Historical model omission remains in the raw output; source literals now supplement it.
                 const finding=graded.findings[id];
                 if (typeof expected==='number') { assert.equal(finding.status,'measured',`${c.id} ${id}`); assert.equal(finding.fraction,expected,`${c.id} ${id}`); }
                 else assert.equal(finding.status,expected,`${c.id} ${id}`);
@@ -751,5 +750,31 @@ test('implicit product policy wording cannot become zero with an empty linked po
     for(const options of [{validatedFacts:decoded},{category:'basic-tshirts'}]) {
         const result=scoreAudit(snapshot,extracted,options);
         assert.equal(result.criteria.find(c=>c.id==='C3').subchecks.find(s=>s.id==='C3.returns').status,'not_measured');
+    }
+});
+
+test('empty model configuration slots retain raw omission and derive source-bound partial choices',async()=>{
+    const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
+    const {assessContentFacts}=await import('./fact-grading.mjs');
+    for(const c of (await releaseCases()).filter(c=>c.id!=='basic-tshirts')) {
+        const p=JSON.parse(c.request.messages[1].content), roles=Object.fromEntries(p.candidates.map(r=>[r.roleId,[]]));
+        const raw={roles,inspections:[],conditionChecks:Object.fromEntries(p.conditionKeys.map(k=>[k,'unknown']))};
+        const decoded=decodeContentFacts(c.prepared,c.request,raw,{requireRoleSlots:true,requireConditionChecks:true});
+        const facts=decoded.facts.filter(f=>f.kind==='configuration'&&f.method==='literal_pattern');
+        assert.ok(facts.length, c.id);
+        assert.deepEqual(raw.roles[p.candidates.find(r=>r.kind==='configuration').roleId],[]);
+        for(const f of facts) {
+            const observation=decoded.observations.find(o=>o.id===f.quoteIds[0]), source=c.prepared.payload.sources.find(s=>s.id===observation.sourceId);
+            assert.equal(source.text.slice(observation.start,observation.end),f.value);
+        }
+        assert.equal(assessContentFacts(c.snapshot,c.extracted,decoded).findings['C1.configuration'].fraction,0.5);
+    }
+});
+
+test('configuration literals do not supplement truncated or control-conflicting product evidence',()=>{
+    for(const extra of [{complete:false},{selectedControls:[{name:'Size',value:'Large'}]}]) {
+        const p=fixture({...extra,blocks:[{text:'Selected size: Medium.',location:'description'}]});
+        const req=buildContentFactsRequest(p), result=decodeContentFacts(p,req,{facts:[],inspections:[]});
+        assert.equal(result.facts.some(f=>f.kind==='configuration'&&f.method==='literal_pattern'),false);
     }
 });

@@ -1,3 +1,4 @@
+import { explicitSelectedConfiguration, hasIncludedPhysicalItem } from './selected-configuration.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 export const CONTENT_RULE_VERSION = '1.0.0';
 const unknown = (reason = 'The evidence does not establish this assessment.') => ({ status: 'not_measured', reason });
@@ -111,9 +112,11 @@ export function assessContent(snapshot, extracted, { category = null, product = 
         set('C1.explanation', /\b(?:designed|built|made) for\s+[^.]{5,}/i.test(description.text) && /\b(?:features?|provides?|helps?|keeps?|holds?|protects?|carries?)\b/i.test(description.text) ? 1 : 0.5, description, '', {});
     else
         absent('C1.explanation', 'a product explanation');
-    const config = match(blocks, /\b(?:includes?|included|comes with)\s+(?:a |an |one |the )?\w+/i);
+    const selectedConfig = complete && !snapshot?.htmlLimited && !html.truncated && !html.uninterpreted ? blocks.find(b=>explicitSelectedConfiguration(b.text,html.selectedControls || [])) : null;
+    const includedConfig = blocks.find(b=>safe(b.text) && hasIncludedPhysicalItem(b.text));
+    const config = selectedConfig || includedConfig;
     if (config)
-        set('C1.configuration', /\b(?:selected|one size|single configuration)\b/i.test(config.text) && /\b(?:includes?|included|comes with)\b/i.test(config.text) ? 1 : 0.5, config, '');
+        set('C1.configuration', selectedConfig && selectedConfig === includedConfig ? 1 : 0.5, config, '');
     else
         absent('C1.configuration', 'configuration and included items');
     if (selected && complete)

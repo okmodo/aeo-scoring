@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "R12 hybrid selected-configuration extraction and independently bounded validation",
+  "decisions": [
+    "R11 is closed-failed: its first raw configuration slot was empty and configuration scored unmeasured despite source choices; retain that result without retry.",
+    "Report R12 as hybrid-system accuracy; inspect raw model roles and deterministic configuration supplements separately.",
+    "Reuse only the five approved source-bound conditional alternatives, binding them to the R12 requests."
+  ],
+  "constraints": [
+    "Fixed five cases, at most one optional normal shirt follow-up and one real call only after all five independent reviews pass; maximum seven provider invocations, no retries or replacements.",
+    "Keep all required reference facts, 15 findings, shirt 78.125, ordinary allowance admission including unresolved R9 hold and CPU1000; production activation is not authorized.",
+    "A real case must have a meaningful supported model role beyond literal facts. Preserve private provider diagnostics without committing messages, snapshots or credentials."
+  ],
+  "completed": [
+    "Prepared separate R12 clients, private paths, wrappers, per-case gate and protocol; no live calls or deployments.",
+    "153 engineering tests and143 independent focused tests passed; literal provenance/offsets, raw omission, selected-control/context rejection and full included-items association reviewed.",
+    "Final independent bundle verification matched5c36aad synthetic and7fc5f34 real, with decoded compressed bytes identical."
+  ],
+  "remaining": [
+    "Commit final source and evaluate all applicable change plans; require hostedCI before inference.",
+    "Run fixed R12 with current normal allowance admission including R9hold; independently review every raw role and literal supplement after each result before continuation.",
+    "Run one exact-source real validation only afterallfive pass; record actual CPU/usage/cache/cleanup and report hybrid readiness without production activation."
+  ],
+  "resumeCommands": [
+    "node evals/changes/explicit-configuration-extraction/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r12-build.mjs",
+    "npm run test:feasibility"
+  ],
+  "state": "Final hybrid source, literal/candidate audit and six requests/bundles independently reviewed; source-bound and hostedCI checks required before any R12 inference."
+}
