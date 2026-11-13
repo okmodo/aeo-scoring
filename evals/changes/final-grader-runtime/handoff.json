@@ -4,7 +4,8 @@
   "decisions": [
     "Keep R14 synthetic and real outcomes and the corrected offline replay as historical evidence; do not retry their cases.",
     "Use one distinct R15 exact-source real invocation after review and hosted CI, with calibrated AI cache identity content-facts-2026-11-12-r15; the uncalibrated cache namespace is unchanged.",
-    "Calibration remains disabled in production and no production activation is authorized."
+    "Calibration remains disabled in production and no production activation is authorized.",
+    "R15 used its one permitted provider call; no retries or production activation."
   ],
   "constraints": [
     "At most one physical provider invocation, no retries or alternate source; normal account admission includes the unresolved R9 hold.",
@@ -12,16 +13,15 @@
     "Retain raw outputs and credentials privately; independent review must verify meaningful model evidence, grades, citations and truthful incomplete/null status."
   ],
   "completed": [
-    "Prepared separate R15 private client, one-shot wrapper, tests, captured-source request freeze and direct/compressed bundle; no R15 calls or deployment."
+    "R15 exact-source real invocation independently reviewed: raw roles, meaningful model evidence, literals, corrected findings and citations passed.",
+    "Runtime HTTP 200, primary CPU 489 ms, incomplete/null report with 27 of 40 measured, same-ID cache hit without additional AI and duplicate 429.",
+    "Operator verified 118.716339 actual neurons settled at 119 against 993 reserved, accepted infrastructure settlement, deletion of temporary Worker and Tail, and absent credentials."
   ],
   "remaining": [
-    "Independent reviewer must verify final source, exact request and bundle; complete all current source-bound evaluations and hosted CI before the one authorized validation.",
-    "If run, record actual usage, CPU, cache, review and cleanup; do not activate production."
+    "Run final current source-bound evaluations and hosted CI; do not activate production or merge as part of this task."
   ],
   "resumeCommands": [
-    "node evals/changes/final-grader-runtime/freeze-input.mjs",
-    "node /private/tmp/aeo-r15-build.mjs",
     "npm run test:feasibility"
   ],
-  "state": "R15 exact-source request and bundle frozen for independent review; no R15 provider call or deployment. Current evaluations and hosted CI remain pending."
+  "state": "R15 independently reviewed exact-source native validation passed, with incomplete/null 27-of-40 report. Actual usage and cleanup verified; production unchanged. Final source-bound evaluations and hosted CI remain."
 }
