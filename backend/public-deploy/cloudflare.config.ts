@@ -26,7 +26,7 @@ export default defineConfig({
       AUDIT_RATE_SECRET: bindings.secret(),
       AUDIT_USAGE_READ_TOKEN: bindings.secret(),
       AUDIT_PREVIEW_PASSWORD: bindings.secret(),
-      AUDIT_PUBLIC_ACCESS: bindings.text('enabled'),
+      AUDIT_PUBLIC_ACCESS: bindings.text('disabled'),
       AUDIT_BILLING_ACCOUNT_ID: accountId ? bindings.text(accountId) : undefined,
       AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId ? bindings.text(subscriptionId) : undefined,
     },

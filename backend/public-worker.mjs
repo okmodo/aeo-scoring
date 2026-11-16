@@ -7,7 +7,7 @@ const retrievePage = (url, options) => retrieve(url, { ...options, observeSitema
 const ALLOWED_ORIGIN = 'https://aeo-scoring-preview-20261105-kk7.pages.dev';
 const ROUTE = '/api/v1/audits';
 const UNLOCK = '/api/v1/preview-access';
-const passwordFormat = /^[A-Za-z0-9_-]{16,128}$/;
+const passwordFormat = /^[A-Za-z0-9_-]{8,128}$/;
 const encoder = new TextEncoder();
 const accessChallenge = encoder.encode('aeo-preview-access-v1');
 
