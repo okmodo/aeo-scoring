@@ -27,9 +27,10 @@ test('frozen complete and incomplete assessments retain only a valid final score
 test('backend actions preserve order, evidence and unknown recovery without inventing fields', () => {
   const assessment = fixture('assessment-incomplete')
   const report = assessment.report
-  report.criteria = [{ id: 'C2', pillar: 'content', maxPoints: 20, points: 3, complete: false, subchecks: [
-    { id: 'C2.essential', maxPoints: 14, availablePoints: 12, status: 'measured', fraction: 0.25, points: 3, evidenceIds: ['real', 'missing'], reason: 'Partial' },
+  report.criteria = [{ id: 'C2', pillar: 'content', maxPoints: 20, points: 5, complete: false, subchecks: [
+    { id: 'C2.essential', maxPoints: 14, availablePoints: 20, status: 'measured', fraction: 0.25, points: 5, evidenceIds: ['real', 'missing'], reason: 'Partial' },
     { id: 'C2.supporting', maxPoints: 6, status: 'not_applicable', fraction: null, points: null, evidenceIds: [], reason: 'Excluded by rule', exclusion: 'Rule' },
+  ] }, { id: 'S1', pillar: 'structure', maxPoints: 13, points: 0, complete: false, subchecks: [
     { id: 'S1.price', maxPoints: 3, status: 'measured', fraction: 0, points: 0, evidenceIds: [], reason: null },
     { id: 'S1.identity', maxPoints: 2, status: 'not_measured', fraction: null, points: null, evidenceIds: [], reason: null },
   ] }]
@@ -44,7 +45,7 @@ test('backend actions preserve order, evidence and unknown recovery without inve
   assert.deepEqual(model.counts, { measured: 0, partial: 1, zero: 1, unmeasured: 1, excluded: 1 })
   assert.deepEqual(model.fixes.map(f => f.id), ['first', 'second'])
   assert.equal(model.fixes[0].recoverablePoints, null)
-  assert.equal(model.fixes[0].checks[0].availablePoints, 12)
+  assert.equal(model.fixes[0].checks[0].availablePoints, 20)
   assert.equal(model.fixes[0].checks[0].fullCredit, 'Every applicable essential attribute explicit with required units and scope')
   assert.equal(model.fixes[0].condition, 'Verify applicable attributes.')
   assert.deepEqual(model.fixes[0].missingEvidenceIds, ['missing'])
@@ -82,14 +83,13 @@ test('live report renders real state, actions, evidence and cache context safely
     assert.doesNotMatch(html, /Northstar|Fictional product|TEST DATA/)
     const partial = fixture('assessment-incomplete')
     partial.cache = { hit: true, validUntil: '2026-11-10T12:00:00Z' }
-    partial.report.score = complete.report.score
-    partial.report.criteria = [{ id: 'C2', pillar: 'content', maxPoints: 14, points: 3, complete: false, subchecks: [{ id: 'C2.essential', maxPoints: 14, availablePoints: 12, status: 'measured', fraction: 0.25, points: 3, evidenceIds: ['real'], reason: null }] }]
+    partial.report.criteria = [{ id: 'C2', pillar: 'content', maxPoints: 14, points: 3.5, complete: false, subchecks: [{ id: 'C2.essential', maxPoints: 14, availablePoints: 14, status: 'measured', fraction: 0.25, points: 3.5, evidenceIds: ['real'], reason: null }] }]
     partial.report.evidence = [{ id: 'real', url: 'javascript:alert(1)', method: 'raw', kind: 'source_excerpt', observedAt: '2026-11-09T12:00:00Z', location: 'body', excerpt: '<script>bad</script>' }]
     partial.report.fixes = [{ id: 'fix', title: 'Verify real details', owner: 'Merchant', checkIds: ['C2.essential'], evidenceIds: ['real'], recoverablePoints: 2, condition: 'Publish verified details.' }]
     const partialHtml = render(partial)
     assert.match(partialHtml, /Essential product details/)
     assert.match(partialHtml, /What we found/)
-    assert.match(partialHtml, /3 of 12 available points earned/)
+    assert.match(partialHtml, /3.5 of 14 available points earned/)
     assert.match(partialHtml, /&lt;script&gt;bad&lt;\/script&gt;/)
     assert.doesNotMatch(partialHtml, /<script>bad<\/script>|href="javascript:/)
     assert.match(partialHtml, /saved result/)
@@ -101,15 +101,18 @@ test('live report renders real state, actions, evidence and cache context safely
 })
 
 
-test('every rubric test has a unique business name and a plain-language explanation', async () => {
-  const { testCopy } = await import('../src/live-report/test-copy.ts')
-  const rubric = JSON.parse(readFileSync(new URL('../config/rubric.v1.json', import.meta.url)))
-  const ids = rubric.criteria.flatMap(criterion => criterion.subchecks.map(check => check.id))
-  assert.deepEqual(Object.keys(testCopy).sort(), [...ids].sort())
-  assert.equal(new Set(Object.values(testCopy).map(copy => copy.name)).size, ids.length)
-  for (const copy of Object.values(testCopy)) {
-    assert.ok(copy.description && copy.improve)
-    assert.doesNotMatch(copy.name, /[SC][1-8]\.|assessment|subcheck/i)
+test('each supported rubric test has a unique business name and plain-language explanation', async () => {
+  const { getTestCopy } = await import('../contracts/report-contract.mjs')
+  for (const version of ['1', '2']) {
+    const rubric = JSON.parse(readFileSync(new URL(`../config/rubric.v${version}.json`, import.meta.url)))
+    const ids = rubric.criteria.flatMap(criterion => criterion.subchecks.map(check => check.id))
+    const copy = ids.map(id => getTestCopy(rubric.version, id))
+    assert.ok(copy.every(Boolean))
+    assert.equal(new Set(copy.map(item => item.name)).size, ids.length)
+    for (const item of copy) {
+      assert.ok(item.description && item.improve)
+      assert.doesNotMatch(item.name, /[SC][1-8]\.|assessment|subcheck/i)
+    }
   }
 })
 
@@ -176,6 +179,11 @@ test('business report lists all tests and surfaces actual findings without the o
     assert.doesNotMatch(html, /View overall score/)
     const complete = fixture('assessment-complete')
     complete.report.evidence.forEach(source => { source.method = 'raw' })
+    complete.status = 'incomplete'
+    complete.report.status = 'incomplete'
+    complete.report.score = null
+    complete.report.criteria[0].subchecks[0].status = 'not_measured'
+    complete.report.criteria[0].subchecks[0].fraction = null
     complete.report.criteria[0].subchecks[0].points = null
     const incompletePoints = renderToStaticMarkup(React.createElement(LiveReport, { assessment: complete, onBack() {} }))
     assert.match(incompletePoints, /Not completed/)
@@ -195,4 +203,58 @@ test('doughnut points reconcile without inventing a final score for unfinished t
   assert.deepEqual(summarizeTestPoints(checks, 78.125), { earned: 78.125, missed: 21.875, unscored: 0, total: 100 })
   const excluded = { status: 'not_applicable', points: null, fraction: null, maxPoints: 10 }
   assert.deepEqual(summarizeTestPoints([...checks, excluded], null), summarizeTestPoints(checks, null))
+})
+
+// Fictional deterministic observations: raw methods exercise the live-report guard,
+// not a claim that a real merchant page was inspected.
+test('v2 complete and unfinished reports render catalog names, points and score state', async () => {
+  const { createServer } = await import('vite')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const React = await import('react')
+  const { getTestCopy } = await import('../contracts/report-contract.mjs')
+  const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' })
+  try {
+    const { LiveReport } = await vite.ssrLoadModule('/src/live-report/LiveReport.tsx')
+    const render = assessment => renderToStaticMarkup(React.createElement(LiveReport, { assessment, onBack() {} }))
+    const load = name => JSON.parse(readFileSync(new URL(`./fixtures/report-fixtures/${name}.json`, import.meta.url)))
+    const complete = load('v2-complete')
+    const html = render(complete)
+    for (const check of complete.report.criteria.flatMap(item => item.subchecks)) {
+      assert.ok(html.includes(getTestCopy('2.0.0', check.id).name), check.id)
+    }
+    assert.doesNotMatch(html, /Additional website test/)
+    assert.match(html, /View overall score/)
+    assert.match(html, /100/)
+    const presented = load('v2-serialized')
+    presented.report.criteria[0].subchecks[0].presentation.name = 'Custom <product> test'
+    const customHtml = render(presented)
+    assert.match(customHtml, /Custom &lt;product&gt; test/)
+    assert.doesNotMatch(customHtml, /Custom <product> test/)
+    presented.report.criteria[0].subchecks[0].presentation.name = {}
+    assert.match(render(presented), /Report unavailable/)
+    const incomplete = load('v2-incomplete')
+    incomplete.report.criteria[0].subchecks[0].reason = 'Observed invalid values: material=.'
+    incomplete.report.evidence[0].kind = 'source_excerpt'
+    incomplete.report.evidence[0].excerpt = 'Observed invalid values: material=.'
+    const partial = render(incomplete)
+    assert.match(partial, /Observed invalid values: material=\./)
+    assert.match(partial, /The product’s material information was missing or could not be read as a valid value\./)
+
+    assert.match(partial, /2 of 4 available points earned/)
+    assert.match(partial, /Not completed/)
+    assert.match(partial, /Not applicable/)
+    assert.doesNotMatch(partial, /View overall score|Additional website test/)
+    for (const mutate of [
+      report => { report.rubricVersion = '99.0.0' },
+      report => { report.criteria[0].subchecks[0].id = 'S1.invalid-secret' },
+      report => { report.criteria[0].subchecks[0].points = -42 },
+    ]) {
+      const invalid = load('v2-complete')
+      mutate(invalid.report)
+      invalid.report.productName = 'SECRET_INVALID_REPORT_CONTENT'
+      const rejected = render(invalid)
+      assert.match(rejected, /Report unavailable/)
+      assert.doesNotMatch(rejected, /SECRET_INVALID_REPORT_CONTENT|S1.invalid-secret|View overall score/)
+    }
+  } finally { await vite.close() }
 })

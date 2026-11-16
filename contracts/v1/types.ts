@@ -32,6 +32,7 @@ export interface Subcheck {
   points: number | null
   evidenceIds: string[]
   reason: string | null
+  presentation?: { name: string; description: string; improve: string; fullCredit: string }
 }
 
 export interface Criterion {
@@ -56,6 +57,7 @@ export interface PriorityFix {
 export interface AuditReport {
   status: 'complete' | 'incomplete'
   rubricVersion: string
+  contractVersion?: '1.0.0'
   engineVersion?: string
   categoryVersion?: string
   category: string | null

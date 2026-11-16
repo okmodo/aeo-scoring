@@ -210,6 +210,7 @@ test("field-level changes cover the frozen action evidence and appear only with 
 });
 
 await import('./live-report.test.mjs');
+await import('./report-contract.test.mjs');
 
 test('live transport restricts report locations and preserves server errors and cancellation', async () => {
   const { auditStatusUrl, requestAudit, getAudit, pollDelay, unlockPreview, PreviewPasswordRequired, AUDIT_ORIGIN } = await import('../src/audit.ts');

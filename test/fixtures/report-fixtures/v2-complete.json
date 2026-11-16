@@ -1,0 +1,963 @@
+{
+  "version": "1",
+  "id": "bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "status": "complete",
+  "statusUrl": "/api/v1/audits/bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "submittedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "assessedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "createdAt": "2026-11-05T12:00:00.000Z",
+  "completedAt": "2026-11-05T12:00:02.000Z",
+  "expiresAt": "2026-11-06T12:00:00.000Z",
+  "cache": {
+    "hit": false,
+    "validUntil": "2026-11-05T13:00:02.000Z"
+  },
+  "report": {
+    "status": "complete",
+    "rubricVersion": "2.0.0",
+    "category": "running-shoes",
+    "productName": "Example product",
+    "variant": "Blue / US 9",
+    "market": "US",
+    "currency": "USD",
+    "score": {
+      "total": 100,
+      "structure": 40,
+      "content": 60
+    },
+    "earnedPoints": 100,
+    "criteria": [
+      {
+        "id": "S1",
+        "pillar": "structure",
+        "maxPoints": 13,
+        "points": 13,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S1.delivery",
+            "maxPoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "e-S1.delivery"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.readability",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S1.readability"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.scope",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S1.scope"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.configuration",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S1.configuration"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S1.supporting-access",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S1.supporting-access"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S2",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 9,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S2.syntax",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.syntax"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.entity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.entity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.offer",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.offer"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.identifiers",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.identifiers"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S2.variants",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S2.variants"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S3",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 9,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S3.identity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S3.price"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.availability"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S3.optional-claims",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.optional-claims"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S4",
+        "pillar": "structure",
+        "maxPoints": 3,
+        "points": 3,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S4.title",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.title"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.organization",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.organization"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S4.image-alternatives",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.image-alternatives"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S5",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S5.search",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S5.search"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S5.ai-retrieval",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S5.ai-retrieval"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S6",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S6.usable",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S6.usable"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S6.inclusion",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S6.inclusion"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S7",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 1,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S7.identity",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S7.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S7.links",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S7.links"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "S8",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 1,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S8.context",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S8.context"
+            ],
+            "reason": null
+          },
+          {
+            "id": "S8.guidance",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S8.guidance"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C1.identity",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C1.identity"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.explanation",
+            "maxPoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "e-C1.explanation"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C1.configuration",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C1.configuration"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "pillar": "content",
+        "maxPoints": 20,
+        "points": 20,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C2.essential",
+            "maxPoints": 14,
+            "status": "measured",
+            "fraction": 1,
+            "points": 14,
+            "evidenceIds": [
+              "e-C2.essential"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C2.supporting",
+            "maxPoints": 6,
+            "status": "measured",
+            "fraction": 1,
+            "points": 6,
+            "evidenceIds": [
+              "e-C2.supporting"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C3.price"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C3.availability"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.shipping",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C3.shipping"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C3.returns",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C3.returns"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C4",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C4.intended-use",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C4.intended-use"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.compatibility",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C4.compatibility"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.limitations",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C4.limitations"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C4.selection",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C4.selection"
+            ],
+            "reason": null
+          }
+        ]
+      },
+      {
+        "id": "C5",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C5.consistency",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "e-C5.consistency"
+            ],
+            "reason": null
+          },
+          {
+            "id": "C5.claim-support",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "e-C5.claim-support"
+            ],
+            "reason": null
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "e-S1.delivery",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.delivery."
+      },
+      {
+        "id": "e-S1.readability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.readability."
+      },
+      {
+        "id": "e-S1.scope",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.scope."
+      },
+      {
+        "id": "e-S1.configuration",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.configuration."
+      },
+      {
+        "id": "e-S1.supporting-access",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.supporting-access."
+      },
+      {
+        "id": "e-S2.syntax",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.syntax."
+      },
+      {
+        "id": "e-S2.entity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.entity."
+      },
+      {
+        "id": "e-S2.offer",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.offer."
+      },
+      {
+        "id": "e-S2.identifiers",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.identifiers."
+      },
+      {
+        "id": "e-S2.variants",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.variants."
+      },
+      {
+        "id": "e-S3.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.identity."
+      },
+      {
+        "id": "e-S3.price",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.price."
+      },
+      {
+        "id": "e-S3.availability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.availability."
+      },
+      {
+        "id": "e-S3.optional-claims",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.optional-claims."
+      },
+      {
+        "id": "e-S4.title",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.title."
+      },
+      {
+        "id": "e-S4.organization",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.organization."
+      },
+      {
+        "id": "e-S4.image-alternatives",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.image-alternatives."
+      },
+      {
+        "id": "e-S5.search",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S5.search."
+      },
+      {
+        "id": "e-S5.ai-retrieval",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S5.ai-retrieval."
+      },
+      {
+        "id": "e-S6.usable",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S6.usable."
+      },
+      {
+        "id": "e-S6.inclusion",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S6.inclusion."
+      },
+      {
+        "id": "e-S7.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S7.identity."
+      },
+      {
+        "id": "e-S7.links",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S7.links."
+      },
+      {
+        "id": "e-S8.context",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S8.context."
+      },
+      {
+        "id": "e-S8.guidance",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S8.guidance."
+      },
+      {
+        "id": "e-C1.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.identity."
+      },
+      {
+        "id": "e-C1.explanation",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.explanation."
+      },
+      {
+        "id": "e-C1.configuration",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.configuration."
+      },
+      {
+        "id": "e-C2.essential",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C2.essential."
+      },
+      {
+        "id": "e-C2.supporting",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C2.supporting."
+      },
+      {
+        "id": "e-C3.price",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.price."
+      },
+      {
+        "id": "e-C3.availability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.availability."
+      },
+      {
+        "id": "e-C3.shipping",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.shipping."
+      },
+      {
+        "id": "e-C3.returns",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.returns."
+      },
+      {
+        "id": "e-C4.intended-use",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.intended-use."
+      },
+      {
+        "id": "e-C4.compatibility",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.compatibility."
+      },
+      {
+        "id": "e-C4.limitations",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.limitations."
+      },
+      {
+        "id": "e-C4.selection",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.selection."
+      },
+      {
+        "id": "e-C5.consistency",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C5.consistency."
+      },
+      {
+        "id": "e-C5.claim-support",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C5.claim-support."
+      }
+    ],
+    "fixes": [],
+    "coverage": {
+      "measured": 40,
+      "notMeasured": 0,
+      "total": 40,
+      "category": "running-shoes",
+      "extraction": null,
+      "limitations": [
+        "Synthetic report for frontend development."
+      ]
+    }
+  },
+  "error": null
+}
