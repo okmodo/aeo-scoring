@@ -1,0 +1,12 @@
+{
+ "version":1,
+ "id":"report-points-summary",
+ "task":"Show a doughnut points summary and left-align the test results column.",
+ "scope":["src/live-report/**","test/live-report.test.mjs","evals/changes/report-points-summary/**"],
+ "nonGoals":["Backend or rubric changes, invented final scores for incomplete audits, public deployment or unrelated local services."],
+ "outcomes":[{"id":"O1","description":"A visual doughnut shows earned, missed and not-yet-scored points, with total score for complete reports and a clearly labelled subtotal when incomplete.","verification":"automated","evidence":"Runtime rendering and points arithmetic regressions for complete, partial and empty results."},{"id":"O2","description":"Result labels, points and the column heading share a left alignment.","verification":"human","evidence":"Local container browser layout check."}],
+ "process":[{"id":"P1","description":"Commit the plan before implementation and run source-bound evaluation, independent review and hosted CI.","verification":"human","evidence":"Git chronology and evaluation records."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse existing report colours and native CSS without dependencies.","verification":"human","evidence":"Source and visual review."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"Report chart and alignment changes do not alter agent workflow or portability."}
+}
