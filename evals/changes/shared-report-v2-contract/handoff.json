@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "changeId": "shared-report-v2-contract",
+  "state": "Shared v1/v2 catalog and validator, additive backend serialization and frontend consumption implemented. Targeted report tests and backend regression suite pass; full evaluator and hosted CI pending at this checkpoint.",
+  "decisions": [
+    "Preserve /api/v1 envelope while supporting rubric1.0.0 and2.0.0 separately.",
+    "Use validated optional wire presentation; fall back to versioned catalog for legacy reports.",
+    "Derive effective criterion redistribution for legacy reports missing availablePoints.",
+    "Block unsupported or malformed reports with no final score; missing evidence is disclosed.",
+    "Copy v2 rubric unchanged from reviewed backend commit686ee815c42c3f6779a8d5196955651a5f0a59b9 without merging or switching main scoring engine."
+  ],
+  "constraints": [
+    "No cloud deployments or model calls. Password and usage admission implementation unchanged.",
+    "Main frontend and deployed backend are separate release branches; deployed backend must incorporate shared contract module before future backend release.",
+    "Initial plan a3795c3 was invalid command grammar; original preserved. Clean branch plan-only d5c5260 preceded final replay, not initial development; earlier branch remains at4bee82c. See planning-correction.md."
+  ],
+  "remaining": [
+    "Run source-bound evaluator, independent review and hosted CI.",
+    "Merge only with user authorization and required review. Deploy frontend separately when requested; do not deploy main backend over deployed rubric v2 engine.",
+    "For next backend release, incorporate shared contract/service integration onto engine branch and rerun contract and guard tests."
+  ],
+  "replayCommands": [
+    "npm ci --ignore-scripts",
+    "npm run evaluate -- --change shared-report-v2-contract --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ],
+  "evidenceLimitations": [
+    "No live merchant audit or browser interaction was performed; frozen fictional SSR fixtures establish rendering and contract behavior.",
+    "Full command trace will be evaluator-generated. Earlier exploratory tests and Terra agent actions are not fully traced; usage metrics unavailable.",
+    "Independent serialized expectations were generated with a separate fixture construction path, not the production serializer; existing scoring gold unchanged."
+  ]
+}

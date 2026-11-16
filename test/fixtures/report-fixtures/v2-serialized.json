@@ -1,0 +1,1204 @@
+{
+  "version": "1",
+  "id": "bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "status": "complete",
+  "statusUrl": "/api/v1/audits/bb80e163-11b8-4706-bf19-b9207e5ad815",
+  "submittedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "assessedUrl": "https://shop.example/products/road-shoe?color=blue",
+  "createdAt": "2026-11-05T12:00:00.000Z",
+  "completedAt": "2026-11-05T12:00:02.000Z",
+  "expiresAt": "2026-11-06T12:00:00.000Z",
+  "cache": {
+    "hit": false,
+    "validUntil": "2026-11-05T13:00:02.000Z"
+  },
+  "report": {
+    "status": "complete",
+    "rubricVersion": "2.0.0",
+    "category": "running-shoes",
+    "productName": "Example product",
+    "variant": "Blue / US 9",
+    "market": "US",
+    "currency": "USD",
+    "score": {
+      "total": 100,
+      "structure": 40,
+      "content": 60
+    },
+    "earnedPoints": 100,
+    "criteria": [
+      {
+        "id": "S1",
+        "pillar": "structure",
+        "maxPoints": 13,
+        "points": 13,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S1.delivery",
+            "maxPoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "e-S1.delivery"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product content in initial HTML",
+              "description": "Is substantive product content available in the initial page HTML?",
+              "improve": "Make substantive product content available in the initial HTML.",
+              "fullCredit": "Substantive main-product content is delivered in the initial HTML without JavaScript execution or interaction."
+            }
+          },
+          {
+            "id": "S1.readability",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S1.readability"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Extractable product information",
+              "description": "Is the delivered product information readable as ordinary text?",
+              "improve": "Provide product information as readable text.",
+              "fullCredit": "Delivered product information is ordinary extractable text."
+            }
+          },
+          {
+            "id": "S1.scope",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S1.scope"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Clearly identified product content",
+              "description": "Can tools distinguish this product from navigation, reviews and other products?",
+              "improve": "Clearly distinguish the audited product content from other page content.",
+              "fullCredit": "The audited product content is distinguishable from navigation, recommendations, reviews and other products."
+            }
+          },
+          {
+            "id": "S1.configuration",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S1.configuration"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product information tied to the selected option",
+              "description": "Are displayed values reliably associated with the selected option?",
+              "improve": "Associate displayed product values with the correct selected option.",
+              "fullCredit": "Displayed values are reliably associated with the selected configuration."
+            }
+          },
+          {
+            "id": "S1.supporting-access",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S1.supporting-access"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Accessible supporting information",
+              "description": "Are referenced specifications, guides and policies accessible?",
+              "improve": "Provide readable sections or usable links to relevant specifications, guides and policies.",
+              "fullCredit": "Referenced specifications, guides and policies are accessible as readable sections or usable links."
+            }
+          }
+        ]
+      },
+      {
+        "id": "S2",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 9,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S2.syntax",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.syntax"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Valid product markup",
+              "description": "Does the relevant product markup parse and use recognized types, properties and formats?",
+              "improve": "Correct invalid product markup and use recognized types, properties and value formats.",
+              "fullCredit": "Relevant product markup parses and uses recognized types, properties and value formats."
+            }
+          },
+          {
+            "id": "S2.entity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.entity"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product entity for this page",
+              "description": "Does the product record unambiguously represent the product on this page?",
+              "improve": "Ensure the product entity clearly represents the audited product.",
+              "fullCredit": "A Product entity unambiguously represents the audited product page."
+            }
+          },
+          {
+            "id": "S2.offer",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.offer"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product offer associations",
+              "description": "Are price, currency and availability coherent and associated with the correct product or option?",
+              "improve": "Connect coherent offer details to the correct product or option.",
+              "fullCredit": "Offers connect to the appropriate Product or variant with internally coherent price, currency and availability fields."
+            }
+          },
+          {
+            "id": "S2.identifiers",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S2.identifiers"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product identifiers",
+              "description": "Are applicable external identifiers valid and associated with the correct product or option?",
+              "improve": "Use verified applicable external identifiers and associate them with the correct product or option.",
+              "fullCredit": "Applicable external identifiers have valid formats and correct product or variant associations."
+            }
+          },
+          {
+            "id": "S2.variants",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S2.variants"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product variant associations",
+              "description": "Are parent products, options and distinguishing attributes correctly connected?",
+              "improve": "Connect parent products, variants and their distinguishing attributes accurately.",
+              "fullCredit": "Parent products, variants and their distinguishing attributes are correctly connected."
+            }
+          }
+        ]
+      },
+      {
+        "id": "S3",
+        "pillar": "structure",
+        "maxPoints": 9,
+        "points": 9,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S3.identity",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.identity"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product name agrees across the page",
+              "description": "Do the visible product details and the product record describe the same item and option?",
+              "improve": "Make the product name and option agree in the visible content and product record.",
+              "fullCredit": "Same product and variant agree"
+            }
+          },
+          {
+            "id": "S3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-S3.price"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Price agrees across the page",
+              "description": "Do the visible price and the price supplied to search tools agree for the same option?",
+              "improve": "Match the current price and currency across the visible page and product record.",
+              "fullCredit": "Price and currency agree in same context"
+            }
+          },
+          {
+            "id": "S3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.availability"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Stock availability agrees across the page",
+              "description": "Does the availability shown to visitors agree with the product record?",
+              "improve": "Match the availability across the visible page and product record for the same option.",
+              "fullCredit": "Availability agrees in same context"
+            }
+          },
+          {
+            "id": "S3.optional-claims",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-S3.optional-claims"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product claims agree across the page",
+              "description": "Do product claims agree wherever they appear in the visible content and product record?",
+              "improve": "Review the cited claims and make their meaning and scope consistent.",
+              "fullCredit": "Supplied claim groups agree"
+            }
+          }
+        ]
+      },
+      {
+        "id": "S4",
+        "pillar": "structure",
+        "maxPoints": 3,
+        "points": 3,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S4.title",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.title"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Clear page title and product heading",
+              "description": "Do the page title and main heading clearly identify the product?",
+              "improve": "Use a clear page title and main product heading that identify this product.",
+              "fullCredit": "Specific title and main product heading"
+            }
+          },
+          {
+            "id": "S4.organization",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.organization"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Clear headings and specification labels",
+              "description": "Are product details organised under clear headings with readable labels?",
+              "improve": "Group the relevant details under clear headings and label the specifications so shoppers can find them.",
+              "fullCredit": "Clearly labeled sections and readable specifications"
+            }
+          },
+          {
+            "id": "S4.image-alternatives",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S4.image-alternatives"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Useful product image descriptions",
+              "description": "Do informative product images have useful text descriptions for people and tools that cannot see them?",
+              "improve": "Give each informative product image an accurate text description. Verify which images need a change in the evidence below.",
+              "fullCredit": "Useful alternatives for informative images"
+            }
+          }
+        ]
+      },
+      {
+        "id": "S5",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S5.search",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S5.search"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Access for search engines",
+              "description": "Does the website allow the search engines checked by this audit to access this product page?",
+              "improve": "Review the website\u2019s crawler permissions and decide which search engines should be allowed to access the product page.",
+              "fullCredit": "Both search crawlers allowed at product URL"
+            }
+          },
+          {
+            "id": "S5.ai-retrieval",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S5.ai-retrieval"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Access for AI answer tools",
+              "description": "Does the website allow the AI retrieval tools checked by this audit to access this product page?",
+              "improve": "Review the website\u2019s crawler permissions against the AI tools you want to allow.",
+              "fullCredit": "All listed retrieval crawlers allowed"
+            }
+          }
+        ]
+      },
+      {
+        "id": "S6",
+        "pillar": "structure",
+        "maxPoints": 2,
+        "points": 2,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S6.usable",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S6.usable"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Working website sitemap",
+              "description": "Can the audit find and read a sitemap that helps tools discover the website\u2019s pages?",
+              "improve": "Publish a readable sitemap containing the relevant website pages.",
+              "fullCredit": "Retrievable parseable sitemap or index with relevant children"
+            }
+          },
+          {
+            "id": "S6.inclusion",
+            "maxPoints": 1,
+            "status": "measured",
+            "fraction": 1,
+            "points": 1,
+            "evidenceIds": [
+              "e-S6.inclusion"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product included in the sitemap",
+              "description": "Does the website\u2019s sitemap include the product page assessed here?",
+              "improve": "Include the correct product URL in a readable sitemap.",
+              "fullCredit": "Audited or legitimate canonical URL listed"
+            }
+          }
+        ]
+      },
+      {
+        "id": "S7",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 1,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S7.identity",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S7.identity"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Website identity in the AI guide",
+              "description": "Does the website\u2019s llms.txt guide identify the business or website?",
+              "improve": "If you maintain an llms.txt guide, identify the business and website clearly.",
+              "fullCredit": "Meaningful llms.txt identifies site and purpose"
+            }
+          },
+          {
+            "id": "S7.links",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S7.links"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Useful links in the AI guide",
+              "description": "Does the llms.txt guide link to useful website resources?",
+              "improve": "If you maintain an llms.txt guide, add verified links to the relevant product, category or information pages.",
+              "fullCredit": "Useful working catalog and policy or help links"
+            }
+          }
+        ]
+      },
+      {
+        "id": "S8",
+        "pillar": "structure",
+        "maxPoints": 1,
+        "points": 1,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "S8.context",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S8.context"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Website context for AI tools",
+              "description": "Does the website\u2019s agent guide explain what the business and website provide?",
+              "improve": "If you maintain an agent guide, describe the business and the purpose of its website.",
+              "fullCredit": "Meaningful site-specific agent guide"
+            }
+          },
+          {
+            "id": "S8.guidance",
+            "maxPoints": 0.5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 0.5,
+            "evidenceIds": [
+              "e-S8.guidance"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Clear guidance for AI tools",
+              "description": "Does the website\u2019s agent guide give tools useful instructions for using its information?",
+              "improve": "If you maintain an agent guide, add clear, accurate instructions and links that help AI tools use the website\u2019s information.",
+              "fullCredit": "Practical authoritative references"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C1.identity",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C1.identity"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product identity",
+              "description": "Does the page clearly identify the product, brand and model where applicable?",
+              "improve": "Provide the verified product identity, including brand and model where applicable.",
+              "fullCredit": "Specific product identity and applicable brand and model"
+            }
+          },
+          {
+            "id": "C1.explanation",
+            "maxPoints": 4,
+            "status": "measured",
+            "fraction": 1,
+            "points": 4,
+            "evidenceIds": [
+              "e-C1.explanation"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Specific product explanation",
+              "description": "Does the description explain this product in useful, specific terms?",
+              "improve": "Explain the product\u2019s relevant features and benefits with concrete, verified details.",
+              "fullCredit": "Clear complete explanation of product and function"
+            }
+          },
+          {
+            "id": "C1.configuration",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C1.configuration"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Options and included items explained",
+              "description": "Does the page explain the product\u2019s configurations and what is included?",
+              "improve": "Describe the available configurations and included items clearly.",
+              "fullCredit": "Clear selected configuration and included items"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "pillar": "content",
+        "maxPoints": 20,
+        "points": 20,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C2.essential",
+            "maxPoints": 14,
+            "status": "measured",
+            "fraction": 1,
+            "points": 14,
+            "evidenceIds": [
+              "e-C2.essential"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Essential product details",
+              "description": "Does the page provide the essential details shoppers need for this type of product?",
+              "improve": "Provide the essential product details identified by the findings, including units and scope where needed.",
+              "fullCredit": "Every applicable essential attribute explicit with required units and scope"
+            }
+          },
+          {
+            "id": "C2.supporting",
+            "maxPoints": 6,
+            "status": "measured",
+            "fraction": 1,
+            "points": 6,
+            "evidenceIds": [
+              "e-C2.supporting"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Additional useful product details",
+              "description": "Does the page include the additional details that help shoppers choose and use this product?",
+              "improve": "Add the supporting product details identified by the findings using verified information.",
+              "fullCredit": "Every applicable supporting attribute explicit with required units and scope"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C3",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C3.price",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C3.price"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Purchase price explained",
+              "description": "Is the price clear for the product and option being assessed?",
+              "improve": "Clarify the price, currency and any conditions for the selected option.",
+              "fullCredit": "Price, currency and material conditions clear"
+            }
+          },
+          {
+            "id": "C3.availability",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C3.availability"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Stock information explained",
+              "description": "Does the content clearly explain the selected option\u2019s availability?",
+              "improve": "Publish current, option-specific availability information.",
+              "fullCredit": "Availability for selected configuration clear"
+            }
+          },
+          {
+            "id": "C3.shipping",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C3.shipping"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Shipping cost and delivery details",
+              "description": "Can shoppers understand the applicable shipping cost and delivery information?",
+              "improve": "Provide verified shipping costs, delivery information and the conditions that apply.",
+              "fullCredit": "Coverage, cost or calculation and delivery guidance clear"
+            }
+          },
+          {
+            "id": "C3.returns",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C3.returns"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Returns policy explained",
+              "description": "Can shoppers understand the return window, eligibility and important conditions?",
+              "improve": "Make the applicable return window, eligibility and conditions clear.",
+              "fullCredit": "Eligibility, window and material conditions clear"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C4",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C4.intended-use",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C4.intended-use"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Questions about product use answered",
+              "description": "Does the page answer the relevant questions about how and when to use the product?",
+              "improve": "Answer the product-use questions identified in the findings with specific, verified information.",
+              "fullCredit": "Applicable category questions answered specifically"
+            }
+          },
+          {
+            "id": "C4.compatibility",
+            "maxPoints": 3,
+            "status": "measured",
+            "fraction": 1,
+            "points": 3,
+            "evidenceIds": [
+              "e-C4.compatibility"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Compatibility questions answered",
+              "description": "Does the page answer the relevant questions about what the product works with?",
+              "improve": "Explain relevant compatibility requirements and restrictions.",
+              "fullCredit": "Applicable category questions answered specifically"
+            }
+          },
+          {
+            "id": "C4.limitations",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C4.limitations"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Product limitations explained",
+              "description": "Does the page explain relevant limitations and situations where the product is unsuitable?",
+              "improve": "Describe the relevant limitations and conditions identified in the findings.",
+              "fullCredit": "Applicable category questions answered specifically"
+            }
+          },
+          {
+            "id": "C4.selection",
+            "maxPoints": 2,
+            "status": "measured",
+            "fraction": 1,
+            "points": 2,
+            "evidenceIds": [
+              "e-C4.selection"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Help choosing the right option",
+              "description": "Does the page help shoppers choose the appropriate size, fit or other product option?",
+              "improve": "Add verified guidance that helps shoppers choose the correct option.",
+              "fullCredit": "Applicable category questions answered specifically"
+            }
+          }
+        ]
+      },
+      {
+        "id": "C5",
+        "pillar": "content",
+        "maxPoints": 10,
+        "points": 10,
+        "complete": true,
+        "subchecks": [
+          {
+            "id": "C5.consistency",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "e-C5.consistency"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Consistent product facts",
+              "description": "Do comparable product facts agree within the same product and option?",
+              "improve": "Resolve the conflicting facts identified in the findings and verify the correct value.",
+              "fullCredit": "No detected contradiction with sufficient comparable evidence"
+            }
+          },
+          {
+            "id": "C5.claim-support",
+            "maxPoints": 5,
+            "status": "measured",
+            "fraction": 1,
+            "points": 5,
+            "evidenceIds": [
+              "e-C5.claim-support"
+            ],
+            "reason": null,
+            "presentation": {
+              "name": "Evidence for product claims",
+              "description": "Are important product claims supported or clearly qualified?",
+              "improve": "Support the cited claims with relevant evidence or explain the conditions and limits.",
+              "fullCredit": "Material claims have relevant support or qualification"
+            }
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "e-S1.delivery",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.delivery."
+      },
+      {
+        "id": "e-S1.readability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.readability."
+      },
+      {
+        "id": "e-S1.scope",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.scope."
+      },
+      {
+        "id": "e-S1.configuration",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.configuration."
+      },
+      {
+        "id": "e-S1.supporting-access",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S1.supporting-access."
+      },
+      {
+        "id": "e-S2.syntax",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.syntax."
+      },
+      {
+        "id": "e-S2.entity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.entity."
+      },
+      {
+        "id": "e-S2.offer",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.offer."
+      },
+      {
+        "id": "e-S2.identifiers",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.identifiers."
+      },
+      {
+        "id": "e-S2.variants",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S2.variants."
+      },
+      {
+        "id": "e-S3.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.identity."
+      },
+      {
+        "id": "e-S3.price",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.price."
+      },
+      {
+        "id": "e-S3.availability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.availability."
+      },
+      {
+        "id": "e-S3.optional-claims",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S3.optional-claims."
+      },
+      {
+        "id": "e-S4.title",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.title."
+      },
+      {
+        "id": "e-S4.organization",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.organization."
+      },
+      {
+        "id": "e-S4.image-alternatives",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S4.image-alternatives."
+      },
+      {
+        "id": "e-S5.search",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S5.search."
+      },
+      {
+        "id": "e-S5.ai-retrieval",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S5.ai-retrieval."
+      },
+      {
+        "id": "e-S6.usable",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S6.usable."
+      },
+      {
+        "id": "e-S6.inclusion",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S6.inclusion."
+      },
+      {
+        "id": "e-S7.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S7.identity."
+      },
+      {
+        "id": "e-S7.links",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S7.links."
+      },
+      {
+        "id": "e-S8.context",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S8.context."
+      },
+      {
+        "id": "e-S8.guidance",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for S8.guidance."
+      },
+      {
+        "id": "e-C1.identity",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.identity."
+      },
+      {
+        "id": "e-C1.explanation",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.explanation."
+      },
+      {
+        "id": "e-C1.configuration",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C1.configuration."
+      },
+      {
+        "id": "e-C2.essential",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C2.essential."
+      },
+      {
+        "id": "e-C2.supporting",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C2.supporting."
+      },
+      {
+        "id": "e-C3.price",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.price."
+      },
+      {
+        "id": "e-C3.availability",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.availability."
+      },
+      {
+        "id": "e-C3.shipping",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.shipping."
+      },
+      {
+        "id": "e-C3.returns",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C3.returns."
+      },
+      {
+        "id": "e-C4.intended-use",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.intended-use."
+      },
+      {
+        "id": "e-C4.compatibility",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.compatibility."
+      },
+      {
+        "id": "e-C4.limitations",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.limitations."
+      },
+      {
+        "id": "e-C4.selection",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C4.selection."
+      },
+      {
+        "id": "e-C5.consistency",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C5.consistency."
+      },
+      {
+        "id": "e-C5.claim-support",
+        "url": "https://shop.example/products/item",
+        "method": "raw",
+        "kind": "derived_observation",
+        "observedAt": "2026-11-05T12:00:00.000Z",
+        "location": "product page",
+        "excerpt": "Observed evidence for C5.claim-support."
+      }
+    ],
+    "fixes": [],
+    "coverage": {
+      "measured": 40,
+      "notMeasured": 0,
+      "total": 40,
+      "category": "running-shoes",
+      "extraction": null,
+      "limitations": [
+        "Synthetic report for frontend development."
+      ]
+    },
+    "contractVersion": "1.0.0"
+  },
+  "error": null
+}

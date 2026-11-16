@@ -18,7 +18,9 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
-    "test:preview": "node --test test/preview.test.mjs"
+    "test:preview": "node --test test/preview.test.mjs",
+    "test:report-contract": "node --test test/live-report.test.mjs test/report-contract.test.mjs",
+    "test:backend": "node --test backend/*.test.mjs"
   },
   "dependencies": {
     "parse5": "^7.3.0",

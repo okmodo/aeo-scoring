@@ -1,4 +1,5 @@
 import { createStore } from './store.mjs';
+import { serializeReport } from '../contracts/report-contract.mjs';
 import { createAllowanceGuard } from './allowance-store.mjs';
 import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
 import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
@@ -157,6 +158,7 @@ export function createAuditService({
         if (contentFacts.status === 'assessed') report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
         else report.coverage.limitations.push(contentFacts.reason);
       }
+      report = serializeReport(report);
       if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');
     } catch (error) {
       await store.finish(audit.id, {

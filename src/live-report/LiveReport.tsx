@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Assessment, Evidence } from '../../contracts/v1/types';
 import { buildLiveReportModel, type CheckDetail } from './model';
-import { copyForTest, findingsForTest, formatPoints, pointsForTest, resultForTest, summarizeTestPoints } from './test-copy';
+import { findingsForTest, formatPoints, pointsForTest, resultForTest, summarizeTestPoints } from './test-copy';
 import '../report-design/report.css';
 import './live.css';
 
@@ -50,7 +50,7 @@ function TestPoints({ check }: { check: CheckDetail }) {
 }
 
 function TestFinding({ check }: { check: CheckDetail }) {
-  const copy = copyForTest(check.id);
+  const copy = check.copy;
   const result = resultForTest(check);
   const points = pointsForTest(check);
   const findings = findingsForTest(check);
@@ -69,7 +69,7 @@ function TestFinding({ check }: { check: CheckDetail }) {
       {result === 'Fail' && (
         <div className="rd-test-change">
           <h4>What to change</h4>
-          <p>{copy.improve}</p>
+          <p>{check.guidance || copy.improve}</p>
           <p className="rd-test-point-note">Verify the details before publishing, then run a new audit to check the result.</p>
         </div>
       )}
@@ -169,7 +169,7 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
                           <button key={check.id} type="button" className="rd-test-button"
                             aria-pressed={selected?.id === check.id} aria-controls="selected-test-result"
                             onClick={() => setSelectedId(check.id)}>
-                            <span className="rd-test-name">{copyForTest(check.id).name}</span>
+                            <span className="rd-test-name">{check.copy.name}</span>
                             <span className="rd-test-summary">
                               <span className={'rd-test-result rd-test-' + result.toLowerCase().replaceAll(' ', '-')}>{result}</span>
                               <TestPoints check={check} />
@@ -214,8 +214,8 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
           <section className="rd-section rd-state">
             <h2>{displayStatus}</h2>
             {model.warnings.map((item, index) => <p key={index}>{item}</p>)}
-            <p>{assessment.status === 'pending' ? 'We’re checking the product page. Your test results will appear here when the audit finishes.' :
-              assessment.error?.message || 'No report was returned. Try another public product page or try again later.'}</p>
+            {!model.warnings.length && <p>{assessment.status === 'pending' ? 'We’re checking the product page. Your test results will appear here when the audit finishes.' :
+              assessment.error?.message || 'No report was returned. Try another public product page or try again later.'}</p>}
             <button className="rd-live-retry" onClick={onBack}>Check another page ↗</button>
           </section>
         )}

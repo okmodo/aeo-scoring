@@ -2,6 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createAuditService } from './service.mjs';
+const presentation = JSON.parse(readFileSync(new URL('../test/fixtures/report-fixtures/v1-presentation.json', import.meta.url), 'utf8'));
+function assertSerialized(actual, expected) {
+  assert.equal(actual.report.contractVersion, '1.0.0');
+  for (const criterion of actual.report.criteria) for (const check of criterion.subchecks) {
+    assert.deepEqual(check.presentation, presentation[check.id]);
+    delete check.presentation;
+  }
+  delete actual.report.contractVersion;
+  assert.deepEqual(actual, expected);
+}
 
 const read = name => JSON.parse(readFileSync(new URL('../contracts/v1/examples/' + name + '.json', import.meta.url), 'utf8'));
 const pending = read('submission-pending');
@@ -71,10 +81,10 @@ test('submission, polling, and cache reuse match the frozen service responses', 
   assert.deepEqual(await accepted.json(), pending);
   assert.deepEqual(await (await handle(poll())).json(), read('status-pending'));
   await task;
-  assert.deepEqual(await (await handle(poll())).json(), read('assessment-incomplete'));
+  assertSerialized(await (await handle(poll())).json(), read('assessment-incomplete'));
   const cached = await handle(post({url:pending.submittedUrl}), context);
   assert.equal(cached.status, 200);
-  assert.deepEqual(await cached.json(), read('cached-assessment'));
+  assertSerialized(await cached.json(), read('cached-assessment'));
   assert.equal(fetches, 2);
 });
 
@@ -175,7 +185,7 @@ test('an AI binding leaves the deterministic report intact until facts calibrati
     AI:{run:async()=>{modelCalls++;throw new Error('Must remain disabled');}},
     egress:{fetch:async()=>assert.fail('Injected retrieval should be used')},secret:'x'.repeat(32),HTMLRewriter:Rewriter,now:()=>time,
     retrievePage:async()=>({url:pending.submittedUrl,extracted:{coverage:{usable:true},productHtml:{complete:true,identity:'Example Road Shoe',blocks:[]}}}),
-    scorePage:(_snapshot,_extracted,options)=>{scores++;assert.equal(options,undefined);return {status:'incomplete',category:'running-shoes',coverage:{limitations:[]}};},
+    scorePage:(_snapshot,_extracted,options)=>{scores++;assert.equal(options,undefined);return {...read('assessment-incomplete').report,category:'running-shoes',coverage:{limitations:[]}};},
   });
   const response=await handle(post({url:pending.submittedUrl}),{address,defer:p=>{task=p;}});
   assert.equal(response.status,202);await task;
