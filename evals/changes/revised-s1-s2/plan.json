@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "id": "revised-s1-s2",
+  "task": "Implement the approved unique S1 accessibility and S2 structured-data subchecks, credit anchors and evidence-bound exclusions as a versioned backend rubric change.",
+  "scope": [
+    "config/rubric.v2.json",
+    "backend/structure-assessment.mjs",
+    "backend/structure-accessibility.mjs",
+    "backend/structure-schema.mjs",
+    "backend/html-product.mjs",
+    "backend/extract.mjs",
+    "backend/scoring.mjs",
+    "backend/service.mjs",
+    "backend/product-fields.mjs",
+    "backend/product-variants.mjs",
+    "backend/product-labels.mjs",
+    "backend/fixtures/**",
+    "backend/**/*.test.mjs",
+    "scripts/scoring-foundations.mjs",
+    "test/scoring-foundations-v2.test.mjs",
+    "test/feasibility.test.mjs",
+    "test/phase2-ai-pilot.test.mjs",
+    "contracts/v1/examples/assessment-engine-v2-complete.json",
+    "docs/revised-s1-s2.md",
+    "evals/changes/revised-s1-s2/**"
+  ],
+  "nonGoals": [
+    "No frontend/presentation, shared types, dependencies, Cloudflare configurations/services, production activation/deployment or merge. Keep 60% limits,CPU1000, model, retrieval safeguards, access settings and Content60/S3-S8 weights and behavior. No provider calls or paid integrations. Preserve historical rubricv1, prior raw outputs, gold expectations and closed validation results unchanged."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Publish rubric2.0.0 with S1.delivery4/readability3/scope3/configuration2/supporting-access1 and S2.syntax2/entity2/offer2/identifiers2/variants1; same40checks and40/60total. Full1/partial.5/zero0 for these revised checks; immutable agreed full/partial/zero/NA anchors retained in specification/fixtures. S1 must not copy content completeness or compare schema. S2 must not grade displayed agreement or shopper completeness.",
+      "verification": "automated",
+      "evidence": "Frozen unique-check matrix covering happy,partial,confirmed failure,NAandunmeasured; nonduplication tests changing C completeness without altering S1 delivery/representation and S2 modeling."
+    },
+    {
+      "id": "O2",
+      "description": "Extract only bounded source evidence sufficient to distinguish initial delivery, readable representation, product scope, selected configuration and referenced support accessibility. No rendered or hidden content falsely presented as ordinary text, no invented scope, absence or selection. Supporting-access applies only to referenced content, including confirmed broken/login cases; timeouts/truncation/unsupported inspection stay unknown. Robots remains nonblocking.",
+      "verification": "automated",
+      "evidence": "Source HTML adversarial/shell/image/state/hidden/multiproduct/selectedcontrol/guide-policy fixtures, collector bounds and deterministic repeated extraction checks."
+    },
+    {
+      "id": "O3",
+      "description": "Evaluate structured syntax/types/formats, product-page association, internal Offer connections, identifier correctness and parent/variant relations separately. Missingmarkup is not NA, ambiguity partial onlywhenobserved, unsupported/malformed/truncated inspection cannot become fabricatedabsence. OfferNA unavailableundercurrentmerchantcategories; configuration/variantNA requires explicitsingle/no variants; identifiersNA requires explicitnotassigned proof/no supplied external ID.",
+      "verification": "automated",
+      "evidence": "Independent per-subcheck matrix including wrongproduct/offers/GTINformat/merchantSKU/conditionalabsence, schema variants and parseerror/microdata/RDFa regressions."
+    },
+    {
+      "id": "O4",
+      "description": "Version cache identity and report metadata for new rubric/engine while preserving APIv1 shape, evidence and assignable fixes. No old-ID checks or recoveries leak into current reports; deductions and relatedfixes are evidence-bound, recovery uniqueandconditional. Onlycriterion-local NA redistribution, noNAfromunknown, no finalscore on missingapplicablemeasurements or all-excludedcriterion. Historical fixtures remain historical; currentversion examples/expectations independently justified.",
+      "verification": "automated",
+      "evidence": "Service cache miss/version separation, full report and recovery exact currentfixture, oldv1 arithmetic regression and v2 NA/status/contract tests."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this plan alone before implementation; Terra agents own distinct S1 extraction, S2 assessment and independent integration/review roles. Frozen expected matrices and any currentversion golden changes receive independent review. Use separatecodexworktree, real source-bound evaluation and hostedCI; no weakeningoldgates/history or synthetic claims oflivevalidation.",
+      "verification": "human",
+      "evidence": "Git chronology, actual commands/review/handoff, focused allowedpaths and independent specmatrix adjudication."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep source evidence bounded and processing linear, preserve supported markupformats and reuse current architecture. New rubricversion explains semantic changes instead of silently rewriting v1. Group related underlying fixes without duplicating recoverable points.",
+      "verification": "human",
+      "evidence": "Backenddiff, boundedlargeinput regressions, existingbuild checks and disclosed absenceofnewnativeCPUmeasurement; configurationcap unchanged."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "node --test test/scoring-foundations-v2.test.mjs"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This changes application scoring/extraction and versioned reports, not agent portability, memory or resumability."
+  }
+}
