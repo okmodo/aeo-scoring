@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Add a visual points doughnut and align result columns.",
+ "state":"Implemented on codex/business-test-report and rebuilt in the existing local review container at http://127.0.0.1:4382/.",
+ "decisions":["Use a CSS doughnut with earned, missed and not-yet-scored segments and an accessible text equivalent.","Use the official total for complete reports. Incomplete reports show a measured subtotal labelled Points so far and explain that it can change when remaining tests complete.","Match column-heading and result-row grids and left-align status and points."],
+ "constraints":["The maximum score remains the existing 100-point rubric. No score extrapolation or backend changes.","The local container uses retained audit results. Existing public deployment is separate."],
+ "completed":["Independent review found no blocking source issues. Arithmetic and rendering regressions pass.","Browser verified the saved assessment chart as 32.86 earned, 16.14 missed and 51 not yet scored, column alignment start/left, and no horizontal overflow at 390px."],
+ "remaining":["Refresh all source-bound evaluation records and hosted CI for the updated PR. Keep the local container available for review."],
+ "resumeCommands":["npm run evaluate -- --change report-points-summary --base origin/main","npm run ci:gate -- origin/main","node /private/tmp/aeo-business-report-container/build.mjs"]
+}

@@ -1,0 +1,16 @@
+{
+ "version":1,
+ "id":"business-test-report",
+ "task":"Present live audit tests, findings and points in clear business-owner language.",
+ "scope":["src/live-report/**","test/live-report.test.mjs","evals/changes/business-test-report/**"],
+ "nonGoals":["Backend, rubric, credential, usage-policy or scoring changes; invented website findings or replacement product facts; merging without a user request."],
+ "outcomes":[
+  {"id":"O1","description":"The report list shows every returned check by a readable name and explicit Pass, Fail, Not completed or Not applicable result with measured points.","verification":"automated","evidence":"Frozen fixtures and status/point boundary regressions, including partial credit and effective weights."},
+  {"id":"O2","description":"Selecting a test shows its actual source-linked finding and a plain-language explanation, with no Where, Owner or Rule blocks.","verification":"automated","evidence":"Runtime rendering verifies visible source findings, absent confusing labels and safe untrusted content handling."},
+  {"id":"O3","description":"An incomplete audit still displays measured results and explains remaining tests without inventing a final score or historical point changes.","verification":"human","evidence":"Independent source review and responsive browser checks using retained test data."}
+ ],
+ "process":[{"id":"P1","description":"Commit plan first, independently review and run source-bound commands and hosted CI before release.","verification":"human","evidence":"Git chronology, actual evaluation and review."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse the approved report style, write for business owners, and retain source evidence with no new dependencies.","verification":"human","evidence":"Visual review and diff."}],
+ "commands":["npm run check","npm test","npm run test:exit","npm run lint","npm run typecheck","npm run build","npm run test:preview"],
+ "exitTest":{"required":false,"reason":"Customer report presentation does not alter agent workflow, portability or resumability."}
+}

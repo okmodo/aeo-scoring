@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Deploy the revised report to a local review container.",
+ "state":"Container aeo-scoring-report-local serves http://127.0.0.1:4382/ from a read-only host bundle using the existing nginx:1.27-alpine image.",
+ "decisions":["Use a dedicated AEO container and loopback port.","Build the same LiveReport component with a retained real assessment for review. The temporary bootstrap replaces the submission entry point only in this local build."],
+ "constraints":["The local review uses captured results and does not run fresh audits. The current production build still uses its normal App entry point.","Local bundle and merchant evidence remain outside source control. Other local applications are untouched."],
+ "completed":["Built the review bundle in /private/tmp/aeo-business-report-container/site and started the dedicated local container.","Verified selectable tests, visible source findings and no horizontal overflow at 390px."],
+ "remaining":["Review the report locally. Keep the container running for the user."],
+ "resumeCommands":["docker ps --filter name=aeo-scoring-report-local","node /private/tmp/aeo-business-report-container/build.mjs","docker restart aeo-scoring-report-local"]
+}

@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Show readable test names, results, points and website findings for business owners.",
+ "state":"Implementation on codex/business-test-report, based on main 08856f7. Local container serves a retained Kokatat assessment for review.",
+ "decisions":["Replace the returned-action list with all returned individual tests. Map every current rubric check to a unique business name.","Full-credit measured tests pass. Completed partial/zero-credit tests fail and retain their earned points. Unknown tests say Not completed and excluded tests say Not applicable.","Label point contributions Earned and Missed for this audit, using effective weights and two-decimal formatting. These are not historical changes or guaranteed recovery.","Show source-backed findings immediately, distinguish audit observations from website excerpts, and retain raw source evidence under an optional disclosure.","Remove Where, Owner, Rule and conditional action blocks. Failed tests show plain-language guidance and explicit verification."],
+ "constraints":["No backend, rubric, scoring, credential, paid API or Cloudflare deployment changes.","Keep merchant evidence and retained response files outside committed artifacts.","A final score is suppressed if any test is not completed, including inconsistent legacy data with unknown points."],
+ "completed":["Independent technical review resolved Offer wording, evidence provenance, null-point score consistency and optional AI-guide wording. Reviewer ran six passing targeted tests.","Browser checks on the local container verified pass/fail/not-completed selection and visible findings. A 390px viewport had no horizontal overflow."],
+ "remaining":["Run source-bound evaluation, publish a PR and confirm hosted CI.","User can review the local container at http://127.0.0.1:4382/. Merge and public release await the user's separate instruction."],
+ "resumeCommands":["npm run evaluate -- --change business-test-report --base origin/main","npm run evaluate -- --change business-report-local-container --base origin/main","npm run ci:gate -- origin/main"]
+}

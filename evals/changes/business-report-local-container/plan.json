@@ -1,0 +1,12 @@
+{
+ "version":1,
+ "id":"business-report-local-container",
+ "task":"Make the revised report available in an isolated local container for design review.",
+ "scope":["evals/changes/business-report-local-container/**"],
+ "nonGoals":["Cloudflare release, live model calls, changes to unrelated local applications or committing merchant evidence."],
+ "outcomes":[{"id":"O1","description":"The local AEO report container serves the revised report with retained audit results and supports selecting tests.","verification":"human","evidence":"Container status, localhost browser selection and screenshot."}],
+ "process":[{"id":"P1","description":"Keep the local review bundle and retained report private outside source control; use the existing nginx image and a dedicated loopback port.","verification":"human","evidence":"Local deployment verification and handoff."}],
+ "styleEfficiency":[{"id":"E1","description":"Reuse the report component directly without adding a production-only demo route or dependencies.","verification":"human","evidence":"Source and review build inspection."}],
+ "commands":["npm run build"],
+ "exitTest":{"required":false,"reason":"A local static design review container does not change the agent workflow or portability."}
+}
