@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "report-points-summary",
+  "recordedAt": "2026-11-16T04:09:31.993Z",
+  "sourceCommit": "a1a9b16ab2591c9c1645fda290de2ceccbe2130a",
+  "sourceDigest": "2052858d775edd3790e17d95202518498eb4908295516e76b6c3d0e8c30ed02b",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 1977,
+      "outputSha256": "bdb0705063e72dad1cedb1bf99737bba79e103aed074650bcc6a0703408e04d6"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7388,
+      "outputSha256": "d0d3d5eb5f0b7f94d448e85bd25b493d32d6f89cc650146c13050c0fc88c03e5"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 199,
+      "outputSha256": "a5fcd52b8eb5f03cf1dc0088611007ea23e2e13084f62b40ad3f3f4f763bd717"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 398,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 551,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 191,
+      "outputSha256": "aa7f55c1bbd1caeff7b2ffe30e2f8c33d881a76c97cc39a4ae5fd1e4111b55bf"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 599,
+      "outputSha256": "93e57c2b1e31f2be338f77f4365395387c83a025e95aa500f963251d03547f98"
+    }
+  ]
+}

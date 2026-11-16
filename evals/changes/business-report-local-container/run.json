@@ -1,9 +1,9 @@
 {
   "version": 1,
   "changeId": "business-report-local-container",
-  "recordedAt": "2026-11-16T03:57:50.752Z",
-  "sourceCommit": "c76accff97483b7c508c092a25b296e7c0cbfbc4",
-  "sourceDigest": "a81197e15f6c7b38bcda44f01686bf21fd88abd9b149344725f947409bba1127",
+  "recordedAt": "2026-11-16T04:09:20.531Z",
+  "sourceCommit": "a1a9b16ab2591c9c1645fda290de2ceccbe2130a",
+  "sourceDigest": "2052858d775edd3790e17d95202518498eb4908295516e76b6c3d0e8c30ed02b",
   "traceCoverage": "evaluation-commands-only",
   "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
   "agentMetrics": {
@@ -15,8 +15,8 @@
     {
       "command": "npm run build",
       "exitCode": 0,
-      "durationMs": 181,
-      "outputSha256": "dc5d75a601707a777eaa29837041f7824493ec793a3db456dec7513de3cb1285"
+      "durationMs": 188,
+      "outputSha256": "aa7f55c1bbd1caeff7b2ffe30e2f8c33d881a76c97cc39a4ae5fd1e4111b55bf"
     }
   ]
 }

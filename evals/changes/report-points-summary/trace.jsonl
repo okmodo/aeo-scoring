@@ -1,0 +1,7 @@
+{"timestamp":"2026-11-16T04:09:20.689Z","tool":"npm","action":"npm run check","durationMs":1977,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:22.667Z","tool":"npm","action":"npm test","durationMs":7388,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:30.055Z","tool":"npm","action":"npm run test:exit","durationMs":199,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:30.254Z","tool":"npm","action":"npm run lint","durationMs":398,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:30.652Z","tool":"npm","action":"npm run typecheck","durationMs":551,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:31.203Z","tool":"npm","action":"npm run build","durationMs":191,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-16T04:09:31.394Z","tool":"npm","action":"npm run test:preview","durationMs":599,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
