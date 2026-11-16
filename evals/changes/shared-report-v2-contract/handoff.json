@@ -1,7 +1,7 @@
 {
   "version": 1,
   "changeId": "shared-report-v2-contract",
-  "state": "Shared v1/v2 catalog and validator, additive backend serialization and frontend consumption implemented. Targeted report tests and backend regression suite pass; full evaluator and hosted CI pending at this checkpoint.",
+  "state": "Implementation complete on codex/shared-report-v2-contract. Local command evaluation passed; independent code review approved subject to final evidence and hosted CI. The gate caught missing required handoff fields; this checkpoint corrects them before refreshed evaluation. No merge or deployment performed.",
   "decisions": [
     "Preserve /api/v1 envelope while supporting rubric1.0.0 and2.0.0 separately.",
     "Use validated optional wire presentation; fall back to versioned catalog for legacy reports.",
@@ -15,18 +15,24 @@
     "Initial plan a3795c3 was invalid command grammar; original preserved. Clean branch plan-only d5c5260 preceded final replay, not initial development; earlier branch remains at4bee82c. See planning-correction.md."
   ],
   "remaining": [
-    "Run source-bound evaluator, independent review and hosted CI.",
+    "Refresh source-bound evaluator after handoff correction, validate gate, commit evidence and open PR for hosted CI.",
     "Merge only with user authorization and required review. Deploy frontend separately when requested; do not deploy main backend over deployed rubric v2 engine.",
     "For next backend release, incorporate shared contract/service integration onto engine branch and rerun contract and guard tests."
-  ],
-  "replayCommands": [
-    "npm ci --ignore-scripts",
-    "npm run evaluate -- --change shared-report-v2-contract --base origin/main",
-    "npm run ci:gate -- origin/main"
   ],
   "evidenceLimitations": [
     "No live merchant audit or browser interaction was performed; frozen fictional SSR fixtures establish rendering and contract behavior.",
     "Full command trace will be evaluator-generated. Earlier exploratory tests and Terra agent actions are not fully traced; usage metrics unavailable.",
     "Independent serialized expectations were generated with a separate fixture construction path, not the production serializer; existing scoring gold unchanged."
+  ],
+  "task": "Connect the frontend to rubric v2 with a shared versioned report contract and compatibility checks.",
+  "resumeCommands": [
+    "npm ci --ignore-scripts",
+    "npm run evaluate -- --change shared-report-v2-contract --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ],
+  "completed": [
+    "Terra agents implemented and independently reviewed the shared contract, frontend rendering and frozen compatibility regressions.",
+    "All nine plan commands passed on2bfc8a2, including16reportcontract tests and306backend regressions; full evaluation will be refreshed after this handoff format correction.",
+    "Clean proposed branch has plan-only commit d5c5260 before replay, with earlier planning limitation explicitly preserved."
   ]
 }
