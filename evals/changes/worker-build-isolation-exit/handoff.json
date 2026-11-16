@@ -1,0 +1,10 @@
+{
+ "version":1,
+ "task":"Verify fresh-agent resumption of Worker build isolation.",
+ "state":"Exported at the meaningful boundary before live trigger revalidation and mutation. No prior chat is needed to perform the next read-only readiness step.",
+ "decisions":["Supply only the export and clean task files to a fresh agent, then record actual independent tool observations.","Keep cloud mutations for the parent after hosted CI passes."],
+ "constraints":["No transcript, password or token in the export.","A source review and subprocess test alone cannot establish this continuation."],
+ "completed":["Committed the new workflow-specific plan before export implementation."],
+ "remaining":["Observe fresh-agent continuation, record its actual identity and findings, run evaluations and hosted CI."],
+ "resumeCommands":["npm run evaluate -- --change worker-build-isolation-exit --base origin/main","npm run ci:gate -- origin/main"]
+}
