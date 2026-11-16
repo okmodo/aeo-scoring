@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { releaseCases } from '../../../backend/fixtures/content-facts/release-cases.mjs';
-import { scoreAudit } from '../../../backend/scoring.mjs';
+// Replay the exact versioned source objects, not a newer extractor's metadata.
+import frozenCases from './synthetic-cases.json' with {type:'json'};
+// Historical whole-report expectations remain bound to rubric v1.
+import { scoreAuditV1 as scoreAudit } from '../../../backend/scoring.mjs';
 import { buildSemanticRequest } from '../../../backend/semantic-assessment.mjs';
 import { inspectProductSchema } from '../../../backend/structure-assessment.mjs';
 import { buildContentFactsRequest, decodeContentFacts } from '../../../backend/content-facts.mjs';
@@ -12,7 +14,7 @@ import oracle from './source-oracle.json' with {type:'json'};
 import approved from './approved-alternatives.json' with {type:'json'};
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const cases=[];
-for (const input of await releaseCases()) {
+for (const input of frozenCases) {
   const ref=oracle.cases.find(x=>x.id===input.id),report=scoreAudit(input.snapshot,input.extracted),prepared=buildSemanticRequest(input.snapshot,input.extracted,report,{product:inspectProductSchema(input.snapshot,input.extracted).product}),request=buildContentFactsRequest(prepared),payload=JSON.parse(request.messages[1].content);
   const item={id:input.id,snapshot:input.snapshot,extracted:input.extracted,report,request,requestHash:hash(request),expected:{facts:ref.requiredFacts,findings:ref.findings,checks:ref.score??ref.findings}};
   const raw={roles:Object.fromEntries(payload.candidates.map(c=>[c.roleId,[]])),inspections:[],conditionChecks:Object.fromEntries(payload.conditionKeys.map(k=>[k,input.id==='basic-tshirts'?'absent':'unknown']))};

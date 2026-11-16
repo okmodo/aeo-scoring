@@ -3,7 +3,7 @@ import { createAllowanceGuard } from './allowance-store.mjs';
 import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
 import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
-import { scoreAudit } from './scoring.mjs';
+import { scoreAudit, RUBRIC_VERSION, ENGINE_VERSION } from './scoring.mjs';
 import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FACTS_RELEASE_ID } from './content-facts-runner.mjs';
 
 const ROUTE = '/api/v1/audits';
@@ -108,7 +108,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {

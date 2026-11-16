@@ -43,6 +43,9 @@ function region(tag, a) { return tag === 'main' || a.role?.toLowerCase() === 'ma
 export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
     const result = { complete: true, blocks: [], headings: [], images: [], links: [], identity: { title: null, mainH1: null }, visibility: 'unknown', discoveryLinks: [], otherProductMarkup: false, selectedControls: [], priceCandidates: [], hasVariantControls: false, singleConfiguration: null, structuredRecords: [], unsupportedProductMarkup: false, platform: null };
     const stack = [];
+    const sourceObservation = result.sourceObservation = { complete: false, regions: 0, productImages: 0, opaqueScripts: 0, controls: 0, unselectedControls: 0, informationalImages: 0, deferredContent: 0, inlineSupport: [], blocks: [], headings: [], links: [], selectedControls: [], hasVariantControls: false };
+    let sourceRegionCount = 0, sourceCount = 0, sourceLimited = false;
+    const sourceAdd = (list, item) => { if (++sourceCount > MAX_ITEMS) sourceLimited = true; else list.push(item); };
     let exhausted = false;
     let explicitSingle = false;
     let count = 0, total = 0, regionCount = 0, titles = [], titleCount = 0, available = typeof rewriter.onDocument === 'function';
@@ -83,6 +86,24 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
                 microAdd(node.microOwner, node.microNames, value);
         }
         const text = clean(node.text);
+        const parent = stack.at(-1);
+        if (node.s1Inside && !node.s1Blocked && /^h[2-6]$/.test(node.tag) && parent) {
+            parent.supportSection = null;
+            if (/\b(?:shipping|delivery|returns?|refunds?|polic(?:y|ies)|guides?|size charts?|specifications?|manuals?|instructions?|warrant(?:y|ies))\b/i.test(text)) {
+            const section = { title: text, id: node.attrs.id || parent.attrs.id || null, readable: false, location: node.location };
+            sourceAdd(sourceObservation.inlineSupport, section);
+            parent.supportSection = section;
+            }
+        }
+        if (node.s1Inside && !node.s1Blocked && /^(?:p|li|dt|dd|blockquote)$/.test(node.tag) && text) {
+            const section = [...stack].reverse().find(item => item.supportSection)?.supportSection;
+            if (section) section.readable = true;
+        }
+        if (node.s1Inside && !node.s1Blocked && text) {
+            if (/^h[1-6]$/.test(node.tag)) sourceAdd(sourceObservation.headings, { text, level: Number(node.tag[1]), location: node.location });
+            else if (/^(?:p|li|dt|dd|blockquote)$/.test(node.tag) || (/^(?:div|span)$/.test(node.tag) && !node.hasStructuralChild && !node.blockAncestor)) sourceAdd(sourceObservation.blocks, { text, location: node.location });
+        }
+        if (node.tag === 'a' && !node.s1DiscoveryBlocked && node.attrs.href && text) sourceAdd(sourceObservation.links, { url: node.attrs.href, text, location: node.location });
         if (node.tag === 'title') {
             titleCount++;
             if (text)
@@ -98,6 +119,7 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
             if (select)
                 select.options.push({ name: select.attrs.name || null, value: (node.attrs.value ?? text) || null, type: 'select', location: node.location });
         }
+        if (node.tag === 'select' && node.s1Inside && node.configurationContext && !node.s1ParentBlocked && node.options.length === 1 && !('multiple' in node.attrs) && !('disabled' in node.attrs)) sourceAdd(sourceObservation.selectedControls, node.options[0]);
         if (node.tag === 'select' && node.inside && node.options.length === 1 && !('multiple' in node.attrs) && !('disabled' in node.attrs) && !node.parentBlocked)
             add(result.selectedControls, node.options[0]);
         if (!node.inside || node.blocked || !text)
@@ -127,11 +149,17 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
             const parentScope = [...stack].reverse().find(frame => frame.microScope)?.microScope;
             const rawBlocked = !!parent?.rawBlocked || discoveryExcluded.test(tag) || /^(?:nav|header|footer|aside)$/.test(tag) || related(a, tag);
             const ownRegion = !parent?.inside && region(tag, a);
+            const review = /(?:^|[\s_-])reviews?(?:$|[\s_-])/i.test(`${a.id || ''} ${a.class || ''}`);
+            const s1Blocked = !!parent?.s1Blocked || hidden(a) || excluded.test(tag) || related(a, tag) || review;
+            const s1OwnRegion = !parent?.s1Inside && !parent?.s1Blocked && !rawBlocked && !hidden(a) && !review && region(tag, a);
+            if (s1OwnRegion) sourceRegionCount++;
             if (ownRegion)
                 regionCount++;
+            if (tag === 'script' && /(?:application\/json)/i.test(a.type || '') && /(?:product|variant)/i.test(a.id || '')) sourceObservation.opaqueScripts++;
+            if (!rawBlocked && /(?:^|[\s_-])(?:deferred-product-content|product-content-on-interaction)(?:$|[\s_-])/i.test(`${a.id || ''} ${a.class || ''}`)) sourceObservation.deferredContent++;
             if (/(?:^|\s)https?:\/\/schema\.org\/Product(?:\s|$)/i.test(a.itemtype || '') || /(?:^|\s)(?:schema:)?Product(?:\s|$)/i.test(a.typeof || ''))
                 result.otherProductMarkup = true;
-            const node = { tag, attrs: a, location: `html:element:${count}`, text: '', inside: !!parent?.inside || ownRegion || policy && (tag === 'body' || !!parent?.inside), blocked: !!parent?.blocked || hidden(a) || excluded.test(tag) || related(a, tag), discoveryBlocked: !!parent?.discoveryBlocked || hidden(a) || discoveryExcluded.test(tag), blockAncestor: !!parent?.blockAncestor || /^(?:p|li|dt|dd|blockquote|h[1-6])$/.test(parent?.tag || ''), hasStructuralChild: false, parentBlocked: !!parent?.blocked, options: [], rawBlocked, microOwner: parentScope, microScope: null, microNames: (a.itemprop || '').trim().split(/\s+/).filter(Boolean), microText: '', microValueSet: false };
+            const node = { tag, attrs: a, location: `html:element:${count}`, text: '', inside: !!parent?.inside || ownRegion || policy && (tag === 'body' || !!parent?.inside), blocked: !!parent?.blocked || hidden(a) || excluded.test(tag) || related(a, tag), discoveryBlocked: !!parent?.discoveryBlocked || hidden(a) || discoveryExcluded.test(tag), s1Inside: !!parent?.s1Inside || s1OwnRegion || policy && (tag === 'body' || !!parent?.s1Inside), s1Blocked, s1ParentBlocked: !!parent?.s1Blocked, s1DiscoveryBlocked: !!parent?.s1DiscoveryBlocked || hidden(a) || discoveryExcluded.test(tag) || related(a, tag) || review, blockAncestor: !!parent?.blockAncestor || /^(?:p|li|dt|dd|blockquote|h[1-6])$/.test(parent?.tag || ''), hasStructuralChild: false, parentBlocked: !!parent?.blocked, options: [], rawBlocked, microOwner: parentScope, microScope: null, microNames: (a.itemprop || '').trim().split(/\s+/).filter(Boolean), microText: '', microValueSet: false };
             const scopeType = (a.itemtype || '').match(/^https?:\/\/schema\.org\/(Product|Offer|Brand|UnitPriceSpecification)$/)?.[1];
             if (!rawBlocked && a.typeof && /(?:^|\s)(?:schema:)?Product(?:\s|$)/i.test(a.typeof))
                 result.unsupportedProductMarkup = true;
@@ -181,11 +209,19 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
             const configurationContext = parent?.configurationContext || /(?:size|colou?r|material|variant|option|swatch)/i.test(`${a.name || ''} ${a.id || ''} ${a['aria-label'] || ''} ${a['data-product-attribute'] || ''}`) || 'data-product-option-change' in a;
             node.configurationContext = configurationContext;
             if (node.inside && !node.rawBlocked && configurationContext && (tag === 'select' || tag === 'input' && /^(?:radio|checkbox)$/i.test(a.type || '')))
+                {
                 result.hasVariantControls = true;
+                if (node.s1Inside && !node.s1ParentBlocked && !review) {
+                    sourceObservation.hasVariantControls = true;
+                    sourceObservation.controls++;
+                    if (tag === 'input' && !('checked' in a)) sourceObservation.unselectedControls++;
+                }
+            }
             if (parent && /^(?:div|section|article|form|p|li|dt|dd|blockquote|h[1-6])$/.test(tag))
                 parent.hasStructuralChild = true;
             if (node.inside && !node.blocked && tag === 'img')
-                add(result.images, { alt: a.alt ?? '', location: node.location });
+                { if (node.s1Inside && !node.s1Blocked) { sourceObservation.productImages++; if (/\b(?:specifications?|size chart|sizing chart|product details|ingredients|dimensions)\b/i.test(a.alt || '')) sourceObservation.informationalImages++; } add(result.images, { alt: a.alt ?? '', location: node.location }); }
+            if (node.s1Inside && !node.s1Blocked && configurationContext && tag === 'input' && /^(?:radio|checkbox)$/i.test(a.type || '') && 'checked' in a && !('disabled' in a)) sourceAdd(sourceObservation.selectedControls, { name: a.name || null, value: a.value || null, type: a.type.toLowerCase(), location: node.location });
             if (node.inside && !node.blocked && tag === 'input' && /^(?:radio|checkbox)$/i.test(a.type || '') && 'checked' in a && !('disabled' in a))
                 add(result.selectedControls, { name: a.name || null, value: a.value || null, type: a.type.toLowerCase(), location: node.location });
             if (voids.test(tag) || element.canHaveContent === false)
@@ -254,6 +290,8 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
                 result.complete = false;
             while (stack.length)
                 finish(stack.pop());
+            sourceObservation.complete = result.complete && !incomplete && !sourceLimited;
+            sourceObservation.regions = sourceRegionCount;
             if (!policy && regionCount !== 1)
                 result.complete = false;
             if (!result.complete || incomplete)
