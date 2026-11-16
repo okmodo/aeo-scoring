@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "runtime": "native workerd with local D1",
+  "externalRequests": 0,
+  "modelCalls": 0,
+  "sourceHashes": {
+    "backend/allowance-store.mjs": "9b509f72754d870959f3c40c5de007367fd7b3d177eb9db6681db648386f39b4",
+    "backend/analytics-allowance.mjs": "af6f42504988ce62948493263a023cc36817d2360203112a5b9886b81d875ef2",
+    "backend/schema.sql": "eea62583dff2ff8fd86b11ae32913e91f545f1f5eb798a4664a54ac588895f08",
+    "evals/changes/reservation-reconciliation/native-probe-worker.mjs": "5f137a2bbb34bfdede35f3e6665186dd0140bf316b4c45c8557d27637f02aaa0"
+  },
+  "cases": [
+    "reserve and settle",
+    "idempotent completion",
+    "observed account estimate catches up without counting completed work twice",
+    "unchanged60% admission still denies over ceiling"
+  ],
+  "note": "CPU duration was not measured. This probe uses mocked account estimates and actual local D1 queries."
+}

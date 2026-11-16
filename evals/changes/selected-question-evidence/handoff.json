@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "R14 selected-value question eligibility and independently bounded validation",
+  "decisions": [
+    "R13 is closed-failed after an unsupported selected-size fit assignment; never retry or reclassify it.",
+    "Reuse unchanged R13 canonical source oracle and seven source-bound alternatives, with separately frozen R14 requests and manifest.",
+    "Review raw model roles and deterministic literals separately; success describes the bounded hybrid system.",
+    "Do not retry R14 or claim overall release readiness. C1 purpose, C4 fit and C2 features require a separately planned grading correction."
+  ],
+  "constraints": [
+    "Fixed five cases, per-case independent gate, optional normal shirt follow-up and one real case only after all five pass; maximum seven physical calls, no retries or replacements.",
+    "Preserve all required source facts, exact 15 findings, shirt 80, existing model, CPU1000, 60% admission and unresolved R9 hold; production activation is not authorized.",
+    "Keep provider error messages, raw outputs, real snapshots and credentials private; real case requires meaningful supported nonliteral model evidence."
+  ],
+  "completed": [
+    "Final engineer guard and frozen request/bundle validation complete; 584 feasibility tests pass.",
+    "All five synthetic cases passed independent raw/literal source review; five primary calls plus one normal shirt condition follow-up.",
+    "The exact-source real case passed raw/model-meaningful and runtime review: HTTP 200, CPU 466 ms, incomplete/null score with 27/40 checks, cache hit with same ID and no extra inference, and duplicate 429.",
+    "Operator verified seven physical calls, actual settlement, accepted infrastructure settlement and removal of both temporary Workers, Tails and all four credentials."
+  ],
+  "remaining": [
+    "Record independent post-call grading review and retain private proofs; no further R14 calls.",
+    "Address real-case C1 purpose, C4 fit and C2 features under a new separately planned change before any readiness decision.",
+    "Retain unknown R9 1004-neuron hold and historical failures; do not activate production."
+  ],
+  "resumeCommands": [
+    "npm run test:feasibility"
+  ],
+  "state": "R14 completed with all synthetic and real raw-source/runtime gates passing, but release readiness is blocked by three independently identified real-case grading undercredits. No R14 retry; production unchanged."
+}

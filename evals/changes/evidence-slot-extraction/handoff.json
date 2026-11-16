@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "state": "R9 closed-failed after one provider invocation returning an error without output/usage. Unknown1004-neuron hold retained; temporary resources removed; production unchanged.",
+  "constraints": [
+    "R8 is closed-failed; retain historical records and do not retry.",
+    "Fixed five cases in order, maximum six synthetic provider calls including the optional normal shirt condition follow-up, then at most one real call only after independent review of every synthetic case.",
+    "Each case requires independent raw slot and source review before the operator approves continuation; no unsupported slot, retries, replacement outputs, or inferred absence.",
+    "Normal allowance admission, one-shot claims, actual settlement, primary CPU at most 1000 ms, and unchanged frozen gold and shirt score apply. Production activation is not authorized."
+  ],
+  "task": "Direct evidence-slot extraction and bounded R9 validation",
+  "decisions": [
+    "Use one required slot per role; mechanically map explicit IDs/contexts to internal facts, with no semantic repair.",
+    "An empty slot and unselected source evidence remain unknown, never absence.",
+    "Preserve explicit width versus fit, all five frozen reference outcomes, PFD care and shirt78.125.",
+    "Keep60% allowances, CPU1000, shared20-second model timeout and existing model; production AI stays off."
+  ],
+  "completed": [
+    "Plan854e4c6 committed before implementation.",
+    "Terra source/test work plus per-case independent review harness, frozen requests and temporary bundle build.",
+    "Focused61 tests and feasibility pass; strict shape fixes include null context, observed inspection and excluded inspection keys."
+  ],
+  "remaining": [
+    "No retry of this failed phase. A separately planned provider-schema compatibility correction must preserve strict decoder/source gates and existing unresolved hold."
+  ],
+  "resumeCommands": [
+    "node evals/changes/evidence-slot-extraction/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r9-build.mjs",
+    "npm run test:feasibility"
+  ]
+}

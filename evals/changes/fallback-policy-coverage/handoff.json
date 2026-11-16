@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "Deterministic policy coverage parity",
+  "state": "Final independent review and refreeze complete after policy parity; current source-bound and hostedCI checks required. No R11 provider invocation; production unchanged.",
+  "decisions": [
+    "Apply the same confirmed-absence principle to fallback reports used without validated AI.",
+    "Require complete safe product and verified complete policy before negative zero; preserve supported positive results.",
+    "Keep weights, shirt78.125, 60% limits, CPU1000 and all historical failed/unknown usage records."
+  ],
+  "constraints": [
+    "No frontend, dependency, production activation or unrelated-service changes.",
+    "No R11 output has informed expected behavior.",
+    "Final R11 source/request/bundle artifacts and CI must reflect parity source before inference."
+  ],
+  "completed": [
+    "Independent reviewer confirmed both fallback negative paths could emit unsupportedzero.",
+    "Final independent source/request/bundle review verified ca3bfb synthetic and133571 real bundle bytes; policy guards apply to both scoring modes."
+  ],
+  "remaining": [
+    "Commit final source and evaluate all applicable change plans, then require hostedCI before inference.",
+    "Run fixed boundedR11 under ordinary admission including unresolvedR9hold, independent raw review after each result and primaryCPU checks.",
+    "Record exact actual outcomes, usage, cleanup and final handoff; no production activation."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change fallback-policy-coverage --base origin/codex/complete-report-assessment",
+    "npm run test:feasibility"
+  ]
+}

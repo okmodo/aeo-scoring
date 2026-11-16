@@ -1,0 +1,9 @@
+{
+  "version":1,"id":"pfd-care-gold","task":"Correct one PFD reference outcome to match independently adjudicated applicable care evidence before R7 model validation.",
+  "scope":["backend/fixtures/content-facts/release-cases.mjs","evals/changes/pfd-care-gold/**"],
+  "nonGoals":["Changing scoring weights, anchors, shirt78.125, any other expected outcome, old recorded failures, or making an unsupported model result pass."],
+  "outcomes":[{"id":"O1","description":"PFD C2.supporting is1.0 when its four source-supported supporting attributes, including explicit freshwater rinsing, are accepted; historical unknown remains documented as the old decoder omission.","verification":"automated","evidence":"Independent source/rubric review, before/after rationale, all frozen category assertions and unchanged shirt78.125."}],
+  "process":[{"id":"P1","description":"Commit this scope and rationale before editing the gold; keep R6 closed-failed and independently review the correction before any R7 output.","verification":"human","evidence":"Git chronology, rubric anchors and Terra adjudication."}],
+  "styleEfficiency":[{"id":"E1","description":"Change only the independently supported reference fraction and retain all other gold assertions.","verification":"human","evidence":"One expected-outcome diff and full regressions."}],
+  "commands":["npm run test:feasibility"],"exitTest":{"required":false,"reason":"Reference-evidence correction does not alter agent workflow or portability."}
+}

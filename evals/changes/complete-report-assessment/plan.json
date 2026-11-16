@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "id": "complete-report-assessment",
+  "task": "Complete and validate existing source-grounded content assessment and supporting inspections, activate under approved limits, and verify production reports.",
+  "scope": [
+    "backend/content-facts.mjs",
+    "backend/content-facts.test.mjs",
+    "backend/fact-grading.mjs",
+    "backend/fact-grading.test.mjs",
+    "backend/semantic-assessment.mjs",
+    "backend/semantic-assessment.test.mjs",
+    "backend/content-assessment.mjs",
+    "backend/content-assessment.test.mjs",
+    "backend/content-facts-runner.mjs",
+    "backend/content-facts-runner.test.mjs",
+    "backend/structure-assessment.mjs",
+    "backend/scoring.test.mjs",
+    "backend/retrieval.mjs",
+    "backend/retrieval.test.mjs",
+    "backend/html-product.mjs",
+    "backend/html-product.test.mjs",
+    "backend/support-assessment.mjs",
+    "backend/support-assessment.test.mjs",
+    "backend/service.mjs",
+    "backend/service.test.mjs",
+    "backend/public-deploy/cloudflare.config.ts",
+    "backend/fixtures/content-facts/**",
+    "test/feasibility.test.mjs",
+    "docs/report-release-validation.md",
+    "docs/content-facts-runtime.md",
+    "evals/changes/complete-report-assessment/**"
+  ],
+  "nonGoals": [
+    "Frontend or dependency changes, rubric weights/bands changes, unrelated Cloudflare services, unsupported or fabricated evidence, guaranteed scores for inaccessible pages."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Validated source facts complete supported content judgments and dependent structure comparisons while preserving selected context, absence and unknown distinctions.",
+      "verification": "automated",
+      "evidence": "Frozen five-category fixtures, ambiguity/conflict/negation tests and existing78.125 expectation."
+    },
+    {
+      "id": "O2",
+      "description": "Supporting inspection resolves valid linked policies and sitemap references using bounded public retrieval, with robots informative only.",
+      "verification": "automated",
+      "evidence": "Synthetic retrieval edge fixtures and actual Kokatat provenance."
+    },
+    {
+      "id": "O3",
+      "description": "Real model calibration and production replay demonstrate grounded facts and usable service outcomes under the accepted60% analytics policy and1000msCPU.",
+      "verification": "human",
+      "evidence": "Independent adjudication, reserved experiment ledger, native runtime observations, hostedCI and sanitized release record."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit immutable plan and validation protocol before model results; use Terra implementation and independent review, CI before authorized merge/deploy.",
+      "verification": "human",
+      "evidence": "Git history, model request hashes and fixed cohort denominator, source-bound runs,review andhandoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing fact/ledger/score representations, preserve contracts and avoid broad parser rewrites.",
+      "verification": "human",
+      "evidence": "Targeted diffs and independent review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Changes scoring and retrieval behavior without changing agent workflow or portability."
+  }
+}

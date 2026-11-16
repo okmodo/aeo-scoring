@@ -1,0 +1,33 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-12-r11",
+  "sourceCommit": "e4b69e5",
+  "evaluatedHead": "a31ffc72569b493c0765c2079ef3e383699ea713",
+  "hostedCI": {
+    "run": 43365126069,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r11s-20261112-a1",
+  "version": "ff2d42f2-84b0-4dc0-9c45-cc49e8efc36b",
+  "bundleSha256": "ca3bfb22e67413c6525beec6a0a85fdc0f9e702381d05817128edef769388530",
+  "proofSha256": "07f84d887d8dcbc935dc56076d9988789f518015efeed533b7dc91ee78724e4c",
+  "providerInvocations": 1,
+  "case": "running-shoes",
+  "httpStatus": 200,
+  "assessment": "assessed",
+  "failure": "Model selected q3/q7 as variant facts but left overlapping configuration slot empty; C1.configuration not_measured instead of predeclared source-supported0.5. No later case ran.",
+  "primaryCpuMs": 98,
+  "providerNeurons": 93.300048828125,
+  "settledNeurons": 94,
+  "priorUnknownR9HoldPreserved": 1004,
+  "laterCasesRun": 0,
+  "realCallRun": false,
+  "productionChanged": false,
+  "cleanup": {
+    "workerDeleted": true,
+    "tailDeleted": true,
+    "credentialsDeleted": true
+  },
+  "cpuCapMs": 1000,
+  "operatingFraction": 0.6
+}

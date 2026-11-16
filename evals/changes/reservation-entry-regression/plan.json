@@ -1,0 +1,11 @@
+{
+  "version":1,"id":"reservation-entry-regression",
+  "task":"Keep the public Worker allowance regression realistic after introducing persistent accounting anchors.",
+  "scope":["backend/public-worker.test.mjs","evals/changes/reservation-entry-regression/**"],
+  "nonGoals":["Changing production entry code, authentication, the frontend, allowance ceilings, or removing exhausted-budget assertions."],
+  "outcomes":[{"id":"O1","description":"Test valid admission before introducing a same-period exhausted account estimate, rather than pretending an exhausted cumulative counter resets to zero; retain all missing-scope, stale-evidence and exhaustion assertions.","verification":"automated","evidence":"Public Worker regression and full feasibility suite."}],
+  "process":[{"id":"P1","description":"Commit the additional test-scope plan before editing the test and independently review the fixture ordering rationale.","verification":"human","evidence":"Git plan chronology and Terra review."}],
+  "styleEfficiency":[{"id":"E1","description":"Make a narrow fixture-state correction without weakening any gate or changing application behavior.","verification":"human","evidence":"Targeted diff and unchanged exhausted-budget expectations."}],
+  "commands":["npm run test:feasibility"],
+  "exitTest":{"required":false,"reason":"A regression fixture ordering correction does not change agent workflow or portability."}
+}

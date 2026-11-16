@@ -1,0 +1,69 @@
+{
+  "sourceCommit": "5c7d0c9",
+  "bundleSha256": "af51d1dd3f6fb7d5031493b97919939d114023119645995ce8963b6448292ad8",
+  "uploaded": true,
+  "previousVersion": "6d73271a-1d79-47be-b230-41b822729083",
+  "deployment": {
+    "id": "d017226f-b68f-41f7-a48f-a2e45c616725",
+    "source": "api",
+    "strategy": "percentage",
+    "author_email": "karlick.keith@gmail.com",
+    "annotations": {
+      "workers/message": "Automatic deployment on upload.",
+      "workers/triggered_by": "upload"
+    },
+    "versions": [
+      {
+        "version_id": "21b1e96c-21f6-4448-a073-dab3d55f3c85",
+        "percentage": 100
+      }
+    ],
+    "created_on": "2026-11-11T21:41:29.575043Z"
+  },
+  "downloadContainsExactBundle": true,
+  "downloadType": "string",
+  "cpuMs": 1000,
+  "bindings": [
+    {
+      "name": "AUDIT_BILLING_ACCOUNT_ID",
+      "type": "plain_text"
+    },
+    {
+      "name": "AUDIT_BILLING_SUBSCRIPTION_ID",
+      "type": "plain_text"
+    },
+    {
+      "name": "AUDIT_DB",
+      "type": "d1"
+    },
+    {
+      "name": "AUDIT_PREVIEW_PASSWORD",
+      "type": "secret_text"
+    },
+    {
+      "name": "AUDIT_PUBLIC_ACCESS",
+      "type": "plain_text",
+      "text": "disabled"
+    },
+    {
+      "name": "AUDIT_RATE_SECRET",
+      "type": "secret_text"
+    },
+    {
+      "name": "AUDIT_USAGE_READ_TOKEN",
+      "type": "secret_text"
+    }
+  ],
+  "verification": {
+    "downloadContainsExactBundle": true,
+    "frontendPreflightStatus": 204,
+    "frontendOrigin": "https://aeo-scoring-preview-20261105-kk7.pages.dev",
+    "unauthorizedAuditStatus": 401,
+    "auditsStarted": 0,
+    "aiBindingPresent": false,
+    "contentReleaseBindingPresent": false,
+    "previewAccessPreserved": true
+  },
+  "authorization": "User explicitly requested deployment after disclosure of incomplete real validation. Deploy code only with inference disabled; this is not calibration approval.",
+  "ci": "https://github.com/okmodo/aeo-scoring/actions/runs/43105068439"
+}

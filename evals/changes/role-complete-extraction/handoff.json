@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Role-complete extraction correction and R8 validation",
+  "state": "R8 closed-failed after one invocation. Decoder rejected malformed completeness decisions; original fit/width raw facts now correct. Production unchanged; temporary resources removed.",
+  "decisions": [
+    "R6 and R7 remain closed-failed; this separately planned algorithm requires a decision for every eligible role/observation.",
+    "Every supported decision and raw fact must agree exactly; unknown never establishes absence.",
+    "Narrow actual width eligibility/support while retaining broad absence-prevention cues and true fit evidence.",
+    "Keep frozen15 outcomes, PFD care adjudication and shirt78.125 unchanged.",
+    "Use ordinary60% admission and CPU1000; no frontend, dependency, preview-access or unrelated-service change; no production activation."
+  ],
+  "constraints": [
+    "Maximum7 physical invocations: fixedfive primaries, optional normalshirtcondition, then onereal onlyafterindependentpass.",
+    "No retries or replacement outputs for failed model cases; preserve all failures.",
+    "Keep private merchant inputs, raw outputs and credentials out of commits; remove temporary resources after tests."
+  ],
+  "completed": [
+    "Terra implementation and new frozen five-category requests.",
+    "Focused59 tests passed, including strict reference decoding and unchangedshirt score.",
+    "New validation client records failed primaryCPU; request/input/reservation bounds measured."
+  ],
+  "remaining": [
+    "No retries of R8. A successor must simplify redundant decision/fact representation under a separately committed plan before implementation."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change role-complete-extraction --base origin/codex/complete-report-assessment",
+    "node evals/changes/role-complete-extraction/freeze-inputs.mjs",
+    "node /private/tmp/aeo-r8-build.mjs"
+  ]
+}

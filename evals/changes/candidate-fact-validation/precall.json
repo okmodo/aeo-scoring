@@ -1,0 +1,111 @@
+{
+  "synthetic": [
+    {
+      "id": "running-shoes",
+      "requestHash": "0bb8496b1fa37dc9418f6cca255368ea063b0609a0494bc858e744b02d35d9fc",
+      "reservationNeurons": 824,
+      "bytes": 20533
+    },
+    {
+      "id": "casual-daypacks",
+      "requestHash": "e4c29a06d85856db8364bc675257811a1f65431b1c4cc605b582a8630adb3183",
+      "reservationNeurons": 812,
+      "bytes": 20095
+    },
+    {
+      "id": "personal-flotation-devices",
+      "requestHash": "f9b956fe8b119602c7aeea48e7a94ee874e28d02de6f2c9b56730311b5770a7e",
+      "reservationNeurons": 843,
+      "bytes": 21263
+    },
+    {
+      "id": "handbags",
+      "requestHash": "bb580bfbda53efd59c8a369f07db5eb89a5494ad77429c2cbf33e78a25b6f89c",
+      "reservationNeurons": 799,
+      "bytes": 19604
+    },
+    {
+      "id": "basic-tshirts",
+      "requestHash": "2d5f07d998db1cca35e77d19c93c0782d19c48c3116a786de973d2effce701c7",
+      "reservationNeurons": 940,
+      "bytes": 22906
+    }
+  ],
+  "real": {
+    "privatePath": "/private/tmp/aeo-ai-r7-real-case-final.json",
+    "requestHash": "44b5b38de63136dcf22e86468494ba75341be632d8fa3ae0c28c375666391fec",
+    "reservationNeurons": 870,
+    "bytes": 16368,
+    "candidates": [
+      {
+        "kind": "identity",
+        "key": "name",
+        "ids": [
+          "q1",
+          "q30"
+        ]
+      },
+      {
+        "kind": "function",
+        "key": "function",
+        "ids": [
+          "q14"
+        ]
+      },
+      {
+        "kind": "context",
+        "key": "price",
+        "ids": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "repeated",
+        "key": "identity",
+        "ids": [
+          "q1",
+          "q30"
+        ]
+      },
+      {
+        "kind": "repeated",
+        "key": "price",
+        "ids": [
+          "q5"
+        ]
+      },
+      {
+        "kind": "repeated",
+        "key": "suitability",
+        "ids": [
+          "q14",
+          "q25",
+          "q26"
+        ]
+      },
+      {
+        "kind": "attribute",
+        "key": "features",
+        "ids": [
+          "q14"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "personal-flotation-devices-intended-use",
+        "ids": [
+          "q14",
+          "q25",
+          "q26"
+        ]
+      },
+      {
+        "kind": "decision",
+        "key": "personal-flotation-devices-compatibility",
+        "ids": [
+          "q14"
+        ]
+      }
+    ]
+  }
+}

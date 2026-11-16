@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "binding": "SHA-256 of JSON.stringify({snapshot,extracted}); final exact request hash must also be precommitted in the executable frozen manifest before any call.",
+  "cases": [
+    {"caseId":"running-shoes","sourceHash":"cd083fb0fde4329c975d91a6b995212f404bc539e341b85cb12d5b7a1021ba6b","alternatives":[{"check":"C4.limitations","conditionKey":"running-limits","inspectionKind":"decision","inspectionKey":"running-limits","status":"not_applicable","rule":"category_conditions_absent"},{"check":"C5.claim-support","conditionKey":"material_claim","inspectionKind":"claim","inspectionKey":"claim","status":"not_applicable","rule":"no_material_claims"}]},
+    {"caseId":"casual-daypacks","sourceHash":"58ce8b6df3a4a3ddddc32989c422fd87148dcf541153e8321d2fee149babfe9d","alternatives":[{"check":"C5.claim-support","conditionKey":"material_claim","inspectionKind":"claim","inspectionKey":"claim","status":"not_applicable","rule":"no_material_claims"}]},
+    {"caseId":"personal-flotation-devices","sourceHash":"916408b34234529116a347c16e246abade07b25845f8dae21813efdd16e7dbed","alternatives":[]},
+    {"caseId":"handbags","sourceHash":"77e1208a9afe3474342cd7a6a853d3f7d908caa8ffd739a11bcf22ade6042d18","alternatives":[{"check":"C4.limitations","conditionKey":"handbags-limitations","inspectionKind":"decision","inspectionKey":"handbags-limitations","status":"not_applicable","rule":"category_conditions_absent"},{"check":"C5.claim-support","conditionKey":"material_claim","inspectionKind":"claim","inspectionKey":"claim","status":"not_applicable","rule":"no_material_claims"}]},
+    {"caseId":"basic-tshirts","sourceHash":"aab588cc6eff2107a70d1ec9b65571f50655ce92845d75a4034c2aef0112be97","alternatives":[]}
+  ],
+  "requiredProof": ["exact frozen case source and primary request hashes match the returned input", "raw primary condition key is absent", "decoded matching product-scope inspection is absent", "product scope is complete and neither truncated nor unsafe nor uninterpreted", "graded status and exact applicability rule match", "independent source review confirms no trigger and all raw assignments and absences are supported", "all other frozen checks and required facts pass exactly"],
+  "disallowed": ["policy measured-zero alternatives", "PFD material claim absence", "shirt live alternatives", "unknown used to conceal a required frozen fact", "unsupported raw roles or absence assertions"]
+}

@@ -63,7 +63,7 @@ test('daily AI resets while storage reservations persist and overlapping cycles 
   const nextEvidence = { ...e, observedAt: tomorrow, aiDay: '2026-11-11' };
   const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
   assert.equal((await reserve(next, 'b', { aiNeurons: 6000, d1StorageBytes: 2 }, tomorrow)).reason, 'allowance_exhausted');
-  assert.equal((await reserve(next, 'c', { aiNeurons: 6000 }, tomorrow)).accepted, true);
+  assert.equal((await reserve(next, 'c', { aiNeurons: 6000 }, tomorrow)).reason, 'allowance_exhausted');
   const overlap = createTestAllowanceGuard(db, { accountId: 'account', evidence: { ...nextEvidence, cycleStart: start }, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
   assert.equal((await reserve(overlap, 'd', { requests: 1 }, tomorrow)).reason, 'cycle_mismatch');
 });
@@ -135,4 +135,146 @@ test('separate SQLite connections enforce simultaneous multi-metric limits atomi
   assert.deepEqual({ ...ai.rows }, { n: 3, requests: 6, ai: 6 });
   assert.equal(ai.totals.requests, 6);
   assert.equal(ai.daily.ai_neurons, 6);
+});
+
+
+test('settlement deduplicates observed usage, preserves bounds, and records overruns', async () => {
+  const allocation = { ...INCLUDED_CEILINGS, requests: 10, aiNeurons: 100 };
+  const e = evidence();
+  const { guard } = setup(e, allocation);
+  assert.equal((await reserve(guard, 'a', { requests: 3, aiNeurons: 80 })).accepted, true);
+  assert.equal((await guard.settle({ id: 'a', costs: { aiNeurons: 20 }, now })).accepted, true);
+  assert.deepEqual(await guard.settle({ id: 'a', costs: { aiNeurons: 20 }, now }), { accepted: true, duplicate: true });
+  assert.equal((await guard.settle({ id: 'a', costs: { aiNeurons: 21 }, now })).reason, 'settlement_conflict');
+  e.usage.aiNeurons = 20; e.usage.requests = 3;
+  assert.equal((await reserve(guard, 'b', { aiNeurons: 80, requests: 7 })).accepted, true);
+  assert.equal((await guard.settle({ id: 'b', costs: { aiNeurons: 90 }, now })).overrun, true);
+  assert.equal((await reserve(guard, 'c', { aiNeurons: 1 })).reason, 'allowance_exhausted');
+});
+
+test('migration holds legacy rows, is idempotent, and anchors verified preexisting settlement', async () => {
+  const sqlite = new DatabaseSync(':memory:');
+  const schema = readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
+  sqlite.exec(schema.slice(0, schema.indexOf('-- Reconciliation is additive')));
+  sqlite.prepare(`INSERT INTO allowance_reservations VALUES ('account','legacy',?,'2026-11-10',?,0,0,0,0,0,900)`)
+    .run(now - 1000, JSON.stringify({ ...zero, aiNeurons: 900 }));
+  const migration = readFileSync(new URL('./migrations/0002-reservation-reconciliation.sql', import.meta.url), 'utf8');
+  const bootstrap = migration.indexOf('-- One atomic statement');
+  sqlite.exec(migration.slice(0, bootstrap));
+  // A v1 writer arriving after trigger installation is counted once by bootstrap.
+  sqlite.prepare(`INSERT INTO allowance_reservations VALUES ('account','concurrent',?,'2026-11-10',?,0,0,0,0,0,1)`)
+    .run(now - 1000, JSON.stringify({ ...zero, aiNeurons: 1 }));
+  sqlite.exec(migration.slice(bootstrap));
+  sqlite.exec(migration);
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 901);
+  const db = { prepare(sql) { return { bind(...args) {
+    const stmt = sqlite.prepare(sql);
+    return { run: async () => stmt.run(...args), first: async () => stmt.get(...args) ?? null };
+  } }; } };
+  const e = evidence(); e.usage.aiNeurons = 805;
+  const guard = createTestAllowanceGuard(db, { accountId: 'account', evidence: e });
+  // Seed the receipt before a verified legacy settlement, without creating an anchor.
+  sqlite.prepare(`INSERT INTO allowance_receipts(account_id,generation,active,subscription_id,cycle_start,cycle_end)
+    VALUES ('account',1,1,'fixture-subscription',?,?)`).run(e.cycleStart, e.cycleEnd);
+  assert.equal((await guard.settle({ id: 'legacy', costs: { aiNeurons: 809 }, now })).accepted, true);
+  sqlite.exec(migration);
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 1);
+  assert.equal((await reserve(guard, 'new', { aiNeurons: 5190 })).accepted, true);
+  assert.equal((await reserve(guard, 'over', { aiNeurons: 1 })).reason, 'allowance_exhausted');
+  assert.deepEqual({ ...sqlite.prepare("SELECT baseline, cutoff FROM allowance_anchors_v2 WHERE metric='aiNeurons'").get() }, { baseline: 809, cutoff: 809 });
+});
+
+test('unresolved AI holds carry across midnight and settlement charges both days', async () => {
+  const start = Date.UTC(2026, 10, 10, 23, 59);
+  const e = { ...evidence(), observedAt: start, cycleStart: start - 1000, cycleEnd: start + 600000 };
+  const { db, guard, sqlite } = setup(e);
+  assert.equal((await reserve(guard, 'late', { aiNeurons: 6000 }, start)).accepted, true);
+  const tomorrow = start + 120000;
+  const nextEvidence = { ...e, observedAt: tomorrow, aiDay: '2026-11-11' };
+  const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence });
+  assert.equal((await reserve(next, 'blocked', { aiNeurons: 1 }, tomorrow)).reason, 'allowance_exhausted');
+  assert.equal((await next.settle({ id: 'late', costs: { aiNeurons: 20 }, now: tomorrow })).accepted, true);
+  assert.equal((await reserve(next, 'available', { aiNeurons: 5980 }, tomorrow)).accepted, true);
+  assert.equal((await reserve(next, 'blocked-again', { aiNeurons: 1 }, tomorrow)).reason, 'allowance_exhausted');
+  assert.deepEqual(sqlite.prepare("SELECT period, amount FROM allowance_settled_v2 WHERE metric='aiNeurons' ORDER BY period").all().map(r => ({...r})), [
+    { period: '2026-11-10', amount: 20 }, { period: '2026-11-11', amount: 20 },
+  ]);
+});
+
+test('settlement rejects earlier and multiple-day completions while preserving the hold', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'chronology', { aiNeurons: 10 })).accepted, true);
+  assert.equal((await guard.settle({ id: 'chronology', costs: { aiNeurons: 1 }, now: now - 2000 })).reason, 'invalid_evidence');
+  const later = now + 2 * 86400000;
+  sqlite.prepare('UPDATE allowance_receipts SET cycle_end = ?').run(later + 1000);
+  assert.equal((await guard.settle({ id: 'chronology', costs: { aiNeurons: 1 }, now: later })).reason, 'invalid_chronology');
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 10);
+});
+
+test('settlement only crosses adjacent proven billing cycles', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'cycle', { aiNeurons: 10 })).accepted, true);
+  const next = now + 1000000;
+  sqlite.prepare('UPDATE allowance_receipts SET cycle_start = ?, cycle_end = ?').run(next + 1, next + 2000000);
+  assert.equal((await guard.settle({ id: 'cycle', costs: { aiNeurons: 2 }, now: next + 2 })).reason, 'invalid_chronology');
+  sqlite.prepare('UPDATE allowance_receipts SET cycle_start = ?').run(next);
+  assert.equal((await guard.settle({ id: 'cycle', costs: { aiNeurons: 2 }, now: next + 2 })).accepted, true);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) AS n FROM allowance_settled_v2 WHERE metric='requests'").get().n, 2);
+});
+
+test('database rejects orphan, invalid and underfunded settlements', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'held', { aiNeurons: 10 })).accepted, true);
+  const insert = sqlite.prepare('INSERT INTO allowance_settlements_v2 VALUES (?, ?, ?, ?, ?, ?)');
+  assert.throws(() => insert.run('account', 'missing', 1, now, String(now - 1000), '2026-11-10'));
+  assert.throws(() => insert.run('account', 'held', -1, now, String(now - 1000), '2026-11-10'));
+  assert.throws(() => insert.run('account', 'held', 1, now, String(now - 1000), '2026-11-09'));
+  assert.throws(() => sqlite.prepare("UPDATE allowance_pending_v2 SET amount = -1 WHERE metric='aiNeurons'").run());
+  sqlite.prepare("UPDATE allowance_pending_v2 SET amount = 0 WHERE metric='aiNeurons'").run();
+  assert.throws(() => insert.run('account', 'held', 1, now, String(now - 1000), '2026-11-10'));
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM allowance_settlements_v2').get().n, 0);
+});
+
+test('receipt generation change during settlement leaves reservation pending', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'race', { aiNeurons: 10 })).accepted, true);
+  const { createAllowanceGuard } = await import('./allowance-store.mjs');
+  const db = { prepare(sql) { return { bind(...args) {
+    const stmt = sqlite.prepare(sql);
+    return { run: async () => stmt.run(...args), first: async () => {
+      const value = stmt.get(...args) ?? null;
+      if (sql.startsWith('SELECT generation, cycle_start')) sqlite.prepare('UPDATE allowance_receipts SET generation = generation + 1').run();
+      return value;
+    } };
+  } }; } };
+  const raced = createAllowanceGuard(db, { accountId: 'account', subscriptionId: 'fixture-subscription' });
+  assert.equal((await raced.settle({ id: 'race', costs: { aiNeurons: 1 }, now })).accepted, false);
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 10);
+});
+
+test('simultaneous settlement retries return duplicate or conflict without losing the hold twice', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'same', { aiNeurons: 10 })).accepted, true);
+  const same = await Promise.all([
+    guard.settle({ id: 'same', costs: { aiNeurons: 3 }, now }),
+    guard.settle({ id: 'same', costs: { aiNeurons: 3 }, now }),
+  ]);
+  assert.equal(same.filter(r => r.accepted && !r.duplicate).length, 1);
+  assert.equal(same.filter(r => r.accepted && r.duplicate).length, 1);
+  assert.equal((await reserve(guard, 'different', { aiNeurons: 10 })).accepted, true);
+  const different = await Promise.all([
+    guard.settle({ id: 'different', costs: { aiNeurons: 3 }, now }),
+    guard.settle({ id: 'different', costs: { aiNeurons: 4 }, now }),
+  ]);
+  assert.equal(different.filter(r => r.accepted).length, 1);
+  assert.equal(different.filter(r => r.reason === 'settlement_conflict').length, 1);
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 0);
+});
+
+test('direct settlement rejects an unproven completion cycle', async () => {
+  const { guard, sqlite } = setup();
+  assert.equal((await reserve(guard, 'cycle-raw', { aiNeurons: 10 })).accepted, true);
+  assert.throws(() => sqlite.prepare('INSERT INTO allowance_settlements_v2 VALUES (?, ?, ?, ?, ?, ?)')
+    .run('account', 'cycle-raw', 1, now, String(now + 2000000), '2026-11-10'));
+  assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 10);
 });

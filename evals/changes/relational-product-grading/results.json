@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "proofSha256": "312a3b2b7954cf867276d199066f4c89bfe0aaf57847da91391124d79420bacc",
+  "requestSha256": "41bd86578b9b4c97dd99f55963393a4413f39b4dd358b21203551429f2c8bc9a",
+  "modelInvocationsDuringReplay": 0,
+  "rawOutputModified": false,
+  "before": {
+    "status": "incomplete",
+    "score": null,
+    "measured": 27,
+    "notMeasured": 13,
+    "notApplicable": 0,
+    "total": 40
+  },
+  "after": {
+    "status": "incomplete",
+    "score": null,
+    "measured": 27,
+    "notMeasured": 13,
+    "notApplicable": 0,
+    "total": 40
+  },
+  "differences": [
+    {
+      "id": "S1.description",
+      "before": {
+        "status": "measured",
+        "fraction": 0.5,
+        "evidenceSha256": [
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      },
+      "after": {
+        "status": "measured",
+        "fraction": 1,
+        "evidenceSha256": [
+          "226f757149df051ee525cf1e974999be074389696611c9b5229d4473674c56eb",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      }
+    },
+    {
+      "id": "C1.explanation",
+      "before": {
+        "status": "measured",
+        "fraction": 0.5,
+        "evidenceSha256": [
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      },
+      "after": {
+        "status": "measured",
+        "fraction": 1,
+        "evidenceSha256": [
+          "226f757149df051ee525cf1e974999be074389696611c9b5229d4473674c56eb",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      }
+    },
+    {
+      "id": "C2.supporting",
+      "before": {
+        "status": "not_measured",
+        "fraction": null,
+        "evidenceSha256": [
+          "0bd00397b154560a41fdfbb5305284e3ee8af418612e7614c12caff97bdb4ce4",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      },
+      "after": {
+        "status": "not_measured",
+        "fraction": null,
+        "evidenceSha256": [
+          "3205926e9e2da7014f735d54d37c28a43963196fddf7470deeca991830321eb3",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      }
+    },
+    {
+      "id": "C4.compatibility",
+      "before": {
+        "status": "measured",
+        "fraction": 0.5,
+        "evidenceSha256": [
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a",
+          "f5ce270e60befbb33205e2897ba29ce70905a3f1be31cc60e37b985c9129111e"
+        ]
+      },
+      "after": {
+        "status": "measured",
+        "fraction": 1,
+        "evidenceSha256": [
+          "8bd12038f8874a78db1803165dffd5f15dac4db2173339ef1422fe9ad1a6de3c",
+          "bf54dc02ffc2d951b60471b241a1f058a7f8cabf8c5accd39663479da44a474a"
+        ]
+      }
+    }
+  ],
+  "attributeChanges": [
+    {
+      "id": "features",
+      "before": {
+        "status": "not_measured",
+        "fraction": null
+      },
+      "after": {
+        "status": "measured",
+        "fraction": 1
+      }
+    }
+  ],
+  "baselineGraderSha256": "e991f2c549ee1337e927e3f7eb5e2c9afa9a3c2b7132b37a12988a29e213a8f0",
+  "decodedFactCount": 15,
+  "oldRuntime": {
+    "cpuMs": 466,
+    "source": "previous R14 measurement; not this offline replay"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "phase": "R14",
+  "status": "readiness_blocked",
+  "summary": "All five synthetic cases passed independent raw and literal source review. The real case passed raw-source, meaningful-model-evidence and runtime checks, but independent review found three grading undercredits; overall release readiness is blocked.",
+  "synthetic": {
+    "sourceReview": "passed all five in fixed order",
+    "primaryCpuMs": [112, 66, 125, 37, 123],
+    "settledNeurons": [128, 122, 132, 107, 156],
+    "shirtUsage": { "primaryNeurons": 135.761, "conditionFollowupNeurons": 19.546, "combinedSettledNeurons": 156 },
+    "privateProofSha256": "830bcb6d6c5b817498e3f0a8011cab5907bc76068282e7a813dd9df491773291"
+  },
+  "real": {
+    "httpStatus": 200,
+    "assessmentStatus": "incomplete",
+    "score": null,
+    "measuredChecks": 27,
+    "totalChecks": 40,
+    "primaryCpuMs": 466,
+    "providerInvocations": 1,
+    "actualNeurons": 118.7163,
+    "settledNeurons": 119,
+    "reservedNeurons": 993,
+    "settlementId": "df74c45e-194d-48df-a93a-3744eac48920",
+    "sourceReview": "passed; meaningful supported model evidence beyond literals",
+    "cache": { "hit": true, "sameId": true, "noAdditionalAI": true },
+    "duplicateStatus": 429,
+    "privateProofSha256": "312a3b2b7954cf867276d199066f4c89bfe0aaf57847da91391124d79420bacc"
+  },
+  "physicalProviderInvocations": 7,
+  "gradingBlockers": ["C1 purpose", "C4 fit", "C2 features"],
+  "accountingAndCleanup": {
+    "source": "operator-verified ledger and cleanup",
+    "infrastructureReservationId": "ai-r14-validation-infra-20261112-a1",
+    "infrastructureSettlement": "accepted",
+    "priorR9UnknownHoldNeurons": 1004,
+    "temporaryWorkersAndTailsDeletedAndAbsenceVerified": true,
+    "allFourCredentialsAbsent": true
+  },
+  "productionActivated": false,
+  "productionState": "Existing worker remains unchanged with CPU cap 1000 and AI disabled.",
+  "rawOutputs": "Private proofs only; not included in public artifacts."
+}

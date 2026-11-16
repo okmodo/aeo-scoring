@@ -1,0 +1,19 @@
+{
+  "releaseId":"content-facts-2026-11-11-r6",
+  "model":"@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "temperature":0,
+  "maxOutputTokens":1536,
+  "requestSha256":"11dc42a67b2ffe808cfa56045e007a1177342c521944cc74ffe48171da445475",
+  "observations":56,
+  "productComplete":false,
+  "uninterpretedScopes":["product"],
+  "reservationNeurons":937,
+  "priorModelInvocations":9,
+  "maximumAdditionalProviderInvocations":1,
+  "maximumTotalCohortProviderInvocations":10,
+  "target":"https://kokatat.com/naiad-pfd-lvhnai",
+  "requirements":["Exact source/request match or no inference", "Ordinary current-day allowance admission", "Independent source support for every raw and accepted role and absence", "Null final score for incomplete assessment", "Same report cached without another provider call", "Measured primary CPU not above1000ms", "All original60% ceilings and preview access unchanged"],
+  "privateExpectations":"/private/tmp/aeo-ai-r6-final-independent-expected.json",
+  "telemetry":"Ephemeral real-time Tail session for this temporary project Worker only. No Tail Worker, persisted logs, or traces. Client must observe primary CPU telemetry for a control request before any inference, and must correlate primary audit telemetry before the repeated request. Only whitelisted scalar metrics and request pathnames are retained.",
+  "envelope":"Ephemeral operator and tail credentials are encrypted to a private local RSA key using AES-GCM with RSA-OAEP key wrapping; private material is deleted after the attempt. No existing Worker or billing secret is extracted."
+}

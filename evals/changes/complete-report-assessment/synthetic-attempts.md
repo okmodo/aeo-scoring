@@ -1,0 +1,5 @@
+# Synthetic calibration attempts
+
+The first running-shoes extraction proposed source-supported facts but also marked weight and surface absent in raw inspections despite proposing matching facts. The decoder reconciled these to observed; independent review rejected the contradictory raw proposals. Revision 2 changed the instruction and output cap before the cohort rerun. The first attempt remains a failure; its raw capture was retained privately.
+
+The revision 2 synthetic responses and revision 4 focused shirt response are frozen in `backend/fixtures/content-facts/release-model-v2.json` as provider response bodies. Raw revision 2 omissions remain visible; deterministic, source-bound supplements supply supported heading, laptop fit, carry, and size facts. For the shirt, the revision 3 focused inspection returned both condition checks unknown; this did not establish absence. Revision 4 returned both absent, subject to independent source review and ordinary cue and completeness validation. The revision 3 wire remains privately retained. These records contain synthetic inputs only, and do not establish real-product performance.

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "evidence-slot-extraction",
+  "task": "Remove redundant S/N/U-versus-facts serialization by assigning evidence IDs directly to required role slots, then independently validate the new representation under the continuing authorized extraction fix.",
+  "scope": [
+    "backend/content-facts.mjs",
+    "backend/content-facts.test.mjs",
+    "backend/content-facts-runner.mjs",
+    "backend/content-facts-runner.test.mjs",
+    "backend/fact-grading.mjs",
+    "backend/fact-grading.test.mjs",
+    "backend/fixtures/content-facts/**",
+    "backend/content-facts-release.mjs",
+    "backend/content-facts-release.test.mjs",
+    "test/feasibility.test.mjs",
+    "docs/content-facts-runtime.md",
+    "docs/evidence-slot-extraction.md",
+    "evals/changes/evidence-slot-extraction/**"
+  ],
+  "nonGoals": [
+    "No frontend, dependencies, gold, scoring weights, model, policy limits, production activation or unrelated service changes. R6/R7/R8 remain closed-failed with immutable history; no retries or reclassification."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "A single required role-slot map carries eligible evidence IDs directly, with no second decision ledger. Every eligible role is explicitly present; an empty list means unknown, never absence. Preserve multiple observations and repeated contexts. Omitted/extra/cross-role/duplicate/invalid assignments fail closed; raw slot assignments remain independently reviewable.",
+      "verification": "automated",
+      "evidence": "Positive, negative, omitted role, wrong-role, multi-role and cross-category regression cases; all frozen reference roles retained and request/output/reservation bounds measured."
+    },
+    {
+      "id": "O2",
+      "description": "Independently audit exact final slot requests, included/excluded source and preserved frozen references before a separately bounded R9 experiment: fixedfive cases once in order, independent raw review aftereach, zero unsupported raw slots, unchanged15 findings and shirt78.125.",
+      "verification": "human",
+      "evidence": "Frozen canonical hashes before any call, original source reference outcomes, source-level independent pre/post-call reviews and all failed outputs retained."
+    },
+    {
+      "id": "O3",
+      "description": "Only after allfive independently pass, perform one exact-source Kokatat call with primary CPU<=1000, cache without inference, normal admission and actual settlement; report readiness without production activation.",
+      "verification": "human",
+      "evidence": "At most seven physical provider invocations: five fixed primary synthetic calls, one optional normal shirt condition call, then one real call. No retries of model failures, no replacement cases, actual primary CPU including failed cases when available, D1 settlement and cleanup records."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this successor plan before changes, preserve R8 contract failure, and use Terra implementation/tooling/independent review. Bind canonical input and bundle hashes, require current source checks and hostedCI beforecalls, and enforce ordinary account60% admission. Maximum7 physical calls: fixedfive, optional normalshirtcondition, thenonereal. No failedcase retries/replacements.",
+      "verification": "human",
+      "evidence": "Git chronology, trace limitations, actual provider invocations and usage, independent source review, account receipt and exact temporary Worker bundle/settings. Temporary resources and credentials removed after validation."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Eliminate duplicated model statements rather than weakening completeness or source checks. Normalize explicit role slots to internal facts only mechanically; no semantic repair, inferred support or hidden supplements. Preserve repeated contexts, broad absence cues, raw outputs and all prior failures. Measure request/output/reservation bounds before calls.",
+      "verification": "human",
+      "evidence": "Focused diff, all raw proposals reviewed separately from decoder/literal supplements, input/token/CPU bounds and source-preserving handoff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This change concerns fact extraction and its bounded release experiment, not agent portability, memory or resumability."
+  }
+}

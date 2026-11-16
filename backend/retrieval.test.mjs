@@ -465,3 +465,44 @@ test('a discovered matching child cannot hide a second uninspected declared site
   assert.deepEqual(result.sitemap,{usableSource:null,inclusionSource:'https://example.com/child.xml',complete:false});
   assert.ok(!calls.some(call=>call.url.endsWith('/second.xml')));
 });
+
+
+test('policy inspection continues past JSON-LD before linked shipping and returns terms', async () => {
+  const html = '<html><head><script type="application/ld+json">{"@type":"WebPage"}</script></head><body><main><h1>Shipping and returns</h1><p>Orders ship within two days.</p><p>Return unworn items within 30 days.</p></main></body></html>';
+  const snapshot = await retrieve('https://example.com/a', {
+    egress: binding({ '/a': page(), '/robots.txt': new Response(''), '/shipping-returns': new Response(html, { headers: { 'content-type': 'text/html' } }) }),
+    observeGuides: true, HTMLRewriter: HtmlTestRewriter,
+    consumeHtml: async () => ({ productHtml: { discoveryLinks: [{ url: '/shipping-returns', text: 'Shipping and returns' }] } }),
+  });
+  for (const kind of ['shipping', 'returns']) {
+    assert.equal(snapshot.policies[kind].state, 'read');
+    assert.equal(snapshot.policies[kind].extraction.complete, true);
+    assert.deepEqual(snapshot.policies[kind].extraction.blocks.map(block => block.text), ['Orders ship within two days.', 'Return unworn items within 30 days.']);
+  }
+});
+
+
+test('complete maintenance and challenge pages are unusable without associated product markup', async () => {
+  for (const label of ["We’re working on it.", 'Access denied', 'Just a moment...']) {
+    const snapshot = { url: 'https://example.com/item', body: `<html><head><title>Example</title></head><body><main><h1>${label}</h1><p>Please try again later.</p></main></body></html>` };
+    assert.equal((await extract(snapshot, { HTMLRewriter: HtmlTestRewriter })).coverage.usable, false);
+  }
+});
+
+test('interstitial words in products and associated product headings remain usable', async () => {
+  for (const html of [
+    '<main><h1>Maintenance Kit</h1><p>We are working on it.</p></main>',
+    '<main itemscope itemtype="https://schema.org/Product"><h1 itemprop="name">Access denied</h1><p>A novelty product.</p></main>',
+    '<title>Access denied</title><main><h1>Everyday Bag</h1><p>A useful bag.</p></main>',
+  ]) {
+    const result = await extract({ url: 'https://example.com/item', body: html }, { HTMLRewriter: HtmlTestRewriter });
+    assert.equal(result.coverage.usable, true);
+  }
+});
+
+test('incomplete interstitial-like HTML remains unclassified', async () => {
+  const snapshot = { url: 'https://example.com/item', htmlLimited: 'bytes', body: '<main><h1>Access denied</h1><p>Later content may contain a product.</p></main>' };
+  const result = await extract(snapshot, { HTMLRewriter: HtmlTestRewriter });
+  assert.equal(result.coverage.usable, true);
+  assert.equal(result.productHtml.complete, false);
+});

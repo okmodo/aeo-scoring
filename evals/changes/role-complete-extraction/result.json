@@ -1,0 +1,32 @@
+{
+  "state": "closed-failed",
+  "release": "content-facts-2026-11-12-r8",
+  "sourceCommit": "10933b9",
+  "evaluatedHead": "8f5e57d7ea9b5b8ac7e28bcb9cd9e984dc092f2b",
+  "hostedCI": {
+    "run": 43358943694,
+    "status": "passed"
+  },
+  "worker": "aeo-audit-validate-r8s-20261112-a1",
+  "version": "9191b931-9330-468a-bdab-8d1a486e5f70",
+  "bundleSha256": "4569a573f9936e1a9a1a77ce1c5c9dc2e5457673607327f34561a779313cdc9e",
+  "proofSha256": "5df3912755c5e357e3174e74083a64114928a900788d03ea4fde754ee235c271",
+  "providerInvocations": 1,
+  "case": "running-shoes",
+  "httpStatus": 200,
+  "assessment": "unavailable",
+  "failure": "Malformed/inconsistent role decision strings; exact supported-decisions and fact correspondence rejected. All14 literal raw facts source-supported, includingfit/width, but completeness contract failed.",
+  "primaryCpuMs": 48,
+  "providerNeurons": 151.53192138671875,
+  "settledNeurons": 152,
+  "laterCasesRun": 0,
+  "realCallRun": false,
+  "productionChanged": false,
+  "cleanup": {
+    "workerDeleted": true,
+    "tailDeleted": true,
+    "credentialsDeleted": true
+  },
+  "cpuCapMs": 1000,
+  "operatingFraction": 0.6
+}

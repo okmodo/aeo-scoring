@@ -1,0 +1,20 @@
+// Freeze one request from the captured private source; never publish its raw content.
+import { readFile, writeFile, chmod } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { scoreAudit } from '../../../backend/scoring.mjs';
+import { buildSemanticRequest } from '../../../backend/semantic-assessment.mjs';
+import { inspectProductSchema } from '../../../backend/structure-assessment.mjs';
+import { buildContentFactsRequest } from '../../../backend/content-facts.mjs';
+import { contentFactsReservation, CONTENT_FACTS_RELEASE_ID, CONTENT_FACTS_CALIBRATION_APPROVED } from '../../../backend/content-facts-runner.mjs';
+const sha=x=>createHash('sha256').update(x).digest('hex');
+const captured=await readFile(process.argv[2] || '/private/tmp/aeo-ai-r14-real-runtime.json');
+if (sha(captured)!=='312a3b2b7954cf867276d199066f4c89bfe0aaf57847da91391124d79420bacc') throw new Error('Captured proof mismatch');
+if (CONTENT_FACTS_RELEASE_ID!=='content-facts-2026-11-12-r15' || CONTENT_FACTS_CALIBRATION_APPROVED!==false) throw new Error('Release guard mismatch');
+const proof=JSON.parse(captured).proof,snapshot=proof?.validation?.snapshot,extracted=snapshot?.extracted;
+if (!snapshot || !extracted) throw new Error('Captured source missing');
+const report=scoreAudit(snapshot,extracted),prepared=buildSemanticRequest(snapshot,extracted,report,{product:inspectProductSchema(snapshot,extracted).product}),request=buildContentFactsRequest(prepared),requestHash=sha(JSON.stringify(request));
+if (requestHash!=='41bd86578b9b4c97dd99f55963393a4413f39b4dd358b21203551429f2c8bc9a' || proof.validation.preflight?.inputHash!==requestHash || sha(JSON.stringify(proof.validation.modelCalls?.[0]?.input))!==requestHash) throw new Error('Exact request mismatch');
+const privatePath='/private/tmp/aeo-ai-r15-real-case-final.json';
+await writeFile(privatePath,JSON.stringify({snapshot,extracted,report,prepared,request,requestHash}),{mode:0o600});await chmod(privatePath,0o600);
+const summary={version:1,priorProofSha256:sha(captured),requestHash,reservationNeurons:contentFactsReservation(request),bytes:Buffer.byteLength(JSON.stringify(request)),releaseId:CONTENT_FACTS_RELEASE_ID,calibrationApproved:CONTENT_FACTS_CALIBRATION_APPROVED,privatePath};
+await writeFile(new URL('./precall.json',import.meta.url),JSON.stringify(summary,null,2)+'\n');console.log(JSON.stringify(summary));

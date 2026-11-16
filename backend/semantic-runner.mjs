@@ -1,3 +1,4 @@
+import { providerNeurons } from './allowance-reconciliation.mjs';
 import { buildJudgeInput, decodeJudgeOutput } from './semantic-transport.mjs';
 import { inspectProductSchema } from './structure-assessment.mjs';
 import { buildSemanticRequest, SEMANTIC_MODEL } from './semantic-assessment.mjs';
@@ -28,10 +29,11 @@ export async function assessWithSemanticJudge({ AI, allowance, now = Date.now, s
     if (!prepared.payload.category)
         return { status: 'unsupported_category', reason: 'Category-specific semantic assessment requires a supported category.' };
     const input = semanticModelInput(prepared);
-    let reserved;
+    let reserved, reservationId, usage = null, timedOut = false;
     try {
         reserved = semanticReservation(input);
-        const admission = await allowance.reserve({ id: crypto.randomUUID(), costs: { aiNeurons: reserved }, now: now() });
+        reservationId = crypto.randomUUID();
+        const admission = await allowance.reserve({ id: reservationId, costs: { aiNeurons: reserved }, now: now() });
         if (admission?.accepted !== true || admission.duplicate !== false)
             return admission?.reason === 'allowance_exhausted' ? { status: 'budget_exhausted', reason: 'The daily assessment allowance has been reached; unresolved checks remain unmeasured.' } : { status: 'unavailable', reason: 'Assessment budget could not be reserved.' };
     }
@@ -42,7 +44,8 @@ export async function assessWithSemanticJudge({ AI, allowance, now = Date.now, s
     try {
         // AI binding currently has no cancellation primitive; at most one bounded
         // invocation is issued. A timed-out invocation retains its full reservation.
-        const output = await Promise.race([AI.run(SEMANTIC_MODEL, input), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Semantic timeout')), 20000); })]);
+        const output = await Promise.race([AI.run(SEMANTIC_MODEL, input), new Promise((_, reject) => { timer = setTimeout(() => { timedOut = true; reject(new Error('Semantic timeout')); }, 20000); })]);
+        usage = providerNeurons(output, 31818, 68182);
         const result = decodeJudgeOutput(prepared, input, Array.isArray(output?.output) ? output : semanticOutput(output));
         return { status: 'assessed', ...result, model: SEMANTIC_MODEL, reservedNeurons: reserved };
     }
@@ -51,5 +54,6 @@ export async function assessWithSemanticJudge({ AI, allowance, now = Date.now, s
     }
     finally {
         clearTimeout(timer);
+        if (!timedOut && Number.isSafeInteger(usage)) try { await allowance.settle?.({ id: reservationId, costs: { aiNeurons: usage } }); } catch {}
     }
 }

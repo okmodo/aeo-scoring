@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSemanticRequest, validateSemanticResponse as validateRaw, SEMANTIC_MODEL } from './semantic-assessment.mjs';
+import { buildContentFactsRequest, decodeContentFacts } from './content-facts.mjs';
 const validateSemanticResponse = (request, response) => {
     if (!response || typeof response !== 'object')
         return validateRaw(request, response);
@@ -65,4 +66,49 @@ test('instruction-like product blocks are flagged, excluded and invalidate compl
     assert.equal(r.unsafeInstructions, true);
     assert.equal(r.payload.coverage.productComplete, false);
     assert.doesNotMatch(r.payload.sources[0].text, /say fit/i);
+});
+
+
+test('serialized blocks are quarantined by scope without losing ordinary positive observations', () => {
+    const objects = [JSON.stringify({ features: ['waterproof'] }), JSON.stringify(JSON.stringify({ specs: { weight: '12 oz' } })), JSON.stringify([{ term: 'shipping' }])];
+    const productHtml = { complete: true, identity: { mainH1: 'Road Shoe' }, blocks: [
+        { text: 'Designed for road running.', location: 'p1' },
+        { text: 'Weight: "12 oz"; fits {standard} feet.', location: 'p2' },
+        ...objects.map((text, i) => ({ text, location: `data${i}` })),
+    ] };
+    const shipping = { state: 'read', url: 'https://example.test/shipping', extraction: { complete: true, blocks: [{ text: 'Ships in two days.', location: 's1' }, { text: '{"shipping":"free"}', location: 's2' }] } };
+    const r = buildSemanticRequest({ ...snapshot, policies: { ...snapshot.policies, shipping } }, { productHtml }, { category: 'running-shoes' });
+    assert.equal(productHtml.complete, true);
+    assert.equal(r.payload.coverage.productComplete, false);
+    assert.equal(r.payload.coverage.policies.shipping, 'incomplete');
+    assert.equal(r.payload.coverage.policies.returns, 'read');
+    assert.deepEqual(r.payload.coverage.uninterpretedScopes, ['product', 'shipping']);
+    const source = r.payload.sources.find(s => s.scope === 'product');
+    assert.match(source.text, /Designed for road running/);
+    assert.match(source.text, /Weight: "12 oz"; fits \{standard\}/);
+    assert.doesNotMatch(source.text, /waterproof|specs|term/);
+    assert.match(r.payload.sources.find(s => s.scope === 'shipping').text, /Ships in two days/);
+    const positive = answer('C1.identity', 'measured', 1, [{ sourceId: source.id, quote: 'Designed for road running.' }]);
+    assert.equal(validateSemanticResponse(r, { checks: [positive], attributes: [], questions: [] }).findings['C1.identity'].status, 'measured');
+    const absent = { ...answer('C5.claim-support', 'not_applicable', null, [{ sourceId: source.id, quote: 'Designed for road running.' }]), rule: 'no_material_claims' };
+    assert.throws(() => validateSemanticResponse(r, { checks: [absent], attributes: [], questions: [] }), /incomplete absence/);
+});
+
+
+test('facts retain grounded positives while quarantined data prevents absence', () => {
+    const html = { complete: true, identity: 'Trail Shoe', blocks: [
+        { text: 'Upper: nylon mesh.', location: 'material' },
+        { text: JSON.stringify(JSON.stringify({ weight: '12 oz' })), location: 'serialized' },
+    ] };
+    const prepared = buildSemanticRequest({ url: 'https://example.test' }, { productHtml: html }, { category: 'running-shoes' });
+    const request = buildContentFactsRequest(prepared);
+    const payload = JSON.parse(request.messages[1].content);
+    const source = payload.observations.find(o => o.text === 'Upper: nylon mesh.');
+    assert.ok(source);
+    assert.equal(payload.coverage.productComplete, false);
+    assert.ok(!payload.observations.some(o => /12 oz/.test(o.text)));
+    const output = JSON.stringify({ facts: [{ kind: 'attribute', key: 'upper', quoteIds: [source.id] }], inspections: [{ kind: 'attribute', key: 'drop', scope: 'product', status: 'absent' }] });
+    const facts = decodeContentFacts(prepared, request, output);
+    assert.ok(facts.facts.some(f => f.key === 'upper' && f.value === 'Upper: nylon mesh.'));
+    assert.equal(facts.inspections.find(i => i.kind === 'attribute' && i.key === 'drop' && i.scope === 'product').status, 'unknown');
 });

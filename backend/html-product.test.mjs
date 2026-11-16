@@ -83,3 +83,15 @@ test('element limit suppresses later text rather than losing hidden-script conte
     assert.equal(result.complete, false);
     assert.doesNotMatch(JSON.stringify(result), /private-script-text|After/);
 });
+
+test('legacy observations retain the frozen baseline for reviews, recommendations, checkboxes and hidden regions', async () => {
+    const cases = [
+        ['<main><h1>Item</h1><section class="reviews"><p>Customer review</p><a href="/shipping">Shipping</a></section><div class="recommendations"><p>Other item</p><a href="/returns">Returns</a></div><input type="checkbox" name="newsletter" checked value="yes"></main>', {"complete":true,"blocks":[{"text":"Customer review","location":"html:element:7"}],"headings":[{"text":"Item","level":1,"location":"html:element:5"}],"images":[],"links":[{"url":"/shipping","text":"Shipping","location":"html:element:8"}],"identity":{"title":null,"mainH1":"Item"},"visibility":"unknown","discoveryLinks":[{"url":"/shipping","text":"Shipping","location":"html:element:8"},{"url":"/returns","text":"Returns","location":"html:element:11"}],"otherProductMarkup":false,"selectedControls":[{"name":"newsletter","value":"yes","type":"checkbox","location":"html:element:12"}],"priceCandidates":[],"hasVariantControls":false,"singleConfiguration":null,"structuredRecords":[],"unsupportedProductMarkup":false,"platform":null}],
+        ['<main hidden><h1>Hidden</h1></main><main><h1>Visible</h1><p>Details</p></main>', {"complete":false,"blocks":[{"text":"Details","location":"html:element:8"}],"headings":[{"text":"Visible","level":1,"location":"html:element:7"}],"images":[],"links":[],"identity":{"title":null,"mainH1":"Visible"},"visibility":"unknown","discoveryLinks":[],"otherProductMarkup":false,"selectedControls":[],"priceCandidates":[],"hasVariantControls":false,"singleConfiguration":null,"structuredRecords":[],"unsupportedProductMarkup":false,"platform":null}]
+    ];
+    for (const [markup, expected] of cases) {
+        const result = await extract(markup);
+        delete result.sourceObservation;
+        assert.deepEqual(result, expected);
+    }
+});

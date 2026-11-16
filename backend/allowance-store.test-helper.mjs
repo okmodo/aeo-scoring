@@ -5,7 +5,7 @@ import { METRICS } from './allowance-policy.mjs';
 export function createTestAllowanceGuard(db, { accountId, evidence, allocations } = {}) {
   const subscriptionId = 'fixture-subscription';
   const guard = createAllowanceGuard(db, { accountId, subscriptionId, allocations });
-  return { async reserve(request) {
+  return { settle: request => guard.settle(request), async reserve(request) {
     const e = evidence ?? {};
     const active = e.verified === true && e.accountId === accountId ? 1 : 0;
     const marks = Object.fromEntries(METRICS.map(key => [key, e.observedAt ?? null]));

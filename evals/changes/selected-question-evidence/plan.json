@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "selected-question-evidence",
+  "task": "Exclude selected-value-only statements from semantic question roles while preserving true fit, compatibility and selection evidence; validate the distinct corrected R14 system.",
+  "scope": [
+    "backend/content-facts.mjs",
+    "backend/content-facts.test.mjs",
+    "test/feasibility.test.mjs",
+    "docs/selected-question-evidence.md",
+    "evals/changes/selected-question-evidence/**"
+  ],
+  "nonGoals": [
+    "Do not retry/reclassify R13 or change any historical output, frozen canonical oracle, scoring weights, frontend, dependencies, model, production activation, access settings, 60% admission limits or CPU1000. Retain unknown R9 AI hold."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Only explicit selected size/color/configuration values cannot qualify as decision answers on their own. Retain all observations for correct configuration/attribute roles, actual fit/width/profile, size-to-body/foot measurement relationships, and mixed statements with substantive question evidence. Keep conservative unknown and absence safety.",
+      "verification": "automated",
+      "evidence": "Allfive-category bare-selected negative matrix; mixed fit/measurement/selection positives; direct disallowed proposal safety; frozen canonical-reference eligibility; existing decoder, grader and cohort checks."
+    },
+    {
+      "id": "O2",
+      "description": "Freeze a distinct R14 cohort with unchanged R13 canonical source oracle and approved proof-bound alternatives before calls. After current evaluations and hostedCI pass, run fixedfive cases once in order, independent raw/literal source review aftereach. Only allfive sourcepasses permit one exact-input Kokatat run with meaningful supported nonliteral evidence, CPU<=1000, actualsettlement and cachedreplay withoutadditionalAI.",
+      "verification": "human",
+      "evidence": "Exact input/bundle hashes, maximum7 physicalcalls including normal optionalshirtfollowup andone real; no retries/replacements aftercasefailure, actualrawfailures preserved privately, sanitizedresults and verifiedcleanup."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this plan alone before implementation; Terra engineering, harness preparation and independent final/per-case review. Keep normal60% budgetadmission and allunresolvedholds; no productionactivation.",
+      "verification": "human",
+      "evidence": "Git chronology, independent full eligibilitymatrix review and exact frozenrequest/bundle verification, actualsource-bound evaluations, hostedCI and budget/CPU evidence."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use a narrow shared guard instead of deleting source or broadly banning size; no gold/output-driven relaxation or semantic score changes.",
+      "verification": "human",
+      "evidence": "Focused boundarydiff, negative/positive testmatrix and honest hybrid-system report."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This corrects extraction evidence eligibility, not agent portability, memory or resumability."
+  }
+}

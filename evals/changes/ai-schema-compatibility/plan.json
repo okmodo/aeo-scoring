@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "ai-schema-compatibility",
+  "task": "Use a smaller provider JSON-schema subset while retaining strict decoder uniqueness, improve private validation diagnostics, and independently rerun the direct-slot contract after the provider rejected R9 without output.",
+  "scope": [
+    "backend/content-facts.mjs",
+    "backend/content-facts.test.mjs",
+    "backend/content-facts-runner.mjs",
+    "backend/content-facts-runner.test.mjs",
+    "backend/fact-grading.mjs",
+    "backend/fact-grading.test.mjs",
+    "backend/fixtures/content-facts/**",
+    "backend/content-facts-release.mjs",
+    "backend/content-facts-release.test.mjs",
+    "test/feasibility.test.mjs",
+    "docs/content-facts-runtime.md",
+    "docs/ai-schema-compatibility.md",
+    "evals/changes/ai-schema-compatibility/**"
+  ],
+  "nonGoals": [
+    "No scoring gold, source threshold, model, frontend, dependencies, production activation, budget or CPU limit changes. Preserve every prior failed phase and the unresolved1004-neuron R9hold; no refunds without verified actual usage."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Remove the provider-facing uniqueItems hint without changing server-side duplicate rejection, including a repeated ID with differing contexts. Exact required role slots, unknowns, source scopes and malformed-response rejection remain unchanged. Capture bounded provider error details only in private validation proofs, never production responses or public artifacts.",
+      "verification": "automated",
+      "evidence": "Positive, negative, omitted role, wrong-role, multi-role and cross-category regression cases; all frozen reference roles retained and request/output/reservation bounds measured."
+    },
+    {
+      "id": "O2",
+      "description": "Independently review final exact requests, included/excluded evidence and unchanged reference outcomes before a separately bounded R10 fixed-five experiment with per-case source review, zero unsupported assignments, all15 findings and shirt78.125.",
+      "verification": "human",
+      "evidence": "Frozen canonical hashes before any call, original source reference outcomes, source-level independent pre/post-call reviews and all failed outputs retained."
+    },
+    {
+      "id": "O3",
+      "description": "Only after allfive independently pass, perform one exact-source Kokatat call with primary CPU<=1000, cache without inference, normal admission and actual settlement; report readiness without production activation.",
+      "verification": "human",
+      "evidence": "At most seven physical provider invocations: five fixed primary synthetic calls, one optional normal shirt condition call, then one real call. No retries of model failures, no replacement cases, actual primary CPU including failed cases when available, D1 settlement and cleanup records."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this compatibility plan before changes. Preserve R9 as closed-failed with unconfirmed cause, use Terra implementation/tooling/independent review, require current source-bound and hostedCI checks before calls, ordinary60% allowance admission including existing unknown holds, max7 physical calls with no failed-case retry/replacement. Retain any new unknown usage rather than refunding it.",
+      "verification": "human",
+      "evidence": "Git chronology, trace limitations, actual provider invocations and usage, independent source review, account receipt and exact temporary Worker bundle/settings. Temporary resources and credentials removed after validation."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep direct-slot semantics unchanged; delete only a provider schema hint that may be unsupported while retaining equivalent strict decoder checks. Treat engine-specific cause as inference, not observed fact, and collect bounded private diagnostics for a future provider failure. No semantic output repair or gold changes.",
+      "verification": "human",
+      "evidence": "Focused diff, all raw proposals reviewed separately from decoder/literal supplements, input/token/CPU bounds and source-preserving handoff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This change concerns fact extraction and its bounded release experiment, not agent portability, memory or resumability."
+  }
+}

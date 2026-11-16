@@ -67,14 +67,15 @@ test('authenticated submissions and report reads require current allowance evide
     await expectDenied(env, 503);
     seedReceipt(subscriptionId, now - 300_001, usage);
     await expectDenied(env, 503);
-    seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
-    await expectDenied(env, 429);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 0);
     seedReceipt(subscriptionId, now, usage);
     await expectDenied({ ...env, AUDIT_BILLING_SUBSCRIPTION_ID: undefined }, 503);
     const response = await poll(env);
     assert.equal(response.status, 200);
     assert.equal((await response.json()).status, 'pending');
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
+    seedReceipt(subscriptionId, now, { ...usage, requests: INCLUDED_CEILINGS.requests });
+    await expectDenied(env, 429);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS total FROM allowance_reservations').get().total, 1);
   } finally {
     if (previousRewriter === undefined) delete globalThis.HTMLRewriter;
@@ -168,5 +169,23 @@ test('direct submissions and report reads fail closed before audit storage', asy
       assert.equal(response.status, expectedStatus);
       assert.equal(response.headers.get('cache-control'), 'no-store');
     }
+  }
+});
+
+test('shared access accepts shorter configured credentials while rejecting invalid boundaries', async () => {
+  const unlock = (secret, provided) => worker.fetch(new Request(accessUrl, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + provided },
+  }), {
+    AUDIT_PREVIEW_PASSWORD: secret,
+    get AUDIT_DB() { assert.fail('Password verification accessed audit storage'); },
+  }, ctx);
+  for (const length of [8, 10, 128]) {
+    const secret = 'x'.repeat(length);
+    assert.equal((await unlock(secret, secret)).status, 204);
+    assert.equal((await unlock(secret, 'incorrect')).status, 401);
+  }
+  for (const secret of ['', 'x'.repeat(7), 'x'.repeat(129), 'invalid password']) {
+    assert.equal((await unlock(secret, secret)).status, 503);
   }
 });

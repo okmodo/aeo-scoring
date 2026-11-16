@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "task": "Correct relational product grading and replay captured R14 evidence offline",
+  "decisions": [
+    "Replay the unchanged captured R14 proof with the normal request builder, strict decoder, grader and scoring; do not invoke a model again.",
+    "S1 description follows the C1 explanation correction because structure copies the content finding; it is an additional report subcheck change, not a new retrieval.",
+    "Preserve incomplete/null status and distinguish old live CPU from this offline replay."
+  ],
+  "constraints": [
+    "Private proof and raw model output must not be committed or published.",
+    "No Cloudflare change, new inference, production activation, source-role change, rubric weight change or fabricated score."
+  ],
+  "completed": [
+    "Prepared proof- and request-hash-bound offline replay and sanitized per-check/evidence hash output, including pinned previous-grader feature comparison.",
+    "Captured R14 source/raw response replayed unchanged with exact request/proof digests; old CPU466 explicitly distinguished from offline new grading."
+  ],
+  "remaining": [
+    "Independent reviewer must reproduce replay and inspect private evidence; complete source-bound checks and hosted CI before PR completion."
+  ],
+  "resumeCommands": [
+    "node evals/changes/relational-product-grading/replay.mjs /private/tmp/aeo-ai-r14-real-runtime.json",
+    "npm run test:feasibility"
+  ],
+  "state": "Three source-grounded grader corrections implemented;586feasibilitytests pass. Unchanged realproof replay verifiesfour reportfinding differences andfeaturescomponentcredit; realstatus remainsincomplete/null27of40. Independent review andfinalsourcebound+hostedCIpending; no newmodelcalls/Cloudflarechanges."
+}

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "task": "Reconcile completed reservations and deploy the backend fix",
+  "state": "Deployed reconciliation from08aac9f to project Worker version78c573e5-8f93-415b-8d2d-c0b099032734 at100% after independent review and hostedCI. Seven verified legacy AI holds5322 settled to809; real D1 admission accepted and over-limit proposal denied. Exact downloaded bundle, CPU1000 and access settings verified.",
+  "decisions": [
+    "Keep all 60% ceilings andCPU 1000 unchanged.",
+    "Use persistent anchored completion floors plus unresolved holds; preserve immutable original history and do not expire unknown work.",
+    "Settle validated provider-root AI usage, retaining conservative non-AI bounds; two-call assessments require usage for both calls.",
+    "Seven known historical AI holds map to nine hash-verified provider receipts and809 rounded neurons; settle only after independent evidence review.",
+    "Deploy with existing preview access and secrets preserved, AI activation still off, and no frontend or unrelated service changes."
+  ],
+  "constraints": [
+    "Account analytics remain sampled/delayed under the accepted policy.",
+    "Additive migration must complete before new code or settlements; bootstrap supports concurrent old writers.",
+    "No live models or deployments in CI; no blanket reset of reservations."
+  ],
+  "completed": [
+    "Plan45e09d4 committed before implementation.",
+    "Terra agents implemented ledger and runtime paths; independent review identified and drove race, chronology and database integrity fixes.",
+    "Hash-bound legacy evidence independently verified: nine provider receipts map to seven holds totaling 5322, settled charge 809.",
+    "Native Worker/D1 reconciliation probe passed without external requests or model calls.",
+    "59 targeted tests passed, including concurrency, idempotency, chronology, receipt races and unknown outcome retention.",
+    "Both source-bound evaluations and hosted CI passed; a production D1 compound-select migration limit was corrected with reviewed JSON expansion and renewed CI.",
+    "Additive migration applied; seven legacy settlements completed idempotently before anchoring. Original history5322 remains, pendingAI0 and settledAI809.",
+    "Actual D1 anchored floor baseline809/cutoff809 accepted a request and denied an over-limit5192-neuron proposal. No model calls.",
+    "Backend deployed; downloaded bundle matches SHA25613a5f4d259a378f94611048183ab703a8ad41a3165f3827ee75af172bb82fc1f. Live frontend CORS204 and unauthorized401 passed; all secret/access bindings preserved."
+  ],
+  "remaining": [
+    "Publish source-bound deployment record and confirm hostedCI.",
+    "AI calibration activation and complete real-product scoring remain separate outstanding work; this release changes accounting only.",
+    "PR34 is stacked on draftPR33 and remains unmerged; user requested deployment, not merging the earlier unvalidated scoring release."
+  ],
+  "resumeCommands": [
+    "node --test backend/allowance-store.test.mjs backend/analytics-allowance.test.mjs backend/allowance-reconciliation.test.mjs backend/content-facts-runner.test.mjs backend/semantic-runner.test.mjs backend/service.test.mjs",
+    "npm run evaluate -- --change reservation-reconciliation --base origin/codex/complete-report-assessment"
+  ]
+}

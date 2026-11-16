@@ -1,0 +1,11 @@
+{
+  "version":1,"id":"fallback-policy-coverage",
+  "task":"Apply the independently confirmed policy-absence coverage correction to deterministic fallback reports before R11 validation, including when AI is unavailable or budget-denied.",
+  "scope":["backend/content-assessment.mjs","backend/content-assessment.test.mjs","backend/scoring.test.mjs","evals/changes/fallback-policy-coverage/**","evals/changes/selected-variant-evidence/**","evals/changes/source-aware-live-references/**","docs/selected-variant-evidence.md"],
+  "nonGoals":["No scoring weights, positive full/partial credit, frozen source facts, frontend, dependencies, model, access, production activation, 60% ceilings or CPU1000 change. No R11 output has been sampled; no historical failure or unknown hold is revised."],
+  "outcomes":[{"id":"O1","description":"Both fallback negative-policy branches require complete safe product inspection and verified complete matching policy inspection before zero; absent arrays or unknown/failed/truncated coverage cannot prove absence, and incomplete product cannot hide inline terms. Preserve supported positive policy findings and shirt78.125.","verification":"automated","evidence":"Source-grounded regression cases for unknown/missing discovery, linked failed/truncated policy, incomplete product plus empty read policy, confirmed complete absence, positive inline terms and scoring fallback integration."}],
+  "process":[{"id":"P1","description":"Commit this plan before edits after independent canonical-rubric confirmation. Refreeze and independently review final R11 artifacts after the parity fix; rerun source-bound and hostedCI checks before inference. No model calls are needed to define expected behavior.","verification":"human","evidence":"Git chronology, independent review and final source/bundle/request hashes before R11 calls."}],
+  "styleEfficiency":[{"id":"E1","description":"Keep the fallback guard consistent with validated-fact policy semantics; do not refactor unrelated scoring or alter support weights to make fixtures pass.","verification":"human","evidence":"Focused negative-coverage diff and actual regression outcomes."}],
+  "commands":["npm run test:feasibility"],
+  "exitTest":{"required":false,"reason":"This is a deterministic coverage guard correction, not agent workflow, memory or portability."}
+}

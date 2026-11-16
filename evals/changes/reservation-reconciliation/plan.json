@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "id": "reservation-reconciliation",
+  "task": "Reconcile completed reservations without double counting sampled account usage, then deploy the backend correction under unchanged included-allowance safeguards.",
+  "scope": [
+    "backend/allowance-store.mjs", "backend/allowance-store.test.mjs", "backend/allowance-store.test-helper.mjs",
+    "backend/allowance-policy.mjs", "backend/analytics-allowance.mjs", "backend/analytics-allowance.test.mjs",
+    "backend/schema.sql", "backend/migrations/**", "backend/allowance-reconciliation.mjs", "backend/allowance-reconciliation.test.mjs",
+    "backend/content-facts-runner.mjs", "backend/content-facts-runner.test.mjs",
+    "backend/semantic-runner.mjs", "backend/semantic-runner.test.mjs",
+    "backend/service.mjs", "backend/service.test.mjs", "test/feasibility.test.mjs",
+    "docs/included-allowance-policy.md", "docs/reservation-reconciliation.md",
+    "evals/changes/reservation-reconciliation/**"
+  ],
+  "nonGoals": [
+    "Changing the 60% ceilings, 1,000 ms CPU cap, scoring rubric, frontend, shared dependencies, preview access, AI calibration gate or unrelated Cloudflare services.",
+    "Treating sampled analytics as a billing guarantee, expiring unknown calls automatically, fabricating resource measurements or blanket-resetting legacy reservations."
+  ],
+  "outcomes": [
+    {"id":"O1","description":"Atomically distinguish unresolved holds from completed consumption and deduplicate completed local consumption against account estimates with a persistent baseline and local cutoff.","verification":"automated","evidence":"Frozen exact accounting cases, independent SQLite connection contention, delayed snapshots, duplicate/conflicting settlement, unknown outcomes, overrun, migration and period rollover regressions."},
+    {"id":"O2","description":"Runtime settles only known completed work; provider-root AI usage is validated independently of model content and includes every issued call. Missing usage, timeout and failed persistence retain holds; unavailable CPU measurements remain explicitly conservative bounds.","verification":"automated","evidence":"Runner and service tests covering happy, malformed, failed, timed-out, follow-up, cached and background paths without live models."},
+    {"id":"O3","description":"Verified legacy completions can be reconciled without changing reservation history, and the deployed project Worker admits permitted work while retaining all original usage/CPU/access controls.","verification":"human","evidence":"Hash-bound private provider receipts, sanitized migration/settlement record, real D1 admission check, exact deployed bundle/settings, native runtime probe, hosted CI and independent Terra review."}
+  ],
+  "process": [
+    {"id":"P1","description":"Commit this plan before implementation, use isolated codex branch and Terra implementation/review, preserve original source evidence and complete source-bound evaluation and hosted CI before deployment.","verification":"human","evidence":"Git plan chronology, genuine command traces, independent review, deployment receipt and handoff. No live AI or deployment in CI."}
+  ],
+  "styleEfficiency": [
+    {"id":"E1","description":"Use additive project-local schema changes and bounded indexed counters; avoid unbounded history scans during admission, new dependencies and unrelated refactors.","verification":"human","evidence":"Query plans, migration idempotency, targeted diffs and independent review."}
+  ],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:foundations", "npm run test:feasibility", "npm run test:preview", "npm run lint", "npm run typecheck", "npm run build"],
+  "exitTest": {"required":false,"reason":"Backend allowance accounting changes neither agent portability nor handoff execution mechanisms."}
+}

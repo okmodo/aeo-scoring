@@ -1,0 +1,10 @@
+{
+  "rationale": "Revised checks use whole, half, zero, explicit exclusions, or unmeasured. Syntax evaluates observed supported markup; absence requires complete inspection. Product-page association, offer relations, identifiers, and variant relationships are independent of displayed content completeness.",
+  "cases": {
+    "happy": {"syntax": 1, "entity": 1, "offer": 1, "identifiers": 1, "variants": 1},
+    "partial": {"syntax": 0.5, "entity": 0.5, "offer": 0.5, "identifiers": 0.5, "variants": 0.5},
+    "zero": {"syntax": 0, "entity": 0, "offer": 0, "identifiers": 0, "variants": 0},
+    "notApplicable": {"variants": "not_applicable", "identifiers": "not_applicable"},
+    "unknown": {"syntax": "not_measured", "entity": "not_measured", "offer": "not_measured", "identifiers": "not_measured", "variants": "not_measured"}
+  }
+}

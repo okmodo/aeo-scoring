@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "relational-product-grading",
+  "task": "Correct three canonical-anchor undercredits discovered in the source-supported real R14 result and replay its unchanged captured evidence without new inference.",
+  "scope": [
+    "backend/fact-grading.mjs",
+    "backend/fact-grading.test.mjs",
+    "docs/relational-product-grading.md",
+    "evals/changes/relational-product-grading/**"
+  ],
+  "nonGoals": [
+    "No retries, new model calls, historical output edits, source-role/eligibility changes, rubric or weight changes, frontend, dependencies, production deployment/activation, access changes, 60% limits or CPU1000 changes. Do not convert a legitimately incomplete real report into a final score."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Recognize explicit product-purpose relationship stated as styled for a specific audience/activity; body-mapped articulated construction explicitly accommodating wearer shape as specific fit evidence; and specifically described articulated panels as a product feature. Preserve source scope, negation, proposition-specific scores/citations and unrelated-clause rejection; no blanket full credit for keyword occurrence.",
+      "verification": "automated",
+      "evidence": "Positive and adversarial source examples including headings, bare panel names, generic styling, other product, negation and unrelated clauses. Existing complete canonical oracle and grader tests unchanged."
+    },
+    {
+      "id": "O2",
+      "description": "Replay unchanged actual R14 raw output and exact captured source through corrected decoder/grader/scoring offline, independently verify exact per-finding changes and all evidence, preserve legitimate incomplete/null report. Label old actual runtime CPU466/cachepass separately; no claim that new grading source was live measured or new provider run occurred.",
+      "verification": "human",
+      "evidence": "Private actual-proof digest, exact prepared request hash, deterministic old/new comparison, independent review and sanitized results. Preserve all old R14 runtime and raw-source results, cleanup and actual settlements."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan alone before implementation; Terra engineering and independent canonical-anchor review, current actual source-bound evaluations and hostedCI before PRcompletion. No further Cloudflare changes or model calls.",
+      "verification": "human",
+      "evidence": "Git chronology, focused independently reviewed diff, actual command records and hostedCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Correct proven source-to-anchor relations with narrow reusable patterns; replay captured evidence instead of paying for identical model inference or changing expected outcomes to match a bug.",
+      "verification": "human",
+      "evidence": "Small grader diff, meaningful adversarial regressions and exact replay disclosure."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Source grading corrections do not change agent portability or resumability."
+  }
+}
