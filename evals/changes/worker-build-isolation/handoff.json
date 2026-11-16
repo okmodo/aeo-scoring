@@ -1,10 +1,26 @@
 {
- "version":1,
- "task":"Stop frontend builds from overwriting the audit Worker.",
- "state":"Plan committed on codex/worker-build-isolation before configuration changes. Inspected both incorrect Worker-scoped Git triggers; no running builds were found.",
- "decisions":["Remove the root/frontend production deploy trigger and its corresponding branch preview trigger.","Keep backend releases manual under the existing no-deployments-in-CI policy. Retain the shared repository connection and all existing service resources."],
- "constraints":["Keep production version 73614bff-d6c1-4825-ae39-5abdcf384707 active at 100%, including password gate, AI, analytics admission and 1,000 ms CPU limit.","Do not commit passwords, tokens, raw build logs or repository connection secrets.","Keep a private full trigger backup in /private/tmp/aeo-worker-build-triggers-before.json."],
- "completed":["Identified production trigger 9b4ada6c-f11b-4cd0-9c3c-319af2d206fc on Worker tag b3bd7ecb2eb9479183037dce71cfed90 and frontend-preview trigger ed03640a-cb06-42e5-a9cf-314e11d8e555 on tag f81a50e81f3f45328add5b3575e570b6.","Documented the existing manual-release policy and correct backend entry point."],
- "remaining":["Independently review the scoped correction and pass required checks/CI, remove only the confirmed triggers, verify empty trigger lists and unchanged active resources, then run password and unauthorized-access checks."],
- "resumeCommands":["npm run evaluate -- --change worker-build-isolation --base origin/main","npm run ci:gate -- origin/main"]
+  "version": 1,
+  "task": "Stop frontend builds from overwriting the audit Worker.",
+  "state": "Plan committed on codex/worker-build-isolation before configuration changes. Inspected both incorrect Worker-scoped Git triggers; no running builds were found.",
+  "decisions": [
+    "Remove the root/frontend production deploy trigger and its corresponding branch preview trigger.",
+    "Keep backend releases manual under the existing no-deployments-in-CI policy. Retain the shared repository connection and all existing service resources."
+  ],
+  "constraints": [
+    "Keep production version 73614bff-d6c1-4825-ae39-5abdcf384707 active at 100%, including password gate, AI, analytics admission and 1,000 ms CPU limit.",
+    "Do not commit passwords, tokens, raw build logs or repository connection secrets.",
+    "Keep a private full trigger backup in /private/tmp/aeo-worker-build-triggers-before.json."
+  ],
+  "completed": [
+    "Identified production trigger 9b4ada6c-f11b-4cd0-9c3c-319af2d206fc on Worker tag b3bd7ecb2eb9479183037dce71cfed90 and frontend-preview trigger ed03640a-cb06-42e5-a9cf-314e11d8e555 on tag f81a50e81f3f45328add5b3575e570b6.",
+    "Documented the existing manual-release policy and correct backend entry point."
+  ],
+  "remaining": [
+    "A fresh agent will revalidate and remove only the confirmed triggers as an authorized configuration correction outside CI, preserve active resources, and return observations.",
+    "Record complete evidence, pass hosted CI and verify password access and unauthorized request rejection."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change worker-build-isolation --base origin/main",
+    "npm run ci:gate -- origin/main"
+  ]
 }

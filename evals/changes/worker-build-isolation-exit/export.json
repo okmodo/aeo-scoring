@@ -1,21 +1,55 @@
 {
- "version":1,
- "task":"Resume readiness verification for removing incorrect Cloudflare Worker Git build triggers.",
- "userAuthorization":"Fix the automatic Cloudflare Worker build so future frontend deployments do not overwrite the audit service. Keep the password gate and usage safeguards working.",
- "repository":"/private/tmp/aeo-worker-build-isolation",
- "cleanTaskFiles":["docs/audit-worker-release.md","evals/changes/worker-build-isolation/plan.json","evals/changes/worker-build-isolation/handoff.json","evals/changes/worker-build-isolation-exit/plan.json"],
- "accountId":"495d788b994070692b54c46945a5e577",
- "workerName":"aeo-audit-public-20261105",
- "expectedActiveVersion":"73614bff-d6c1-4825-ae39-5abdcf384707",
- "expectedCpuMs":1000,
- "expectedPagesDeployment":"659ea35b-00f9-4634-992e-a905ed5d4149",
- "targets":[
-  {"tag":"b3bd7ecb2eb9479183037dce71cfed90","trigger":"9b4ada6c-f11b-4cd0-9c3c-319af2d206fc","branch":"main","build":"npm run build","deploy":"npx wrangler deploy","root":"/"},
-  {"tag":"f81a50e81f3f45328add5b3575e570b6","trigger":"ed03640a-cb06-42e5-a9cf-314e11d8e555","branch":"codex/business-test-report","build":"npm run build","deploy":"npx wrangler preview","root":"/"}
- ],
- "completed":["Plan committed before implementation.","Source reviewer independently confirmed both bad trigger records and approved the narrow deletion scope, subject to live revalidation.","Private trigger backup exists. No cloud configuration writes have occurred."],
- "nextAction":"Independently revalidate the two exact live triggers, active Worker version and version-specific runtime/bindings, Pages deployment and absence of running builds using read-only Cloudflare APIs. Check public unauthenticated submission rejection if feasible without an audit. Return actual observations and whether exact deletion is ready. Do not delete, deploy or mutate anything. Do not read secrets, transcripts or other private files.",
- "expectedBindings":["AUDIT_DB","AUDIT_AI","AUDIT_CONTENT_RELEASE","AUDIT_BILLING_ACCOUNT_ID","AUDIT_BILLING_SUBSCRIPTION_ID","AUDIT_PREVIEW_PASSWORD","AUDIT_PUBLIC_ACCESS","AUDIT_RATE_SECRET","AUDIT_USAGE_READ_TOKEN"],
- "output":"/private/tmp/aeo-worker-isolation-fresh-observation.json",
- "remainingAfterReadiness":"Parent records genuine exit evidence, passes hosted CI, deletes only the confirmed triggers, checks both trigger lists empty and verifies unchanged Worker resources and password access."
+  "version": 1,
+  "task": "Resume the reviewed correction of incorrect Cloudflare Worker Git build triggers.",
+  "userAuthorization": "Fix the automatic Cloudflare Worker build so future frontend deployments do not overwrite the audit service. Keep the password gate and usage safeguards working.",
+  "repository": "/private/tmp/aeo-worker-build-isolation",
+  "cleanTaskFiles": [
+    "docs/audit-worker-release.md",
+    "evals/changes/worker-build-isolation/plan.json",
+    "evals/changes/worker-build-isolation/handoff.json",
+    "evals/changes/worker-build-isolation-exit/plan.json"
+  ],
+  "accountId": "495d788b994070692b54c46945a5e577",
+  "workerName": "aeo-audit-public-20261105",
+  "expectedActiveVersion": "73614bff-d6c1-4825-ae39-5abdcf384707",
+  "expectedCpuMs": 1000,
+  "expectedPagesDeployment": "659ea35b-00f9-4634-992e-a905ed5d4149",
+  "targets": [
+    {
+      "tag": "b3bd7ecb2eb9479183037dce71cfed90",
+      "trigger": "9b4ada6c-f11b-4cd0-9c3c-319af2d206fc",
+      "branch": "main",
+      "build": "npm run build",
+      "deploy": "npx wrangler deploy",
+      "root": "/"
+    },
+    {
+      "tag": "f81a50e81f3f45328add5b3575e570b6",
+      "trigger": "ed03640a-cb06-42e5-a9cf-314e11d8e555",
+      "branch": "codex/business-test-report",
+      "build": "npm run build",
+      "deploy": "npx wrangler preview",
+      "root": "/"
+    }
+  ],
+  "completed": [
+    "Plan committed before implementation.",
+    "Source reviewer independently confirmed both bad trigger records and approved the narrow deletion scope, subject to live revalidation.",
+    "Private trigger backup exists. No cloud configuration writes have occurred.",
+    "Both required local evaluations passed and the independent reviewer approved the narrow correction scope. This is an authorized configuration correction outside CI; no Worker code is being deployed."
+  ],
+  "nextAction": "Revalidate both exact live triggers, the active Worker version and version-specific runtime/bindings, Pages deployment and absence of running builds. If and only if all match, delete the two listed Worker-scoped build triggers using the Cloudflare API. Do not delete the repository connection, change any other trigger, deploy code or mutate Worker settings. Immediately verify both trigger lists are empty and the expected production Worker version, resources and Pages deployment are unchanged. Record actual tool observations and exact mutations in the private output. Stop and report any mismatch without mutation. Do not read secrets or transcripts.",
+  "expectedBindings": [
+    "AUDIT_DB",
+    "AUDIT_AI",
+    "AUDIT_CONTENT_RELEASE",
+    "AUDIT_BILLING_ACCOUNT_ID",
+    "AUDIT_BILLING_SUBSCRIPTION_ID",
+    "AUDIT_PREVIEW_PASSWORD",
+    "AUDIT_PUBLIC_ACCESS",
+    "AUDIT_RATE_SECRET",
+    "AUDIT_USAGE_READ_TOKEN"
+  ],
+  "output": "/private/tmp/aeo-worker-isolation-fresh-observation.json",
+  "remainingAfterReadiness": "Parent records the observed fresh-agent correction with a source-bound exit result, refreshes evaluations, passes hosted CI and verifies password unlock plus unauthorized submission/report rejection."
 }
