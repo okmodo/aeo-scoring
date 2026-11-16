@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "changeId": "business-report-local-container",
+  "recordedAt": "2026-11-16T03:57:50.752Z",
+  "sourceCommit": "c76accff97483b7c508c092a25b296e7c0cbfbc4",
+  "sourceDigest": "a81197e15f6c7b38bcda44f01686bf21fd88abd9b149344725f947409bba1127",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 181,
+      "outputSha256": "dc5d75a601707a777eaa29837041f7824493ec793a3db456dec7513de3cb1285"
+    }
+  ]
+}
