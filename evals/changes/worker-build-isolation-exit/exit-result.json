@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "worker-build-isolation-exit",
+  "sourceDigest": "139cc717e544c6830a42f588e27b2359c10ef9886038a38ef1c903ab62dbf5fd",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/worker_isolation_exit",
+  "exportSha256": "efb0f5ad17710882df24a225a78ee4ddea0dc6b6d3b227404338f9d9a4858066",
+  "interruptionPoint": "After committing the task files and export, before independent live target revalidation and trigger mutation.",
+  "observedContinuation": "A fresh agent started with fork_turns none, read the export and clean task files, independently verified the exact two triggers, unchanged active Worker and Pages, and no active builds. It reread the revised committed export authorizing the correction, revalidated live state, deleted only the two identified triggers and verified empty trigger lists, byte-identical version resources and unchanged active version/traffic. Before and after unauthorized audit submission/report requests returned 401. Parent separately verified password unlock204 and wrong password401.",
+  "limitations": "The first export was read-only. Its committed revision explicitly authorized the exact correction before any cloud writes, without supplying prior chat or credentials. Cloud observations are separate from evaluator command traces. No audit/model call or Worker deployment was performed. Hosted CI is verified separately."
+}

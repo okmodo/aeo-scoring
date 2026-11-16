@@ -1,0 +1,12 @@
+{
+ "version":1,
+ "id":"worker-build-isolation-exit",
+ "task":"Verify independent continuation of the corrected manual Worker release workflow.",
+ "scope":["evals/changes/worker-build-isolation-exit/**"],
+ "nonGoals":["Changing the original committed plan or weakening the release policy."],
+ "outcomes":[{"id":"O1","description":"A fresh agent with only the exported task state and clean task files resumes the reviewed trigger correction, revalidates the target and preserves production safeguards.","verification":"human","evidence":"Observed continuation with actual remote verification and correction."}],
+ "process":[{"id":"P1","description":"Apply the reviewer's workflow classification through a new immutable plan, perform the genuine fresh-agent exit test, and verify the completed evidence through hosted CI.","verification":"human","evidence":"Git history, export hash, fresh agent identity and observed tool results."}],
+ "styleEfficiency":[{"id":"E1","description":"Export only necessary task state with no passwords, tokens or transcripts.","verification":"human","evidence":"Independent review of the export."}],
+ "commands":["npm run test:exit"],
+ "exitTest":{"required":true,"reason":"Independent review classified removal of automatic application deployment as a release-workflow change, requiring a genuine fresh-agent continuation."}
+}

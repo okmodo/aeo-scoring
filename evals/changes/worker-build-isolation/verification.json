@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "status": "corrected",
+  "removedTriggers": [
+    "9b4ada6c-f11b-4cd0-9c3c-319af2d206fc",
+    "ed03640a-cb06-42e5-a9cf-314e11d8e555"
+  ],
+  "workerVersion": "73614bff-d6c1-4825-ae39-5abdcf384707",
+  "trafficPercent": 100,
+  "runtimeCpuMs": 1000,
+  "checks": {
+    "triggersEmpty": true,
+    "activeUnchanged": true,
+    "versionResourcesUnchanged": true,
+    "pagesUnchanged": true
+  },
+  "passwordAccess": {
+    "password unlock": 204,
+    "wrong password": 401,
+    "unauthenticated submission": 401,
+    "unauthenticated report": 401
+  },
+  "remaining": "Required hosted CI and final independent evidence review.",
+  "limitations": [
+    "No audit or model invocation was started. The compiled service and version-specific resources were compared unchanged. Evaluation traces cover command checks, with these actual cloud observations recorded separately."
+  ]
+}

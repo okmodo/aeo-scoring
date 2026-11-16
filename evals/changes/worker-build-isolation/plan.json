@@ -1,0 +1,12 @@
+{
+ "version":1,
+ "id":"worker-build-isolation",
+ "task":"Prevent frontend Git builds from overwriting the production audit Worker.",
+ "scope":["docs/audit-worker-release.md","evals/changes/worker-build-isolation/**"],
+ "nonGoals":["Redeploying the Worker, scoring changes, changing password or usage safeguards, changing the Pages preview or shared GitHub connection."],
+ "outcomes":[{"id":"O1","description":"The misconfigured production and frontend-preview Worker build triggers are removed while the verified production Worker stays active.","verification":"human","evidence":"Exact trigger inventory before and after, targeted API operations and unchanged active version/resources."},{"id":"O2","description":"The password endpoint accepts the configured credential and unauthenticated submissions and report reads remain rejected.","verification":"human","evidence":"Live status/CORS checks without starting an audit."}],
+ "process":[{"id":"P1","description":"Commit the plan before changing infrastructure, independently review the exact correction, record actual effects and run required checks.","verification":"human","evidence":"Git chronology, independent review and sanitized configuration verification."}],
+ "styleEfficiency":[{"id":"E1","description":"Use the smallest correction consistent with the existing manual-release policy and retain a private configuration backup.","verification":"human","evidence":"Two Worker-scoped triggers removed; no repository connection or service changes."}],
+ "commands":["npm run check","npm test","npm run test:exit"],
+ "exitTest":{"required":false,"reason":"This corrects a remote application build attachment and documents the existing manual release rule. It does not change agent workflow, portability, memory or resumability."}
+}
