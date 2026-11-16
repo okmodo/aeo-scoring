@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "shared-report-v2-contract",
+  "task": "Connect the frontend to rubric v2 through a shared versioned report contract and automatic compatibility checks.",
+  "scope": [
+    "contracts/**",
+    "config/rubric.v2.json",
+    "backend/**",
+    "src/**",
+    "test/**",
+    "package.json",
+    "docs/shared-report-contract.md",
+    "evals/changes/shared-report-v2/**",
+    "evals/changes/shared-report-v2-contract/**"
+  ],
+  "nonGoals": [
+    "Changing rubric scores, inference, password or usage limits; merging backend engine branch; deploying cloud resources; changing CI policy or agent workflow."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Rubric v1 and v2 reports display recognized business-friendly tests, correct statuses and points, specific findings and supported recommendations; unsupported versions fail clearly.",
+      "verification": "automated",
+      "evidence": "Frozen report fixtures and rendered report regression tests."
+    },
+    {
+      "id": "O2",
+      "description": "Shared report catalog/contract is consumed by backend report serialization and frontend normalization; compatibility regression checks reject unknown IDs and malformed data.",
+      "verification": "automated",
+      "evidence": "Contract producer/consumer integration tests and catalog coverage against both frozen rubrics."
+    },
+    {
+      "id": "O3",
+      "description": "Password protection and usage safeguards remain intact.",
+      "verification": "automated",
+      "evidence": "Existing backend access/usage regression tests and no cloud writes."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan before implementation; Terra agents implement separate scopes; independent review and hosted CI before merge.",
+      "verification": "human",
+      "evidence": "Git history, recorded actual evaluation and PR checks."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use additive versioned contract support, preserve legacy reports and limit changes to report integration.",
+      "verification": "human",
+      "evidence": "Review diff and source-bound command records; no model calls."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:report-contract",
+    "npm run test:backend"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This changes the application report data contract and presentation, not agent workflow, memory, portability or resumability. Existing exit smoke tests still run."
+  }
+}
