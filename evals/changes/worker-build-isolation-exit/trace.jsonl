@@ -1,0 +1,1 @@
+{"timestamp":"2026-11-16T04:40:04.544Z","tool":"npm","action":"npm run test:exit","durationMs":220,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
