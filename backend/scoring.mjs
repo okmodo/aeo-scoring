@@ -1,5 +1,8 @@
 // Deterministic observations only. An unobserved field is not proof of absence.
-import rubric from '../config/rubric.v1.json' with { type: 'json' };
+import rubricV1 from '../config/rubric.v1.json' with { type: 'json' };
+import rubricV2 from '../config/rubric.v2.json' with { type: 'json' };
+import { assessSourceAccessibility } from './structure-accessibility.mjs';
+import { inspectRevisedProductSchema } from './structure-schema.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
 import { scoreProductFields } from './product-fields.mjs';
@@ -12,8 +15,8 @@ import { assessSupport } from './support-assessment.mjs';
 import { inspectProductSchema, assessStructure } from './structure-assessment.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
 
-const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
-const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
+export const RUBRIC_VERSION = rubricV2.version;
+export const ENGINE_VERSION = '2.0.0';
 const CRAWLER_GROUPS = [
   ['S5.search', crawlerRegistry.scoring.search.botIds],
   ['S5.ai-retrieval', crawlerRegistry.scoring.aiRetrieval.botIds],
@@ -36,7 +39,13 @@ const schemaType = (types, type) => types.includes(type) || types.includes('http
 const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'http://schema.org', 'http://schema.org/']);
 
 /** Score supported observations from a bounded retrieved document. */
-export function scoreAudit(snapshot, extracted, { category = null, semantic = null, validatedFacts = null } = {}) {
+// Explicit v1 replay preserves historical tests; service requests always use v2.
+export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
+export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null } = {}, rubric) {
+  const legacy = rubric.version === '1.0.0';
+  const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
+  const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
   const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
   const evidence = [];
   let productName = null;
@@ -68,7 +77,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
   const products = [];
   const groups = [];
   let scriptsComplete = !snapshot?.htmlLimited && Array.isArray(extracted?.jsonLd) && scripts.length < 100 && extracted?.coverage?.jsonLdTruncated === false;
-  for (const [index, script] of scripts.entries()) {
+  for (const [index, script] of (legacy ? scripts.entries() : [])) {
     if (typeof script !== 'string' || script.length >= 8192) { scriptsComplete = false; continue; }
     let records, context, graphContainer;
     try {
@@ -93,7 +102,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
       else products.push({ record, index });
     }
   }
-  if (products.length && typeof sourceUrl === 'string' && typeof snapshot?.observedAt === 'string') {
+  if (legacy && products.length && typeof sourceUrl === 'string' && typeof snapshot?.observedAt === 'string') {
     const addProductEvidence = (index, excerpt) =>
       addEvidence(sourceUrl, `script[type="application/ld+json"] at extracted index ${index}`, excerpt);
     const id = addProductEvidence(products[0].index, scriptsComplete ? 'Product' : 'Observed a schema.org Product candidate in retained JSON-LD.');
@@ -143,7 +152,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
       }
     }
   }
-  if (scriptsComplete && groups.length === 1 && products.length === 0 &&
+  if (legacy && scriptsComplete && groups.length === 1 && products.length === 0 &&
       typeof sourceUrl === 'string' && typeof observedAt === 'string') {
     const { record, index } = groups[0];
     const selected = selectProductVariant(record, sourceUrl);
@@ -155,11 +164,11 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
       scoreFields(selected.record, excerpt => addEvidence(sourceUrl, location, excerpt));
     }
   }
-  if (!scriptsComplete && groups.length && typeof sourceUrl === 'string' && typeof observedAt === 'string') {
+  if (legacy && !scriptsComplete && groups.length && typeof sourceUrl === 'string' && typeof observedAt === 'string') {
     addEvidence(sourceUrl, `script[type="application/ld+json"] at extracted index ${groups[0].index}`,
       'Observed a schema.org ProductGroup candidate in retained JSON-LD.');
   }
-  if (scriptsComplete && checks['S2.entity'].fraction === 0.5) fixes.push({
+  if (legacy && scriptsComplete && checks['S2.entity'].fraction === 0.5) fixes.push({
     id: 'verify-product-association', title: 'Verify the structured product matches the audited page',
     owner: 'Web developer', checkIds: ['S2.entity'], evidenceIds: ['e1'], recoverablePoints: null,
     condition: 'Recovery cannot be calculated until the association is assessed.',
@@ -210,19 +219,31 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
         evidence: addEvidence(finding.url, finding.location, finding.excerpt) };
     }
   }
-  if (extracted?.productHtml) {
-    const schema = inspectProductSchema(snapshot, extracted);
-    const content = validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, product: schema.product });
+  if (extracted?.productHtml || !legacy) {
+    const hasHtml = Boolean(extracted?.productHtml);
+    const schema = hasHtml ? inspectProductSchema(snapshot, extracted) : {findings:{},product:null};
+    const content = !hasHtml ? {findings:{},facts:{},category,productName:null} : validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, product: schema.product });
     if (!validatedFacts && semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
     category = content.category;
     productName = content.productName || productName;
     variant = content.variant || schema.variant || variant;
     currency = content.currency || currency;
     const semanticFindings = !validatedFacts && semantic?.version === '1.0.0' && semantic?.status === 'assessed' ? Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured')) : {};
-    const observations = { ...schema.findings, ...assessStructure(snapshot, extracted, { schema, content }),
-      ...content.findings, ...semanticFindings, ...assessSupport(snapshot, extracted) };
+    const structure = assessStructure(snapshot, extracted, { schema, content });
+    const revisedSchema = legacy ? null : inspectRevisedProductSchema(snapshot, extracted);
+    if (!legacy && !productName && typeof revisedSchema.product?.name === 'string') productName = revisedSchema.product.name.trim().slice(0,160);
+    if (!legacy && !hasHtml && revisedSchema.product) {
+      for (const [id, finding] of Object.entries(scoreProductLabels(revisedSchema.product, extracted?.labelEvidence))) {
+        const evidenceId = addEvidence(sourceUrl, finding.location, finding.excerpt);
+        checks[id] = {status:'measured',fraction:finding.fraction,evidence:evidenceId};
+      }
+    }
+    const observations = { ...(legacy ? schema.findings : revisedSchema.findings),
+      ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
+      ...(!legacy ? assessSourceAccessibility(snapshot, extracted) : {}),
+      ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
     // Replace legacy observations so unresolved new extraction cannot inherit old credit.
-    for (const id of Object.keys(checks)) checks[id] = { status: 'not_measured' };
+    for (const id of Object.keys(checks)) if (hasHtml || id.startsWith('S2.')) checks[id] = { status: 'not_measured' };
     for (const [id, finding] of Object.entries(observations)) {
       if (!Object.hasOwn(checks, id)) continue;
       const evidenceIds = [];
@@ -242,7 +263,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
     fixes.length = 0;
     const actions = {
-      S1: ['Publish readable product facts', 'Content editor'],
+      S1: [legacy ? 'Publish readable product facts' : 'Make product information accessible in source HTML', 'Web developer'],
       S2: ['Repair product structured data', 'Web developer'],
       S3: ['Align structured data with product content', 'Web developer'],
       S4: ['Improve product labels and organization', 'Content editor'],
@@ -294,7 +315,7 @@ export function scoreAudit(snapshot, extracted, { category = null, semantic = nu
       content: criteria.filter(c => c.pillar === 'content').reduce((sum, c) => sum + c.points, 0)
     } : null,
     earnedPoints: reference.earnedPoints, rubricVersion: rubric.version,
-    ...(extracted?.productHtml ? {engineVersion:'1.1.0',categoryVersion:categories.version} : {}),
+    ...(!legacy || extracted?.productHtml ? {engineVersion:legacy ? '1.1.0' : ENGINE_VERSION,categoryVersion:categories.version} : {}),
     category: categories.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,

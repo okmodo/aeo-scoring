@@ -222,3 +222,9 @@ await import('../evals/changes/selected-question-evidence/compare.test.mjs');
 
 await import('../evals/changes/final-grader-runtime/runtime-validation-worker.test.mjs');
 await import('../evals/changes/final-grader-runtime/telemetry.test.mjs');
+
+// Current rubric v2 coverage runs separately from explicit historical v1 replays.
+await import('../backend/structure-accessibility.test.mjs');
+await import('../backend/structure-schema.test.mjs');
+await import('../backend/revised-rubric.test.mjs');
+await import('./scoring-foundations-v2.test.mjs');

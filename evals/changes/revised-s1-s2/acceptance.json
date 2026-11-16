@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "basis": "Approved revised-s1-s2 plan a6046ff; expectations authored independently before implementation review.",
+  "scale": {
+    "full": 1,
+    "partial": 0.5,
+    "failure": 0,
+    "excluded": "NA",
+    "unknown": "unmeasured"
+  },
+  "weights": {
+    "S1": {
+      "delivery": 4,
+      "readability": 3,
+      "scope": 3,
+      "configuration": 2,
+      "supporting-access": 1
+    },
+    "S2": {
+      "syntax": 2,
+      "entity": 2,
+      "offer": 2,
+      "identifiers": 2,
+      "variants": 1
+    }
+  },
+  "cases": [
+    {
+      "check": "S1.delivery",
+      "full": "Initial response contains product information in inspectable source.",
+      "partial": "Initial source contains some product information but material product information is deferred or inaccessible.",
+      "failure": "A complete initial response is a shell without product information.",
+      "unmeasured": "Response unavailable, truncated before evidence, or inspection unsupported."
+    },
+    {
+      "check": "S1.readability",
+      "full": "Product information is available as ordinary readable source text.",
+      "partial": "Some product information is readable while other observed information is image-only or otherwise not ordinary text.",
+      "failure": "Observed product information is exclusively image-only or inaccessible to ordinary source-text extraction.",
+      "unmeasured": "Insufficient source evidence to determine its representation."
+    },
+    {
+      "check": "S1.scope",
+      "full": "Source evidence clearly associates product information with the audited product.",
+      "partial": "Product information is present but its association with the audited product is ambiguous.",
+      "failure": "Complete evidence establishes that available product information concerns another product.",
+      "unmeasured": "No reliable product association can be determined from incomplete or unsupported evidence."
+    },
+    {
+      "check": "S1.configuration",
+      "full": "Source identifies the selected configuration where configuration selection applies.",
+      "partial": "Source gives observed but ambiguous selected-configuration evidence.",
+      "failure": "Complete source establishes a required selection without identifying the selected configuration.",
+      "NA": "Explicit evidence establishes exactly one configuration and no dependent values.",
+      "unmeasured": "Missing or incomplete evidence does not establish selection or the conditions for exclusion."
+    },
+    {
+      "check": "S1.supporting-access",
+      "full": "All referenced supporting resources inspected are accessible.",
+      "partial": "Referenced resources include both accessible and confirmed inaccessible resources.",
+      "failure": "Referenced supporting resources are confirmed broken or require login and none are accessible.",
+      "NA": "Complete evidence establishes no supporting resources are referenced.",
+      "unmeasured": "A referenced resource times out, inspection is unsupported, or evidence is truncated such that access cannot be determined."
+    },
+    {
+      "check": "S2.syntax",
+      "full": "Recognized structured markup parses and observed types and formats are valid.",
+      "partial": "Some recognized markup is valid and some observed markup has syntax, type, or format defects.",
+      "failure": "Complete inspection finds no markup or only malformed or invalid markup.",
+      "unmeasured": "Truncation or unsupported inspection prevents reliable assessment."
+    },
+    {
+      "check": "S2.entity",
+      "full": "A product entity is clearly associated with the audited product page.",
+      "partial": "An observed product entity has ambiguous page association.",
+      "failure": "Complete inspection finds no product entity or establishes that it describes another product.",
+      "unmeasured": "Inspection cannot reliably establish whether an associated entity exists."
+    },
+    {
+      "check": "S2.offer",
+      "full": "An Offer is correctly connected to the product or variant with internally coherent price, currency, and availability fields.",
+      "partial": "An observed Offer has usable but incomplete information or an ambiguous association, including a typed embedded Offer without commercial fields.",
+      "failure": "Complete inspection establishes a missing associated Offer, wrong-product connection, or unusable contradiction.",
+      "unmeasured": "Incomplete or unsupported inspection prevents determining the offer connection."
+    },
+    {
+      "check": "S2.identifiers",
+      "full": "Provided applicable identifiers are appropriately modeled and valid.",
+      "partial": "Observed identifier evidence is incomplete or limited to a merchant SKU.",
+      "failure": "Complete inspection establishes missing applicable identifiers or invalid supplied identifier values.",
+      "NA": "Explicit evidence establishes none are assigned and no external identifier is supplied.",
+      "unmeasured": "Missing evidence alone does not establish that identifiers are unassigned."
+    },
+    {
+      "check": "S2.variants",
+      "full": "Applicable parent-family relationships and distinguishing variant attributes are correctly modeled.",
+      "partial": "Observed variant relationships exist but are ambiguous or incomplete.",
+      "failure": "Complete evidence establishes applicable variants are missing or incorrectly related.",
+      "NA": "Explicit evidence establishes no variants.",
+      "unmeasured": "Absence of evidence alone does not establish no variants."
+    }
+  ],
+  "crossChecks": [
+    "Missing product markup is not NA for syntax, entity, offer, identifiers, or variants; conditional exclusions require their own explicit evidence.",
+    "Offer is always applicable under current merchant categories.",
+    "Unknown is never NA or a confirmed failure; ambiguity earns partial only when observed.",
+    "Changing shopper-content completeness alone leaves S1 delivery and representation and S2 modeling unchanged.",
+    "Changing S1 or S2 evidence alone does not cascade into other checks or change Content, S3-S8 behavior.",
+    "Initial source evidence must not claim rendering or present hidden text, image-only text, or serialized state as ordinary visible text; robots does not block assessment.",
+    "Apply NA redistribution only within its criterion: remaining applicable weights are scaled to the criterion maximum; e.g. S1 configuration NA makes full delivery worth 4*13/11 and half delivery worth 2*13/11.",
+    "Missing an applicable measurement prevents a final score; an entirely excluded criterion also has no final score.",
+    "Preserve v1 historical results; v2 rubric and engine versions and cache identity are distinct; v1 API shape remains unchanged.",
+    "Bound source extraction and processing; truncation and unsupported inspection must not fabricate absence. Repeated extraction of identical bounded input is deterministic."
+  ]
+}

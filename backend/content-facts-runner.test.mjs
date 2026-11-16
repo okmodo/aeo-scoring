@@ -117,7 +117,7 @@ async function completeShirtRun(secondOutput) {
     return {result,calls,reservations,item,settled};
 }
 test('one focused inspection can finish a complete report within the original reservation', async()=>{
-    const {scoreAudit}=await import('./scoring.mjs');
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');
     const {result,calls,reservations,item}=await completeShirtRun({response:{conditionChecks:{material_claim:'absent','shirt-limits':'absent'}}});
     assert.equal(calls,2);assert.equal(reservations,1);assert.equal(result.status,'assessed');
     const report=scoreAudit(item.snapshot,item.extracted,{validatedFacts:result.facts});

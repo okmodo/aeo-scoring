@@ -189,7 +189,7 @@ test('replays the retained v2 model output without inventing its missing conditi
     const {readFileSync}=await import('node:fs');
     const {extract}=await import('./retrieval.mjs');
     const {HtmlTestRewriter}=await import('./html-product-test-helper.mjs');
-    const {scoreAudit}=await import('./scoring.mjs');
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');
     const read=name=>readFileSync(new URL(`./fixtures/complete-engine/${name}`,import.meta.url),'utf8');
     const snap={url:'https://shop.example/products/everyday-tshirt',observedAt:'2026-11-09T00:00:00.000Z',body:read('complete-shirt.html'),htmlLimited:null,...JSON.parse(read('support.json'))};
     const html=await extract(snap,{HTMLRewriter:HtmlTestRewriter});
@@ -457,7 +457,7 @@ test('retained synthetic model responses replay against all frozen outcomes', as
     const {readFileSync}=await import('node:fs');
     const {releaseCases}=await import('./fixtures/content-facts/release-cases.mjs');
     const {assessContentFacts}=await import('./fact-grading.mjs');
-    const {scoreAudit}=await import('./scoring.mjs');
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');
     const outputs=JSON.parse(readFileSync(new URL('./fixtures/content-facts/release-model-v2.json',import.meta.url),'utf8'));
     for (const c of await releaseCases()) {
         const output=outputs[c.id];
@@ -726,7 +726,7 @@ test('policy absence inspections require a complete retrieved scope, independent
 
 test('unrecognized readable policy cannot become zero through claimed absence', async()=>{
     const {assessContentFacts}=await import('./fact-grading.mjs');
-    const {scoreAudit}=await import('./scoring.mjs');
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');
     const snapshot={url:'https://example.test',policies:{returns:{state:'read',url:'https://example.test/returns',extraction:{complete:true,blocks:[{text:'All purchases are final.',location:'policy'}]}}}};
     const extracted={productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'Cotton shirt.',location:'description'}],links:[]}};
     const p=buildSemanticRequest(snapshot,extracted,{category:'basic-tshirts'}), req=buildContentFactsRequest(p);
@@ -740,7 +740,7 @@ test('unrecognized readable policy cannot become zero through claimed absence', 
 
 test('implicit product policy wording cannot become zero with an empty linked policy', async()=>{
     const {assessContentFacts}=await import('./fact-grading.mjs');
-    const {scoreAudit}=await import('./scoring.mjs');
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');
     const snapshot={url:'https://example.test',policies:{returns:{state:'read',url:'https://example.test/returns',extraction:{complete:true,blocks:[]}}}};
     const extracted={productHtml:{complete:true,identity:'Acme T-shirt',blocks:[{text:'All purchases are final.',location:'description'}],links:[]}};
     const p=buildSemanticRequest(snapshot,extracted,{category:'basic-tshirts'}), req=buildContentFactsRequest(p);

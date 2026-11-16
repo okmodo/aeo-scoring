@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "id": "historical-rubric-replay",
+  "task": "Bind the two historical R13/R14 oracle-comparison tests explicitly to the preserved v1 scorer while new default-path tests independently cover rubricv2.",
+  "scope": [
+    "evals/changes/question-evidence-scoring/compare.test.mjs",
+    "evals/changes/selected-question-evidence/compare.test.mjs",
+    "evals/changes/historical-rubric-replay/**"
+  ],
+  "nonGoals": [
+    "Do not edit historical oracle/fixtures/raw outputs, comparator logic, expectations, thresholds, workflow, sourcebound gates or production behavior. No front end, limits, CPU, dependencies or services changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Historical R13/R14 whole-report oracle tests exercise scoreAuditV1 explicitly and retain every existing score, source binding and adversarial assertion. Default scoreAudit remains v2 and independently tested by revised-s1-s2.",
+      "verification": "automated",
+      "evidence": "Two explicit import changes, unchanged historical assertions and full comparison test suites."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan alone before editing these out-of-original-scope historical test imports; independent review confirms no gate weakening or lost default-path coverage.",
+      "verification": "human",
+      "evidence": "Git chronology, narrow diff and independent currentv2 test review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Preserve versioned historical results rather than rewriting gold to current scoring.",
+      "verification": "human",
+      "evidence": "Exact untouched fixtures and unchanged assertions."
+    }
+  ],
+  "commands": [
+    "node --test evals/changes/question-evidence-scoring/compare.test.mjs evals/changes/selected-question-evidence/compare.test.mjs"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Binding historical application tests to their rubric version does not change agent memory or resumability."
+  }
+}

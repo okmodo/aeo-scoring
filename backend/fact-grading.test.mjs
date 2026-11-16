@@ -161,7 +161,7 @@ test('reviewed shirt source passes through literal fact validation and retains t
     assert.equal(validated.facts.filter(f=>f.validity==='plausible' && f.method!=='literal_pattern').length,31,JSON.stringify(validated.facts.filter(f=>f.validity!=='plausible').map(f=>({kind:f.kind,key:f.key,value:f.value}))));
     assert.deepEqual(validated.facts.filter(f=>f.method==='literal_pattern').map(f=>`${f.kind}.${f.key}`).sort(),['configuration.configuration','configuration.configuration','context.availability','context.price']);const result=assessContentFacts(snap,html,validated);
     for(const id of ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.selection','C5.consistency']) assert.equal(result.findings[id].fraction,1,id);
-    const {scoreAudit}=await import('./scoring.mjs');const report=scoreAudit(snap,html,{validatedFacts:validated});
+    const {scoreAuditV1:scoreAudit}=await import('./scoring.mjs');const report=scoreAudit(snap,html,{validatedFacts:validated});
     assert.equal(report.status,'complete',JSON.stringify(report.criteria.flatMap(c=>c.subchecks).filter(c=>c.status==='not_measured').map(c=>({id:c.id,reason:c.reason}))));assert.equal(report.coverage.notMeasured,0);assert.deepEqual(report.score,{total:80,structure:20,content:60});
     assert.equal(result.findings['C4.compatibility'].fraction,1);assert.equal(result.findings['C4.limitations'].status,'not_applicable');assert.equal(result.findings['C5.claim-support'].status,'not_applicable');
 });

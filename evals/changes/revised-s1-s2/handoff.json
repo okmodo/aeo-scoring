@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Revised S1/S2 backend rubric and historical replay preservation",
+  "state": "Implementation and independent review complete in clean review branch; 628 feasibility tests pass. Original planning history and exact original bytes preserved. Source-bound evaluation and hosted CI pending. No merge/deployment or Cloudflare changes.",
+  "decisions": [
+    "Default rubric/engine2.0.0; Structure40/Content60 and S1 13/S2 9 unchanged.",
+    "Explicit v1 scorer and original frozen inputs preserve historical outcomes; current v2 tests cover new behavior independently.",
+    "Original invalid-command planning branch is preserved unchanged; clean review branch candidly records original coding chronology."
+  ],
+  "constraints": [
+    "Frontend, shared types, dependencies, production services,60% limits and CPU1000 unchanged.",
+    "No live model calls, native CPU measurement, merge or deployment.",
+    "Unknown evidence remains unmeasured; only explicit exclusions redistribute inside their criterion."
+  ],
+  "completed": [
+    "Terra implementation, independent acceptance matrix and initial offline integration tests.",
+    "New versioned complete example and arithmetic, cache, isolation and source tests.",
+    "Independent Terra integration, source, example, arithmetic, cache and planning review approved; 628 feasibility tests passed."
+  ],
+  "remaining": [
+    "Commit reviewed implementation and run actual source-bound evaluation and repository gate.",
+    "Push feature branch, open PR and verify hosted CI; do not merge or deploy.",
+    "Frontend owner needs version-aware full-credit explanatory copy before a coordinated rubric v2 rollout."
+  ],
+  "resumeCommands": [
+    "npm run test:feasibility",
+    "npm run evaluate -- --change revised-s1-s2 --base origin/codex/complete-report-assessment",
+    "npm run ci:gate -- origin/codex/complete-report-assessment"
+  ]
+}

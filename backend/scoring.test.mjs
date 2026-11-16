@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scoreAudit } from './scoring.mjs';
+import { scoreAuditV1 as scoreAudit } from './scoring.mjs';
 
 const snapshot = { url: 'https://shop.example/item', status: 200, robots: 'allowed', observedAt: '2026-01-01T00:00:00Z' };
 const extracted = () => ({ jsonLd: ['{"@context":"https://schema.org","@type":"Product","name":"Example shoe"}'], coverage: { html: true, bodyText: false, jsonLdTruncated: false } });
