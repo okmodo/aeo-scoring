@@ -45,9 +45,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Product content in initial HTML",
-              "description": "Is substantive product content available in the initial page HTML?",
-              "improve": "Make substantive product content available in the initial HTML.",
+              "name": "Product details available when the page first loads",
+              "description": "Can search and AI tools read the product details without running scripts or clicking anything?",
+              "improve": "Publish the product details in the page’s initial text so tools can read them without clicking or waiting for scripts.",
               "fullCredit": "Substantive main-product content is delivered in the initial HTML without JavaScript execution or interaction."
             }
           },
@@ -62,9 +62,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Extractable product information",
-              "description": "Is the delivered product information readable as ordinary text?",
-              "improve": "Provide product information as readable text.",
+              "name": "Product information available as readable text",
+              "description": "Can people and tools read the product information as text rather than only in images or hidden data?",
+              "improve": "Provide the product information as readable page text.",
               "fullCredit": "Delivered product information is ordinary extractable text."
             }
           },
@@ -139,9 +139,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Valid product markup",
-              "description": "Does the relevant product markup parse and use recognized types, properties and formats?",
-              "improve": "Correct invalid product markup and use recognized types, properties and value formats.",
+              "name": "Product data readable by search tools",
+              "description": "Is the product information for search tools written in a valid, recognized format?",
+              "improve": "Correct formatting errors in the product data so search and AI tools can read it.",
               "fullCredit": "Relevant product markup parses and uses recognized types, properties and value formats."
             }
           },
@@ -156,9 +156,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Product entity for this page",
-              "description": "Does the product record unambiguously represent the product on this page?",
-              "improve": "Ensure the product entity clearly represents the audited product.",
+              "name": "Product record identifies the right item",
+              "description": "Does the information supplied to search tools clearly identify the product on this page?",
+              "improve": "Make the product record supplied to search tools clearly identify the product being assessed.",
               "fullCredit": "A Product entity unambiguously represents the audited product page."
             }
           },
@@ -173,9 +173,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Product offer associations",
-              "description": "Are price, currency and availability coherent and associated with the correct product or option?",
-              "improve": "Connect coherent offer details to the correct product or option.",
+              "name": "Price and stock linked to the right option",
+              "description": "Are price, currency and availability linked to the correct product or selected option?",
+              "improve": "Connect the verified price, currency and availability to the correct product or option.",
               "fullCredit": "Offers connect to the appropriate Product or variant with internally coherent price, currency and availability fields."
             }
           },
@@ -190,9 +190,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Product identifiers",
-              "description": "Are applicable external identifiers valid and associated with the correct product or option?",
-              "improve": "Use verified applicable external identifiers and associate them with the correct product or option.",
+              "name": "Valid product identification codes",
+              "description": "Are applicable manufacturer or global product codes valid and linked to the correct product or option?",
+              "improve": "Publish verified manufacturer or global product codes where applicable and link them to the correct product or option.",
               "fullCredit": "Applicable external identifiers have valid formats and correct product or variant associations."
             }
           },
@@ -207,9 +207,9 @@
             ],
             "reason": null,
             "presentation": {
-              "name": "Product variant associations",
-              "description": "Are parent products, options and distinguishing attributes correctly connected?",
-              "improve": "Connect parent products, variants and their distinguishing attributes accurately.",
+              "name": "Product options connected correctly",
+              "description": "Can search tools connect each size, colour or other option to the main product and its distinguishing details?",
+              "improve": "Connect each product option to the main product and identify the details that distinguish it.",
               "fullCredit": "Parent products, variants and their distinguishing attributes are correctly connected."
             }
           }
@@ -372,7 +372,7 @@
             "presentation": {
               "name": "Access for search engines",
               "description": "Does the website allow the search engines checked by this audit to access this product page?",
-              "improve": "Review the website\u2019s crawler permissions and decide which search engines should be allowed to access the product page.",
+              "improve": "Review the website’s crawler permissions and decide which search engines should be allowed to access the product page.",
               "fullCredit": "Both search crawlers allowed at product URL"
             }
           },
@@ -389,7 +389,7 @@
             "presentation": {
               "name": "Access for AI answer tools",
               "description": "Does the website allow the AI retrieval tools checked by this audit to access this product page?",
-              "improve": "Review the website\u2019s crawler permissions against the AI tools you want to allow.",
+              "improve": "Review the website’s crawler permissions against the AI tools you want to allow.",
               "fullCredit": "All listed retrieval crawlers allowed"
             }
           }
@@ -414,7 +414,7 @@
             "reason": null,
             "presentation": {
               "name": "Working website sitemap",
-              "description": "Can the audit find and read a sitemap that helps tools discover the website\u2019s pages?",
+              "description": "Can the audit find and read a sitemap that helps tools discover the website’s pages?",
               "improve": "Publish a readable sitemap containing the relevant website pages.",
               "fullCredit": "Retrievable parseable sitemap or index with relevant children"
             }
@@ -431,7 +431,7 @@
             "reason": null,
             "presentation": {
               "name": "Product included in the sitemap",
-              "description": "Does the website\u2019s sitemap include the product page assessed here?",
+              "description": "Does the website’s sitemap include the product page assessed here?",
               "improve": "Include the correct product URL in a readable sitemap.",
               "fullCredit": "Audited or legitimate canonical URL listed"
             }
@@ -457,7 +457,7 @@
             "reason": null,
             "presentation": {
               "name": "Website identity in the AI guide",
-              "description": "Does the website\u2019s llms.txt guide identify the business or website?",
+              "description": "Does the website’s llms.txt guide identify the business or website?",
               "improve": "If you maintain an llms.txt guide, identify the business and website clearly.",
               "fullCredit": "Meaningful llms.txt identifies site and purpose"
             }
@@ -500,7 +500,7 @@
             "reason": null,
             "presentation": {
               "name": "Website context for AI tools",
-              "description": "Does the website\u2019s agent guide explain what the business and website provide?",
+              "description": "Does the website’s agent guide explain what the business and website provide?",
               "improve": "If you maintain an agent guide, describe the business and the purpose of its website.",
               "fullCredit": "Meaningful site-specific agent guide"
             }
@@ -517,8 +517,8 @@
             "reason": null,
             "presentation": {
               "name": "Clear guidance for AI tools",
-              "description": "Does the website\u2019s agent guide give tools useful instructions for using its information?",
-              "improve": "If you maintain an agent guide, add clear, accurate instructions and links that help AI tools use the website\u2019s information.",
+              "description": "Does the website’s agent guide give tools useful instructions for using its information?",
+              "improve": "If you maintain an agent guide, add clear, accurate instructions and links that help AI tools use the website’s information.",
               "fullCredit": "Practical authoritative references"
             }
           }
@@ -561,7 +561,7 @@
             "presentation": {
               "name": "Specific product explanation",
               "description": "Does the description explain this product in useful, specific terms?",
-              "improve": "Explain the product\u2019s relevant features and benefits with concrete, verified details.",
+              "improve": "Explain the product’s relevant features and benefits with concrete, verified details.",
               "fullCredit": "Clear complete explanation of product and function"
             }
           },
@@ -577,7 +577,7 @@
             "reason": null,
             "presentation": {
               "name": "Options and included items explained",
-              "description": "Does the page explain the product\u2019s configurations and what is included?",
+              "description": "Does the page explain the product’s configurations and what is included?",
               "improve": "Describe the available configurations and included items clearly.",
               "fullCredit": "Clear selected configuration and included items"
             }
@@ -663,7 +663,7 @@
             "reason": null,
             "presentation": {
               "name": "Stock information explained",
-              "description": "Does the content clearly explain the selected option\u2019s availability?",
+              "description": "Does the content clearly explain the selected option’s availability?",
               "improve": "Publish current, option-specific availability information.",
               "fullCredit": "Availability for selected configuration clear"
             }
