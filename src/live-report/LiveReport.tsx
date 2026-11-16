@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Assessment, Evidence } from '../../contracts/v1/types';
 import { buildLiveReportModel, type CheckDetail } from './model';
-import { copyForTest, findingsForTest, formatPoints, pointsForTest, resultForTest } from './test-copy';
+import { copyForTest, findingsForTest, formatPoints, pointsForTest, resultForTest, summarizeTestPoints } from './test-copy';
 import '../report-design/report.css';
 import './live.css';
 
@@ -93,12 +93,9 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
   checks.forEach(check => { counts[resultForTest(check)]++; });
   const finalScore = counts['Not completed'] === 0 ? model.finalScore : null;
   const completed = counts.Pass + counts.Fail;
-  const categories = [
-    ['Pass', counts.Pass, 'fulfilled'],
-    ['Fail', counts.Fail, 'zero'],
-    ['Not completed', counts['Not completed'], 'unmeasured'],
-    ['Not applicable', counts['Not applicable'], 'excluded'],
-  ] as const;
+  const pointSummary = summarizeTestPoints(checks, finalScore?.total ?? null);
+  const scoreLabel = finalScore ? 'Total score' : 'Points so far';
+  const scoredEnd = pointSummary.earned + pointSummary.missed;
   const context = [report?.variant, report?.market, report?.currency].filter(Boolean).join(' · ');
   const displayStatus = model.warnings.length && !report ? 'Report unavailable' : statusText[assessment.status];
 
@@ -135,15 +132,22 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
               </div>
               <figure className="rd-chart rd-live-chart">
                 <figcaption><h3>Your results at a glance</h3></figcaption>
-                <div className="rd-live-stack" aria-label={categories.map(([label, count]) => label + ': ' + count).join(', ')}>
-                  {categories.map(([label, count, key]) => (
-                    <span key={key} className={'rd-live-' + key} style={{ flexGrow: count }} title={label + ': ' + count} />
-                  ))}
+                <div className="rd-points-doughnut" role="img"
+                  aria-label={scoreLabel + ': ' + formatPoints(pointSummary.earned) + ' of 100. ' +
+                    formatPoints(pointSummary.missed) + ' points missed. ' +
+                    formatPoints(pointSummary.unscored) + ' points not yet scored.'}
+                  style={{ background: 'conic-gradient(#061135 0% ' + pointSummary.earned + '%, #c97665 ' +
+                    pointSummary.earned + '% ' + scoredEnd + '%, #dfddd7 ' + scoredEnd + '% 100%)' }}>
+                  <div className="rd-points-centre" aria-hidden="true">
+                    <span>{scoreLabel}</span>
+                    <strong>{formatPoints(pointSummary.earned)}<small> / 100</small></strong>
+                  </div>
                 </div>
-                <div className="rd-live-legend">
-                  {categories.map(([label, count, key]) => (
-                    <div key={key}><span><i className={'rd-live-' + key} />{label}</span><strong>{count}</strong></div>
-                  ))}
+                {!finalScore && <p className="rd-points-pending">Total score pending. Points may change as the remaining tests are completed.</p>}
+                <div className="rd-live-legend rd-points-legend">
+                  <div><span><i className="rd-live-fulfilled" />Points earned</span><strong>{formatPoints(pointSummary.earned)}</strong></div>
+                  <div><span><i className="rd-live-zero" />Points missed</span><strong>{formatPoints(pointSummary.missed)}</strong></div>
+                  <div><span><i className="rd-live-unmeasured" />Not yet scored</span><strong>{formatPoints(pointSummary.unscored)}</strong></div>
                 </div>
               </figure>
             </section>

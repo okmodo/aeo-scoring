@@ -111,3 +111,13 @@ export function findingsForTest(check: CheckDetail): Finding[] {
   if (result === 'Not completed') text = 'The audit did not return enough information to complete this test.';
   return [{ text, label: 'Audit finding' }];
 }
+
+export function summarizeTestPoints(checks: CheckDetail[], finalTotal: number | null) {
+  const total = 100;
+  const measured = checks.map(pointsForTest).filter(points => points !== null);
+  const earned = Math.max(0, Math.min(total, finalTotal ??
+    measured.reduce((sum, points) => sum + points.earned, 0)));
+  const missed = finalTotal !== null ? total - earned :
+    Math.max(0, Math.min(total - earned, measured.reduce((sum, points) => sum + points.missed, 0)));
+  return { earned, missed, unscored: Math.max(0, total - earned - missed), total };
+}

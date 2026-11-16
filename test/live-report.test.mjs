@@ -77,6 +77,8 @@ test('live report renders real state, actions, evidence and cache context safely
     const html = render(complete)
     assert.match(html, /View overall score/)
     assert.match(html, /Your results at a glance/)
+    assert.match(html, /class="rd-points-doughnut" role="img"/)
+    assert.match(html, /aria-label="Total score:/)
     assert.doesNotMatch(html, /Northstar|Fictional product|TEST DATA/)
     const partial = fixture('assessment-incomplete')
     partial.cache = { hit: true, validUntil: '2026-11-10T12:00:00Z' }
@@ -92,6 +94,8 @@ test('live report renders real state, actions, evidence and cache context safely
     assert.doesNotMatch(partialHtml, /<script>bad<\/script>|href="javascript:/)
     assert.match(partialHtml, /saved result/)
     assert.match(partialHtml, /overall score is unavailable/)
+    assert.match(partialHtml, /aria-label="Points so far:/)
+    assert.match(partialHtml, /Total score pending/)
     assert.doesNotMatch(partialHtml, /View overall score/)
   } finally { await vite.close() }
 })
@@ -177,4 +181,18 @@ test('business report lists all tests and surfaces actual findings without the o
     assert.match(incompletePoints, /Not completed/)
     assert.doesNotMatch(incompletePoints, /View overall score/)
   } finally { await vite.close() }
+})
+
+test('doughnut points reconcile without inventing a final score for unfinished tests', async () => {
+  const { summarizeTestPoints } = await import('../src/live-report/test-copy.ts')
+  const checks = [
+    { status: 'measured', fraction: 1, points: 20, maxPoints: 20 },
+    { status: 'measured', fraction: 0.5, points: 10, maxPoints: 25, availablePoints: 20 },
+    { status: 'not_measured', fraction: null, points: null, maxPoints: 60 },
+  ]
+  assert.deepEqual(summarizeTestPoints(checks, null), { earned: 30, missed: 10, unscored: 60, total: 100 })
+  assert.deepEqual(summarizeTestPoints([], null), { earned: 0, missed: 0, unscored: 100, total: 100 })
+  assert.deepEqual(summarizeTestPoints(checks, 78.125), { earned: 78.125, missed: 21.875, unscored: 0, total: 100 })
+  const excluded = { status: 'not_applicable', points: null, fraction: null, maxPoints: 10 }
+  assert.deepEqual(summarizeTestPoints([...checks, excluded], null), summarizeTestPoints(checks, null))
 })
