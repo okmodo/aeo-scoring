@@ -1,0 +1,1201 @@
+{
+  "snapshot": {
+    "url": "https://example.com/shorts",
+    "rawHtml": "<h1>Trail shorts</h1><p>Dries in 10 minutes.</p><p>Lab measured 10 minutes.</p><p>Eliminates 99% of odor.</p>"
+  },
+  "extracted": {
+    "productHtml": {
+      "blocks": [
+        {
+          "text": "Trail shorts",
+          "location": "heading"
+        }
+      ]
+    }
+  },
+  "artifact": {
+    "version": "1",
+    "sourceDigest": "634da8032be89a7a4a4bfd9ca4446f819819634e2477192126c91a23de128dc5",
+    "profileDigest": "90eef3a994d29bbfc86ced4f49f512f8b887857a4d1e6b1fb42d71ac1b462bfc",
+    "profile": {
+      "version": "1",
+      "category": "Trail shorts",
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Trail shorts"
+        }
+      ],
+      "slots": [
+        {
+          "id": "slot-0",
+          "group": "C2.essential",
+          "label": "Expectation 0",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        },
+        {
+          "id": "slot-1",
+          "group": "C2.supporting",
+          "label": "Expectation 1",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        },
+        {
+          "id": "slot-2",
+          "group": "C4.intended-use",
+          "label": "Expectation 2",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        },
+        {
+          "id": "slot-3",
+          "group": "C4.compatibility",
+          "label": "Expectation 3",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        },
+        {
+          "id": "slot-4",
+          "group": "C4.limitations",
+          "label": "Expectation 4",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        },
+        {
+          "id": "slot-5",
+          "group": "C4.selection",
+          "label": "Expectation 5",
+          "relevance": "Useful to a shopper",
+          "full": "Complete details",
+          "partial": "Incomplete details",
+          "zero": "No useful details",
+          "missingExpectation": "State the missing details"
+        }
+      ]
+    },
+    "inspections": [
+      {
+        "sourceId": "s1",
+        "claimsComplete": true,
+        "comparisonsComplete": true,
+        "claims": [
+          {
+            "quote": "Dries in 10 minutes."
+          },
+          {
+            "quote": "Eliminates 99% of odor."
+          }
+        ],
+        "comparisons": [],
+        "checks": [
+          {
+            "id": "S1.delivery",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.readability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.supporting-access",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.scope",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.entity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.offer",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.identifiers",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.variants",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.optional-claims",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.title",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.organization",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.image-alternatives",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.links",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.context",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.guidance",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.explanation",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.shipping",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.returns",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.consistency",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.claim-support",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-0",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-1",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-2",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-3",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-4",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-5",
+            "status": "unknown",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s2",
+        "claimsComplete": true,
+        "comparisonsComplete": true,
+        "claims": [],
+        "comparisons": [],
+        "checks": [
+          {
+            "id": "S1.delivery",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.readability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.supporting-access",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.scope",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.entity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.offer",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.identifiers",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.variants",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.optional-claims",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.title",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.organization",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.image-alternatives",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.links",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.context",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.guidance",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.explanation",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.shipping",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.returns",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.consistency",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.claim-support",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-0",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-1",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-2",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-3",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-4",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-5",
+            "status": "unknown",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s3",
+        "claimsComplete": true,
+        "comparisonsComplete": true,
+        "claims": [],
+        "comparisons": [],
+        "checks": [
+          {
+            "id": "S1.delivery",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.readability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.supporting-access",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.scope",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.entity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.offer",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.identifiers",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.variants",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.optional-claims",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.title",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.organization",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.image-alternatives",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.links",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.context",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.guidance",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.explanation",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.shipping",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.returns",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.consistency",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.claim-support",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-0",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-1",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-2",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-3",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-4",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-5",
+            "status": "unknown",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s4",
+        "claimsComplete": true,
+        "comparisonsComplete": true,
+        "claims": [],
+        "comparisons": [],
+        "checks": [
+          {
+            "id": "S1.delivery",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.readability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.supporting-access",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.scope",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.entity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.offer",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.identifiers",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S2.variants",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S3.optional-claims",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.title",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.organization",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S4.image-alternatives",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S7.links",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.context",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "S8.guidance",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.identity",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.explanation",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C1.configuration",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.price",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.availability",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.shipping",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C3.returns",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.consistency",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "C5.claim-support",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-0",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-1",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-2",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-3",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-4",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "id": "slot-5",
+            "status": "unknown",
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "supportInspections": [
+      {
+        "sourceId": "s1",
+        "claims": [
+          {
+            "id": "s1-claim-0",
+            "status": "present",
+            "evidence": [
+              {
+                "sourceId": "s1",
+                "quote": "Lab measured 10 minutes."
+              }
+            ],
+            "references": []
+          },
+          {
+            "id": "s1-claim-1",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s2",
+        "claims": [
+          {
+            "id": "s1-claim-0",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          },
+          {
+            "id": "s1-claim-1",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s3",
+        "claims": [
+          {
+            "id": "s1-claim-0",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          },
+          {
+            "id": "s1-claim-1",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          }
+        ]
+      },
+      {
+        "sourceId": "s4",
+        "claims": [
+          {
+            "id": "s1-claim-0",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          },
+          {
+            "id": "s1-claim-1",
+            "status": "absent",
+            "evidence": [],
+            "references": []
+          }
+        ]
+      }
+    ],
+    "judgments": {
+      "judgments": [
+        {
+          "id": "S1.delivery",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S1.readability",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S1.supporting-access",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S1.scope",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S1.configuration",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S2.entity",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S2.offer",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S2.identifiers",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S2.variants",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S3.identity",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S3.price",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S3.availability",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S3.optional-claims",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S4.title",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S4.organization",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S4.image-alternatives",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S7.identity",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S7.links",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S8.context",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "S8.guidance",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C1.identity",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C1.explanation",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C1.configuration",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C3.price",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C3.availability",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C3.shipping",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C3.returns",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C5.consistency",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "C5.claim-support",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-0",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-1",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-2",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-3",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-4",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        },
+        {
+          "id": "slot-5",
+          "status": "not_measured",
+          "fraction": null,
+          "reason": "Insufficient evidence",
+          "evidence": []
+        }
+      ],
+      "c5": {
+        "claims": [
+          {
+            "id": "s1-claim-0",
+            "status": "measured",
+            "fraction": 1,
+            "reason": "Test stated",
+            "evidence": [
+              {
+                "sourceId": "s1",
+                "quote": "Dries in 10 minutes."
+              },
+              {
+                "sourceId": "s1",
+                "quote": "Lab measured 10 minutes."
+              }
+            ]
+          },
+          {
+            "id": "s1-claim-1",
+            "status": "measured",
+            "fraction": 0,
+            "reason": "No support found",
+            "evidence": [
+              {
+                "sourceId": "s1",
+                "quote": "Eliminates 99% of odor."
+              }
+            ]
+          }
+        ],
+        "comparisons": []
+      }
+    }
+  },
+  "expected": {
+    "claimStatus": "measured",
+    "claimFraction": 0.5,
+    "consistencyStatus": "not_measured",
+    "identityStatus": "not_measured"
+  }
+}
