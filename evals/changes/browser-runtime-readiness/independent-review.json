@@ -11,12 +11,38 @@
     "Capture failure is preserved when cleanup fails, with a sanitized cleanup code. The compatibility flag is additive; the 60 percent thresholds, 1000 ms CPU setting, application deadline and reservation controls are unchanged in this diff."
   ],
   "verification": [
-    {"command": "node --test backend/browser-allowance.test.mjs backend/browser-retrieval.test.mjs backend/browser-workflow-service.test.mjs", "result": "40 passed, 0 failed"},
-    {"command": "git diff --check", "result": "passed"}
+    {
+      "command": "node --test backend/browser-allowance.test.mjs backend/browser-retrieval.test.mjs backend/browser-workflow-service.test.mjs",
+      "result": "40 passed, 0 failed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
   ],
   "limitations": [
     "Static review and offline mocked tests only; no independent native provider call, live deployment or billing verification was performed.",
     "The native import and session-history observations described in the plan were not independently verified in this review. A successful closure reconciliation does not prove the product capture itself works.",
     "Final committed source, fresh-agent continuation, full evaluation and hosted CI require separate verification. Existing accepted analytics sampling and watchdog/provider failure limitations remain."
-  ]
+  ],
+  "networkReview": {
+    "base": "f25cade",
+    "planningCommit": "33ff42c",
+    "result": "accepted_with_limitations",
+    "reviewedState": "Uncommitted supplemental network and route-freeze changes as observed during review.",
+    "findingsResolved": [
+      "Non-GET requests are aborted without egress. Non-navigation ping/beacon aborts preserve coverage; other non-navigation requests mark it incomplete and navigation fails closed. Diagnostics are limited to bounded method/type/count.",
+      "A route callback race found during review is addressed by freezing routing, draining in-flight callbacks, closing the browser and finalizing coverage after bounded cleanup. Delayed callback and freeze-before-egress regressions were added.",
+      "Future closure records remain unaccepted until a fresh clock reaches the end time; retry remains within the existing bounded deadline."
+    ],
+    "verification": {
+      "command": "node --test backend/browser-retrieval.test.mjs backend/browser-allowance.test.mjs",
+      "result": "42 passed, 0 failed"
+    },
+    "limitations": [
+      "Static and mocked offline review only; final committed source, full source-bound evaluation, fresh-agent continuation and hosted CI not independently verified.",
+      "Observed request-block cause has not been established as POST or request-count exhaustion.",
+      "No native call or deployment performed by reviewer; existing analytics sampling and watchdog/billing limitations remain."
+    ]
+  }
 }

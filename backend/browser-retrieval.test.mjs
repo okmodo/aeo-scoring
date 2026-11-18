@@ -2,16 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { captureBrowserProduct } from './browser-retrieval.mjs';
 
-function fixture({requests = ['https://store.com/product'], body = '<h1>Product</h1>', closeThrows = false, redirect = false, redirectTo = null, stable = true, cookies = {}, responseHeaders = {}} = {}) {
+function fixture({requests = ['https://store.com/product'], body = '<h1>Product</h1>', closeThrows = false, redirect = false, redirectTo = null, stable = true, cookies = {}, responseHeaders = {}, mainMethod = 'GET', extraRequests = []} = {}) {
   const calls = []; let handler;
   const guard = {reserve:async x => {calls.push(['reserve',x]);return {accepted:true,duplicate:false}},startLaunch:async x=>{calls.push(['start',x]);return {accepted:true,duplicate:false}},bindSession:async x=>{calls.push(['bind',x]);return {accepted:true}},settle:async x=>{calls.push(['settle',x]);return {accepted:true}}};
   const frame = {}; let current;
   const page = {mainFrame:()=>frame,on(){}, async goto(url) {
     current=url; calls.push(['goto',url]);
-    const entries = [url, ...requests.slice(1)];
-    for (const [index, target] of entries.entries()) {
+    const entries = [{target:url,method:mainMethod,type:'document',navigation:true}, ...requests.slice(1).map(target=>({target,method:'GET',type:'script',navigation:false})), ...extraRequests];
+    for (const [index, entry] of entries.entries()) {
+      const {target,method,type,navigation} = entry;
       let aborted = false;
-      await handler({request:()=>({url:()=>target,method:()=> 'GET',isNavigationRequest:()=>index===0,resourceType:()=> index===0 ? 'document' : 'script',allHeaders:async()=>({cookie:cookies[new URL(target).hostname] || ''}),frame:()=>frame}),fulfill:async x=>{calls.push(['fulfill',x.body.length,x.headers])},abort:async()=>{aborted=true}});
+      await handler({request:()=>({url:()=>target,method:()=>method,isNavigationRequest:()=>navigation,resourceType:()=>type,allHeaders:async()=>({cookie:cookies[new URL(target).hostname] || ''}),frame:()=>frame}),fulfill:async x=>{calls.push(['fulfill',x.body.length,x.headers])},abort:async()=>{aborted=true}});
       if (aborted && index===0) throw new Error('navigation aborted');
     }
     return {ok:()=>true};
@@ -19,7 +20,8 @@ function fixture({requests = ['https://store.com/product'], body = '<h1>Product<
   const context = {cookies:async url=>cookies[new URL(url).hostname] ? [{name:'session',value:cookies[new URL(url).hostname].split('=')[1]}] : [],addInitScript:async()=>{},routeWebSocket:async()=>{},route:async(_,fn)=>{handler=fn},newPage:async()=>page};
   const browser = {sessionId:()=> 'session',newContext:async()=>context,close:async()=>{calls.push(['close']);if(closeThrows)throw Error('lost')}};
   const egress = {fetch:async(target, options)=>{calls.push(['fetch',target,options]);return (redirect || (redirectTo && target===requests[0])) ? new Response(null,{status:302,headers:{...responseHeaders,location:redirectTo || 'http://127.0.0.1/private'}}) : new Response(body,{status:200,headers:responseHeaders})}};
-  return {calls,guard,egress,launch:async()=>browser,binding:{},id:'test',supportInspector:async snapshot=>snapshot};
+  const emitRequest = ({target,method='GET',type='fetch',navigation=false,abort=async()=>{},headers=async()=>({})}) => handler({request:()=>({url:()=>target,method:()=>method,isNavigationRequest:()=>navigation,resourceType:()=>type,allHeaders:headers,frame:()=>frame}),fulfill:async()=>assert.fail('frozen request was fulfilled'),abort});
+  return {calls,guard,egress,launch:async()=>browser,binding:{},id:'test',supportInspector:async snapshot=>snapshot,emitRequest};
 }
 
 test('one navigation captures initial and rendered evidence and closes before settlement', async()=>{
@@ -169,10 +171,10 @@ test('missing history is retried within one deadline, then confirmed with fresh 
   assert.equal(calls,2);
 });
 
-test('malformed, duplicate and future closure records are not retried',async()=>{
+test('malformed and duplicate closure records are not retried',async()=>{
   const {createBrowserProvider} = await import('./browser-retrieval.mjs');
   const start=1_800_000_000_000;
-  for (const data of [null,[{sessionId:'s',startTime:start,endTime:'bad'}],[{sessionId:'s',startTime:start,endTime:start+30}],[{sessionId:'s',startTime:start,endTime:start+10},{sessionId:'s',startTime:start,endTime:start+10}]]) {
+  for (const data of [null,[{sessionId:'s',startTime:start,endTime:'bad'}],[{sessionId:'s',startTime:start,endTime:start+10},{sessionId:'s',startTime:start,endTime:start+10}]]) {
     let calls=0;const sdk={history:async()=>{calls++;return data}};
     const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>start+20,confirmationTimeoutMs:100,retryMs:2});
     await assert.rejects(provider.verifyClosed({sessionId:'s'}));
@@ -200,4 +202,94 @@ test('capture failure is preserved if settlement throws',async()=>{
   f.launch=async()=>({...await launch(),newContext:async()=>{throw original}});
   f.guard.settle=async()=>{throw new Error('sensitive settlement details')};
   await assert.rejects(captureBrowserProduct('https://store.com/product',f),error=>error===original && error.cleanupCode==='browser_settlement_unconfirmed' && !JSON.stringify(error).includes('sensitive'));
+});
+
+test('beacon side effects are aborted without invalidating product capture',async()=>{
+  const f=fixture({extraRequests:[{target:'https://analytics.com/track?private=secret',method:'POST',type:'ping',navigation:false},{target:'https://analytics.com/second',method:'POST',type:'beacon',navigation:false}]});
+  const result=await captureBrowserProduct('https://store.com/product',f);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+  assert.equal(result.coverage.subresourceLimited,false);
+  assert.deepEqual(result.coverage.blockedNonGet,[{method:'POST',resourceType:'ping',count:1},{method:'POST',resourceType:'beacon',count:1}]);
+  assert.doesNotMatch(JSON.stringify(result.coverage),/analytics|secret/);
+});
+
+test('non-GET product data requests are aborted and mark coverage incomplete',async()=>{
+  const f=fixture({extraRequests:[{target:'https://store.com/api',method:'POST',type:'fetch',navigation:false},{target:'https://store.com/api2',method:'POST',type:'xhr',navigation:false},{target:'https://store.com/api3',method:'POST',type:'xhr',navigation:false}]});
+  const result=await captureBrowserProduct('https://store.com/product',f);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+  assert.equal(result.coverage.subresourceLimited,true);
+  assert.equal(result.extracted.productHtml.complete,false);
+  assert.deepEqual(result.coverage.blockedNonGet,[{method:'POST',resourceType:'fetch',count:1},{method:'POST',resourceType:'xhr',count:2}]);
+});
+
+test('non-GET navigation is rejected without sending a request',async()=>{
+  const f=fixture({mainMethod:'POST'});
+  await assert.rejects(captureBrowserProduct('https://store.com/product',f));
+  assert.equal(f.calls.some(x=>x[0]==='fetch'),false);
+  assert.ok(f.calls.some(x=>x[0]==='close'));
+});
+
+test('slightly future closure is verified only after the worker clock catches up',async()=>{
+  const {createBrowserProvider}=await import('./browser-retrieval.mjs');
+  const start=1_800_000_000_000; let calls=0; let clockTime=start+10;
+  const sdk={history:async()=>{calls++; if(calls===2) clockTime=start+31; return [{sessionId:'s',startTime:start,endTime:start+30}]}};
+  const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>clockTime,confirmationTimeoutMs:100,retryMs:2});
+  const result=await provider.verifyClosed({sessionId:'s'});
+  assert.equal(calls,2);assert.equal(result.observedAt,start+31);assert.equal(result.durationMs,30);
+});
+
+test('far-future closure is never accepted before the bounded deadline',async()=>{
+  const {createBrowserProvider}=await import('./browser-retrieval.mjs');
+  const start=1_800_000_000_000; let calls=0;
+  const sdk={history:async()=>{calls++;return [{sessionId:'s',startTime:start,endTime:start+10_000}]}};
+  const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>start+1,confirmationTimeoutMs:20,retryMs:2});
+  await assert.rejects(provider.verifyClosed({sessionId:'s'}));
+  assert.ok(calls>1);
+});
+
+test('pending route callbacks drain before the final snapshot and return',async()=>{
+  const f=fixture(); let release; const delayed=new Promise(resolve=>{release=resolve});
+  f.supportInspector=async snapshot=>{
+    void f.emitRequest({target:'https://store.com/api',method:'POST',type:'xhr',abort:()=>delayed});
+    return snapshot;
+  };
+  let finished=false;
+  const capture=captureBrowserProduct('https://store.com/product',f).finally(()=>{finished=true});
+  await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(finished,false);
+  release();
+  const result=await capture;
+  assert.equal(result.coverage.complete,false);
+  assert.deepEqual(result.coverage.blockedNonGet,[{method:'POST',resourceType:'xhr',count:1}]);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+});
+
+test('requests arriving during browser close are aborted without egress and reflected in coverage',async()=>{
+  const f=fixture(); const launch=f.launch;
+  f.launch=async()=>{const browser=await launch();return {...browser,close:async()=>{
+    await f.emitRequest({target:'https://store.com/late.js',type:'script'});
+    await browser.close();
+  }}};
+  const result=await captureBrowserProduct('https://store.com/product',f);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+  assert.equal(result.coverage.subresourceLimited,true);
+  assert.equal(result.extracted.productHtml.complete,false);
+  await f.emitRequest({target:'https://store.com/after-close',method:'POST',type:'xhr'});
+  assert.deepEqual(result.coverage.blockedNonGet,[]);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+});
+
+test('a request awaiting headers at freeze cannot start egress afterward',async()=>{
+  const f=fixture();let release;const delayed=new Promise(resolve=>{release=resolve});
+  f.supportInspector=async snapshot=>{
+    void f.emitRequest({target:'https://store.com/delayed.js',type:'script',headers:()=>delayed});
+    return snapshot;
+  };
+  const capture=captureBrowserProduct('https://store.com/product',f);
+  await new Promise(resolve=>setTimeout(resolve,10));
+  release({});
+  const result=await capture;
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+  assert.equal(result.coverage.subresourceLimited,true);
+  assert.equal(result.extracted.productHtml.complete,false);
 });

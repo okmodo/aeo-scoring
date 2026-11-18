@@ -6,7 +6,10 @@
     "Enable documentednew_module_registry forpinnedSDK createRequire(import.meta.url) withdate2026-11-05.",
     "Provider closure usesfreshpost-history clock; guardvalidates againstfreshpostverification clock andwritesverifiedobservation time.",
     "Retry missinghistory only within3s total; malformed/duplicate/future remainunknown. Capture20s/close2s/62minhold/hourlywatchdog unchanged.",
-    "Cleanupuncertainty no longermasks originalcapturefailure; publicerrors remain safe."
+    "Cleanupuncertainty no longermasks originalcapturefailure; publicerrors remain safe.",
+    "Supplementalplan33ff42c classifies blockedsideeffects andwaitsforWorkerclock within3s; nofutureproof acceptance ornewnetworksideeffects.",
+    "Freeze anddrainroutecallbacks withincapturedeadline; no new egressafterfreeze andfinalcoverage reflects callbacks throughbrowserclose.",
+    "UserexplicitlyrequesteddeploybeforefurtherliveURLtesting: finishofflinechecks/review/CI,deploy,thenuseFahertyessentialdrawstringshort URL. Do notrequireanotherpreactivationmerchanttest."
   ],
   "constraints": [
     "Allaccount60%ceilings andCPU1000 unchanged; nofrontend/scoring/dependency/unrelatedservices changes.",
@@ -18,9 +21,10 @@
     "Terraimplementation andindependentreview,40targetedtests passed; sourceboundevaluation/exit/CI recordedseparately."
   ],
   "remaining": [
-    "Run finalsource-bound checks,freshagentexitandhostedCI.",
     "Validatecorrectedstagedcapture andownedsessionclosure/reconciliation; onlyswitchproduction afterpass.",
-    "R2/browser/pipelinebindings andactiveversionsecrets/monitoring/hourlycron mustbepreserved inAPIrollout; repoexampleconfigisnotfullruntimebindingmanifest."
+    "R2/browser/pipelinebindings andactiveversionsecrets/monitoring/hourlycron mustbepreserved inAPIrollout; repoexampleconfigisnotfullruntimebindingmanifest.",
+    "AfterpassingCImerge/deployfollowupPR44 preservingproductionsecrets/monitoring/cron/bindings andCPU1000,thenvalidateFahertyURLwithinexistingguards.",
+    "Remove onlytaskcreatedtemporaryvalidationWorker andnonproductiondiagnosticversions; reconcileknownclosedownedsessionsandsettlerolloutreservationconservatively."
   ],
   "resumeCommands": [
     "npm run test:browser-build",
