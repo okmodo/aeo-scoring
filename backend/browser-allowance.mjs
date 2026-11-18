@@ -8,7 +8,7 @@ export const BROWSER_CONTROLS_VERSION = 'browser-application-controls-v1';
 
 // The application-controls capability is fixed by trusted deployment code.
 // The timeout and cleanup do not impose a provider-enforced lifetime.
-export function createBrowserAllowanceGuard(db, { accountId, subscriptionId, token, fetch: fetcher, listSessions, collect = collectBrowserUsage, verifyClosed, capability } = {}) {
+export function createBrowserAllowanceGuard(db, { accountId, subscriptionId, token, fetch: fetcher, listSessions, collect = collectBrowserUsage, verifyClosed, capability, clock = Date.now } = {}) {
   return {
     async reserve({ id, maxDurationMs, now = Date.now() } = {}) {
       if (!validId(accountId) || !validId(id) || !number(now) || !number(maxDurationMs) || maxDurationMs < 1 || maxDurationMs > BROWSER_CYCLE_LIMIT_MS) return deny('invalid_request');
@@ -89,8 +89,9 @@ export function createBrowserAllowanceGuard(db, { accountId, subscriptionId, tok
         if (lease.settled_at !== null) return {accepted:true,duplicate:true};
         if (!lease.session_id || typeof verifyClosed !== 'function') return deny('unknown_usage');
         const result = await verifyClosed({accountId,sessionId:lease.session_id,now});
-        if (!result || result.sessionId !== lease.session_id || result.closed !== true || !number(result.durationMs) || !number(result.observedAt) || result.observedAt>now || now-result.observedAt>MAX_AGE) return deny('unknown_usage');
-        const row = await db.prepare('UPDATE browser_allowance_leases SET actual_ms=?3, settled_at=?4 WHERE account_id=?1 AND id=?2 AND settled_at IS NULL RETURNING id').bind(accountId,id,result.durationMs,now).first();
+        const completedAt = clock();
+        if (!number(completedAt) || completedAt < now || !result || result.sessionId !== lease.session_id || result.closed !== true || !number(result.durationMs) || !number(result.observedAt) || result.observedAt < now || result.observedAt > completedAt || completedAt - result.observedAt > MAX_AGE) return deny('unknown_usage');
+        const row = await db.prepare('UPDATE browser_allowance_leases SET actual_ms=?3, settled_at=?4 WHERE account_id=?1 AND id=?2 AND settled_at IS NULL RETURNING id').bind(accountId,id,result.durationMs,result.observedAt).first();
         return row ? {accepted:true,duplicate:false,overrun:result.durationMs>lease.duration_ms} : deny('settlement_race');
       } catch { return deny('unknown_usage'); }
     },

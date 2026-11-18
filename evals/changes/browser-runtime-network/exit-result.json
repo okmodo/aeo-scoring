@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "browser-runtime-network",
+  "sourceDigest": "bd49db396cf74b593cc66ce1ae8f46e6759bdfd303c1842c96b7f8e57270880b",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/browser_merged_exit",
+  "exportSha256": "9b877f903295692f33e5a7f406e6abab04c1ad7b3e0830542b16a878d11159a7",
+  "interruptionPoint": "Frozenclosed ownedsession heldafterunknownresult beforefreshSQLite settlement.",
+  "observedContinuation": "FreshTerraagent using onlyexport+source replayedcanonicalprovider+freshSQLiteguard:2070ms settledat1794981371400. Future/missingproof keptunknown_usage withnullactual/settled. Node24bothfocusedfiles passed43tests includingcallbackfreeze,beacons,productPOST,futurewaitandstalenavigation. Initialsyntheticone-daycyclefixturewasrejected; correctedvalid30dayfixturepassed.",
+  "limitations": "Syntheticmock/inmemorySQLite,notnativeCloudflare/modelquality. No livebrowser/network/sourceedits. Userrequestsproductiondeploymentbeforefurthermerchanttests."
+}

@@ -49,6 +49,17 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
   };
   const controller = new AbortController();
   const deadline = new Promise((_, reject) => { timeout = setTimeout(() => { controller.abort(); reject(new Error('browser capture timeout')); }, sessionTimeoutMs); });
+  let captureError; let captureFailed = false; let result;
+  let routingFrozen = false; let finalized = false; let routeError; let subresourceLimited = false;
+  const pendingRoutes = new Set(); const blockedNonGet = [];
+  const recordBlocked = (method,resourceType) => {
+    const safeMethod = ['POST','PUT','PATCH','DELETE','HEAD','OPTIONS'].includes(method) ? method : 'OTHER';
+    const safeType = ['ping','beacon','fetch','xhr','document','script','image','stylesheet','font','media','websocket','eventsource','manifest','other'].includes(resourceType) ? resourceType : 'other';
+    let entry = blockedNonGet.find(item=>item.method===safeMethod && item.resourceType===safeType);
+    if (!entry) { entry = {method:safeMethod,resourceType:safeType,count:0}; blockedNonGet.push(entry); }
+    entry.count++;
+  };
+  const drainRoutes = async () => { while (pendingRoutes.size) await Promise.allSettled([...pendingRoutes]); };
   try {
     const work = (async () => {
       const create = launch || (await import('@cloudflare/playwright')).launch;
@@ -73,16 +84,40 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
           try { Object.defineProperty(globalThis, key, {value:undefined, configurable:false, writable:false}); } catch {}
         }
       });
-      let count = 0; let total = 0; let initial; let routeError; let page; let pendingRedirect; let subresourceLimited = false;
-      await context.route('**/*', async route => {
+      let count = 0; let total = 0; let initial; let page; let pendingRedirect;
+      const handleRoute = async route => {
         try {
           const request = route.request();
+          if (finalized) { await route.abort(); return; }
+          if (routingFrozen) {
+            const resourceType = request.resourceType();
+            if (request.method() !== 'GET') recordBlocked(request.method(),resourceType);
+            if (request.isNavigationRequest()) routeError ||= new Error('navigation after capture freeze');
+            else if (resourceType !== 'ping' && resourceType !== 'beacon') subresourceLimited = true;
+            await route.abort(); return;
+          }
+          if (controller.signal.aborted || ++count > 100) throw new Error('request blocked');
+          const method = request.method();
+          const resourceType = request.resourceType();
+          const navigation = request.isNavigationRequest();
+          if (method !== 'GET') {
+            recordBlocked(method,resourceType);
+            if (navigation) throw new Error('request blocked');
+            if (resourceType !== 'ping' && resourceType !== 'beacon') subresourceLimited = true;
+            await route.abort();
+            return;
+          }
           const target = normalizePublicTarget(request.url());
-          if (controller.signal.aborted || ++count > 100 || request.method() !== 'GET') throw new Error('request blocked');
-          const isDocument = request.isNavigationRequest() && request.resourceType() === 'document';
+          const isDocument = navigation && resourceType === 'document';
           if (isDocument && request.frame() !== page.mainFrame()) throw new Error('frame navigation blocked');
           const browserHeaders = await request.allHeaders();
+          if (routingFrozen || controller.signal.aborted) {
+            if (navigation) routeError ||= new Error('navigation after capture freeze');
+            else if (resourceType !== 'ping' && resourceType !== 'beacon') subresourceLimited = true;
+            await route.abort(); return;
+          }
           const response = await egress.fetch(target, {method:'GET', redirect:'manual', browserHeaders, signal:controller.signal});
+          if (routingFrozen && isDocument) { await response.body?.cancel(); throw new Error('navigation after capture freeze'); }
           // Playwright does not route subsequent requests in a redirect chain. Never
           // give Chromium a 3xx that it could follow outside the egress boundary.
           if (response.status >= 300 && response.status < 400) {
@@ -110,7 +145,12 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
           delete headers['content-encoding']; delete headers['content-length']; delete headers['transfer-encoding'];
           if (isDocument && response.status >= 200 && response.status < 300) initial = {url:target, body, status:response.status, limited:body.byteLength > MAX_DOCUMENT};
           await route.fulfill({ status: response.status, headers, body:Buffer.from(body) });
-        } catch (error) { routeError ||= error; await route.abort().catch(() => {}); }
+        } catch (error) { if (!finalized) routeError ||= error; await route.abort().catch(() => {}); }
+      };
+      await context.route('**/*', route => {
+        const job = handleRoute(route); pendingRoutes.add(job);
+        void job.then(()=>pendingRoutes.delete(job),()=>pendingRoutes.delete(job));
+        return job;
       });
       page = await context.newPage();
       page.on('popup', popup => { void popup.close(); });
@@ -126,9 +166,10 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
       }
       if (!response || !response.ok() || !initial || initial.status !== 200 || routeError) throw routeError || new Error('document unavailable');
       const stability = await page.evaluate(waitForProductStability);
-      const dom = await page.evaluate(captureProductDom, {initialHtml:new TextDecoder().decode(initial.body), initialLimited:initial.limited});
+      let dom = await page.evaluate(captureProductDom, {initialHtml:new TextDecoder().decode(initial.body), initialLimited:initial.limited});
       if (subresourceLimited || !stability?.stable) { dom.extracted.productHtml.complete = false; dom.extracted.coverage.html = false; }
       if (routeError || !initial || page.url() !== initial.url) throw routeError || new Error('unexpected navigation');
+      const expandedBeforeFreeze = dom.expanded;
       const supportSnapshot = {url:initial.url, extracted:dom.extracted};
       const fetchBounded = async (target, requestSignal) => {
         if (controller.signal.aborted || requestSignal.aborted || ++count > 100) throw new Error('support budget exhausted');
@@ -146,29 +187,58 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
       const inspected = await supportInspector(supportSnapshot, {fetchBounded,signal:controller.signal});
       const support = {crawlerPolicy:inspected.crawlerPolicy,sitemap:inspected.sitemap,guides:inspected.guides,policies:inspected.policies};
       if (controller.signal.aborted) throw new Error('browser capture timeout');
-      return {support,url:initial.url, observedAt:new Date(now()).toISOString(), initialHtml:initial.body.slice(0, MAX_DOCUMENT), initialLimited:initial.limited, renderedHtml:dom.renderedHtml, initialExtracted:dom.initialExtracted, extracted:dom.extracted, selectedVariant:dom.selectedVariant, coverage:{expanded:dom.expanded, complete:dom.extracted.coverage?.html === true, initialLimited:initial.limited, renderedLimited:dom.renderedLimited, subresourceLimited, stable:stability?.stable === true}};
+      routingFrozen = true;
+      await drainRoutes();
+      if (routeError) throw routeError;
+      dom = await page.evaluate(captureProductDom, {initialHtml:new TextDecoder().decode(initial.body), initialLimited:initial.limited});
+      dom.expanded += expandedBeforeFreeze;
+      if (subresourceLimited || !stability?.stable) { dom.extracted.productHtml.complete = false; dom.extracted.coverage.html = false; }
+      return {support,url:initial.url, observedAt:new Date(now()).toISOString(), initialHtml:initial.body.slice(0, MAX_DOCUMENT), initialLimited:initial.limited, renderedHtml:dom.renderedHtml, initialExtracted:dom.initialExtracted, extracted:dom.extracted, selectedVariant:dom.selectedVariant, coverage:{expanded:dom.expanded, complete:dom.extracted.coverage?.html === true, initialLimited:initial.limited, renderedLimited:dom.renderedLimited, subresourceLimited, blockedNonGet, stable:stability?.stable === true}};
     })().finally(async () => { if (controller.signal.aborted) await close(); });
-    return await Promise.race([work, deadline]);
+    result = await Promise.race([work, deadline]);
+    return result;
+  } catch (error) {
+    captureError = error; captureFailed = true;
+    throw error;
   } finally {
     clearTimeout(timeout); controller.abort();
-    await close();
-    if (browser && !closeConfirmed) throw new Error('browser closure unconfirmed');
-    if (sessionBound && closeConfirmed) {
-      const settled = await guard.settle({id, now:now()});
-      if (!settled?.accepted) throw new Error('browser closure or usage unconfirmed');
+    let cleanupCode;
+    try {
+      routingFrozen = true;
+      await close();
+      if (closeConfirmed && pendingRoutes.size) await providerTimeout(drainRoutes(),closeTimeoutMs);
+      finalized = true;
+      if (result) {
+        if (subresourceLimited) { result.extracted.productHtml.complete = false; result.extracted.coverage.html = false; result.coverage.complete = false; }
+        result.coverage.subresourceLimited = subresourceLimited;
+        result.coverage.blockedNonGet = structuredClone(blockedNonGet);
+      }
+      if (browser && !closeConfirmed) cleanupCode = 'browser_close_unconfirmed';
+      else if (sessionBound && closeConfirmed) {
+        const settled = await guard.settle({id, now:now()});
+        if (!settled?.accepted) cleanupCode = 'browser_settlement_unconfirmed';
+      }
+    } catch { cleanupCode = 'browser_settlement_unconfirmed'; }
+    if (!captureFailed && !cleanupCode && routeError) throw routeError;
+    if (cleanupCode) {
+      if (captureFailed) {
+        if (captureError && typeof captureError === 'object' && Object.isExtensible(captureError)) {
+          try { Object.defineProperty(captureError,'cleanupCode',{value:cleanupCode,configurable:true}); } catch { /* Preserve the original error. */ }
+        }
+      } else throw Object.assign(new Error(cleanupCode === 'browser_close_unconfirmed' ? 'browser closure unconfirmed' : 'browser closure or usage unconfirmed'),{code:cleanupCode});
     }
   }
 }
 
-async function providerTimeout(promise) {
+async function providerTimeout(promise, timeoutMs = 5000) {
   let timer;
-  try { return await Promise.race([promise, new Promise((_,reject)=>{ timer=setTimeout(()=>reject(new Error('browser provider timeout')),5000); })]); }
+  try { return await Promise.race([promise, new Promise((_,reject)=>{ timer=setTimeout(()=>reject(new Error('browser provider timeout')),timeoutMs); })]); }
   finally { clearTimeout(timer); }
 }
 
 // The caller must only pass closeOwnedSession IDs loaded from its own lease.
-export function createBrowserProvider(binding, { sdk } = {}) {
-  if (!binding || typeof binding.closeSession !== 'function') throw new TypeError('Browser session binding required');
+export function createBrowserProvider(binding, { sdk, clock = Date.now, confirmationTimeoutMs = 3000, retryMs = 100 } = {}) {
+  if (!binding || typeof binding.closeSession !== 'function' || typeof clock !== 'function' || !Number.isSafeInteger(confirmationTimeoutMs) || confirmationTimeoutMs < 1 || confirmationTimeoutMs > 3000 || !Number.isSafeInteger(retryMs) || retryMs < 1 || retryMs > 3000) throw new TypeError('Browser session binding and bounded confirmation required');
   const api = async () => sdk || await import('@cloudflare/playwright');
   return {
     async launch(options) { return (await api()).launch(binding, options); },
@@ -177,14 +247,26 @@ export function createBrowserProvider(binding, { sdk } = {}) {
       if (!Array.isArray(sessions)) throw new Error('invalid browser sessions');
       return sessions;
     },
-    async verifyClosed({sessionId, now = Date.now()}) {
-      const history = await providerTimeout((await api()).history(binding));
-      if (!Array.isArray(history)) throw new Error('browser closure unknown');
-      const matches = history.filter(item => item?.sessionId === sessionId);
-      if (matches.length !== 1) throw new Error('browser closure unknown');
-      const session = matches[0];
-      if (!Number.isSafeInteger(session.startTime) || !Number.isSafeInteger(session.endTime) || session.startTime < 1_000_000_000_000 || session.endTime < session.startTime || session.endTime > now) throw new Error('browser closure unknown');
-      return {sessionId, closed:true, durationMs:session.endTime-session.startTime, observedAt:now};
+    async verifyClosed({sessionId}) {
+      const deadline = Date.now() + confirmationTimeoutMs;
+      for (;;) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) throw new Error('browser closure unknown');
+        const history = await providerTimeout(api().then(client=>{ if (Date.now() >= deadline) throw new Error('browser closure unknown'); return client.history(binding); }), remaining);
+        if (Date.now() >= deadline) throw new Error('browser closure unknown');
+        const observedAt = clock();
+        if (!Number.isSafeInteger(observedAt) || observedAt < 0 || !Array.isArray(history) || history.some(item=>!item || typeof item.sessionId !== 'string' || !item.sessionId)) throw new Error('browser closure unknown');
+        const matches = history.filter(item => item.sessionId === sessionId);
+        if (matches.length > 1) throw new Error('browser closure unknown');
+        if (matches.length === 1) {
+          const session = matches[0];
+          if (!Number.isSafeInteger(session.startTime) || !Number.isSafeInteger(session.endTime) || session.startTime < 1_000_000_000_000 || session.endTime < session.startTime) throw new Error('browser closure unknown');
+          if (session.endTime <= observedAt) return {sessionId, closed:true, durationMs:session.endTime-session.startTime, observedAt};
+        }
+        const wait = Math.min(retryMs, deadline - Date.now());
+        if (wait <= 0) throw new Error('browser closure unknown');
+        await new Promise(resolve=>setTimeout(resolve,wait));
+      }
     },
     async closeOwnedSession(sessionId) {
       if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('session ID required');

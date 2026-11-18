@@ -21,7 +21,7 @@ export default defineConfig({
     limits: { cpuMs: MAX_INVOCATION_CPU_MS },
     entrypoint,
     compatibilityDate: '2026-11-05',
-    compatibilityFlags: ['global_fetch_strictly_public', 'cache_option_enabled', 'nodejs_compat'],
+    compatibilityFlags: ['global_fetch_strictly_public', 'cache_option_enabled', 'nodejs_compat', 'new_module_registry'],
     workersDev: true,
     previewUrls: false,
     env: {

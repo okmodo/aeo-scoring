@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "id": "browser-runtime-network",
+  "task": "Handle native browser beacon side effects safely and wait for closure timestamps without accepting future proof.",
+  "scope": [
+    "backend/**",
+    "scripts/browser-build-check.mjs",
+    "docs/browser-product-retrieval.md",
+    "evals/changes/browser-runtime-readiness/**",
+    "evals/changes/browser-runtime-network/**"
+  ],
+  "nonGoals": [
+    "No rubric/scoring/frontend/shareddependency changes, no changes to unrelatedservices, no limit increases or unknown zero settlements.",
+    "Retain60%limits,CPU1000,20scapture/2sclose deadlines,hourly owned-session watchdog and62minute hold."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Abort all nonGET requests: navigationnonGET remainsfatal; non-navigationping/beacon doesnotinvalidate maincapture; fetch/xhr/othernonGET recordsnetworkcoverageincomplete withoutsending sideeffects. Preserve resource/time/securitybounds andstructuredcoverage diagnostics.",
+      "verification": "automated",
+      "evidence": "Frozenbeacon,productPOST,navigationPOST andstrict noforwarding tests plusnativecapturediagnostics."
+    },
+    {
+      "id": "O2",
+      "description": "Forvalidfinishedhistoryrecord withendTimeahead ofWorkerclock, wait/requerywithinexisting3s total untilpostresponseclock>=endTime; neveracceptfutureproof, malformed/duplicate records orunknownzero. Preserveall60%/CPU1000 andcapture/closebounds.",
+      "verification": "automated",
+      "evidence": "Movingclocknear-future/farfuture/deadline andunknownholdtests;independentreview."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable plan beforefix,Terraimplementation andindependentreview,sourceboundevaluation/CI, genuinefreshagent continuation of owned-session settlement. Native budget already reserved asbrowser-production-rollout-20261117-a1; unknown2070msclosedsession hold isnotreleased until authenticatedproviderproofthroughguard.",
+      "verification": "human",
+      "evidence": "Git history,review,handoff,exit/run/trace andCI; deployment records and productionversion verification."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Small runtime fix; no extra page fetch or browser launch retries. Bounded closureconfirmation and accurate failure semantics.",
+      "verification": "human",
+      "evidence": "Diff,regressions,review andnative outcomes."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Closure confirmation/settlement workflow changes; freshagent must recover closed owned-session state usingfrozenproof withoutpriorchat orlivecalls."
+  },
+  "context": "Afterplan5d0a9db andruntimefixf25cade, isolatednativevalidationstillfailed withsafeoriginalerrorrequestblocked. Closedproviderrecords repeatedlyend6\u201351msafterlocalWorkerclock; theywereverifiedlaterandsettledthroughrealwatchdog,neverzero. This supplements capture-sideeffectclassification andboundedwaiting without relaxingfutureproof acceptance. Productionunchanged; do notedit originalplan."
+}

@@ -8,9 +8,9 @@ function setup() {
   const sqlite=new DatabaseSync(':memory:'); sqlite.exec(readFileSync(new URL('./migrations/0006-browser-allowances.sql',import.meta.url),'utf8'));
   const db={prepare(sql){return {bind(...args){const s=sqlite.prepare(sql);return {run:async()=>s.run(...args),first:async()=>s.get(...args)??null,all:async()=>({results:s.all(...args)})};}};}};
   const e={accountId:'a',cycleStart:now-100,cycleEnd:now+30*86_400_000,observedAt:now,usageMs:0,concurrencyUnits:0,activeSessions:0,complete:true};
-  let closed;
-  const guard=createBrowserAllowanceGuard(db,{accountId:'a',capability:{version:BROWSER_CONTROLS_VERSION,maxDurationMs:1000,cleanupAfterMs:200},collect:async()=>e,verifyClosed:async()=>closed});
-  return {guard,e,sqlite,close:v=>{closed=v;}};
+  let closed, time=now, verify=async()=>closed;
+  const guard=createBrowserAllowanceGuard(db,{accountId:'a',capability:{version:BROWSER_CONTROLS_VERSION,maxDurationMs:1000,cleanupAfterMs:200},collect:async()=>e,verifyClosed:request=>verify(request),clock:()=>time});
+  return {guard,e,sqlite,close:v=>{closed=v;},setTime:v=>{time=v;},setVerify:v=>{verify=v;}};
 }
 const reserve=(guard,id)=>guard.reserve({id,maxDurationMs:1000,now});
 test('serializes leases, retains unknowns, and settles only provider closure',async()=>{
@@ -34,7 +34,8 @@ test('fails closed on missing hard lifetime, stale or incomplete metrics, and ac
 });
 
 test('watchdog only closes recorded expired owned sessions and keeps unknowns',async()=>{
-  const {guard,close}=setup(); assert.equal((await reserve(guard,'one')).accepted,true);
+  const {guard,close,setTime}=setup(); assert.equal((await reserve(guard,'one')).accepted,true);
+  setTime(now+2000);
   await guard.startLaunch({id:'one',now});
   assert.equal((await guard.watchdog({now:now+2000,closeOwnedSession:async()=>assert.fail('unknown session')})).examined,0);
   await guard.startLaunch({id:'one',now}); await guard.bindSession({id:'one',sessionId:'owned'}); const seen=[];
@@ -98,4 +99,37 @@ test('a delayed start cannot use an expired launch grant',async()=>{
   const {guard}=setup(); await reserve(guard,'late');
   assert.equal((await guard.startLaunch({id:'late',now:now+200})).accepted,false);
   assert.equal((await guard.cancelUnstarted({id:'late',now:now+200})).accepted,true);
+});
+
+test('settlement validates fresh post-response observation and records it',async()=>{
+  const {guard,close,setTime,sqlite}=setup(); await reserve(guard,'one');
+  await guard.startLaunch({id:'one',now}); await guard.bindSession({id:'one',sessionId:'owned'});
+  close({sessionId:'owned',closed:true,durationMs:1200,observedAt:now+25});
+  setTime(now+24); assert.equal((await guard.settle({id:'one',now})).reason,'unknown_usage');
+  setTime(now+25); assert.deepEqual(await guard.settle({id:'one',now}),{accepted:true,duplicate:false,overrun:true});
+  assert.equal(sqlite.prepare('SELECT settled_at FROM browser_allowance_leases WHERE id=?').get('one').settled_at,now+25);
+  assert.equal((await guard.settle({id:'one',now})).duplicate,true);
+});
+test('settlement retains unknown for stale, malformed, future and clock rollback proof',async()=>{
+  const {guard,close,setTime}=setup(); await reserve(guard,'one');
+  await guard.startLaunch({id:'one',now}); await guard.bindSession({id:'one',sessionId:'owned'});
+  for (const proof of [
+    {sessionId:'owned',closed:true,durationMs:1,observedAt:now-1},
+    {sessionId:'other',closed:true,durationMs:1,observedAt:now},
+    {sessionId:'owned',closed:true,durationMs:-1,observedAt:now},
+    {sessionId:'owned',closed:true,durationMs:1,observedAt:now+1},
+  ]) { close(proof); assert.equal((await guard.settle({id:'one',now})).reason,'unknown_usage'); }
+  close({sessionId:'owned',closed:true,durationMs:1,observedAt:now}); setTime(now+300001);
+  assert.equal((await guard.settle({id:'one',now})).reason,'unknown_usage');
+  setTime(now-1);
+  assert.equal((await guard.settle({id:'one',now})).reason,'unknown_usage');
+  assert.equal((await reserve(guard,'two')).accepted,false);
+});
+
+test('clock advances while provider closure verification is in flight',async()=>{
+  const {guard,setTime,setVerify,sqlite}=setup(); await reserve(guard,'one');
+  await guard.startLaunch({id:'one',now}); await guard.bindSession({id:'one',sessionId:'owned'});
+  setVerify(async()=>{ await Promise.resolve(); setTime(now+50); return {sessionId:'owned',closed:true,durationMs:50,observedAt:now+50}; });
+  assert.equal((await guard.settle({id:'one',now})).accepted,true);
+  assert.equal(sqlite.prepare('SELECT settled_at FROM browser_allowance_leases WHERE id=?').get('one').settled_at,now+50);
 });

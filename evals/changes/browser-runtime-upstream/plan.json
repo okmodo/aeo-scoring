@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "id": "browser-runtime-upstream",
+  "task": "Preserve newly merged PR42 candidate-reference validation and engine2.2.1 when deploying browser runtime fixes.",
+  "scope": [
+    "backend/**",
+    "scripts/browser-build-check.mjs",
+    "docs/browser-product-retrieval.md",
+    "evals/changes/browser-runtime-readiness/**",
+    "evals/changes/browser-runtime-network/**",
+    "evals/changes/browser-runtime-upstream/**"
+  ],
+  "nonGoals": [
+    "No rubric/scoring/frontend/shareddependency changes, no changes to unrelatedservices, no limit increases or unknown zero settlements.",
+    "Retain60%limits,CPU1000,20scapture/2sclose deadlines,hourly owned-session watchdog and62minute hold."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Merge currentbackend d88a943 beforeproduction, preservePR42validation/engine2.2.1 withoutalteringgrades, refreshonlyfrozenbrowserreportengineversion andsourceboundevidence againstactualimmutablebase.",
+      "verification": "automated",
+      "evidence": "Combinedupstream/browserregressions,independentreview,CI andgitdiff preservingmergedcontent."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable plan beforefix,Terraimplementation andindependentreview,sourceboundevaluation/CI, genuinefreshagent continuation of owned-session settlement. Native budget already reserved asbrowser-production-rollout-20261117-a1; unknown2070msclosedsession hold isnotreleased until authenticatedproviderproofthroughguard.",
+      "verification": "human",
+      "evidence": "Git history,review,handoff,exit/run/trace andCI; deployment records and productionversion verification."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Small runtime fix; no extra page fetch or browser launch retries. Bounded closureconfirmation and accurate failure semantics.",
+      "verification": "human",
+      "evidence": "Diff,regressions,review andnative outcomes."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Upstreamcandidate-reference fix andengineversion metadata do notchangebrowsercapture/settlement resume; existingruntime plans stillperformfreshagentexit onfinalsource."
+  },
+  "context": "CIpassedcommandsbutgatefoundsourceDigeststale becausebackendbaseadvancedfrom297b7d6 tod88a943 (PR42). Thisplanprecedesmergingupstreamandupdatingbrowserfrozenexpectedengineversion. No gradepolicy changes orliveURLtesting; userrequestsdeploybeforemoretests."
+}
