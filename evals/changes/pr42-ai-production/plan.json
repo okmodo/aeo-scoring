@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "id": "pr42-ai-production",
+  "task": "Deploy current merged backend with the AI path enabled as explicitly requested after prior validation failures, retaining strict score validation and all budget/CPU safeguards.",
+  "scope": [
+    "evals/changes/pr42-ai-production/**",
+    "docs/pr42-production-rollout.md"
+  ],
+  "nonGoals": [
+    "No grading/quotation/unknown-score validation changes, higher limits, frontend/shared dependencies or unrelated services. Do not claim successful model calibration or complete reports from a release flag."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Merge updated PR42 after currentCI/review, build exact currentbackend includingbrowserintegration, verify existingprojectR2 lifecycle andDBschema, apply onlyrequired project migrations, preserve secrets/access/monitoring/CPU1000 and60% limits.",
+      "verification": "human",
+      "evidence": "Merge/tree/bundle hashes, readback, accountguard admission, projectmigration record and rollbackversion."
+    },
+    {
+      "id": "O2",
+      "description": "Explicitly enable AUDIT_RUBRIC_RELEASE and matchingpipeline/content flags in deployedbackend perlatestuserinstruction. Verify actualproviderattempt/status with a bounded private productiontest; unmeasured orunsupportedcheckswithholdnumericalscore. Preservebrowseraccountguard, seriallease/closure andhourlywatchdog.",
+      "verification": "human",
+      "evidence": "Versionbindings/100%deployment, protectedAPIandoneboundedrealpageaudit, stored browser/AI reservations andactualoutcome."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "User latestmessage explicitly requests deployAIpath after disclosure of failednativecalibration, superseding prior AI-off rolloutassumption. Immutableplanbeforeenablement, independentdeploymentreview and CI forintegration; recordgenuineruntimefailures andlimits.",
+      "verification": "human",
+      "evidence": "Planhistory, userauthorization, review and redactedverification."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Deploy reviewedmergedcodewithoutspeculativefixes, avoidunboundedmodel/browserretries and preserveunknownusageholds.",
+      "verification": "human",
+      "evidence": "Focusedresourcediff andactualattemptcounts."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Operational deployment/release selection only; existing replaycapability/sourceinterfaces unchanged andbrowser/rubricregressionsrerun."
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "pr42-browser-integration",
+  "task": "Resolve PR42 against merged browser retrieval PR43 without dropping browser source provenance, release gates or candidate quotation validation; deploy the merged latest backend under existing budgets.",
+  "scope": [
+    "backend/**",
+    "docs/pr42-production-rollout.md",
+    "evals/changes/pr42-browser-integration/**"
+  ],
+  "nonGoals": [
+    "No frontend/root dependencies/shared contracts, historical oracle edits, weakened validation, higher allowances/CPU or unrelated services. New AI release stays disabled pending calibration."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Merge latest backend base preserving browser work; category candidates use scoped rendered product evidence for browser captures and product evidence for HTTP captures, with every section still inspected later and strict quotations. Engine2.2.1 isolates changed candidates.",
+      "verification": "automated",
+      "evidence": "Existing and added HTTP/browser provenance regression tests; real backend build including pinned browser SDK."
+    },
+    {
+      "id": "O2",
+      "description": "Preserve API statuses,24h retention,60% included guards,1000ms CPU, secrets, access, monitoring and browser accounting; merge updated PR42 only after all CI and independent review, then publish exact merged bundle and verify production readback.",
+      "verification": "human",
+      "evidence": "Merge/source/bundle hashes, active resources, verified account admission and protected runtime checks; any unavailable release remains explicitly gated."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "New immutable separately committed integration plan before resolving conflicts; actual source-bound evaluations against current browser base, independent review, hostedCI then explicitly user-authorized merge/deployment.",
+      "verification": "human",
+      "evidence": "Git history, traces, review and rollout records."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Resolve only actual conflicts and required integration differences, reuse existing build/cost controls and report limits honestly.",
+      "verification": "human",
+      "evidence": "Focused merged diff and review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This is integration of already reviewed browser capture/replay with a candidate-source correction; no new portability/resumability interface. Existing genuine browser and rubric replay evidence is preserved and both regression suites rerun."
+  }
+}

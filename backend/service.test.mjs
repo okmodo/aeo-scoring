@@ -182,7 +182,7 @@ test('an AI binding leaves the deterministic report intact until facts calibrati
   assert.equal(response.status,202);await task;
   assert.equal(audit.status,'incomplete');assert.equal(scores,1);assert.equal(reservations,0);assert.equal(modelCalls,0);
   assert.match(audit.report.coverage.limitations[0],/calibration/);
-  const cryptoInput='audit-v1:rubric-2.0.0:categories-1.2:scoring-2.2.0:content-facts-1.0.0:ai-1:calibrated-0:pipeline-legacy:open-rubric-off:'+pending.submittedUrl;
+  const cryptoInput='audit-v1:rubric-2.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-1:calibrated-0:pipeline-legacy:open-rubric-off:'+pending.submittedUrl;
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(cryptoInput));
   assert.equal(cacheKey,Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''));
   const legacyInput='audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-1:calibrated-0:pipeline-legacy:open-rubric-off:'+pending.submittedUrl;

@@ -43,7 +43,11 @@ test('nested rendered references retain rendered provenance and external policie
 test('frozen retained capture resumes deterministic assessment without another product request',()=>{
  const input=JSON.parse(read('./fixtures/browser-product/retained-capture.json'));
  const result=scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted});
- assert.deepEqual(result,JSON.parse(read('./fixtures/browser-product/replay-report.json')));
+ const historical=JSON.parse(read('./fixtures/browser-product/replay-report.json'));
+ assert.equal(historical.engineVersion,'2.2.0');
+ // Candidate preparation changes the release/cache revision only. Keep every
+ // frozen score, finding, evidence reference and fix unchanged in this replay.
+ assert.deepEqual(result,{...historical,engineVersion:'2.2.1'});
  assert.equal(result.status,'incomplete');assert.equal(result.score,null);
  assert.ok(input.snapshot.browser.renderedHtml.includes('Warm recycled fleece'));
  assert.ok(!input.rawHtml.includes('Warm recycled fleece'));
