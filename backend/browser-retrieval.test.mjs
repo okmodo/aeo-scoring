@@ -293,3 +293,16 @@ test('a request awaiting headers at freeze cannot start egress afterward',async(
   assert.equal(result.coverage.subresourceLimited,true);
   assert.equal(result.extracted.productHtml.complete,false);
 });
+
+test('a navigation awaiting headers at freeze prevents returning a stale capture',async()=>{
+  const f=fixture();let release;const delayed=new Promise(resolve=>{release=resolve});
+  f.supportInspector=async snapshot=>{
+    void f.emitRequest({target:'https://store.com/new',type:'document',navigation:true,headers:()=>delayed});
+    return snapshot;
+  };
+  const capture=captureBrowserProduct('https://store.com/product',f);
+  await new Promise(resolve=>setTimeout(resolve,10));
+  release({});
+  await assert.rejects(capture,/navigation after capture freeze/);
+  assert.equal(f.calls.filter(x=>x[0]==='fetch').length,1);
+});

@@ -112,10 +112,12 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
           if (isDocument && request.frame() !== page.mainFrame()) throw new Error('frame navigation blocked');
           const browserHeaders = await request.allHeaders();
           if (routingFrozen || controller.signal.aborted) {
-            if (!navigation && resourceType !== 'ping' && resourceType !== 'beacon') subresourceLimited = true;
+            if (navigation) routeError ||= new Error('navigation after capture freeze');
+            else if (resourceType !== 'ping' && resourceType !== 'beacon') subresourceLimited = true;
             await route.abort(); return;
           }
           const response = await egress.fetch(target, {method:'GET', redirect:'manual', browserHeaders, signal:controller.signal});
+          if (routingFrozen && isDocument) { await response.body?.cancel(); throw new Error('navigation after capture freeze'); }
           // Playwright does not route subsequent requests in a redirect chain. Never
           // give Chromium a 3xx that it could follow outside the egress boundary.
           if (response.status >= 300 && response.status < 400) {
