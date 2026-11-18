@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "id": "browser-runtime-readiness",
+  "task": "Fix native browser SDK module-registry compatibility and closure observation timing before authorized production deployment of merged PR43.",
+  "scope": [
+    "backend/**",
+    "scripts/browser-build-check.mjs",
+    "docs/browser-product-retrieval.md",
+    "evals/changes/browser-runtime-readiness/**"
+  ],
+  "nonGoals": [
+    "No rubric/scoring/frontend/shareddependency changes, no changes to unrelatedservices, no limit increases or unknown zero settlements.",
+    "Retain60%limits,CPU1000,20scapture/2sclose deadlines,hourly owned-session watchdog and62minute hold."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Use documented new_module_registry runtime support for SDK import.meta.url and preserve explicit projectR2/browser/release setup in deployment documentation.",
+      "verification": "automated",
+      "evidence": "PinnedSDK buildcheck, deploymentconfigtest and native staged import proof."
+    },
+    {
+      "id": "O2",
+      "description": "Verify closure against fresh post-response clock, settle against verified observation time, retry only visibility uncertainty within one bounded total deadline. Preserve original capture failure when cleanup also fails, without exposing merchantdata/secrets.",
+      "verification": "automated",
+      "evidence": "Deterministic movingclock,missingthenvisible,future/malformed/duplicate,deadline,unknownhold andcapture/cleanup failure tests; nativebudgeted session closure reconciliation."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable plan beforefix,Terraimplementation andindependentreview,sourceboundevaluation/CI, genuinefreshagent continuation of owned-session settlement. Native budget already reserved asbrowser-production-rollout-20261117-a1; unknown2070msclosedsession hold isnotreleased until authenticatedproviderproofthroughguard.",
+      "verification": "human",
+      "evidence": "Git history,review,handoff,exit/run/trace andCI; deployment records and productionversion verification."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Small runtime fix; no extra page fetch or browser launch retries. Bounded closureconfirmation and accurate failure semantics.",
+      "verification": "human",
+      "evidence": "Diff,regressions,review andnative outcomes."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Closure confirmation/settlement workflow changes; freshagent must recover closed owned-session state usingfrozenproof withoutpriorchat orlivecalls."
+  },
+  "context": "Production remains old6517eb55. PR43 staged16d18718 SDK dynamicimport failed createRequire(import.meta.url); documentednew_module_registry flag fixed nativeimport in1dc73f76. Reviewedsource staged378c38ff acceptedoneaudit butreportedunable; session439681b6 start1794981369220/end1794981371290 NormalClosure,2070ms,recordobtainedfromauthenticatedSDKhistory. Its localhold remainsunknown. Productiontraffic hasnotchanged. AdditiveD1migrations0006/7 applied."
+}
