@@ -289,6 +289,10 @@ test('browser final model request includes the trusted source origin catalog and
  }};
  const result=await assessRetainedRubric({AI,allowance:{reserve(){return {accepted:true,duplicate:false}},settle(){}},calibrationApproved:true,...f});
  assert.equal(result.status,'assessed');
+ const candidates=requests.filter(input=>input.messages[0].content.includes('Extract relevant exact quotations'));
+ assert.deepEqual(candidates.map(input=>JSON.parse(input.messages[1].content).source.id),f.bundle.sources.filter(s=>s.scope==='product'&&s.origin==='rendered'&&s.kind==='text').map(s=>s.id));
+ const inspected=requests.filter(input=>input.messages[0].content.includes('Inspect this entire source'));
+ assert.deepEqual(inspected.map(input=>JSON.parse(input.messages[1].content).source.id),f.bundle.sources.map(s=>s.id));
  const final=requests.find(input=>input.messages[0].content.includes('Judge every listed check'));
  const payload=JSON.parse(final.messages[1].content);
  assert.deepEqual(payload.sourceCatalog,f.bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.method?{method:s.method}:{})})));
