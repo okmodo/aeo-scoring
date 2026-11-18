@@ -48,7 +48,7 @@ test('failed section call reserves capacity and cannot claim complete assessment
 test('absence requires an explicit complete per-section inspection',async()=>{
  const f=await fixture(), id='C1.explanation';
  Object.assign(f.judgments.judgments.find(x=>x.id===id),{status:'measured',fraction:0,basis:'absence',reason:'No explanation found',evidence:[{sourceId:f.source.id,quote:'Solar kettle'}]});
- const inspections=f.bundle.sources.map(source=>({sourceId:source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(key=>({id:key,status:'absent'}))}));
+ const inspections=f.bundle.sources.map(source=>({sourceId:source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(key=>({id:key,status:'absent',evidence:[]}))}));
  assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections}).findings[id].fraction,0);
  inspections[0].checks.find(x=>x.id===id).status='unknown';
  assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections}).findings[id].status,'not_measured');
@@ -135,4 +135,78 @@ test('unread claim substantiation reference withholds unsupported-claim zero',as
  const id=`${f.source.id}-claim-0`, supportInspections=f.bundle.sources.map(s=>({sourceId:s.id,claims:[{id,status:'absent',evidence:[],references:s.id===f.source.id?[{quote:'test report',target:'/test-report'}]:[]}]}));
  f.judgments.c5={claims:[{id,status:'measured',fraction:0,reason:'No captured support',evidence:[{sourceId:f.source.id,quote:'Removes 99% of toxins.'}]}],comparisons:[]};
  assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections}).findings['C5.claim-support'].status,'not_measured');
+});
+test('conditional C4 excludes only a proven absent condition, not an unanswered question',async()=>{
+ const f=await fixture(), slot=f.profile.slots.find(s=>s.group==='C4.compatibility');
+ Object.assign(slot,{applicability:'conditional',condition:'Product requires external power',conditionWhy:'Electrical compatibility matters only if power is required'});
+ f.profile.conditionReview=[{id:slot.id,valid:true,reason:'Observable product circumstance'}];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],conditions:[{id:slot.id,status:'absent',evidence:[]}],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ const item=f.judgments.judgments.find(x=>x.id===slot.id); Object.assign(item,{status:'not_applicable',fraction:null,rule:'category_conditions_absent',reason:'No external power applies',evidence:[{sourceId:f.source.id,quote:'Solar kettle'}]});
+ const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C4.compatibility'];
+ let result=check(); assert.equal(result.status,'not_applicable'); assert.equal(result.rule,'category_conditions_absent'); assert.equal(result.conditions[0].condition,slot.condition);
+ inspections[0].conditions[0].status='unknown'; assert.equal(check().status,'not_measured');
+ inspections[0].conditions[0].status='absent'; slot.applicability='always'; slot.condition=null; slot.conditionWhy=null; f.profile.conditionReview=[]; assert.equal(check().status,'not_measured');
+});
+test('conditional C4 excludes absent slots and retains applicable measured slots',async()=>{
+ const f=await fixture(), slot=f.profile.slots.find(s=>s.group==='C4.selection');
+ Object.assign(slot,{applicability:'conditional',condition:'Multiple sizes are offered',conditionWhy:'Size choice applies only to multiple sizes'});
+ f.profile.slots.push({...slot,id:'another-question',applicability:'always',condition:null,conditionWhy:null,label:'Use guidance'});
+ f.judgments.judgments.push({id:'another-question',status:'measured',fraction:0.5,reason:'Partial guidance',evidence:[{sourceId:f.source.id,quote:'Solar kettle'}]});
+ Object.assign(f.judgments.judgments.find(x=>x.id===slot.id),{status:'not_applicable',fraction:null,rule:'category_conditions_absent',reason:'One size only',evidence:[{sourceId:f.source.id,quote:'Solar kettle'}]});
+ f.profile.conditionReview=[{id:slot.id,valid:true,reason:'Observable product circumstance'}];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],conditions:[{id:slot.id,status:'absent',evidence:[]}],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ const result=validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C4.selection']; assert.equal(result.status,'measured'); assert.equal(result.fraction,0.5);
+});
+test('C5 accepts quoted equivalent values and still distinguishes contradictions',async()=>{
+ const f=await fixture(); f.snapshot.rawHtml='<h1>Solar kettle</h1><p>Weight: 1 kg</p><p>Weight: 1000 g</p>'; f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted); f.source=f.bundle.sources[0];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:s.id===f.source.id?[{field:'weight',context:'same kettle',quote:'Weight: 1 kg'},{field:'weight',context:'same kettle',quote:'Weight: 1000 g'}]:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'unknown',evidence:[]}))}));
+ const group={candidateIds:[`${f.source.id}-comparison-0`,`${f.source.id}-comparison-1`],status:'measured',fraction:1,reason:'One kilogram equals one thousand grams',context:'same kettle'};
+ f.judgments.c5={claims:[],comparisons:[group]}; const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C5.consistency'];
+ assert.equal(check().fraction,1); group.fraction=0; group.reason='Conflicting weights'; assert.equal(check().fraction,0);
+ inspections[0].comparisons[1].context='different variant'; assert.equal(check().status,'not_measured');
+});
+test('generic present attribute can earn zero only after complete inspection',async()=>{
+ const f=await fixture(); f.snapshot.rawHtml='<h1>Solar kettle</h1><p>Premium quality.</p>'; f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted); f.source=f.bundle.sources[0]; const id='slot-0';
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(key=>({id:key,status:key===id&&s.id===f.source.id?'present':'absent',evidence:key===id&&s.id===f.source.id?[{sourceId:s.id,quote:'Premium quality.'}]:[]}))}));
+ Object.assign(f.judgments.judgments.find(x=>x.id===id),{status:'measured',fraction:0,basis:'generic',reason:'Generic wording does not specify the attribute',evidence:[{sourceId:f.source.id,quote:'Premium quality.'}]});
+ const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C2.essential'];
+ assert.equal(check().fraction,0); inspections[0].checks.find(x=>x.id===id).status='unknown'; assert.equal(check().status,'not_measured');
+});
+test('confirmed absent policy differs from failed or unread policy',async()=>{
+ const f=await fixture(); f.snapshot.policies={shipping:{state:'absent'}}; f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted); f.source=f.bundle.sources[0]; const id='C3.shipping';
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(key=>({id:key,status:'absent',evidence:[]}))}));
+ Object.assign(f.judgments.judgments.find(x=>x.id===id),{status:'measured',fraction:0,basis:'absence',reason:'No shipping details and linked policy is absent',evidence:[{sourceId:f.source.id,quote:'Solar kettle'}]});
+ const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings[id];
+ assert.equal(check().fraction,0); f.snapshot.policies.shipping.state='failed'; assert.equal(check().status,'not_measured');
+});
+test('conditional profile rejects circular answer-presence conditions',async()=>{
+ const f=await fixture(), slot=f.profile.slots.find(s=>s.group==='C4.compatibility');
+ Object.assign(slot,{applicability:'conditional',condition:'Compatibility information is provided',conditionWhy:'An answer is present'});
+ assert.throws(()=>validateRubricProfile(f.bundle,f.profile));
+ slot.condition='Compatible devices are specified'; assert.throws(()=>validateRubricProfile(f.bundle,f.profile));
+});
+test('independent category-only review must approve each conditional circumstance',async()=>{
+ const f=await fixture(),slot=f.profile.slots.find(s=>s.group==='C4.selection');
+ Object.assign(slot,{applicability:'conditional',condition:'A size recommendation exists',conditionWhy:'Controls whether selection applies'});
+ f.profile.conditionReview=[{id:slot.id,valid:false,reason:'Circular answer presence'}]; assert.throws(()=>validateRubricProfile(f.bundle,f.profile));
+ slot.condition='Multiple sizes are offered'; f.profile.conditionReview=[{id:slot.id,valid:true,reason:'Observable product feature'}];
+ assert.equal(validateRubricProfile(f.bundle,f.profile).slots.find(x=>x.id===slot.id).applicability,'conditional');
+ f.profile.conditionReview=[]; assert.throws(()=>validateRubricProfile(f.bundle,f.profile));
+});
+test('conditional profile uses separate category-only model review before freezing',async()=>{
+ const f=await fixture(), slot=f.profile.slots.find(s=>s.group==='C4.selection'); Object.assign(slot,{applicability:'conditional',condition:'Multiple sizes are offered',conditionWhy:'Choice only applies with alternatives'});
+ const calls=[]; let reviewedValid=true;
+ const AI={run(_model,input){ calls.push(input); const system=input.messages[0].content,payload=JSON.parse(input.messages[1].content); let response;
+  if (system.includes('Extract relevant exact quotations')) response={evidence:[]};
+  else if (system.includes('Identify only the primary')) response={status:'classified',category:f.profile.category,evidence:f.profile.evidence};
+  else if (system.includes('Independently of any individual')) response={slots:f.profile.slots};
+  else if (system.includes('Independently review each proposed')) response={conditions:[{id:slot.id,valid:reviewedValid,reason:'Checked independently'}]};
+  else if (system.includes('Inspect this entire source')) response={sourceId:payload.source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],conditions:[{id:slot.id,status:'unknown',evidence:[]}],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))};
+  else response=f.judgments;
+  return {response};
+ }};
+ const args={AI,allowance:{reserve(){return {accepted:true,duplicate:false};}},calibrationApproved:true,...f};
+ let result=await assessRetainedRubric(args); assert.equal(result.status,'assessed');
+ const review=calls.find(x=>x.messages[0].content.includes('Independently review each proposed')); const payload=JSON.parse(review.messages[1].content); assert.deepEqual(Object.keys(payload).sort(),['category','slots']); assert.equal(result.profile.conditionReview[0].valid,true);
+ reviewedValid=false; result=await assessRetainedRubric(args); assert.equal(result.status,'unavailable');
 });

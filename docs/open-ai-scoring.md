@@ -12,6 +12,8 @@ The service downloads once, retains the raw capture and extracted snapshot, and 
 
 The subsequent section inspections record present, absent or unknown for each expected judgment. Presence requires source citations. Absence requires complete relevant coverage and an explicit absent result from each relevant section. Final grading uses this evidence; it cannot turn an unread section into proof of absence. Product-policy and guide scopes remain distinguishable. The model may explain a category using synonyms rather than repeating its exact words in the product heading.
 
+C4 questions may be conditional on an actual product feature or use circumstance. A separate category-only AI review checks proposed conditions before the profile is frozen; answer-presence conditions are rejected. Each condition then requires its own complete presence/absence inspection. Missing answers do not establish inapplicability, and unknown conditions retain their weight. This cross-check reduces arbitrary exclusions but remains a model judgment requiring calibration.
+
 ## Responsibility by criterion
 
 | Criterion | Points | AI responsibility | Local responsibility |
@@ -38,6 +40,8 @@ Leaf judgments use1,0.5 or0 credit. Dynamic C2/C4 subchecks average their applic
 
 Zero for absence requires a complete relevant inspection. Zero for a confirmed contradiction or unusable information requires supporting evidence instead. Not-applicable is restricted to a permitted, justified exclusion, not model preference. C5 no-material-claims exclusion requires an explicit complete absence inspection. The model cannot declare external claim verification.
 
+C5 inventories material claims and comparable observations across the captured sections. Each discovered claim must receive an individual judgment, including unsupported claims, and each comparison candidate must be accounted for. The backend averages those results. Unread referenced substantiation leaves support unknown; a claim's own wording is not distinct supporting evidence. Semantic equivalence can be explained without identical phrasing, while technical numeric checks remain binding.
+
 Reports retain existing evidence and assignable-action fields. Actions are recalculated after judgments, grouped without double-counting subcheck recovery. Recovery is conditional on a subsequent audit; unknown recovery remains null. The backend owns the new assessment modules and optional coverage metadata; frontend and shared-contract integration remain separate ownership. No presentation or shared dependency change is included.
 
 ## Retention and replay
@@ -54,4 +58,4 @@ The existing25-second background deadline remains. Multiple section passes can e
 
 The new release is separately selected by `AUDIT_RUBRIC_RELEASE=open-rubric-2026-11-17-v1`, with the existing content-calibration and retained-pipeline release prerequisites. Ordinary code deployment does not opt production into this release. The module's calibration default is false. Before activation, reserve a bounded live validation budget, measure native CPU and model usage, independently review real product evidence/judgments, and prove replay and failure behavior. Offline mocked responses establish orchestration and validation behavior, not model quality or native CPU cost.
 
-The release ID and engine participate in cache identity, isolating older and disabled-path reports. No merge or production rollout is part of this change.
+The release ID and engine participate in cache identity, isolating older and disabled-path reports. When this release is selected but AI cannot finish, semantic scores are withheld rather than inherited from the older keyword grader. No merge or production rollout is part of this change.

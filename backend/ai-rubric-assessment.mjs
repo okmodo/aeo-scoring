@@ -31,26 +31,43 @@ export function validateRubricProfile(bundle, value) {
   if (!p || !text(p.category,160) || !Array.isArray(p.evidence) || !refs(bundle,p.evidence).some(e=>e.scope==='product') || !Array.isArray(p.slots) || p.slots.length < 6 || p.slots.length > 36) fail();
   const ids=new Set(); const slots=p.slots.map(s=>{
     if (!s || !text(s.id,80) || !/^[a-z0-9-]+$/.test(s.id) || ids.has(s.id) || DIRECT.includes(s.id) || !GROUPS.includes(s.group) || !['label','relevance','full','partial','zero','missingExpectation'].every(k=>text(s[k],400)) || new Set([s.full,s.partial,s.zero].map(x=>x.trim().toLowerCase())).size!==3) fail();
-    ids.add(s.id); return {id:s.id,group:s.group,label:s.label,relevance:s.relevance,full:s.full,partial:s.partial,zero:s.zero,missingExpectation:s.missingExpectation};
+    const applicability=s.applicability ?? 'always';
+    if (!['always','conditional'].includes(applicability) || (applicability==='conditional' && (!s.group.startsWith('C4.') || !text(s.condition,300) || !text(s.conditionWhy,300) || /\b(?:information|guidance|details?|answers?|description|explanation|instructions?|content|copy|page|text|disclos(?:e|ure)|statements?|describ(?:ed|es?)|mention(?:ed|s)?|stat(?:ed|es?)|provid(?:ed|es?)|specif(?:ied|ies)|list(?:ed|s)?|explain(?:ed|s)?|indicat(?:ed|es?))\b/i.test(s.condition))) || (applicability==='always' && (s.condition != null || s.conditionWhy != null))) fail();
+    ids.add(s.id); return {id:s.id,group:s.group,label:s.label,relevance:s.relevance,full:s.full,partial:s.partial,zero:s.zero,missingExpectation:s.missingExpectation,applicability,condition:applicability==='conditional'?s.condition:null,conditionWhy:applicability==='conditional'?s.conditionWhy:null};
   });
   if (GROUPS.some(g=>!slots.some(s=>s.group===g))) fail();
-  return freeze({version:'1',category:p.category,evidence:refs(bundle,p.evidence).map(({sourceId,quote})=>({sourceId,quote})),slots});
+  const conditional=slots.filter(s=>s.applicability==='conditional'), review=p.conditionReview ?? [];
+  if (!Array.isArray(review) || review.length!==conditional.length) fail();
+  const seenReviews=new Set();
+  for (const item of review) { if (!conditional.some(s=>s.id===item?.id) || seenReviews.has(item.id) || item.valid!==true || !text(item.reason,400)) fail(); seenReviews.add(item.id); }
+  return freeze({version:'1',category:p.category,evidence:refs(bundle,p.evidence).map(({sourceId,quote})=>({sourceId,quote})),slots,conditionReview:review.map(x=>({id:x.id,valid:true,reason:x.reason}))});
 }
-function validateItem(bundle, item, id, inspections, group = null) {
+function validateItem(bundle, item, id, inspections, group = null, slot = null, inspected = false, snapshot = null) {
   if (!item || item.id!==id || !['measured','not_measured','not_applicable'].includes(item.status) || !Array.isArray(item.evidence)) fail();
   const evidence=refs(bundle,item.evidence);
   if (item.status==='not_measured') { if (item.fraction!==null || !text(item.reason)) fail(); return {status:'not_measured',reason:item.reason}; }
   if (!evidence.length || !text(item.reason)) fail();
   if (item.status==='not_applicable') {
-    if (id!=='C5.claim-support' || item.rule!=='no_material_claims' || item.fraction!==null || !bundle.coverage.complete || !allAbsent(bundle,inspections,id)) fail();
+    if (item.fraction!==null || !bundle.coverage.complete) fail();
+    if (slot?.applicability==='conditional' && group?.startsWith('C4.') && item.rule==='category_conditions_absent' && inspected && conditionAbsent(bundle,inspections,slot.id) && evidence.some(e=>e.scope==='product')) {
+      const ref=evidence.find(e=>e.scope==='product');
+      return {status:'not_applicable',rule:item.rule,justification:item.reason,reason:item.reason,evidence,conditions:[{questionId:slot.id,condition:slot.condition,status:'absent',evidence:ref.excerpt,location:ref.location,method:'complete retained-source condition inspection'}]};
+    }
+    if (id!=='C5.claim-support' || item.rule!=='no_material_claims' || !allAbsent(bundle,inspections,id)) fail();
     return {status:'not_applicable',rule:item.rule,justification:item.reason,reason:item.reason,evidence};
   }
   if (![0,0.5,1].includes(item.fraction)) fail();
   if ((id.startsWith('C1.') || group?.startsWith('C2.') || group?.startsWith('C4.')) && !evidence.some(e=>e.scope==='product')) fail();
   // Negative findings require an entire source inspection, not an inference from a fragment.
-  if (item.fraction===0 && item.basis==='absence' && (!bundle.coverage.complete || !allAbsent(bundle,inspections,id))) fail();
-  if (item.fraction===0 && item.basis!=='absence' && !(item.basis==='contradiction' && id==='C5.consistency' && evidence.length>=2)) fail();
-  if (id==='C3.shipping' || id==='C3.returns') { const scope=id.split('.')[1]; if (!evidence.some(e=>e.scope===scope) || (item.fraction!==0.5 && bundle.coverage.scopes?.[scope]!==true)) fail(); }
+  if (item.fraction===0 && item.basis==='absence' && (!inspected || !bundle.coverage.complete || !allAbsent(bundle,inspections,id))) fail();
+  if (item.fraction===0 && item.basis==='generic') {
+    if (!inspected || !inspectionComplete(bundle,inspections,id) || !inspections.some(section=>section.checks.some(check=>check.id===id && check.status==='present' && check.evidence.some(ref=>evidence.some(e=>e.sourceId===ref.sourceId && e.quote===ref.quote))))) fail();
+  } else if (item.fraction===0 && item.basis!=='absence' && !(item.basis==='contradiction' && id==='C5.consistency' && evidence.length>=2)) fail();
+  if (id==='C3.shipping' || id==='C3.returns') {
+    const scope=id.split('.')[1];
+    const confirmedAbsent=item.fraction===0 && item.basis==='absence' && inspected && snapshot?.policies?.[scope]?.state==='absent' && allAbsent(bundle,inspections,id) && evidence.some(e=>e.scope==='product');
+    if (!confirmedAbsent && (!evidence.some(e=>e.scope===scope) || (item.fraction!==0.5 && bundle.coverage.scopes?.[scope]!==true))) fail();
+  }
   if (id.startsWith('S7.') && !evidence.some(e=>e.scope==='llms')) fail();
   if (id.startsWith('S8.') && !evidence.some(e=>e.scope==='agents')) fail();
   if (id==='C5.consistency' && (evidence.length<2 || !evidence.some(e=>e.scope==='product') || evidence.some(e=>!['product','llms','agents'].includes(e.scope)) || new Set(evidence.map(e=>`${e.sourceId}:${e.quote}`)).size<2 || !text(item.comparisonContext))) fail();
@@ -71,13 +88,35 @@ function allAbsent(bundle, inspections, id) {
     return matches?.length===1 && matches[0].status==='absent';
   });
 }
+function inspectionComplete(bundle, inspections, id) {
+  const relevant=bundle.sources.filter(s=>['product','extracted'].includes(s.scope));
+  return relevant.length>0 && relevant.every(source=>{
+    const section=inspections.find(x=>x.sourceId===source.id);
+    const item=section?.checks?.find(x=>x.id===id);
+    return item && (item.status==='present' || item.status==='absent');
+  });
+}
+function conditionAbsent(bundle, inspections, id) {
+  const relevant=bundle.sources;
+  return relevant.length>0 && Array.isArray(inspections) && inspections.length===bundle.sources.length && relevant.every(source=>{
+    const sections=inspections.filter(x=>x?.sourceId===source.id);
+    const found=sections[0]?.conditions?.filter(x=>x?.id===id);
+    return sections.length===1 && found?.length===1 && found[0].status==='absent';
+  });
+}
 function validateInspections(bundle, profile, inspections) {
   const ids=[...DIRECT,...profile.slots.map(s=>s.id)];
+  const conditional=profile.slots.filter(s=>s.applicability==='conditional').map(s=>s.id);
   if (!Array.isArray(inspections) || inspections.length!==bundle.sources.length) fail();
   const seen=new Set();
   for (const section of inspections) {
     if (!bundle.sources.some(s=>s.id===section?.sourceId) || seen.has(section.sourceId) || !Array.isArray(section.checks) || section.checks.length!==ids.length || section.claimsComplete!==true || section.comparisonsComplete!==true || !Array.isArray(section.claims) || !Array.isArray(section.comparisons) || section.claims.length>30 || section.comparisons.length>30) fail();
     for (const [kind,items] of [['claim',section.claims],['comparison',section.comparisons]]) for (const item of items) { if (!text(item?.quote,1000) || (kind==='comparison' && (!text(item.field,160) || !text(item.context,300)))) fail(); const evidence=refs(bundle,[{sourceId:section.sourceId,quote:item.quote}]); if (!evidence.length) fail(); }
+    if (conditional.length) {
+      if (!Array.isArray(section.conditions) || section.conditions.length!==conditional.length) fail();
+      const conditionIds=new Set();
+      for (const item of section.conditions) { if (!conditional.includes(item?.id) || conditionIds.has(item.id) || !['present','absent','unknown'].includes(item.status) || !Array.isArray(item.evidence)) fail(); const evidence=refs(bundle,item.evidence); if (evidence.some(e=>e.sourceId!==section.sourceId) || (item.status==='present' && !evidence.length)) fail(); conditionIds.add(item.id); }
+    }
     seen.add(section.sourceId); const found=new Set();
     for (const item of section.checks) { if (!ids.includes(item?.id) || found.has(item.id) || !['present','absent','unknown'].includes(item.status) || !Array.isArray(item.evidence)) fail(); const evidence=refs(bundle,item.evidence); if (evidence.some(e=>e.sourceId!==section.sourceId) || (item.status==='present' && !evidence.length)) fail(); found.add(item.id); }
   }
@@ -163,7 +202,8 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       const evidence=candidates.map(c=>c.evidence);
       if (new Set(candidates.map(c=>c.field.trim().toLowerCase())).size!==1 || new Set(candidates.map(c=>c.context.trim().toLowerCase())).size!==1) fail();
       if (new Set(evidence.map(e=>`${e.sourceId}:${e.quote}`)).size<2 || !evidence.some(e=>e.scope==='product')) fail();
-      if (group.fraction===1 && (!text(group.value,200) || evidence.filter(e=>e.quote.includes(group.value)).length<2)) fail();
+      // Semantic equivalence is adjudicated from the distinct quoted observations.
+      // A shared literal would reject equivalent units and paraphrases.
       entries.push({status:'measured',fraction:group.fraction,reason:group.reason,evidence,context:group.context});
     }
     if (used.size!==inventory.comparisons.length) fail();
@@ -176,13 +216,18 @@ export function validateRubricAssessment(bundle, profileValue, rawValue, {snapsh
   if (!raw || !Array.isArray(raw.judgments) || raw.judgments.length!==DIRECT.length+profile.slots.length) fail();
   const byId=new Map(); for (const item of raw.judgments) { if (!item || byId.has(item.id)) fail(); byId.set(item.id,item); }
   const expected=[...DIRECT,...profile.slots.map(s=>s.id)]; if (expected.some(id=>!byId.has(id)) || byId.size!==expected.length) fail();
-  const findings={}; for (const id of DIRECT) { try {findings[id]=validateItem(bundle,byId.get(id),id,inspections);} catch {findings[id]={status:'not_measured',reason:'The model judgment could not be validated.'};} }
+  let inspected=false; try {validateInspections(bundle,profile,inspections); inspected=true;} catch {}
+  const findings={}; for (const id of DIRECT) { try {findings[id]=validateItem(bundle,byId.get(id),id,inspections,null,null,inspected,snapshot);} catch {findings[id]={status:'not_measured',reason:'The model judgment could not be validated.'};} }
   let c5; try { validateInspections(bundle,profile,inspections); c5=assessC5(bundle,inspections,raw.c5,supportInspections); } catch { c5={claim:{status:'not_measured',reason:'Claim inventory is incomplete or unvalidated.'},consistency:{status:'not_measured',reason:'Comparison inventory is incomplete or unvalidated.'}}; }
   findings['C5.claim-support']=c5.claim; findings['C5.consistency']=c5.consistency;
   for (const group of GROUPS) {
-    const entries=profile.slots.filter(s=>s.group===group).map(s=>{ let result; try {result=validateItem(bundle,byId.get(s.id),s.id,inspections,s.group);} catch {result={status:'not_measured',reason:'The model judgment could not be validated.'};} return {id:s.id,label:s.label,...result}; });
+    const entries=profile.slots.filter(s=>s.group===group).map(s=>{ let result; try {result=validateItem(bundle,byId.get(s.id),s.id,inspections,s.group,s,inspected,snapshot);} catch {result={status:'not_measured',reason:'The model judgment could not be validated.'};} return {id:s.id,label:s.label,...result}; });
     const key=group.startsWith('C2.')?'attributes':'questions';
-    findings[group]=entries.some(x=>x.status!=='measured') ? {status:'not_measured',reason:'One or more category-specific judgments are unmeasured.',[key]:entries} : {status:'measured',fraction:entries.reduce((n,x)=>n+x.fraction,0)/entries.length,evidence:entries.flatMap(x=>x.evidence),[key]:entries};
+    const applicable=entries.filter(x=>x.status!=='not_applicable');
+    if (applicable.some(x=>x.status!=='measured')) findings[group]={status:'not_measured',reason:'One or more category-specific judgments are unmeasured.',[key]:entries};
+    else if (!applicable.length && group.startsWith('C4.')) findings[group]={status:'not_applicable',rule:'category_conditions_absent',justification:'The conditions for all category questions are absent from the complete captured product inspection.',evidence:entries.flatMap(x=>x.evidence),conditions:entries.flatMap(x=>x.conditions),[key]:entries};
+    else if (applicable.length) findings[group]={status:'measured',fraction:applicable.reduce((n,x)=>n+x.fraction,0)/applicable.length,evidence:applicable.flatMap(x=>x.evidence),[key]:entries};
+    else findings[group]={status:'not_measured',reason:'No applicable category attributes.',[key]:entries};
   }
   const assessment=freeze({version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profile,findings}); if (snapshot && extracted) marks.set(assessment,{snapshot,extracted,serialized:JSON.stringify([snapshot,extracted])}); return assessment;
 }
@@ -225,13 +270,19 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     
     const identity=await call({AI,allowance,now,remaining,input:request(`${BASE} Identify only the primary product category from the supplied quotations and heading, excluding recommendations, accessories and related items. If primary identity is ambiguous, do not guess. Return {status,category,evidence}; status is classified or ambiguous. For ambiguous use null category and empty evidence. Classified evidence must quote the primary product.`,{primaryObservations,observations,heading:extracted?.productHtml?.identity ?? null},512)});
     if (identity?.status!=='classified' || !text(identity.category,160) || !refs(bundle,identity.evidence).some(e=>e.scope==='product')) fail();
-    const proposal=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently of any individual product page, define category-specific shopper expectations for the supplied category. Produce slots for every group: ${GROUPS.join(', ')}. Each slot has unique id, group, label, relevance, full, partial, zero, missingExpectation. Choose an appropriate number; no fixed attribute list. Use distinct concrete anchors. Return {slots}.`,{category:identity.category},1800)});
-    const proposed={category:identity.category,evidence:identity.evidence,slots:proposal?.slots};
+    const proposal=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently of any individual product page, define category-specific shopper expectations for the supplied category. Produce slots for every group: ${GROUPS.join(', ')}. Each slot has unique id, group, label, relevance, full, partial, zero, missingExpectation, applicability, condition, conditionWhy. Default applicability to always with null condition and conditionWhy. Only C4 slots may be conditional; use conditional solely for a specific observable condition, supplying the condition and why it determines applicability. Choose an appropriate number; no fixed attribute list. Use distinct concrete anchors. Return {slots}.`,{category:identity.category},1800)});
+    const conditional=(proposal?.slots || []).filter(slot=>slot.applicability==='conditional');
+    let conditionReview=[];
+    if (conditional.length) {
+      const reviewed=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently review each proposed conditional question for the supplied category. A valid condition describes an observable product feature, use circumstance, or product claim which determines whether the question applies. A condition referring to whether an answer, page statement, guidance or information is present or complete is invalid and circular. Evaluate without any individual product evidence. Return {conditions:[{id,valid,reason}]} for every conditional slot.`,{category:identity.category,slots:conditional},1000)});
+      conditionReview=reviewed?.conditions;
+    }
+    const proposed={category:identity.category,evidence:identity.evidence,slots:proposal?.slots,conditionReview};
     const profile=validateRubricProfile(bundle,proposed); if (onProfile) await onProfile(profile); stages.push({stage:'category',status:'completed',code:'profile_validated'});
     const checks=rubric.criteria.flatMap(c=>c.subchecks).filter(s=>DIRECT.includes(s.id));
     const inspections=[];
     for (const source of bundle.sources) {
-      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Inspect this entire source section independently for each listed check and category slot. For each return present when it contains relevant information, absent only when it contains none, unknown when you cannot inspect it. Return {sourceId,checks:[{id,status,evidence:[{sourceId,quote}]}]}, exactly one for every ID. For present include exact relevant quotes from this section; for absent or unknown use empty evidence. Also inventory EVERY material product claim and EVERY potentially comparable product field observation in this section, even if unsupported or repeated: add claimsComplete and comparisonsComplete booleans, claims:[{quote}], comparisons:[{field,context,quote}]. Quotes must be exact from this section. Set complete false if any could be omitted or unclear. Ordinary specifications are comparison candidates; material claims include quantified performance, health, safety, environmental and certifications. Do not cap or omit items: indicate incomplete instead.`,{source,checks,slots:profile.slots},2500)});
+      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Inspect this entire source section independently for each listed check and category slot. For each return present when it contains relevant information, absent only when it contains none, unknown when you cannot inspect it. Return {sourceId,checks:[{id,status,evidence:[{sourceId,quote}]}]}, exactly one for every ID. For present include exact relevant quotes from this section; for absent or unknown use empty evidence. For each conditional slot separately inspect whether its stated condition occurs, returning conditions:[{id,status,evidence:[{sourceId,quote}]}] with present, absent or unknown. An unanswered question is not an absent condition. Also inventory EVERY material product claim and EVERY potentially comparable product field observation in this section, even if unsupported or repeated: add claimsComplete and comparisonsComplete booleans, claims:[{quote}], comparisons:[{field,context,quote}]. Quotes must be exact from this section. Set complete false if any could be omitted or unclear, including unread product-specific documents that could contain relevant claims or comparisons; unrelated generic guides do not block. Use the captured source catalog to identify inspected documents. Ordinary specifications are comparison candidates; material claims include quantified performance, health, safety, environmental and certifications. Do not cap or omit items: indicate incomplete instead.`,{source,checks,slots:profile.slots,captured:bundle.sources.map(s=>({url:s.url,scope:s.scope})),coverage:bundle.coverage},2500)});
       inspections.push(out);
     }
     validateInspections(bundle,profile,inspections);
@@ -242,7 +293,7 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
       supportInspections.push(out);
     }
     validateClaimInspections(bundle,inventory,supportInspections);
-    const response=await call({AI,allowance,now,remaining,input:request(`${BASE} Judge every listed check and slot against its rubric anchors. Return {judgments:[{id,status,fraction,reason,rule,basis,comparisonContext,comparisonValue,evidence,inspectedSourceIds}]}. status measured, not_measured or not_applicable; measured fraction 0, 0.5 or 1; others null. Cite exact source quotations. For zero set basis to absence or contradiction; contradiction is permitted only for C5.consistency with two distinct quotations. For absence supply all inspected source IDs. Only C5.claim-support may be not_applicable, using rule no_material_claims when complete inspection finds no material claims. For C5 consistency provide two distinct comparable quotes and comparisonContext; full credit requires comparisonValue quoted in both. Shipping and returns require policy evidence. Ambiguity is not_measured. Also return c5:{claims:[{id,status,fraction,reason,evidence}],comparisons:[{candidateIds,status,fraction,reason,context,value}]}. Judge EVERY claim individually including unsupported claims, citing claim and support or qualification for nonzero credit. Group EVERY comparable observation exactly once by same field and product context; never drop candidates. Use not_measured if unclear. Do not compute scores.`,{checks,profile,observations,inspections,inventory,supportInspections,sourceIds:bundle.sources.map(s=>s.id),coverage:bundle.coverage},4000)});
+    const response=await call({AI,allowance,now,remaining,input:request(`${BASE} Judge every listed check and slot against its rubric anchors. Return {judgments:[{id,status,fraction,reason,rule,basis,comparisonContext,comparisonValue,evidence,inspectedSourceIds}]}. status measured, not_measured or not_applicable; measured fraction 0, 0.5 or 1; others null. Cite exact source quotations. For zero set basis to absence, generic (explicit unusable or generic information), or contradiction; generic requires a quote of the unusable information and a completed inspection; contradiction is permitted only for C5.consistency with two distinct quotations. For absence supply all inspected source IDs. C4 conditional slots may be not_applicable only with rule category_conditions_absent when every relevant section confirms the stated condition is absent. An absent answer is not proof the condition is absent. C5.claim-support may use rule no_material_claims when complete inspection finds no material claims. For C5 consistency provide two distinct comparable quotes and comparisonContext; recognize semantically equivalent values, including equivalent units; explain the equivalence and cite the exact distinct observations. Shipping and returns require policy evidence. Ambiguity is not_measured. Also return c5:{claims:[{id,status,fraction,reason,evidence}],comparisons:[{candidateIds,status,fraction,reason,context,value}]}. Judge EVERY claim individually including unsupported claims, citing claim and support or qualification for nonzero credit. Group EVERY comparable observation exactly once by same field and product context; never drop candidates. Use not_measured if unclear. Do not compute scores.`,{checks,profile,observations,inspections,inventory,supportInspections,sourceIds:bundle.sources.map(s=>s.id),coverage:bundle.coverage},4000)});
     if (JSON.stringify([snapshot,extracted])!==original) throw new Error('inputs_changed');
     const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections}), replayArtifact={version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response)};
     if (encoder.encode(JSON.stringify(replayArtifact)).length > 256*1024) throw new Error('artifact_limit');

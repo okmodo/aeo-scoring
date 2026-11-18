@@ -25,14 +25,35 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
   for (const [id, finding] of Object.entries(assessment.findings)) {
     if (!semanticChecks.has(id) || !Object.hasOwn(checks, id)) continue;
     if (finding.status === 'not_measured') {
-      if (checks[id].status !== 'not_applicable' &&
+      if ((checks[id].status !== 'not_applicable' || id.startsWith('C4.')) &&
           !((technicalCaps.has(id) || id === 'S2.entity') && checks[id].status === 'measured' && checks[id].fraction === 0))
         checks[id] = { status: 'not_measured', reason: finding.reason };
       continue;
     }
-    if (!Array.isArray(finding.evidence) || !finding.evidence.length) continue;
+    if (!Array.isArray(finding.evidence) || !finding.evidence.length) {
+      if (id.startsWith('C4.') && finding.status === 'not_applicable') checks[id] = { status: 'not_measured', reason: 'The conditional exclusion lacks evidence.' };
+      continue;
+    }
+    if (finding.status === 'not_applicable' && id.startsWith('C4.') && finding.rule === 'category_conditions_absent') {
+      const slots = assessment.profile?.slots?.filter(slot => slot.group === id) || [];
+      const conditions = finding.conditions;
+      if (!slots.length || slots.some(slot => slot.applicability !== 'conditional' || !slot.condition) ||
+          !Array.isArray(conditions) || conditions.length !== slots.length ||
+          new Set(conditions.map(item => item.questionId)).size !== slots.length ||
+          slots.some(slot => !conditions.some(item => item.questionId === slot.id && item.condition === slot.condition &&
+            item.status === 'absent' && item.evidence && item.location && item.method)) || !finding.justification) {
+        checks[id] = { status: 'not_measured', reason: 'The conditional exclusion was not established.' };
+        continue;
+      }
+      const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt));
+      checks[id] = { ...finding, evidence: ids[0], evidenceIds: [...new Set(ids)] };
+      continue;
+    }
+    if (finding.status === 'not_applicable' && id.startsWith('C4.')) {
+      checks[id] = { status: 'not_measured', reason: 'The conditional exclusion rule is unsupported.' };
+      continue;
+    }
     if (finding.status === 'not_applicable' && id === 'C5.claim-support' && finding.rule === 'no_material_claims') {
-      if (checks[id].status === 'measured') continue;
       const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt));
       checks[id] = { ...finding, evidence: ids[0], evidenceIds: [...new Set(ids)] };
       continue;
@@ -42,7 +63,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
         !Number.isFinite(finding.fraction) || finding.fraction < 0 || finding.fraction > 1 ||
         (!aggregate && ![0, 0.5, 1].includes(finding.fraction))) continue;
     const prior = checks[id];
-    if (prior.status === 'not_applicable') continue;
+    if (prior.status === 'not_applicable' && !id.startsWith('C4.') && !id.startsWith('C5.')) continue;
     // A syntactically invalid or uninspected schema cannot be repaired by interpretation.
     if (id.startsWith('S2.') && (checks['S2.syntax']?.status !== 'measured' || checks['S2.syntax'].fraction < 1)) continue;
     if (requireTechnicalMeasurement.has(id) && prior.status !== 'measured') continue;

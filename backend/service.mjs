@@ -162,10 +162,12 @@ export function createAuditService({
       });
       const observedAt = new Date(now()).toISOString();
       let extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
-      if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
+      // The new assessor can interpret retained raw HTML even when the legacy
+      // product extractor cannot produce usable observations.
+      if (extracted.coverage?.usable !== true && !snapshot.htmlLimited && !openRubricEnabled) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
       await pipeline?.record('retrieval', 'completed', 'downloaded');
-      report = scorePage(snapshot, extracted);
+      report = scorePage(snapshot, extracted, openRubricEnabled ? { requireAiAssessment: true } : undefined);
       if (retained) {
         stage = 'snapshot';
         if (!snapshotStore) throw new Error('Snapshot storage unavailable');

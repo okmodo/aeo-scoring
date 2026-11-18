@@ -86,3 +86,95 @@ test('full scoreAudit does not promote unverified structured fields or variant r
     }
   }
 });
+
+test('conditional question exclusions require matching frozen conditions and evidence', () => {
+  const input=inputs();
+  const profile={slots:[{id:'fit',group:'C4.compatibility',applicability:'conditional',condition:'Requires a host device'}]};
+  const absent={status:'not_applicable',rule:'category_conditions_absent',justification:'No host device is required.',evidence:[ref],conditions:[{questionId:'fit',condition:'Requires a host device',status:'absent',evidence:'No host device',location:'description',method:'raw'}]};
+  const checks={'C4.compatibility':{status:'not_measured'}};
+  applyRubricAssessment(checks,{profile,findings:{'C4.compatibility':absent}},input);
+  assert.equal(checks['C4.compatibility'].status,'not_applicable');
+  assert.equal(checks['C4.compatibility'].rule,'category_conditions_absent');
+  const invalid={...absent,conditions:[{...absent.conditions[0],condition:'Different condition'}]};
+  applyRubricAssessment(checks,{profile,findings:{'C4.compatibility':invalid}},input);
+  assert.equal(checks['C4.compatibility'].status,'not_measured');
+  applyRubricAssessment(checks,{profile,findings:{'C4.compatibility':{status:'not_measured',reason:'Condition unknown'}}},input);
+  assert.equal(checks['C4.compatibility'].status,'not_measured');
+});
+
+test('C4 exclusions redistribute only among applicable subchecks and all excluded stays incomplete', async () => {
+  const { scoreReference } = await import('../scripts/scoring-foundations.mjs');
+  const rubric={version:'2.0.0',criteria:[{id:'C4',maxPoints:10,subchecks:[{id:'C4.compatibility',maxPoints:4},{id:'C4.selection',maxPoints:6}]}]};
+  const categories={categories:[{id:'open',decisionSupport:[{id:'fit',subcheckId:'C4.compatibility',applicability:'conditional',condition:'Requires host'}, {id:'select',subcheckId:'C4.selection',applicability:'conditional',condition:'Has choices'}]}]};
+  const exclusion=(questionId,condition)=>({status:'not_applicable',rule:'category_conditions_absent',justification:'Condition absent',conditions:[{questionId,condition,status:'absent',evidence:'e1',location:'description',method:'raw'}]});
+  const checks={'C4.compatibility':exclusion('fit','Requires host'),'C4.selection':{status:'measured',fraction:0.5,evidence:'e2'}};
+  const partial=scoreReference(rubric,categories,{category:'open',checks});
+  assert.equal(partial.criteria.C4.points,5); assert.equal(partial.status,'complete');
+  checks['C4.selection']=exclusion('select','Has choices');
+  assert.equal(scoreReference(rubric,categories,{category:'open',checks}).status,'incomplete');
+  checks['C4.compatibility'].conditions[0].condition='Wrong';
+  assert.throws(()=>scoreReference(rubric,categories,{category:'open',checks}),/Unjustified category exclusion/);
+});
+
+test('required AI assessment withholds heuristic content after an unavailable or forged assessment', async () => {
+  const { scoreAudit } = await import('./scoring.mjs');
+  const snapshot={url:'https://example.test/item',observedAt:'2026-11-17T00:00:00Z'};
+  const extracted={coverage:{jsonLdTruncated:false},jsonLd:[],productHtml:{complete:true,identity:'Acme Trail Shoe',blocks:[{text:'This trail shoe protects feet on rocky paths.',location:'description'}],links:[]}};
+  const previous=scoreAudit(snapshot,extracted,{category:'running-shoes'});
+  assert.ok(previous.criteria.find(c=>c.id==='C1').subchecks.some(c=>c.status==='measured'));
+  for (const aiAssessment of [null,{version:'1',findings:{}}]) {
+    const result=scoreAudit(snapshot,extracted,{category:'running-shoes',requireAiAssessment:true,aiAssessment});
+    assert.equal(result.score,null); assert.equal(result.category,null);
+    for (const c of result.criteria.filter(c=>c.id.startsWith('C'))) for (const check of c.subchecks) assert.equal(check.status,'not_measured',check.id);
+  }
+});
+
+test('validated absent C4 condition reaches scoreAudit category registry', async () => {
+  const { prepareAssessmentSources } = await import('./assessment-sources.mjs');
+  const { validateRubricAssessment } = await import('./ai-rubric-assessment.mjs');
+  const { scoreAudit } = await import('./scoring.mjs');
+  const rubric=(await import('../config/rubric.v2.json',{with:{type:'json'}})).default;
+  const snapshot={url:'https://example.test/item',observedAt:'2026-11-17T00:00:00Z',rawHtml:'<h1>Solar kettle</h1><p>Six cups</p>'};
+  const extracted={coverage:{jsonLdTruncated:false},jsonLd:[],productHtml:{complete:true,blocks:[{text:'Solar kettle',location:'heading'}]}};
+  const bundle=await prepareAssessmentSources(snapshot,extracted), source=bundle.sources.find(s=>s.scope==='product');
+  const groups=['C2.essential','C2.supporting','C4.intended-use','C4.compatibility','C4.limitations','C4.selection'];
+  const profile={category:'Solar kettle',evidence:[{sourceId:source.id,quote:'Solar kettle'}],slots:groups.map((group,i)=>({id:`slot-${i}`,group,label:`Need ${i}`,relevance:'Relevant',full:'Complete value',partial:'Partial value',zero:'Missing value',missingExpectation:'Provide value'}))};
+  const slot=profile.slots.find(s=>s.group==='C4.compatibility');
+  Object.assign(slot,{applicability:'conditional',condition:'Product requires external power',conditionWhy:'Electrical compatibility applies only when power is required'});
+  profile.conditionReview=[{id:slot.id,valid:true,reason:'The condition describes an actual product property.'}];
+  const direct=rubric.criteria.flatMap(c=>c.subchecks.map(s=>s.id)).filter(id=>!/^S[56]\./.test(id) && id!=='S2.syntax' && !/^C[24]\./.test(id));
+  const judgments={judgments:[...direct,...profile.slots.map(s=>s.id)].map(id=>({id,status:'not_measured',fraction:null,reason:'Unknown',evidence:[]}))};
+  Object.assign(judgments.judgments.find(x=>x.id===slot.id),{status:'not_applicable',fraction:null,rule:'category_conditions_absent',reason:'No external power applies',evidence:[{sourceId:source.id,quote:'Solar kettle'}]});
+  const inspections=bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],conditions:[{id:slot.id,status:'absent',evidence:[]}],checks:[...direct,...profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+  const assessment=validateRubricAssessment(bundle,profile,judgments,{snapshot,extracted,inspections,supportInspections:[]});
+  assert.equal(assessment.findings['C4.compatibility'].status,'not_applicable');
+  const report=scoreAudit(snapshot,extracted,{aiAssessment:assessment});
+  assert.equal(report.criteria.find(c=>c.id==='C4').subchecks.find(s=>s.id==='C4.compatibility').status,'not_applicable');
+  assert.equal(report.score,null);
+});
+
+test('validated claim assessments replace legacy C5 assumptions in both directions', () => {
+  const checks={'C5.claim-support':{status:'not_applicable',rule:'no_material_claims'}};
+  applyRubricAssessment(checks,{findings:{'C5.claim-support':judgment(0.5)}},inputs());
+  assert.equal(checks['C5.claim-support'].status,'measured'); assert.equal(checks['C5.claim-support'].fraction,0.5);
+  const absence={status:'not_applicable',rule:'no_material_claims',justification:'No claims in complete inspection.',evidence:[ref]};
+  applyRubricAssessment(checks,{findings:{'C5.claim-support':absence}},inputs());
+  assert.equal(checks['C5.claim-support'].status,'not_applicable');
+});
+
+test('complete 40+60 rubric preserves conditional redistribution and recoverable deduction', async () => {
+  const { scoreReference } = await import('../scripts/scoring-foundations.mjs');
+  const rubric=(await import('../config/rubric.v2.json',{with:{type:'json'}})).default;
+  const categories={categories:[{id:'open',decisionSupport:[{id:'host',subcheckId:'C4.compatibility',applicability:'conditional',condition:'Requires host device'}]}]};
+  const checks=Object.fromEntries(rubric.criteria.flatMap(c=>c.subchecks.map(s=>[s.id,{status:'measured',fraction:1,evidence:'e1'}])));
+  checks['C4.compatibility']={status:'not_applicable',rule:'category_conditions_absent',justification:'No host device.',conditions:[{questionId:'host',condition:'Requires host device',status:'absent',evidence:'e1',location:'product',method:'raw'}]};
+  const complete=scoreReference(rubric,categories,{category:'open',checks});
+  assert.equal(complete.status,'complete'); assert.equal(complete.finalScore,100);
+  assert.equal(rubric.criteria.filter(c=>c.pillar==='structure').reduce((n,c)=>n+complete.criteria[c.id].points,0),40);
+  assert.equal(rubric.criteria.filter(c=>c.pillar==='content').reduce((n,c)=>n+complete.criteria[c.id].points,0),60);
+  checks['C4.selection'].fraction=0.75;
+  const partial=scoreReference(rubric,categories,{category:'open',checks});
+  const criterion=rubric.criteria.find(c=>c.id==='C4'), subcheck=criterion.subchecks.find(s=>s.id==='C4.selection');
+  const recovery=subcheck.maxPoints*0.25*criterion.maxPoints/partial.criteria.C4.denominator;
+  assert.ok(recovery>0); assert.ok(Math.abs(partial.finalScore+recovery-100)<1e-9);
+});

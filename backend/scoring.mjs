@@ -45,7 +45,7 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 // Explicit v1 replay preserves historical tests; service requests always use v2.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, aiAssessment = null } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, aiAssessment = null, requireAiAssessment = false } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
   const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
   const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, extracted);
@@ -265,9 +265,20 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
     }
+    if (!legacy && requireAiAssessment && !aiValidated) {
+      const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S7.links','S8.guidance']);
+      for (const id of Object.keys(checks)) {
+        const needsJudgment = /^C[1-5]\./.test(id) || id.startsWith('S4.') ||
+          ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
+        const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
+          technicalFailures.has(id) && checks[id].status === 'measured' && checks[id].fraction === 0);
+        if (needsJudgment && !establishedTechnical) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
+      }
+      category = null;
+    }
     if (aiValidated) {
       category = 'open-rubric';
-      categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile.category, decisionSupport: [] }] };
+      categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile.category, decisionSupport: aiAssessment.profile.slots.filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
       applyRubricAssessment(checks, aiAssessment, { snapshot, extracted, addEvidence });
     }
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));

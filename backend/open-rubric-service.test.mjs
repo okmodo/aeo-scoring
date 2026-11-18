@@ -8,7 +8,7 @@ import { createSnapshotStore } from './snapshot-store.mjs';
 const id = 'd9428888-122b-4c77-8d11-666666666666';
 const now = Date.UTC(2026, 10, 17), url = 'https://example.test/product';
 const html = '<h1>Climbing belay device</h1><p>A friction brake for rope climbing.</p>';
-function fixture({ failSnapshot = false, failFacts = false, limited = false, enabled = true, assessor } = {}) {
+function fixture({ failSnapshot = false, failFacts = false, limited = false, enabled = true, usable = true, assessor } = {}) {
   const sqlite = new DatabaseSync(':memory:');
   for (const name of ['0003-retained-snapshots.sql', '0005-pipeline-state.sql']) sqlite.exec(readFileSync(new URL('./migrations/' + name, import.meta.url), 'utf8'));
   const db = { prepare(sql) { return { bind(...args) { const stmt = sqlite.prepare(sql); return { first:async()=>stmt.get(...args)??null, all:async()=>({results:stmt.all(...args)}), run:async()=>({meta:{changes:Number(stmt.run(...args).changes)}}) }; } }; } };
@@ -19,15 +19,16 @@ function fixture({ failSnapshot = false, failFacts = false, limited = false, ena
   let audit = {id,url,status:'pending',createdAt:now,expiresAt:now+86400000}, task, key;
   const handle = createAuditService({normalizeUrl:value=>value,store:{reserve:async input=>{key=input.cacheKey; return {kind:'created',audit};},finish:async(_id,result)=>{audit={...audit,...result};}},allowance,snapshotStore:snapshots,pipelineDb:db,requireSnapshots:true,openRubricEnabled:enabled,
     AI:{run:()=>assert.fail('injected assessor owns model')},HTMLRewriter:class{},egress:{fetch:()=>assert.fail('injected retrieval')},secret:'x'.repeat(32),now:()=>now,
-    retrievePage:async(_url,options)=>{assert.equal(options.captureHtml,true); return {url,htmlLimited:limited?'bytes':null,extracted:{coverage:{usable:true},jsonLd:[]},rawHtml:new TextEncoder().encode(html)};},
-    scorePage:(snapshot,_extracted,options)=>{events.push(options?'final-score':'initial-score'); if(options) { assert.equal(sqlite.prepare('SELECT facts_state FROM retained_snapshots').get().facts_state,'ready'); assert.deepEqual(options,{aiAssessment:{test:true}}); } return {status:snapshot.htmlLimited?'incomplete':'complete',score:snapshot.htmlLimited?null:{total:77},coverage:{notMeasured:0,limitations:[]}};},
+    retrievePage:async(_url,options)=>{assert.equal(options.captureHtml,true); return {url,htmlLimited:limited?'bytes':null,extracted:{coverage:{usable},jsonLd:[]},rawHtml:new TextEncoder().encode(html)};},
+    scorePage:(snapshot,_extracted,options)=>{if (enabled && !options?.aiAssessment) assert.deepEqual(options,{requireAiAssessment:true}); events.push(options?.aiAssessment?'final-score':'initial-score'); if(options?.aiAssessment) { assert.equal(sqlite.prepare('SELECT facts_state FROM retained_snapshots').get().facts_state,'ready'); assert.deepEqual(options,{aiAssessment:{test:true}}); } return {status:snapshot.htmlLimited?'incomplete':'complete',score:snapshot.htmlLimited?null:{total:77},coverage:{notMeasured:0,limitations:[]}};},
     assessRubric:assessor || (async()=>({status:'unavailable',reason:'Not assessed.'})) });
   return {sqlite,snapshots,events,get audit(){return audit;},get key(){return key;},async run(){const response=await handle(new Request('https://audit.test/api/v1/audits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url})}),{address:'192.0.2.1',defer:p=>{task=p;}});assert.equal(response.status,202);await task;}};
 }
 
 test('open assessment receives retained raw HTML without a recognized product region and persists profile and artifact before scoring',async()=>{
   const profile={version:'1',category:'Belay devices'}, artifact={version:'1',judgments:[]};
-  const f=fixture({assessor:async args=>{
+  const f=fixture({usable:false,assessor:async args=>{
+    assert.equal(args.extracted.coverage.usable,false);
     assert.equal(new TextDecoder().decode(args.snapshot.rawHtml),html); assert.equal(args.extracted.productHtml,undefined);
     await args.onProfile(profile);
     assert.deepEqual(await f.snapshots.readAssessment(id,'profile'),profile);
@@ -48,4 +49,9 @@ test('limited input stays incomplete and open release has a distinct cache ident
   const partial=fixture({limited:true,assessor:async args=>{await args.onProfile({version:'1',category:'Belay devices'});return {status:'assessed',assessment:{test:true},replayArtifact:{version:'1'},stages:[]};}});
   await partial.run(); assert.equal(partial.audit.status,'incomplete'); assert.equal(partial.audit.report.score,null);
   const disabled=fixture({enabled:false}); await disabled.run(); assert.notEqual(partial.key,disabled.key); partial.sqlite.close(); disabled.sqlite.close();
+});
+
+test('legacy path still rejects an unusable extraction before assessment',async()=>{
+  let called=false; const f=fixture({enabled:false,usable:false,assessor:async()=>{called=true;}});
+  await f.run(); assert.equal(called,false); assert.equal(f.audit.status,'unable_to_assess'); f.sqlite.close();
 });
