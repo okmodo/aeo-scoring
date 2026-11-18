@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "changeId": "browser-product-retrieval",
+  "recordedAt": "2026-11-18T05:39:03.158Z",
+  "sourceCommit": "d3536d04b29787ad6b45440bcca76e7d3b1c9d93",
+  "sourceDigest": "bc0d8bce8ef3669bf1afaf48db512c749b7cf50c8fe4dd632a77d88c0e5a96e2",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 5032,
+      "outputSha256": "bd2c439bd45311bfa168f206499f87fac947250145cc0caf54d8449373e26f99"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7139,
+      "outputSha256": "01ae395caad9ab1e5f2e3e39baca2bf80962a1b039549b22f4b0cbf7d7907061"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 203,
+      "outputSha256": "6e33459b269d28f5759e78fedd4eeb046d834b9a07516d6a58ff6a1a0397353c"
+    },
+    {
+      "command": "npm run test:foundations",
+      "exitCode": 0,
+      "durationMs": 125,
+      "outputSha256": "9609da72252dd3ea67bd509853a00697367f8241fcff5dd3d175d2a7c911404c"
+    },
+    {
+      "command": "npm run test:feasibility",
+      "exitCode": 0,
+      "durationMs": 2782,
+      "outputSha256": "e21b21c74a0398f7cdc08f5f858bc5c1948de503a11e29371f9f692a4ebc60c1"
+    },
+    {
+      "command": "npm run test:browser-build",
+      "exitCode": 0,
+      "durationMs": 2304,
+      "outputSha256": "2a8146c2803e8189ecc809682f020cec6010775a6855d65eb656a2b6b0be13c8"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 557,
+      "outputSha256": "d05d42898cc8443c17f793b0c312810b744ff20170b6569d4f4c6b8eb34f6827"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 569,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 549,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 206,
+      "outputSha256": "9aaea576487ace45abb4eea5dbe56729b5f8ccd313d54037a189e53082ef0fd8"
+    }
+  ]
+}

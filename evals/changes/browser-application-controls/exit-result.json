@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "browser-application-controls",
+  "sourceDigest": "bc0d8bce8ef3669bf1afaf48db512c749b7cf50c8fe4dd632a77d88c0e5a96e2",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/browser_exit_integrated",
+  "exportSha256": "533aa2c0a39869aa439b497c2a85fd67b2c48fe3fe9457fb0759e7c5363e2fe9",
+  "interruptionPoint": "Frozen synthetic initial/rendered capture exported after persistence and before the fresh agent scores it.",
+  "observedContinuation": "Fresh Terra agent read export and task source only. Node24 ran all five exported files:53 passed,0 failed. Direct scoreAudit(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted}) exactly matched frozen engine2.2.0 replay: incomplete, score null, 20.488095238095237 earned points. Observed initial loading/size vs rendered fleece/care, recommendation excluded; single atomic claim and no-refetch, unknown launched holds and proven-unstarted cancellation; initial S1/S2 vs scoped visible content and associated comparison validation, provenance preserved through replay.",
+  "limitations": "Synthetic/mock offline evidence, not live browser/provider/model/CPU/billing validation. No network, live browser, source edit, merge or deployment by fresh agent. This is a reproducible capture-boundary continuation, not an actual production interruption."
+}
