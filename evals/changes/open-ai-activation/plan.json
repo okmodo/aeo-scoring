@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "id": "open-ai-activation",
+  "task": "Validate merged PR41 open-ended AI scoring on native Cloudflare within existing budgets, then activate only the project backend if validation passes.",
+  "scope": [
+    "evals/changes/open-ai-activation/**"
+  ],
+  "nonGoals": [
+    "No frontend, shared dependencies, unrelated services, allowance/CPU increases, paid integrations, unreviewed engine fixes or blind activation after failed validation. Preserve existing secrets/access/monitoring."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Verify exact active backend version, existing private Standard R2 lifecycle/bindings and project D1 schema. Reserve measured current account headroom at60%, retaining unknown holds, before native validation/deployment.",
+      "verification": "human",
+      "evidence": "Redacted resource inventories, actual counters/reservations and bounded validation protocol."
+    },
+    {
+      "id": "O2",
+      "description": "Run frozen known-response native control then bounded real-model retained-input assessment underCPU1000 and production deadline. Independently review category/profile/evidence/credit and replay; stop on budget/unknownusage/unsupported output.",
+      "verification": "human",
+      "evidence": "Private source/provider capture, sanitized runtime and usage results, nativeCPU telemetry and independent review."
+    },
+    {
+      "id": "O3",
+      "description": "If validation accepted, upload merged production backend with R2 and release flags, inherit existing active secrets, CPU1000, access and monitoring. Verify deployment version/resources and protected real-page audit; do not touch frontend/unrelated services.",
+      "verification": "human",
+      "evidence": "Bundle hash, active bindings, deployment and audited report/replay or accurate blocked activation evidence."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "User explicitly authorizes PR41 merge and AI activation; separately commit immutable operational plan before helper code/live changes; Terra validation and independent review with genuine source-bound evaluation for helper code.",
+      "verification": "human",
+      "evidence": "Git chronology, trace, review and bounded runtime evidence."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse production guards/snapshot engine, cap provider runs and requests, no blind retries or false completeness/calibration claims.",
+      "verification": "human",
+      "evidence": "Targeted diff and observed validation outcomes."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Operational activation validates PR41 retained replay; it does not introduce new portability or resumability behavior. PR41 final-source genuine fresh-agent evidence remains applicable."
+  }
+}
