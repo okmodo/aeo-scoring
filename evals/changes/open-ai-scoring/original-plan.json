@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "id": "open-ai-scoring",
+  "task": "Implement source-grounded open-ended AI assessment for every rubric criterion using retained R2 data; preserve fixed rubric weights and deterministic technical validation.",
+  "scope": [
+    "backend/",
+    "docs/open-ai-scoring.md",
+    "test/feasibility.test.mjs",
+    "evals/changes/open-ai-scoring/"
+  ],
+  "nonGoals": [
+    "No frontend/shared contracts/dependencies, historical gold edits, allowance increases, CPU changes, live Cloudflare changes, paid integrations, merge or deployment. No claim of live calibration from offline evidence."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Evidence-backed open category/product understanding and frozen dynamic C2 attributes/C4 questions without category/attribute allowlists or fixed three-slot requirement; distinct full/partial/zero anchors, relevance explanations, missing-information expectations and safe applicability.",
+      "verification": "automated",
+      "evidence": "Frozen varied-product, recommendation, sparse-page, malformed, ambiguous and injection scenarios."
+    },
+    {
+      "id": "O2",
+      "description": "Read immutable retained snapshot, account for all downloaded raw/extracted/support content using bounded sections and explicit coverage. AI semantic judgments for S1/S2 associations/S3/S4/S7/S8 and C1-C5; technical S2/S5/S6 validations cannot be overridden; exact references, absence coverage, comparisons and exclusions validated.",
+      "verification": "automated",
+      "evidence": "Full coverage/chunk limits, retained source replay/corruption and judgment validation tests."
+    },
+    {
+      "id": "O3",
+      "description": "Validated AI credit applied with unchanged Structure40/Content60 weights, full/half/zero judgments and criterion-local aggregation; missing applicable checks withhold final score; evidence-linked assignable fixes and conditional nonduplicated recovery, version-isolated cache and bounded diagnostics.",
+      "verification": "automated",
+      "evidence": "Scoring/contract regression and frozen full/partial/unknown/failure examples."
+    },
+    {
+      "id": "O4",
+      "description": "Reserve all model work under existing60% guards before invocation, bounded requests/output/section count/deadline, preserve uncertain holds, snapshot24h access, CPU1000. New model orchestration remains independently calibration-gated.",
+      "verification": "automated",
+      "evidence": "Mock binding budget, timeout, malformed output, expired/corrupt snapshot and replay assertions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable preimplementation plan, isolated codex worktree, Terra implementation and independent technical review, real source-bound evaluation, genuine fresh-agent exported replay, hosted CI/PR.",
+      "verification": "human",
+      "evidence": "Git history, review.md, handoff.json, exit-test observation and actual run/trace."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse storage/allowance/serialization primitives, clear ownership, bounded loops, no speculative refactoring or service changes; disclose local and live limits.",
+      "verification": "human",
+      "evidence": "Independent diff review and trace."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "New retained-source profile/judgment replay requires fresh-agent continuation from exported state only."
+  }
+}

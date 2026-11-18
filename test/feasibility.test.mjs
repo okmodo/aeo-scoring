@@ -1,3 +1,7 @@
+import '../backend/ai-rubric-scoring.test.mjs';
+import '../backend/ai-rubric-assessment.test.mjs';
+import '../backend/assessment-sources.test.mjs';
+import '../backend/open-rubric-service.test.mjs';
 import '../backend/retained-pipeline.test.mjs';
 import '../backend/pipeline-state.test.mjs';
 import '../backend/snapshot-store.test.mjs';
