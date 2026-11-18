@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "date": "2026-11-17",
+  "r2Pricing": {
+    "source": "https://developers.cloudflare.com/r2/pricing/",
+    "standardIncluded": {
+      "gbMonth": 10,
+      "classA": 1000000,
+      "classB": 10000000
+    },
+    "operatingFraction": 0.6
+  },
+  "readOnlyChecks": {
+    "accountMetrics": "verified camelCase Standard uploaded/published fields",
+    "analyticsQueries": "r2OperationsAdaptiveGroups and r2StorageAdaptiveGroups accepted",
+    "runtimeToken": {
+      "status": "verified after user permission update",
+      "estimatedUsage": {
+        "r2StorageBytes": 0,
+        "r2ClassA": 3,
+        "r2ClassB": 0
+      }
+    }
+  },
+  "localPagePreparation": [
+    {
+      "merchant": "Faherty",
+      "capturedBytes": 1048576,
+      "htmlLimited": "bytes",
+      "categoryRequestPrepared": true,
+      "modelCalled": false
+    },
+    {
+      "merchant": "Scarpa",
+      "capturedBytes": 853021,
+      "htmlLimited": null,
+      "categoryRequestPrepared": true,
+      "modelCalled": false
+    },
+    {
+      "merchant": "Kokatat",
+      "httpStatus": 200,
+      "capturedBytes": 372438,
+      "productSources": 0,
+      "categoryRequestPrepared": false,
+      "modelCalled": false
+    }
+  ],
+  "limitations": [
+    "No bucket writes, lifecycle creation, migration, model inference, native CPU measurement, merge or deployment performed.",
+    "Local Node parser observations are not Cloudflare native HTMLRewriter results.",
+    "Analytics are delayed estimates accepted by user, not synchronous billing enforcement.",
+    "Semantic category and profile quality require separate live calibration before activation.",
+    "Initial plan scope notation corrected via an immutable supplemental plan before implementation commits; original retained unchanged."
+  ]
+}

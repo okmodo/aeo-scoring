@@ -1,6 +1,7 @@
 import { associatedConfigurationItems } from './selected-configuration.mjs';
 import { hasAmbiguousPolicyCue, hasQuestionConditionCue } from './content-assessment.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
+import { isValidatedCategoryProfile } from './category-profile.mjs';
 
 const ids = ['C1.identity','C1.explanation','C1.configuration','C2.essential','C2.supporting','C3.price','C3.availability','C3.shipping','C3.returns','C4.intended-use','C4.compatibility','C4.limitations','C4.selection','C5.consistency','C5.claim-support'];
 const unknown = reason => ({status:'not_measured', reason});
@@ -23,7 +24,7 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
     const dto = validatedFacts || {};
     const observations = new Map((dto.observations || []).map(o => [o.id,o]));
     const facts = Array.isArray(dto.facts) ? dto.facts.filter(f=>f.validity==='plausible') : [];
-    const category = categories.categories.find(c => c.id === dto.category) || null;
+    const category = isValidatedCategoryProfile(dto.categoryProfile) && dto.categoryProfile.id === dto.category ? dto.categoryProfile : categories.categories.find(c => c.id === dto.category) || null;
     const coverage = dto.coverage || {};
     const productTruncated = Array.isArray(coverage.truncatedScopes) ? coverage.truncatedScopes.includes('product') : coverage.truncated === true;
     const complete = coverage.productComplete === true && !productTruncated && !coverage.unsafeInstructions;
@@ -119,7 +120,26 @@ export function assessContentFacts(snapshot, extracted, validatedFacts) {
             if (!f) return {id:a.id,...missing(a.label,complete && inspectedAbsent('attribute',a.id))};
             const positive=fs.filter(x=>!negative.test(context(x)));
             if (!positive.length) return {id:a.id,...unknown('The attribute appears in negative or ambiguous context.'),...ev(f)};
-            const best=positive.map(x=>({f:x,score:attrScore(a.id,context(x))})).sort((a,b)=>(b.score ?? -1)-(a.score ?? -1))[0];
+            const best=positive.map(x=>{
+                let score=attrScore(a.id,context(x));
+                if (/^(?:essential|supporting)-[1-3]$/.test(a.id)) {
+                    const label=a.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const value=context(x).match(new RegExp(`\\b${label}\\s*[:=]\\s*([^.;]+)`, 'i'))?.[1]?.trim();
+                    // Generic anchors recognise only self-contained, explicit values. A
+                    // useful value without enough format detail remains partial.
+                    if (!value || /\b(?:unknown|n\/a|see|available|contact|check)\b/i.test(value)) score=null;
+                    else if (/^(?:various|assorted|many|multiple|premium|high quality)[.!]?$/i.test(value)) score=0;
+                    else {
+                        const dimension=/\b(?:size|sizing)\b/i.test(a.label);
+                        const sizeCode=dimension && /^(?:xxs|xs|s|m|l|xl|xxl|xxxl|small|medium|large|one size)$/i.test(value) && (/\bselected\b/i.test(context(x)) || extracted?.productHtml?.singleConfiguration === true);
+                        const quantified=(/\b(?:inseam|length|width|height|depth|circumference|dimension|diameter)\b/i.test(a.label) && /^\d+(?:\.\d+)?\s*(?:mm|cm|in(?:ch(?:es)?)?|ft)\.?$/i.test(value)) || (/\bweight\b/i.test(a.label) && /^\d+(?:\.\d+)?\s*(?:g|kg|oz|lbs?)\.?$/i.test(value)) || (/\b(?:capacity|volume)\b/i.test(a.label) && /^\d+(?:\.\d+)?\s*(?:lit(?:er|re)s?|l|ml)\.?$/i.test(value));
+                        const composition=/\b(?:fabric|fibre|fiber|material|composition)\b/i.test(a.label) && [...value.matchAll(/(\d+(?:\.\d+)?)%\s*(?:organic\s+)?(?:cotton|polyester|nylon|wool|linen|elastane|spandex|rayon|viscose|silk|hemp)\b/gi)];
+                        const fullComposition=Array.isArray(composition) && composition.length && composition.reduce((sum,m)=>sum+Number(m[1]),0)===100 && value.replace(/(\d+(?:\.\d+)?)%\s*(?:organic\s+)?(?:cotton|polyester|nylon|wool|linen|elastane|spandex|rayon|viscose|silk|hemp)\b/gi,'').replace(/[\s,\/&+]/g,'')==='';
+                        score=sizeCode || quantified || fullComposition ? 1 : usable(value) || /^[a-z0-9]$/i.test(value) ? 0.5 : null;
+                    }
+                }
+                return {f:x,score};
+            }).sort((a,b)=>(b.score ?? -1)-(a.score ?? -1))[0];
             return best.score === null ? {id:a.id,...unknown('The proposed text does not establish a specific attribute value.'),...ev(best.f)} : {id:a.id,...measured(best.score,best.f)};
         });
         const first=entries.find(e=>e.url);

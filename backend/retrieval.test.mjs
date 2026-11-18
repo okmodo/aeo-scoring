@@ -506,3 +506,14 @@ test('incomplete interstitial-like HTML remains unclassified', async () => {
   assert.equal(result.coverage.usable, true);
   assert.equal(result.productHtml.complete, false);
 });
+
+test('stream capture retains only the bounded bytes consumed for extraction', async () => {
+  const snapshot = await retrieve('https://example.com/a', {
+    egress: binding({ '/a': new Response('abcdefgh', { headers: { 'content-type': 'text/html' } }) }),
+    maxStreamBytes: 5, captureHtml: true,
+    consumeHtml: async page => ({ text: await new Response(page.body).text() }),
+  });
+  assert.equal(new TextDecoder().decode(snapshot.rawHtml), 'abcde');
+  assert.equal(snapshot.extracted.text, 'abcde');
+  assert.equal(snapshot.htmlLimited, 'bytes');
+});

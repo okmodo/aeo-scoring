@@ -75,8 +75,8 @@ async function boundedResponse(response, limit, signal, { fatal = false } = {}) 
 
 // The consumer receives only a bounded prefix, including when the deadline
 // expires. Reading one extra chunk distinguishes an exact limit from truncation.
-function streamingBody(response, limit, signal, snapshot) {
-  if (!response.body) return { body: new ReadableStream({ start(controller) { controller.close(); } }), cancel() {} };
+function streamingBody(response, limit, signal, snapshot, capture) {
+  if (!response.body) return { body: new ReadableStream({ start(controller) { controller.close(); } }), cancel() {}, complete() { return true; } };
   const reader = response.body.getReader();
   let size = 0, finished = false;
   const cancel = () => { Promise.resolve(reader.cancel()).catch(() => {}); };
@@ -88,13 +88,13 @@ function streamingBody(response, limit, signal, snapshot) {
         if (part.done) { finished = true; controller.close(); return; }
         const remaining = limit - size;
         if (part.value.byteLength > remaining) {
-          if (remaining) controller.enqueue(part.value.subarray(0, remaining));
+          if (remaining) { const chunk = part.value.subarray(0, remaining); if (capture) capture.push(chunk.slice()); controller.enqueue(chunk); }
           size += remaining;
           snapshot.htmlLimited = 'bytes';
           finished = true; cancel(); controller.close(); return;
         }
         size += part.value.byteLength;
-        if (part.value.byteLength) controller.enqueue(part.value);
+        if (part.value.byteLength) { if (capture) capture.push(part.value.slice()); controller.enqueue(part.value); }
       } catch (error) {
         finished = true; cancel();
         if (error.code === 'timeout') { snapshot.htmlLimited = 'time'; controller.close(); }
@@ -103,7 +103,7 @@ function streamingBody(response, limit, signal, snapshot) {
     },
     cancel() { finished = true; cancel(); },
   });
-  return { body, cancel };
+  return { body, cancel, complete: () => finished };
 }
 
 async function withTimeoutConsumer(promise, signal, snapshot) {
@@ -361,7 +361,7 @@ export async function retrieve(input, options = {}) {
   const { egress, maxBytes, maxStreamBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
   if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
   for (const n of [maxBytes, maxStreamBytes, maxRobotsBytes, timeoutMs]) if (!Number.isSafeInteger(n) || n < 1) throw failure('invalid_limits', 'Limits must be positive integers');
-  if (!Number.isSafeInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 10) throw failure('invalid_limits', 'Invalid redirect limit');
+  if (!Number.isSafeInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 10 || (options.captureHtml === true && (!options.consumeHtml || maxStreamBytes > DEFAULTS.maxStreamBytes))) throw failure('invalid_limits', 'Invalid redirect or capture limit');
   let url = checkedUrl(input);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -392,11 +392,18 @@ export async function retrieve(input, options = {}) {
       const snapshot = { url: url.toString(), status: response.status, contentType, body };
       if (options.consumeHtml) {
         snapshot.htmlLimited = null;
-        const streaming = streamingBody(response, maxStreamBytes, controller.signal, snapshot);
+        const captured = options.captureHtml === true ? [] : null;
+        const streaming = streamingBody(response, maxStreamBytes, controller.signal, snapshot, captured);
         snapshot.body = streaming.body;
         try { snapshot.extracted = await withTimeoutConsumer(Promise.resolve().then(() => options.consumeHtml(snapshot)), controller.signal, snapshot); }
-        finally { streaming.cancel(); }
+        finally { if (!streaming.complete()) snapshot.htmlLimited ||= 'bytes'; streaming.cancel(); }
         delete snapshot.body;
+        if (captured) {
+          const size = captured.reduce((total, chunk) => total + chunk.byteLength, 0);
+          snapshot.rawHtml = new Uint8Array(size);
+          let offset = 0;
+          for (const chunk of captured) { snapshot.rawHtml.set(chunk, offset); offset += chunk.byteLength; }
+        }
       }
       // Robots is optional evidence and has its own short deadline within the
       // overall retrieval deadline. It never controls which resources are fetched.

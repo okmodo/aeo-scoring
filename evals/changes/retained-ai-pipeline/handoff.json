@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "task": "Retain source snapshots and generate evidence-backed open-ended product categories before content assessment.",
+  "state": "Implementation prepared on codex/retained-ai-pipeline from backend base686ee81. Separate immutable plans af20c0d and2a0d019 precede implementation commits. Source-bound evaluation, exit-test record and hosted CI are recorded separately; no merge or deployment performed.",
+  "decisions": [
+    "Private R2 Standard objects store bounded raw HTML, extracted evidence, frozen profile and validated-response replay artifacts; D1 manifests record association, expiry, sizes and SHA-256 digests.",
+    "Snapshots become unreadable at24h; scheduled bounded deletion and one-day lifecycle fallback may delete physically later.",
+    "Open-ended LLM category/profile generation precedes fact assessment; profile receives category only, not observed completeness, and is persisted before grading. Fixed40/60 weights remain.",
+    "Generated profile is branded only after validation; replay restores it against original inputs and verifies artifact sourceSHA256 before deterministic grading.",
+    "Dedicated R2guard accounts for accountwide current/historical estimates with60% ceilings and conservative outstandingholds; no unknown reservation is released aszero.",
+    "Backend adds optional coverage.pipeline/categoryAssessment, engine2.1.0 and versionedcache identity; frontend/sharedcontracts untouched."
+  ],
+  "constraints": [
+    "Keep60% includedallowances andCPU1000; unknownmodelusage remainsreserved.",
+    "No frontend, shareddependencies, sharedcontracts, unrelatedservices, paidintegrations, liveAIcalls, merge or deployment.",
+    "Account analytics lag remains accepted; R2lifetimeanchors conservativelyaccumulate andmayrequire evidence-backed reconciliation.",
+    "R2included allowances andreadAPIshapes verified; userenabledR2andupdatedexisting runtime tokenreadpermission; privatefilecredentialsnotcommitted."
+  ],
+  "completed": [
+    "Bounded capture through existing retrievalstream; private storage integrity, partialwrite cleanup and strict expiry.",
+    "LLM category/profile orchestration and conservative full/partial/zero/unknown openattributeanchors; category-first budgeting anddiagnostics.",
+    "Source-bound reproducible JSONroundtrip replay and failure-pathretention guards.",
+    "Frozen synthetic happy,ambiguous,recommendation,injection,storagefailure,deadline,quota,replaycorruption andscheduledcleanup scenarios registeredinfeasibilitysuite.",
+    "Read-only local realpage preparation andR2runtimecounterverification recordedinverification.json; no nativeCPU orliveLLMclaims."
+  ],
+  "remaining": [
+    "Review source-bound run/trace, independentreview andhostedCI before merge readiness.",
+    "After separate authorization: create dedicated private Standardbucket/lifecycle,bindingAUDIT_SNAPSHOTS,applynewmigrations,validatenativeCPUandliveAIwithinreservedbudget,then setAUDIT_PIPELINE_RELEASE onlyafteracceptance.",
+    "Realpagecompletion isnotestablished: Fahertycapturelimited, Kokatatlocalextractionunusable, category/profilesemanticqualityneedslivecalibration.",
+    "No permanent rawpagearchive orautomaticdurablepipeline/resumeendpoint isintroduced."
+  ],
+  "resumeCommands": [
+    "cd /private/tmp/aeo-retained-ai-pipeline",
+    "npm ci --ignore-scripts",
+    "npm run evaluate -- --change retained-ai-pipeline --base origin/codex/complete-report-assessment",
+    "npm run evaluate -- --change retained-ai-pipeline-scope --base origin/codex/complete-report-assessment",
+    "EVALUATION_BASE=origin/codex/complete-report-assessment npm run ci:gate"
+  ]
+}

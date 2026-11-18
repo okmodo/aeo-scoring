@@ -203,6 +203,11 @@ function plausibleRole(f, q, prepared) {
     if (/(?:\\["/]|\\n|[{}]\s*,?\s*\\?")/.test(text)) return false;
     const generic = /\b(?:another|other|different|separate)\s+(?:product|item|shirt|shoe|bag|pack|vest|model|variant)\b|\b(?:generic|general|universal)\s+(?:size|sizing|fit|product)?\s*guides?\b|\b(?:for|applies to)\s+all\s+products\b/i;
     if (generic.test(text)) return false;
+    if (f.kind === 'attribute' && /^(?:essential|supporting)-[1-3]$/.test(f.key)) {
+        const attribute = [...prepared.payload.category.essentialAttributes, ...prepared.payload.category.supportingAttributes].find(a=>a.id===f.key);
+        const label = attribute?.label?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return Boolean(label && new RegExp(`\\b${label}\\s*[:=]\\s*\\S`, 'i').test(text));
+    }
     const unrelated = {
         'basic-tshirts': /\b(?:backpack|handbag|storage bag|shoe|sneaker|life vest)\b/i,
         'running-shoes': /\b(?:t.shirt|handbag|backpack|life vest)\b/i,
@@ -404,7 +409,7 @@ export function decodeContentFacts(prepared, request, output, { requireCondition
         const scopes = kind === 'policy' ? ['product', key] : ['product'];
         for (const scope of scopes) inspections.push({kind, key, scope, status: facts.some(f => f.kind === kind && f.key === key && f.validity === 'plausible' && index.get(f.quoteIds[0]).scope === scope) ? 'observed' : reported.get(JSON.stringify([kind, key, scope])) || 'unknown'});
     }
-    return { version: CONTENT_FACTS_VERSION, cueRegistryVersion: CONTENT_CUE_REGISTRY_VERSION, roleValidationVersion: CONTENT_ROLE_VALIDATION_VERSION, category: payload.category.id, coverage: payload.coverage, observations: payload.observations, observedFacts: payload.observedFacts, facts, inspections };
+    return { version: CONTENT_FACTS_VERSION, cueRegistryVersion: CONTENT_CUE_REGISTRY_VERSION, roleValidationVersion: CONTENT_ROLE_VALIDATION_VERSION, category: payload.category.id, categoryProfile: prepared.payload.category.source === 'category-profile-v1' ? prepared.payload.category : null, coverage: payload.coverage, observations: payload.observations, observedFacts: payload.observedFacts, facts, inspections };
 }
 
 // Follow-up is optional and does not invoke a model. It asks only about raw

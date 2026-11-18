@@ -5,6 +5,9 @@ import { RESERVED_INVOCATION_CPU_MS } from './allowance-policy.mjs';
 import { extract, normalizeTarget, retrieve } from './retrieval.mjs';
 import { scoreAudit, RUBRIC_VERSION, ENGINE_VERSION } from './scoring.mjs';
 import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FACTS_RELEASE_ID } from './content-facts-runner.mjs';
+import { createPipelineState, PIPELINE_VERSION } from './pipeline-state.mjs';
+import { createSnapshotStore } from './snapshot-store.mjs';
+import { createR2AllowanceGuard } from './allowance-r2.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -14,7 +17,7 @@ const encoding = new TextEncoder();
 // Offline envelopes only. Production remains disabled until actual D1 query,
 // index, rejected-request and account-wide ingress costs have been bounded.
 const REPORT_LIMIT = 256 * 1024;
-const INVOCATION_COSTS = Object.freeze({ requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 10, d1StorageBytes: 512 * 1024 });
+const INVOCATION_COSTS = Object.freeze({ requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 100, d1StorageBytes: 512 * 1024 });
 const POLL_COSTS = Object.freeze({ requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 2, d1StorageBytes: 4096 });
 
 
@@ -107,8 +110,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -128,6 +131,7 @@ function retrievalProblem(error) {
 export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
+  snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -142,27 +146,85 @@ export function createAuditService({
     return result === 'exhausted' ? errorResponse(429, 'rate_limited') : errorResponse(503, 'service_unavailable');
   }
   async function run(audit) {
+    const deadlineAt = now() + 25_000;
     let snapshot;
     let report;
+    let aiAttempted = false, profileRetained = false;
+    const retained = Boolean(snapshotStore) || requireSnapshots;
+    const pipeline = retained ? createPipelineState({ db: pipelineDb, auditId: audit.id, now }) : null;
+    let stage = 'retrieval';
     try {
+      await pipeline?.record('retrieval', 'running', 'downloading');
       snapshot = await retrievePage(audit.url, {
-        egress, consumeHtml: page => extractPage(page, { HTMLRewriter }),
+        egress, captureHtml: retained, consumeHtml: page => extractPage(page, { HTMLRewriter }),
       });
       const observedAt = new Date(now()).toISOString();
-      const extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
+      let extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
       if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
+      await pipeline?.record('retrieval', 'completed', 'downloaded');
       report = scorePage(snapshot, extracted);
+      if (retained) {
+        stage = 'snapshot';
+        if (!snapshotStore) throw new Error('Snapshot storage unavailable');
+        await snapshotStore.preserve({ auditId: audit.id, snapshot, extracted, rawHtml: snapshot.rawHtml });
+        // Model input must come from the durable, integrity-checked snapshot.
+        const captured = await snapshotStore.read(audit.id);
+        if (!captured) throw new Error('Snapshot expired or unavailable');
+        snapshot = captured.snapshot;
+        extracted = captured.extracted;
+        await pipeline.record('snapshot', 'completed', 'snapshot_retained');
+      }
       if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
-        const contentFacts = await assessWithContentFacts({AI,allowance,now,snapshot,extracted,report,calibrationApproved:contentCalibrationApproved});
+        stage = 'content';
+        await pipeline?.record('category', 'running', 'classification_started');
+        aiAttempted = true;
+        const contentFacts = await assessContent({AI,allowance,now,snapshot,extracted,report,deadlineAt,calibrationApproved:contentCalibrationApproved,
+          ...(retained ? {onProfile: async categoryProfile => {
+            await snapshotStore.saveAssessment({ auditId: audit.id, kind: 'profile', artifact: {version:'1',categoryProfile} });
+            profileRetained = true;
+            await pipeline.record('category', 'completed', 'profile_retained');
+            await pipeline.record('content', 'running', 'facts_preparing');
+          }} : {})});
+        for (const item of (contentFacts.stages ?? []).slice(0, 4)) await pipeline?.record(item.stage, item.status, item.code);
         if (contentFacts.status === 'assessed') {
-          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts});
+          if (retained) {
+            stage = 'snapshot';
+            if (!profileRetained) throw new Error('Assessment profile was not retained');
+            await snapshotStore.saveAssessment({ auditId: audit.id, kind: 'facts', artifact: contentFacts.replayArtifact });
+            await pipeline.record('snapshot', 'completed', 'assessment_retained');
+            stage = 'content';
+          }
+          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts, categoryProfile: contentFacts.categoryProfile});
           if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
         }
-        else report.coverage.limitations.push(contentFacts.reason);
+        else {
+          if (contentFacts.categoryProfile && (!retained || profileRetained)) report = scorePage(snapshot, extracted, { categoryProfile: contentFacts.categoryProfile });
+          if (retained) { report.status = 'incomplete'; report.score = null; }
+          report.coverage.limitations.push(contentFacts.reason);
+        }
+        if (!contentFacts.stages?.length) await pipeline?.record('content', contentFacts.status === 'assessed' ? 'completed' : 'failed', contentFacts.status === 'assessed' ? 'facts_validated' : 'content_unavailable');
+      } else if (retained) {
+        await pipeline.record('content', 'skipped', AI ? 'no_assessable_product' : 'ai_unavailable');
       }
+      stage = 'scoring';
+      await pipeline?.record('scoring', 'completed', report.status === 'complete' ? 'report_complete' : 'report_incomplete');
+      if (pipeline) report.coverage.pipeline = pipeline.summary();
       if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');
     } catch (error) {
+      if (pipeline) {
+        try { await pipeline.record(stage, 'failed', stage === 'retrieval' ? 'retrieval_failed' : stage === 'snapshot' ? 'snapshot_unavailable' : 'assessment_failed'); } catch { /* D1 may be unavailable; terminal report still records safe diagnostics. */ }
+      }
+      if (pipeline && stage !== 'retrieval' && report) {
+        report.status = 'incomplete';
+        report.score = null;
+        report.coverage.limitations.push(stage === 'snapshot' ? (aiAttempted ? 'The assessment inputs or results could not be retained and verified; no final score is available.' : 'The downloaded page could not be retained and verified; AI assessment did not start.') : 'The assessment pipeline did not finish; unresolved checks remain unmeasured.');
+        report.coverage.pipeline = pipeline.summary();
+        const completedAt = now();
+        await store.finish(audit.id, { status: 'incomplete', report, assessedUrl: snapshot.url, completedAt,
+          cacheUntil: Math.min(completedAt + HOUR, audit.expiresAt) });
+        return;
+      }
       await store.finish(audit.id, {
         status: 'unable_to_assess', error: retrievalProblem(error), completedAt: now(),
       });
@@ -203,7 +265,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
         });
@@ -251,6 +313,11 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
   const analyticsToken = env.AUDIT_USAGE_READ_TOKEN;
   const billingScopeConfigured = typeof accountId === 'string' && /^[a-f0-9]{32}$/.test(accountId) &&
     typeof subscriptionId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(subscriptionId);
+  let snapshotStore;
+  if (db && billingScopeConfigured && analyticsToken && env.AUDIT_SNAPSHOTS) {
+    snapshotStore = createSnapshotStore({ db, bucket: env.AUDIT_SNAPSHOTS,
+      allowance: createR2AllowanceGuard(db, { accountId, token: analyticsToken }) });
+  }
   const service = createAuditService({
     store: db ? createStore(db) : null,
     allowance: db && billingScopeConfigured ? (
@@ -258,7 +325,10 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
         ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })
         : createAllowanceGuard(db, { accountId, subscriptionId })
     ) : undefined,
-    egress, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved, secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
+    egress, allowsProduct, normalizeUrl, retrievePage,
+    contentCalibrationApproved: contentCalibrationApproved && env.AUDIT_PIPELINE_RELEASE === PIPELINE_VERSION,
+    snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI),
+    secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),
@@ -266,10 +336,28 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
   });
 }
 
+export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now() }) {
+  const id = `snapshot-cleanup-${crypto.randomUUID()}`;
+  const admission = await allowance.reserve({ id, now,
+    costs: { requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 200, d1StorageBytes: 4096 } });
+  if (!admission?.accepted || admission.duplicate !== false) return { status: 'skipped' };
+  const result = await snapshots.cleanup({ limit: 10 });
+  await db.prepare('DELETE FROM audit_pipeline_state WHERE audit_id IN (SELECT audit_id FROM audit_pipeline_state WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
+  await allowance.settle?.({ id });
+  return { status: 'completed', ...result };
+}
+
 export default {
   fetch: handleAuditRequest,
   async scheduled(_event, env) {
-    // Disabled until the D1 and ingress accounting envelope is independently bounded.
-    void env;
+    if (!env.AUDIT_DB || !env.AUDIT_SNAPSHOTS || !env.AUDIT_USAGE_READ_TOKEN) return;
+    const db = env.AUDIT_DB, now = Date.now();
+    const scope = { accountId: env.AUDIT_BILLING_ACCOUNT_ID, subscriptionId: env.AUDIT_BILLING_SUBSCRIPTION_ID, token: env.AUDIT_USAGE_READ_TOKEN };
+    const allowance = createAnalyticsAllowanceGuard(db, scope);
+    // Keep the scheduled invocation bounded. More expired snapshots remain indexed
+    // for the next run, with the bucket lifecycle serving as an independent fallback.
+    const snapshots = createSnapshotStore({ db, bucket: env.AUDIT_SNAPSHOTS,
+      allowance: createR2AllowanceGuard(db, scope) });
+    await cleanupRetainedSnapshots({ db, snapshots, allowance, now });
   },
 };

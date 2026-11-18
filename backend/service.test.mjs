@@ -181,10 +181,10 @@ test('an AI binding leaves the deterministic report intact until facts calibrati
   assert.equal(response.status,202);await task;
   assert.equal(audit.status,'incomplete');assert.equal(scores,1);assert.equal(reservations,0);assert.equal(modelCalls,0);
   assert.match(audit.report.coverage.limitations[0],/calibration/);
-  const cryptoInput='audit-v1:rubric-2.0.0:categories-1.2:scoring-2.0.0:content-facts-1.0.0:ai-1:calibrated-0:'+pending.submittedUrl;
+  const cryptoInput='audit-v1:rubric-2.0.0:categories-1.2:scoring-2.1.0:content-facts-1.0.0:ai-1:calibrated-0:pipeline-legacy:'+pending.submittedUrl;
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(cryptoInput));
   assert.equal(cacheKey,Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''));
-  const legacyInput='audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-1:calibrated-0:'+pending.submittedUrl;
+  const legacyInput='audit-v1:rubric-1.0.0:categories-1.2:scoring-10:content-facts-1.0.0:ai-1:calibrated-0:pipeline-legacy:'+pending.submittedUrl;
   const oldDigest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(legacyInput));
   assert.notEqual(cacheKey,Array.from(new Uint8Array(oldDigest),x=>x.toString(16).padStart(2,'0')).join(''));
 });
@@ -231,7 +231,7 @@ test('worker production entry and scheduled maintenance remain paused', async ()
   } finally { globalThis.HTMLRewriter = previous; }
 });
 
-test('service release flag controls inference and isolates calibrated cache entries', async () => {
+test('production inference requires both retained pipeline release and configured storage', async () => {
   const {DatabaseSync}=await import('node:sqlite');
   const {handleAuditRequest}=await import('./service.mjs');
   const {CONTENT_FACTS_RELEASE_ID}=await import('./content-facts-runner.mjs');
@@ -239,6 +239,7 @@ test('service release flag controls inference and isolates calibrated cache entr
   const {METRICS}=await import('./allowance-policy.mjs');
   const sqlite=new DatabaseSync(':memory:');
   sqlite.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
+  sqlite.exec(readFileSync(new URL('./migrations/0005-pipeline-state.sql',import.meta.url),'utf8'));
   const db={prepare(sql){return {bind(...args){
     const stmt=sqlite.prepare(sql);
     return {query:/^\s*SELECT\b/i.test(sql),run:async()=>({meta:{changes:Number(stmt.run(...args).changes)}}),first:async()=>stmt.get(...args)??null,
@@ -261,8 +262,11 @@ test('service release flag controls inference and isolates calibrated cache entr
     assert.equal((await submit({url:pending.submittedUrl})).status,200);
     assert.equal(modelCalls,0);
     env.AUDIT_CONTENT_RELEASE=CONTENT_FACTS_RELEASE_ID;
+    assert.equal((await submit({url:pending.submittedUrl})).status,200);
+    assert.equal(modelCalls,0);
+    env.AUDIT_PIPELINE_RELEASE='retained-ai-1';
     assert.equal((await submit({url:pending.submittedUrl})).status,202);
-    assert.equal(modelCalls,1);
+    assert.equal(modelCalls,0);
     const rows=sqlite.prepare('SELECT cache_key,status FROM audits ORDER BY created_at').all();
     assert.equal(rows.length,2);assert.notEqual(rows[0].cache_key,rows[1].cache_key);
     assert.ok(rows.every(row=>row.status==='incomplete'));
