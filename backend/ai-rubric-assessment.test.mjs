@@ -210,3 +210,27 @@ test('conditional profile uses separate category-only model review before freezi
  const review=calls.find(x=>x.messages[0].content.includes('Independently review each proposed')); const payload=JSON.parse(review.messages[1].content); assert.deepEqual(Object.keys(payload).sort(),['category','slots']); assert.equal(result.profile.conditionReview[0].valid,true);
  reviewedValid=false; result=await assessRetainedRubric(args); assert.equal(result.status,'unavailable');
 });
+test('category candidates use only product sections while inspections cover every retained section',async()=>{
+ const f=await fixture(), candidates=[], inspections=[];
+ assert.ok(f.bundle.sources.some(s=>s.scope==='metadata'));
+ const AI={run(_model,input){
+  const system=input.messages[0].content,payload=JSON.parse(input.messages[1].content); let response;
+  if (system.includes('Extract relevant exact quotations')) {
+   candidates.push(payload.source.id);
+   // This bad metadata quotation would fail strict refs if metadata were requested here.
+   response=payload.source.scope==='metadata'?{evidence:[{sourceId:payload.source.id,quote:'not verbatim'}]}:{evidence:[]};
+  } else if (system.includes('Identify only the primary')) response={status:'classified',category:f.profile.category,evidence:f.profile.evidence};
+  else if (system.includes('Independently of any individual')) response={slots:f.profile.slots};
+  else if (system.includes('Inspect this entire source')) {inspections.push(payload.source.id); response={sourceId:payload.source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))};}
+  else response=f.judgments;
+  return {response};
+ }};
+ const args={AI,allowance:{reserve(){return {accepted:true,duplicate:false};}},calibrationApproved:true,...f};
+ assert.equal((await assessRetainedRubric(args)).status,'assessed');
+ assert.deepEqual(candidates,f.bundle.sources.filter(s=>s.scope==='product').map(s=>s.id));
+ assert.deepEqual(inspections,f.bundle.sources.map(s=>s.id));
+ let calls=0;
+ const badAI={run(_model,input){calls++;const source=JSON.parse(input.messages[1].content).source;return {response:{evidence:[{sourceId:source.id,quote:'not verbatim'}]}};}};
+ assert.equal((await assessRetainedRubric({...args,AI:badAI})).status,'unavailable');
+ assert.equal(calls,1);
+});

@@ -262,7 +262,7 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     const bundle=await prepareAssessmentSources(snapshot,extracted); checkBundle(bundle);
     if (!bundle.coverage.complete) return unavailable('Retained source coverage is incomplete.');
     const observations=[], primaryObservations=[];
-    for (const source of bundle.sources) {
+    for (const source of bundle.sources.filter(source=>source.scope==='product')) {
       const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Extract relevant exact quotations for product identity, attributes, selection, purchase, policies, claims, structured data and site guides. Return {evidence:[{sourceId,quote}],primaryEvidence:[{sourceId,quote}]}, at most 12 quotes in each. Identify candidate primary product heading or title separately from recommendations and accessories; preserve exact quotations. Omit irrelevant material.`,{source},1000)});
       const found=refs(bundle,out?.evidence), primary=refs(bundle,out?.primaryEvidence ?? []); if ([...found,...primary].some(e=>e.sourceId!==source.id)) fail(); observations.push(...found.map(({sourceId,quote})=>({sourceId,quote}))); primaryObservations.push(...primary.map(({sourceId,quote})=>({sourceId,quote})));
       if (encoder.encode(JSON.stringify([observations,primaryObservations])).length>40000) throw new Error('observation_limit');

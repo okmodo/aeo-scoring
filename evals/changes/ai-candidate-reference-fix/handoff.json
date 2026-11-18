@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Correct category candidate source selection and validate before requested AI activation.",
+  "state": "Narrow correction from merged PR41 base7ab5ddb, immutable plan64b5af7 before edits. Production remains6517eb55; a1 failed before profile and is not calibration. New cohort protocol frozen before calls.",
+  "decisions": [
+    "Only product-scoped candidate sources; mandatory later full-section inspection unchanged.",
+    "Strict non-verbatim product quotation rejection remains; engine2.2.1 isolates caches.",
+    "New private a2 cohort uses existing account guards andCPU1000, no frontend or unrelated services."
+  ],
+  "constraints": [
+    "Keep60% limits, CPU1000, unknown holds and24h retention.",
+    "No unreviewed activation; actual model semantics and retained replay must pass before enabling.",
+    "Private source/provider outputs stay outside Git."
+  ],
+  "completed": [
+    "43 focused tests and offline private-prefix replay reached identity without new provider calls.",
+    "Independent reviewer confirmed source filter does not remove later coverage."
+  ],
+  "remaining": [
+    "Record all-nine evaluation and hostedCI beforemerge.",
+    "Run frozen a2 cohort and independent actualevidence review; activate only ifpassed."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change ai-candidate-reference-fix --base 7ab5ddb03f69ee5886c25aaf8faa94bd5e684966",
+    "node --test evals/changes/ai-candidate-reference-fix/runtime-worker.test.mjs"
+  ]
+}

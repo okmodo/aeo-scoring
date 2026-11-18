@@ -17,7 +17,7 @@ async function fixture(){
 }
 test('default report uses rubric v2 and only revised S1/S2 check IDs',async()=>{
  const{snapshot,extracted,semantic}=await fixture(),r=scoreAudit(snapshot,extracted,{semantic});
- assert.equal(r.rubricVersion,'2.0.0');assert.equal(r.engineVersion,'2.2.0');
+ assert.equal(r.rubricVersion,'2.0.0');assert.equal(r.engineVersion,'2.2.1');
  assert.equal(r.coverage.total,40);assert.equal(check(r,'S1.identity'),undefined);assert.equal(check(r,'S2.core-properties'),undefined);
  assert.equal(r.status,'complete');assert.equal(r.score.structure,20);assert.equal(r.score.content,58.125);assert.equal(r.score.total,78.125);
  assert.equal(check(r,'S1.configuration').status,'not_applicable');assert.equal(check(r,'S2.identifiers').status,'not_applicable');
@@ -25,7 +25,7 @@ test('default report uses rubric v2 and only revised S1/S2 check IDs',async()=>{
  const ids=new Set(r.evidence.map(e=>e.id));for(const s of r.criteria.flatMap(c=>c.subchecks))for(const id of s.evidenceIds)assert.ok(ids.has(id));
  const affected=r.fixes.flatMap(f=>f.checkIds);assert.equal(affected.length,new Set(affected).size);
  assert.equal(r.score.total+r.fixes.reduce((n,f)=>n+(f.recoverablePoints||0),0),100);
- const expected=JSON.parse(read('../contracts/v1/examples/assessment-engine-v2-complete.json'));assert.deepEqual(r,{...expected.report,engineVersion:'2.2.0'});
+ const expected=JSON.parse(read('../contracts/v1/examples/assessment-engine-v2-complete.json'));assert.deepEqual(r,{...expected.report,engineVersion:'2.2.1'});
 });
 test('content and S3-S8 fractions remain identical to explicit v1 replay',async()=>{
  const{snapshot,extracted,semantic}=await fixture(),old=scoreAuditV1(snapshot,extracted,{semantic}),current=scoreAudit(snapshot,extracted,{semantic});
