@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "id": "browser-product-retrieval",
+  "task": "Replace product-page HTTP crawling with one bounded Cloudflare Playwright browser visit, preserve raw initial-document versus rendered evidence and all scoring rules, retain captures in R2 for24h, and add fail-closed accountwide browser60% admission.",
+  "scope": [
+    "backend/**",
+    "docs/browser-product-retrieval.md",
+    "docs/included-allowance-policy.md",
+    "evals/changes/browser-product-retrieval/**",
+    "test/feasibility.test.mjs",
+    "package.json",
+    "scripts/browser-build-check.mjs"
+  ],
+  "nonGoals": [
+    "No scoring criteria/weights/fullpartialzeroNA rules, category/profile rules, fixranking or arithmetic changes. Metadata/provenance adaptations only; do not import unmerged grading/prompt fixes from previous rollout branch.",
+    "No frontend/sharedtypes/rootdependencies orrootlockfile changes; rootpackage scripts only for mandatory backend bundle check. Playwright dependency belongs exclusively tobackend package andlock.",
+    "No separate product-page HTTP fetch or HTTP fallback, paid externalAPIs, raising60%ceilings orCPU1000, unrelated Cloudflare services, or merge/productiondeploy withoutauthorization. No livebrowser/modelcalls inCI."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "One browser navigation perproduct target, bounded DOMstabilization/selective details expansion without variantchange, initialdocument response captured fromsamenavigation and finalrendered HTML/data extracted inbrowser. Use private freshcontexts, scopedproductrecords andselectedstate, exclude recommendations; inspect needed supportingresources in samecontext withsharedbounds. Missing/failedbrowser hasnoHTTPfallback. URLredirectsubrequestsecurity must coverremote browser networking, notonly Workers fetch.",
+      "verification": "automated",
+      "evidence": "FrozenJSshell/renderedrich, variant/recommendation, accordion, redirect/privateIP/subresource, timeout/block,largeinput fixtures andactual pinnedSDK bundle check."
+    },
+    {
+      "id": "O2",
+      "description": "Accountwide browserincluded10hmonthly at60%=21600000ms; reserve bounded sessiontime and concurrency beforelaunch, serialize projectbrowser sessions and verifyaccount concurrency below60%included allowance. Close/destroybrowser beforeAI, reconcileauthoritativeusage without releasingunknowns aszero; failedcollection/exhaustedquota/staleusage/closefailurefailclosed, retainholds. Preserveexisting WorkersAI/R2/D1guardceilings andCPU1000.",
+      "verification": "automated",
+      "evidence": "Verifiedprimaryprices/API schema, frozen accountmetricfixtures, concurrent/duplicate/startfail/latecompletion/unknownusage/reconciliation tests; nativebrowsercheck only withfreshadmission andbudget."
+    },
+    {
+      "id": "O3",
+      "description": "Persist initialHTML/renderedHTML/extractedstate/URL/time/selectedvariant/coverage inprivateR2 atsame24h expiry. Keep source-specific structure checks initialresponse-grounded whilecontent usesrendered evidence. Expose accurate raw/rendered provenance without changing APIenvelope orscoringpolicy; sameevidence fixtures preservefractions. Versionretrieval/cacheidentity, keep incomplete/no-score andretrievalfailure semantics.",
+      "verification": "automated",
+      "evidence": "R2integrity/expiry/replay tests, source-versus-rendered score/provenance tests andunchanged scorer/rubric/history filehashes."
+    },
+    {
+      "id": "O4",
+      "description": "Compact or deterministically partition AIrequest evidence tofitexisting60KiB limit withoutdropping applicablechecks orinventingcompleteabsence; preserve originalsource IDs/quotes, explicitcoverage of omissions, anddeterministicvalidated replay. Browser-side extraction andbounded Worker processing must be CPUvalidated beforeactivation; noclaimthatbrowseralonesolvesCPU.",
+      "verification": "automated",
+      "evidence": "Frozenlargepayloadregressions around60KiB, mixedsources/omission/grounding/replay tests; livevalidation gates or explicitlimitations ifnativeaccountaccess unavailable."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separatelycommit immutableplan beforecode. Agents ownbrowsercapture/dependency, accountbudgetcollector andindependentreview; rootownsservice/storage/provenance/buildintegration. Isolatedworktreecodex/browser-product-retrieval frommergeda39cdf4 preservespreviousrolloutbranch. Freeze inputs, genuinefreshagentexit, real sourceboundevaluation andhostedCI; no secrets/rawmerchantdata committed.",
+      "verification": "human",
+      "evidence": "Git history, agentreview, handoff, exitresult, actualevaluationtrace andPRCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep capture andsource processingbounded, performDOM extractionremotely, closebrowserpromptly andavoidbusywaits/unlimitedclicks/retries. Preserveinitial/renderedmeaning andexistingAPI semantics; reportnativeCPU/browserbilling limitations honestly.",
+      "verification": "human",
+      "evidence": "Diff, boundedfixtures, byte/time/sessionmetrics and review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Retrieval andretainedcapture/replay inputs change, requiringfresh-agent continuation froma frozen exported browsercapture withoutpriorchat orlivebrowser/modelcalls."
+  }
+}
