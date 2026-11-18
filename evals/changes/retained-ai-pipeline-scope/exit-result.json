@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "retained-ai-pipeline-scope",
+  "sourceDigest": "78cd7b7fef2c8dfda9be7665eefb64b45e15f46403ad127bdfcaed214ecf6901",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/retained_exit_final",
+  "exportSha256": "fe80671dec89cd9bd850f670e33e07ef5286d979295acd2e8ff32750bf8915be",
+  "interruptionPoint": "Initial implementation stopped at a frozen synthetic retained-profile/facts export before replay. A fresh Terra agent received only that export and clean source files, with no inherited conversation.",
+  "observedContinuation": "Fresh Node process awaited replayContentAssessment, scored validated facts, and asserted category open:hiking-shorts, C2.essential fraction1, score null, incomplete status and35unmeasured checks. Invented profile quote rejected with evidence; modified extracted waistMtoL rejected with Replay source mismatch. Assertion command exited0. No model orCloudflare calls orsourceedits.",
+  "limitations": "Synthetic fileexport rather than actual privateR2retrieval or providerinference. Sameengine revision. Separateoffline tests exercise storeintegrity. Agenthad sourcefiles andexportonly; host started incurrentmissingcwd, workdir explicitlyset. No long-term archiveor crossengineportability claim."
+}

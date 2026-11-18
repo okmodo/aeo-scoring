@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "retained-ai-pipeline",
+  "task": "Retain bounded private page snapshots in R2 for 24 hours, diagnose every AI stage, generate open-ended evidence-backed category and fixed-size assessment profile with the LLM, and score validated facts without a hardcoded category prerequisite.",
+  "scope": [
+    "backend/",
+    "docs/retained-ai-pipeline.md",
+    "docs/included-allowance-policy.md",
+    "test/feasibility.test.mjs",
+    "test/phase2-ai-pilot.test.mjs",
+    "evals/changes/retained-ai-pipeline/"
+  ],
+  "nonGoals": [
+    "No frontend, shared contract/type/dependency edits, merge, deployment, live model calls or unrelated Cloudflare service changes. Keep Structure40/Content60, incomplete/null score semantics, 60% account limits, CPU1000, private access and retrieval security. No external paid integrations. Historical scoring replay must remain reproducible."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Private bounded HTML and extracted snapshot objects linked to audit IDs in D1; snapshot reads rejected at age24h; idempotent scheduled cleanup and lifecycle fallback with deletion lag disclosed; download once and LLM input read from retained snapshot. Corrupt, expired, oversized or unavailable storage fails closed with stage diagnosis.",
+      "verification": "automated",
+      "evidence": "Frozen storage/service tests for happy,expired,partialwrite,corrupt,oversize,retry and cleanup; no credentials/raw merchant pages in committed evidence."
+    },
+    {
+      "id": "O2",
+      "description": "LLM generates open-ended category with source evidence and ambiguity result before content assessment. Frozen validated C2/C4 profile precedes grading, independent of observed attribute completeness; fixed slots/weights, no self-selected easy attributes, unsupported certification requirements, invented evidence or arbitrary NA. Existing supported categories retain regression behavior.",
+      "verification": "automated",
+      "evidence": "Frozen shorts,boots with misleading Tshirt recommendation,PFD,ambiguous,injection and invalid response fixtures; exact deterministic profile and score assertions."
+    },
+    {
+      "id": "O3",
+      "description": "Reserve conservative per-stage AI and R2 costs under60% before work, collect account-wide R2 Standard usage and operations with freshness/error checks, preserve outstanding unknown reservations and CPU1000. Never equate failed calls with zero use. Explicit status/reasons distinguish download/storage/classification/profile/preparation/admission/model/validation/scoring failure.",
+      "verification": "automated",
+      "evidence": "Budget concurrency/reconciliation/failure tests, stage diagnostics and no raw exception/secret leakage; documented R2 allowance and lifecycle primary sources."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separately commit immutable plan before Terra implementation; distinct file ownership, independent review and fresh-agent exit test from export only; actual evaluation and hosted CI before merge readiness. No deployment/live changes in this task.",
+      "verification": "human",
+      "evidence": "Git history, source-bound trace, independent review and exit-test continuation."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Bound streaming/body/LLM data, reuse bindings and deterministic grading, avoid speculative refactors and disclose lack of new native CPU/live model validation.",
+      "verification": "human",
+      "evidence": "Focused diff, size tests, architecture documentation and test trace."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Retained input and resumable assessment workflow changes require fresh-agent continuation from exported state without this chat."
+  }
+}

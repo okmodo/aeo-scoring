@@ -1,3 +1,8 @@
+import '../backend/retained-pipeline.test.mjs';
+import '../backend/pipeline-state.test.mjs';
+import '../backend/snapshot-store.test.mjs';
+import '../backend/allowance-r2.test.mjs';
+import '../backend/category-profile.test.mjs';
 import test from 'node:test';
 import '../evals/changes/complete-report-assessment/runtime-validation-worker.test.mjs';
 import '../evals/changes/ai-real-validation/runtime-validation-worker.test.mjs';

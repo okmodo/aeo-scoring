@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "kind": "synthetic-retained-assessment",
+  "interruptionPoint": "Frozen category profile and model-facts artifact have been retained; original agent stops before replay in a fresh process.",
+  "engineVersion": "2.1.0",
+  "snapshot": {
+    "url": "https://shop.example/shorts",
+    "observedAt": "2026-11-17T00:00:00Z"
+  },
+  "extracted": {
+    "coverage": {
+      "usable": true
+    },
+    "jsonLd": [],
+    "productHtml": {
+      "complete": true,
+      "identity": "Acme Hiking Shorts",
+      "blocks": [
+        {
+          "text": "Selected waist size: M",
+          "location": "details"
+        },
+        {
+          "text": "Inseam: 8 inches",
+          "location": "details"
+        },
+        {
+          "text": "Fabric composition: 100% nylon",
+          "location": "details"
+        }
+      ]
+    }
+  },
+  "report": {
+    "category": null
+  },
+  "artifact": {
+    "version": "1",
+    "categoryProfile": {
+      "id": "open:hiking-shorts",
+      "name": "Hiking Shorts",
+      "label": "Hiking Shorts",
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Acme Hiking Shorts",
+          "url": "https://shop.example/shorts",
+          "location": "product heading"
+        }
+      ],
+      "source": "category-profile-v1",
+      "essentialAttributes": [
+        {
+          "id": "essential-1",
+          "label": "Waist size",
+          "question": "Is Waist size specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        },
+        {
+          "id": "essential-2",
+          "label": "Inseam",
+          "question": "Is Inseam specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        },
+        {
+          "id": "essential-3",
+          "label": "Fabric composition",
+          "question": "Is Fabric composition specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        }
+      ],
+      "supportingAttributes": [
+        {
+          "id": "supporting-1",
+          "label": "Closure type",
+          "question": "Is Closure type specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        },
+        {
+          "id": "supporting-2",
+          "label": "Care instructions",
+          "question": "Is Care instructions specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        },
+        {
+          "id": "supporting-3",
+          "label": "Pocket configuration",
+          "question": "Is Pocket configuration specified?",
+          "full": "A supported complete size, measurement with appropriate unit, or complete fiber composition is stated.",
+          "partial": "A specific value is stated but completeness cannot be established.",
+          "zero": "Explicit generic or unusable information.",
+          "applicability": "always"
+        }
+      ],
+      "decisionSupport": [
+        {
+          "id": "profile-intended-use",
+          "subcheckId": "C4.intended-use",
+          "question": "What is the intended use and audience?",
+          "full": "Specific actionable guidance is stated.",
+          "partial": "Some relevant guidance is stated.",
+          "zero": "No relevant guidance is stated.",
+          "applicability": "always"
+        },
+        {
+          "id": "profile-compatibility",
+          "subcheckId": "C4.compatibility",
+          "question": "How does the product fit or work with the shopper’s needs?",
+          "full": "Specific actionable guidance is stated.",
+          "partial": "Some relevant guidance is stated.",
+          "zero": "No relevant guidance is stated.",
+          "applicability": "always"
+        },
+        {
+          "id": "profile-limitations",
+          "subcheckId": "C4.limitations",
+          "question": "What limitations or restrictions apply?",
+          "full": "Specific actionable guidance is stated.",
+          "partial": "Some relevant guidance is stated.",
+          "zero": "No relevant guidance is stated.",
+          "applicability": "always"
+        },
+        {
+          "id": "profile-selection",
+          "subcheckId": "C4.selection",
+          "question": "How should a shopper choose the appropriate configuration?",
+          "full": "Specific actionable guidance is stated.",
+          "partial": "Some relevant guidance is stated.",
+          "zero": "No relevant guidance is stated.",
+          "applicability": "always"
+        }
+      ]
+    },
+    "originalOutput": {
+      "roles": {
+        "identity.name": [],
+        "configuration.configuration": [],
+        "repeated.identity": [],
+        "repeated.material": [],
+        "repeated.suitability": [],
+        "attribute.essential-1": [
+          "q2"
+        ],
+        "attribute.essential-2": [
+          "q3"
+        ],
+        "attribute.essential-3": [
+          "q4"
+        ],
+        "decision.profile-intended-use": [],
+        "decision.profile-compatibility": []
+      },
+      "inspections": [],
+      "conditionChecks": {
+        "material_claim": "unknown"
+      }
+    },
+    "sourceDigest": "c853397852866ce71f793817e8aeae071cb68bad4794d4350de627221ee85c20"
+  },
+  "expected": {
+    "category": "open:hiking-shorts",
+    "essentialFraction": 1,
+    "finalScore": null
+  },
+  "instructions": [
+    "Do not call a model or touch Cloudflare. Treat this as a private-store export of synthetic data, not actual merchant/model evidence.",
+    "Await replayContentAssessment and import scoreAudit from the clean worktree; reconstruct validated facts from this JSON without original in-process WeakSet state.",
+    "Confirm category, C2.essential fraction1 and final score null from unresolved applicable checks. Mutate a source quote and prove replay fails. Report observed continuation and limitations.",
+    "Change an extracted source attribute while retaining the original artifact digest and confirm replay rejects the mismatch."
+  ]
+}

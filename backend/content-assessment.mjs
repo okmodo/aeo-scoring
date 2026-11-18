@@ -1,5 +1,6 @@
 import { explicitSelectedConfiguration, hasIncludedPhysicalItem } from './selected-configuration.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
+import { isValidatedCategoryProfile } from './category-profile.mjs';
 export const CONTENT_RULE_VERSION = '1.0.0';
 const unknown = (reason = 'The evidence does not establish this assessment.') => ({ status: 'not_measured', reason });
 const negated = text => /\b(?:not|no|never|without|neither|doesn.t|isn.t|cannot|can.t)\b/i.test(text);
@@ -63,7 +64,7 @@ function inferCategory(text) {
         return 'basic-tshirts';
     return null;
 }
-export function assessContent(snapshot, extracted, { category = null, product = null } = {}) {
+export function assessContent(snapshot, extracted, { category = null, product = null, categoryProfile = null } = {}) {
     const html = extracted?.productHtml;
     const url = snapshot?.url;
     const findings = {};
@@ -102,7 +103,7 @@ export function assessContent(snapshot, extracted, { category = null, product = 
     const excluded = Boolean(exclusions[candidate]?.test(categoryText));
     const inferred = excluded ? null : candidate;
     const selected = excluded ? null : requested ? categories.categories.find(c => c.id === requested) : categories.categories.find(c => c.id === inferred);
-    const categoryId = selected?.id || null;
+    const categoryId = isValidatedCategoryProfile(categoryProfile) ? categoryProfile.id : selected?.id || null;
     const set = (id, fraction, block, fallback, extra) => { findings[id] = measured(fraction, block, fallback, url, extra); };
     const absent = (id, label) => {
         if (complete && !blocks.length)
@@ -129,7 +130,7 @@ export function assessContent(snapshot, extracted, { category = null, product = 
         set('C1.configuration', selectedConfig && selectedConfig === includedConfig ? 1 : 0.5, config, '');
     else
         absent('C1.configuration', 'configuration and included items');
-    if (selected && complete)
+    if (selected && complete && (!categoryProfile || selected.id === categoryProfile.id))
         for (const [key, attrs] of [['essential', selected.essentialAttributes], ['supporting', selected.supportingAttributes]]) {
             let entries = attrs.map(a => {
                 const b = patterns[a.id] && match(blocks, patterns[a.id]);
@@ -193,7 +194,7 @@ export function assessContent(snapshot, extracted, { category = null, product = 
                 set(id, 0, null, `Inspected product and ${kind} policy; no terms found.`, { url: policy.url });
         }
     }
-    if (selected && complete)
+    if (selected && complete && (!categoryProfile || selected.id === categoryProfile.id))
         for (const subcheck of ['C4.intended-use', 'C4.compatibility', 'C4.limitations', 'C4.selection']) {
             const qs = selected.decisionSupport.filter(q => q.subcheckId === subcheck);
             const assessed = [];

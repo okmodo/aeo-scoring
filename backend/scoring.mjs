@@ -14,9 +14,10 @@ import { assessContent } from './content-assessment.mjs';
 import { assessSupport } from './support-assessment.mjs';
 import { inspectProductSchema, assessStructure } from './structure-assessment.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
+import { isValidatedCategoryProfile } from './category-profile.mjs';
 
 export const RUBRIC_VERSION = rubricV2.version;
-export const ENGINE_VERSION = '2.0.0';
+export const ENGINE_VERSION = '2.1.0';
 const CRAWLER_GROUPS = [
   ['S5.search', crawlerRegistry.scoring.search.botIds],
   ['S5.ai-retrieval', crawlerRegistry.scoring.aiRetrieval.botIds],
@@ -42,8 +43,10 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 // Explicit v1 replay preserves historical tests; service requests always use v2.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
+  const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
+  const categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
   const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
   const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
   const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
@@ -222,7 +225,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   if (extracted?.productHtml || !legacy) {
     const hasHtml = Boolean(extracted?.productHtml);
     const schema = hasHtml ? inspectProductSchema(snapshot, extracted) : {findings:{},product:null};
-    const content = !hasHtml ? {findings:{},facts:{},category,productName:null} : validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, product: schema.product });
+    const content = !hasHtml ? {findings:{},facts:{},category,productName:null} : validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, categoryProfile: profile, product: schema.product });
     if (!validatedFacts && semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
     category = content.category;
     productName = content.productName || productName;
@@ -292,7 +295,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   }
   fixes.sort((a, b) => (b.recoverablePoints ?? -1) - (a.recoverablePoints ?? -1));
 
-  const reference = scoreReference(rubric, categories, { category, checks });
+  const reference = scoreReference(rubric, categoryRegistry, { category, checks });
   const criteria = rubric.criteria.map(c => ({
     id: c.id, pillar: c.pillar, maxPoints: c.maxPoints,
     points: reference.criteria[c.id].points,
@@ -316,15 +319,16 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     } : null,
     earnedPoints: reference.earnedPoints, rubricVersion: rubric.version,
     ...(!legacy || extracted?.productHtml ? {engineVersion:legacy ? '1.1.0' : ENGINE_VERSION,categoryVersion:categories.version} : {}),
-    category: categories.categories.some(c => c.id === category) ? category : null,
+    category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,
     coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
-      total: allChecks.length, category: categories.categories.some(c => c.id === category) ? category : null,
+      total: allChecks.length, category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
+      ...(profile ? {categoryAssessment:{version:'1',label:profile.label,profileId:profile.id,evidence:profile.evidence}} : {}),
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
         ...(semantic?.status === 'assessed' ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
-        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? ['Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
+        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? [profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.' : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
   };
 }
