@@ -289,6 +289,10 @@ test('browser final model request includes the trusted source origin catalog and
  }};
  const result=await assessRetainedRubric({AI,allowance:{reserve(){return {accepted:true,duplicate:false}},settle(){}},calibrationApproved:true,...f});
  assert.equal(result.status,'assessed');
+ const candidates=requests.filter(input=>input.messages[0].content.includes('Extract relevant exact quotations'));
+ assert.deepEqual(candidates.map(input=>JSON.parse(input.messages[1].content).source.id),f.bundle.sources.filter(s=>s.scope==='product'&&s.origin==='rendered'&&s.kind==='text').map(s=>s.id));
+ const inspected=requests.filter(input=>input.messages[0].content.includes('Inspect this entire source'));
+ assert.deepEqual(inspected.map(input=>JSON.parse(input.messages[1].content).source.id),f.bundle.sources.map(s=>s.id));
  const final=requests.find(input=>input.messages[0].content.includes('Judge every listed check'));
  const payload=JSON.parse(final.messages[1].content);
  assert.deepEqual(payload.sourceCatalog,f.bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.method?{method:s.method}:{})})));
@@ -378,4 +382,29 @@ test('associated initial product and visible rendered observations can support c
  assert.equal(result.fraction,1); assert.deepEqual(result.evidence.map(x=>x.method),['raw','rendered']);
  f.judgments.c5.comparisons[0].candidateIds[1]=`${rendered.id}-comparison-0`;
  assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C5.consistency'].status,'not_measured');
+});
+
+test('category candidates use only product sections while inspections cover every retained section',async()=>{
+ const f=await fixture(), candidates=[], inspections=[];
+ assert.ok(f.bundle.sources.some(s=>s.scope==='metadata'));
+ const AI={run(_model,input){
+  const system=input.messages[0].content,payload=JSON.parse(input.messages[1].content); let response;
+  if (system.includes('Extract relevant exact quotations')) {
+   candidates.push(payload.source.id);
+   // This bad metadata quotation would fail strict refs if metadata were requested here.
+   response=payload.source.scope==='metadata'?{evidence:[{sourceId:payload.source.id,quote:'not verbatim'}]}:{evidence:[]};
+  } else if (system.includes('Identify only the primary')) response={status:'classified',category:f.profile.category,evidence:f.profile.evidence};
+  else if (system.includes('Independently of any individual')) response={slots:f.profile.slots};
+  else if (system.includes('Inspect this entire source')) {inspections.push(payload.source.id); response={sourceId:payload.source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))};}
+  else response=f.judgments;
+  return {response};
+ }};
+ const args={AI,allowance:{reserve(){return {accepted:true,duplicate:false};}},calibrationApproved:true,...f};
+ assert.equal((await assessRetainedRubric(args)).status,'assessed');
+ assert.deepEqual(candidates,f.bundle.sources.filter(s=>s.scope==='product').map(s=>s.id));
+ assert.deepEqual(inspections,f.bundle.sources.map(s=>s.id));
+ let calls=0;
+ const badAI={run(_model,input){calls++;const source=JSON.parse(input.messages[1].content).source;return {response:{evidence:[{sourceId:source.id,quote:'not verbatim'}]}};}};
+ assert.equal((await assessRetainedRubric({...args,AI:badAI})).status,'unavailable');
+ assert.equal(calls,1);
 });

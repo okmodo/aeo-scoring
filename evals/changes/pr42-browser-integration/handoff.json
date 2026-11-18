@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "Merge PR42 into current browser backend and deploy latest merged source under unchanged limits.",
+  "state": "Integration plan dd85482 precedes merge a66e8f4. Final source63aedf5 retains PR43 browser implementation and PR42 product-candidate fix. Independent review and current source-bound evaluations are required before user-authorized merge/deployment.",
+  "decisions": [
+    "Browser category candidates use only scoped visible rendered product text; HTTP candidates use product sources. All later sections and strict quotations remain.",
+    "Keep engine2.2.1; frozen browser oracle remains byte-identical and only replay expected engine metadata is advanced.",
+    "Production rollout must add project browser/R2 bindings and migrations0006/0007 because latest public Worker has no HTTP product fallback. The original AI-off assumption was superseded by the explicit user request to deploy the AI path; see immutable pr42-ai-production plan."
+  ],
+  "constraints": [
+    "Keep60% account ceilings andCPU1000. Preserve current secrets,passwordaccess,monitoring,frontend and unrelatedservices.",
+    "Do not enable browsertraffic until guardednative capture/closure/retention andcostvalidation succeeds.",
+    "No liveAIcalls in this integration/rollout; prior validationfailed."
+  ],
+  "completed": [
+    "Merged latestbackendbase297b7d6 andpreservedallbrowserregressions.",
+    "38focusedprovenance/replay tests passed after release-metadata-only correction, historicaloracleunchanged."
+  ],
+  "remaining": [
+    "Independentexact-source review and currentall-plan evaluation/hostedCI.",
+    "Merge PR42 then deployexactmergedbundle with currentprojectresources and verifyproduction, or recordconcreteblockingruntimefailure."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change ai-candidate-reference-fix --base 297b7d6",
+    "npm run evaluate -- --change pr42-browser-integration --base 297b7d6",
+    "npm run test:browser-build"
+  ]
+}

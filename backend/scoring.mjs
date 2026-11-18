@@ -19,7 +19,7 @@ import { isValidatedRubricAssessment } from './ai-rubric-assessment.mjs';
 import { applyRubricAssessment } from './ai-rubric-scoring.mjs';
 
 export const RUBRIC_VERSION = rubricV2.version;
-export const ENGINE_VERSION = '2.2.0';
+export const ENGINE_VERSION = '2.2.1';
 const CRAWLER_GROUPS = [
   ['S5.search', crawlerRegistry.scoring.search.botIds],
   ['S5.ai-retrieval', crawlerRegistry.scoring.aiRetrieval.botIds],

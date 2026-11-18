@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Deploy latest backend and enable AI path as explicitly requested.",
+  "state": "New user instruction supersedes earlier AI-off plan. Source integrates PR43 and resolves PR42. No production settings changed yet. Enable explicitreleaseflags only with existing budget and evidence guards; native model quality is not claimed.",
+  "decisions": [
+    "Use exactmergedbackend includingbrowsercapture; noHTTPfallbackadded.",
+    "EnablematchingnewAI/pipeline/contentflags peruserinstruction whileunsupported/unfinishedchecksremainunknown/null.",
+    "Preserve existingprojectsecrets/access/monitoring and1000CPU; addonlyprojectR2/browserbinding andrequiredschema."
+  ],
+  "constraints": [
+    "Account60%operatinglimitsandbrowserguardsunchanged.",
+    "Nofrontend/shareddeps/unrelatedservices.",
+    "Privatepassword/token and capturedsources/providerresponsesnevercommitted."
+  ],
+  "completed": [
+    "Recordedseparateimmutableenablementplan07c5288beforecfgchanges.",
+    "BrowserSDKbuild/offline47tests andintegrationprovenanceregressionspassed."
+  ],
+  "remaining": [
+    "Currentallplansevaluation/hostedCI andPR42merge.",
+    "Guardednativepreviewverification andproductiondeployment/readback, boundedprotectedruntimeaudit andactualoutcomerecord."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change pr42-ai-production --base 297b7d6",
+    "npm run test:browser-build"
+  ]
+}

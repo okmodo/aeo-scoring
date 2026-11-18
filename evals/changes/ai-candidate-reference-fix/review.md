@@ -1,0 +1,7 @@
+# Independent review
+
+Reviewed the candidate source change, focused tests, native cohort protocol, and validation helper before the a2 cohort. The initial candidate loop now selects product-scoped sources. The subsequent section and claim-support inspection loops still use the complete retained bundle, and exact quotation validation is unchanged. Engine 2.2.1 distinguishes results from the previous behavior. The focused tests cover full-section inspection, invalid product quotations and ambiguous primary identity. I independently ran the four affected backend test files: 43 tests passed.
+
+The helper differs from the previously reviewed expiring helper only by recording elapsed wall time for returned provider outputs. This is not CPU measurement. I independently ran its focused tests: four passed. The protocol requires isolated, attributable platform CPU observations, fresh allowance headroom, private evidence, retained replay, and independent semantic review. It stops on incomplete or invalid AI assessment. Unknown technical observations may legitimately leave the final score null; they do not excuse an incomplete AI assessment.
+
+The recorded a1 failure and offline regression establish the reason for the correction, not model calibration. No conclusion is made here about a2 model quality, native runtime, hosted CI, or readiness to activate production; those require the planned evidence and review.

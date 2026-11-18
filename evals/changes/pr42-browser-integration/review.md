@@ -1,0 +1,9 @@
+# Independent integration review
+
+Reviewed source through 63aedf5 against browser base 297b7d6. Candidate extraction now uses product-scoped sources, restricted for browser captures to scoped rendered product text. Subsequent section and claim-support inspection still covers the retained source bundle. Strict exact-reference validation, browser initial/rendered provenance rules and unknown handling remain in place. Engine version 2.2.1 separates the changed behavior. The historical browser replay oracle remains frozen except for the explicitly asserted engine metadata update.
+
+Independently ran `node --test --test-reporter=dot backend/ai-rubric-assessment.test.mjs backend/assessment-sources.test.mjs backend/browser-scoring.test.mjs`: 38 passed. The earlier engine-version fixture mismatch was corrected without changing expected scores, evidence or fixes. These offline tests do not establish native browser behavior or successful AI calibration.
+
+The user subsequently requested deployment of the AI path for production testing, with existing score and allowance safeguards. Prior AI probes failed, so no successful model-quality claim follows from this review; unsupported or unknown checks must continue to withhold the score. Before traffic, confirm required project D1 migrations, private R2 and browser binding, account-wide allowance headroom, 1,000 ms CPU configuration, preserved access/secrets/observability and the hourly cleanup/watchdog. A bounded native probe must establish browser session and history API shapes, verified closure and settlement, public egress, retained replay and CPU. Unknown session or usage remains held and blocks another launch. The public Worker has no HTTP product fallback, so missing dependencies or failed native validation are material deployment blockers.
+
+This is an integration and rollout-prerequisite review, not evidence that CI, native validation, production deployment or semantic calibration has succeeded.

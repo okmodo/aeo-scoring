@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Native browser runtime readiness fixes before authorized deployment.",
-  "state": "Branchcodex/browser-runtime-readiness frommergedPR43 297b7d6; plan5d0a9db precedesfixes. Productionstill6517eb55; stagedversionsnotproduction.",
+  "state": "Runtimefixesintegrate newlymergedPR42 d88a943 withengine2.2.1. Deployment-first userinstruction preservesfullCI/reviewandallcostguards, thenproductionactivationbeforemoremerchanttests.",
   "decisions": [
     "Enable documentednew_module_registry forpinnedSDK createRequire(import.meta.url) withdate2026-11-05.",
     "Provider closure usesfreshpost-history clock; guardvalidates againstfreshpostverification clock andwritesverifiedobservation time.",
@@ -9,7 +9,8 @@
     "Cleanupuncertainty no longermasks originalcapturefailure; publicerrors remain safe.",
     "Supplementalplan33ff42c classifies blockedsideeffects andwaitsforWorkerclock within3s; nofutureproof acceptance ornewnetworksideeffects.",
     "Freeze anddrainroutecallbacks withincapturedeadline; no new egressafterfreeze andfinalcoverage reflects callbacks throughbrowserclose.",
-    "UserexplicitlyrequesteddeploybeforefurtherliveURLtesting: finishofflinechecks/review/CI,deploy,thenuseFahertyessentialdrawstringshort URL. Do notrequireanotherpreactivationmerchanttest."
+    "UserexplicitlyrequesteddeploybeforefurtherliveURLtesting: finishofflinechecks/review/CI,deploy,thenuseFahertyessentialdrawstringshort URL. Do notrequireanotherpreactivationmerchanttest.",
+    "PreservePR42candidate-referencefix andengine2.2.1. ExistingprojectAIenablementhandoff requests matchingopen-rubric/pipeline/contentreleaseflags forproductiontesting; no qualitycalibrationclaim."
   ],
   "constraints": [
     "Allaccount60%ceilings andCPU1000 unchanged; nofrontend/scoring/dependency/unrelatedservices changes.",
@@ -28,7 +29,7 @@
   ],
   "resumeCommands": [
     "npm run test:browser-build",
-    "npm run evaluate -- --change browser-runtime-readiness --base 297b7d6611538fa65bd018c989fd81c72b3c4c41",
-    "EVALUATION_BASE=297b7d6611538fa65bd018c989fd81c72b3c4c41 npm run ci:gate"
+    "npm run evaluate -- --change browser-runtime-readiness --base d88a943ae47a194cc3b331413ef502321cbae441",
+    "EVALUATION_BASE=d88a943ae47a194cc3b331413ef502321cbae441 npm run ci:gate"
   ]
 }

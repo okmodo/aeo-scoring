@@ -1,6 +1,6 @@
 # Browser product retrieval
 
-Implementation branch: `codex/browser-product-retrieval`, based on merged backend PR #40 and integrated with PR #41 (`7ab5ddb`). The existing engine 2.2.0 retained-source assessor and release gating are preserved. This changes retrieval, not the rubric: Structure /40, Content /60, credit rules, conditional fixes and numerical-score eligibility are unchanged. The browser cache namespace is `browser-product-v1`; historical HTTP reports are not reused as browser captures.
+Implementation branch: `codex/browser-product-retrieval`, based on merged backend PR #40 and integrated with PR #41 (`7ab5ddb`). The existing engine 2.2.1 retained-source assessor and release gating are preserved. This changes retrieval, not the rubric: Structure /40, Content /60, credit rules, conditional fixes and numerical-score eligibility are unchanged. The browser cache namespace is `browser-product-v1`; historical HTTP reports are not reused as browser captures.
 
 ## Capture and assessment
 
