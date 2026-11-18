@@ -1,9 +1,7 @@
 import service, { handleAuditRequest } from './service.mjs';
-import { retrieve } from './retrieval.mjs';
 import { createPublicEgress, normalizePublicTarget } from './public-egress.mjs';
 
 const egress = createPublicEgress();
-const retrievePage = (url, options) => retrieve(url, { ...options, observeSitemap: true, observeGuides: true });
 const ALLOWED_ORIGIN = 'https://aeo-scoring-preview-20261105-kk7.pages.dev';
 const ROUTE = '/api/v1/audits';
 const UNLOCK = '/api/v1/preview-access';
@@ -33,7 +31,7 @@ async function handleProtectedRequest(request, env, ctx, path, method) {
   if (request.method === method) {
     if (env.AUDIT_PUBLIC_ACCESS === 'enabled') {
       if (path === UNLOCK) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
-      return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, retrievePage });
+      return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, requireBrowser: true });
     }
     const expected = env.AUDIT_PREVIEW_PASSWORD;
     if (typeof expected !== 'string' || !passwordFormat.test(expected)) {
@@ -47,7 +45,7 @@ async function handleProtectedRequest(request, env, ctx, path, method) {
     if (path === UNLOCK) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
   }
   if (path === UNLOCK) return new Response(null, { status: 405, headers: { allow: 'POST', 'cache-control': 'no-store' } });
-  return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, retrievePage });
+  return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, requireBrowser: true });
 }
 
 function routeMethod(path) {

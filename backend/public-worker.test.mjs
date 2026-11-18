@@ -27,6 +27,8 @@ const send = (path, init = {}, env = {}) => worker.fetch(new Request(url + path,
 test('authenticated submissions and report reads require current allowance evidence for the pinned billing scope', async () => {
   const sqlite = new DatabaseSync(':memory:');
   const previousRewriter = globalThis.HTMLRewriter;
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(null, {status: 503});
   globalThis.HTMLRewriter = class {};
   try {
     sqlite.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
@@ -40,7 +42,7 @@ test('authenticated submissions and report reads require current allowance evide
     const accountId = '0123456789abcdef0123456789abcdef';
     const subscriptionId = 'fixture-subscription';
     const now = Date.now();
-    const env = { ...configured, AUDIT_DB: db, AUDIT_RATE_SECRET: 'x'.repeat(32), AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId };
+    const env = { ...configured, AUDIT_DB: db, AUDIT_RATE_SECRET: 'x'.repeat(32), AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId, AUDIT_USAGE_READ_TOKEN:'fixture-token', AUDIT_BROWSER:{closeSession:async()=>assert.fail('No browser session expected')}, AUDIT_SNAPSHOTS:{put:async()=>{},get:async()=>{},delete:async()=>{}} };
     const poll = scope => send('/' + id, { headers: authorized }, scope);
     const submit = scope => send('', {
       method: 'POST',
@@ -56,8 +58,8 @@ test('authenticated submissions and report reads require current allowance evide
     const seedReceipt = (sub, observedAt, amounts) => {
       const watermarks = Object.fromEntries(METRICS.map(key => [key, observedAt]));
       sqlite.prepare(`INSERT OR REPLACE INTO allowance_receipts
-        (account_id, subscription_id, generation, active, cycle_start, cycle_end, ai_day, observed_at, usage_json, watermarks_json)
-        VALUES (?, ?, 1, 1, ?, ?, ?, ?, ?, ?)`)
+        (account_id, subscription_id, generation, active, cycle_start, cycle_end, ai_day, observed_at, usage_json, watermarks_json, diagnostic_status)
+        VALUES (?, ?, 1, 1, ?, ?, ?, ?, ?, ?, 'analytics_estimate')`)
         .run(accountId, sub, now - 60_000, now + 60_000, new Date(now).toISOString().slice(0,10), observedAt, JSON.stringify(amounts), JSON.stringify(watermarks));
     };
     sqlite.prepare('INSERT INTO audits (id,url,cache_key,status,created_at,expires_at) VALUES (?,?,?,?,?,?)')
@@ -80,6 +82,7 @@ test('authenticated submissions and report reads require current allowance evide
   } finally {
     if (previousRewriter === undefined) delete globalThis.HTMLRewriter;
     else globalThis.HTMLRewriter = previousRewriter;
+    globalThis.fetch = previousFetch;
     sqlite.close();
   }
 });

@@ -91,7 +91,15 @@ export function buildContentFactsRequest(prepared) {
     } };
     const modelPayload = { ...payload, candidates, observations: payload.observations.map(({id,scope,text}) => ({id,scope,text})) };
     const request = { messages: [{ role: 'system', content: instruction }, { role: 'user', content: JSON.stringify(modelPayload) }], response_format: { type: 'json_schema', json_schema: schema }, temperature: 0, max_tokens: 2048, stream: false };
-    if (bytes(JSON.stringify(request)) > MAX_BYTES) throw new Error('Content facts request exceeds input budget');
+    if (bytes(JSON.stringify(request)) <= MAX_BYTES) return request;
+    // The category already contains every attribute label and complete decision
+    // definition. Candidate labels and definitions duplicate those fields; keep
+    // the IDs and eligibility lists intact and resolve the descriptions by key.
+    const { allowedKeys: _allowedKeys, ...compactBase } = modelPayload;
+    const compactPayload = { ...compactBase, packingVersion: '1', candidates: candidates.map(({roleId,ids}) => ({roleId,ids})) };
+    request.messages[0].content += '\nPacking version 1: Each candidate roleId is kind.key; split at the first dot to find its kind and key. Look up attribute labels and complete decision definitions in category by key. Allowed inspection kinds and keys are in the response schema.';
+    request.messages[1].content = JSON.stringify(compactPayload);
+    if (bytes(JSON.stringify(request)) > MAX_BYTES) throw new Error('Content facts request exceeds input budget: ' + bytes(JSON.stringify(request)));
     return request;
 }
 // JSON.parse silently accepts duplicate keys, including nested ones.

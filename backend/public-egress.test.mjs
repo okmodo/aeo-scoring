@@ -63,3 +63,14 @@ test('public submission rejects reserved example domains before database admissi
   assert.equal(response.status, 400);
   assert.equal((await response.json()).error.code, 'invalid_input');
 });
+
+test('browser transport forwards only bounded allowlisted scoped headers',async()=>{
+  const calls=[];
+  const egress=createPublicEgress({fetcher:async (url,options)=>{calls.push({url,options});return new Response('ok');}});
+  await egress.fetch('https://shop.example.com/a',{method:'GET',redirect:'manual',browserHeaders:{cookie:'session=one',accept:'text/html','accept-language':'en-US',authorization:'secret','proxy-authorization':'secret',host:'private'}});
+  assert.deepEqual(calls[0].options.headers,{'user-agent':'AEOAuditBot/1.0',accept:'text/html','accept-language':'en-US',cookie:'session=one'});
+  await egress.fetch('https://other.example.org/a',{method:'GET',redirect:'manual',browserHeaders:{cookie:'other=two','accept-language':'bad\r\ninjected'}});
+  assert.equal(calls[1].options.headers.cookie,'other=two');
+  assert.equal(calls[1].options.headers['accept-language'],undefined);
+  assert.equal(calls[1].options.headers.authorization,undefined);
+});

@@ -24,11 +24,11 @@ function checkBundle(bundle) {
 }
 function refs(bundle, value) {
   if (!Array.isArray(value) || value.length > 16) fail();
-  return value.map(ref=>{ const s=bundle.sources.find(x=>x.id===ref?.sourceId); if (!s || !text(ref.quote,1000) || !s.text.includes(ref.quote)) fail(); return {sourceId:s.id,quote:ref.quote,url:s.url,location:s.location,excerpt:ref.quote,scope:s.scope}; });
+  return value.map(ref=>{ const s=bundle.sources.find(x=>x.id===ref?.sourceId); if (!s || !text(ref.quote,1000) || !s.text.includes(ref.quote)) fail(); return {sourceId:s.id,quote:ref.quote,url:s.url,location:s.location,excerpt:ref.quote,scope:s.scope,...(s.method ? {method:s.method} : {})}; });
 }
 export function validateRubricProfile(bundle, value) {
   checkBundle(bundle); const p=parse(value);
-  if (!p || !text(p.category,160) || !Array.isArray(p.evidence) || !refs(bundle,p.evidence).some(e=>e.scope==='product') || !Array.isArray(p.slots) || p.slots.length < 6 || p.slots.length > 36) fail();
+  if (!p || !text(p.category,160) || !Array.isArray(p.evidence) || !refs(bundle,p.evidence).some(e=>e.scope==='product' && (!bundle.sources.some(s=>s.origin != null) || contentAllowed(bundle.sources.find(s=>s.id===e.sourceId)))) || !Array.isArray(p.slots) || p.slots.length < 6 || p.slots.length > 36) fail();
   const ids=new Set(); const slots=p.slots.map(s=>{
     if (!s || !text(s.id,80) || !/^[a-z0-9-]+$/.test(s.id) || ids.has(s.id) || DIRECT.includes(s.id) || !GROUPS.includes(s.group) || !['label','relevance','full','partial','zero','missingExpectation'].every(k=>text(s[k],400)) || new Set([s.full,s.partial,s.zero].map(x=>x.trim().toLowerCase())).size!==3) fail();
     const applicability=s.applicability ?? 'always';
@@ -42,14 +42,39 @@ export function validateRubricProfile(bundle, value) {
   for (const item of review) { if (!conditional.some(s=>s.id===item?.id) || seenReviews.has(item.id) || item.valid!==true || !text(item.reason,400)) fail(); seenReviews.add(item.id); }
   return freeze({version:'1',category:p.category,evidence:refs(bundle,p.evidence).map(({sourceId,quote})=>({sourceId,quote})),slots,conditionReview:review.map(x=>({id:x.id,valid:true,reason:x.reason}))});
 }
+const isBrowser = bundle => bundle.sources.some(source=>source.origin != null);
+const isSourceCheck = (bundle,id) => isBrowser(bundle) && /^(?:S1|S2)\./.test(id);
+const isContentCheck = (bundle,id) => isBrowser(bundle) && (/^(?:C1|C3)\./.test(id) || !DIRECT.includes(id));
+const contentAllowed = source => (source.origin === 'rendered' && source.scope === 'product' && source.kind === 'text') || (source.origin === 'shared' && ['support','shipping','returns','llms','agents'].includes(source.scope));
+function sourceAllowed(source,id) {
+  if (source.origin === 'initial') return true;
+  return id === 'S1.supporting-access' && source.origin === 'shared' && (source.scope === 'support' || ['shipping','returns','llms','agents'].includes(source.scope));
+}
+function relevantSources(bundle,id) {
+  if (isSourceCheck(bundle,id)) return bundle.sources.filter(source=>sourceAllowed(source,id));
+  if (isBrowser(bundle) && id==='C5.claim-support') return bundle.sources.filter(contentAllowed);
+  if (isContentCheck(bundle,id)) return bundle.sources.filter(source=>contentAllowed(source) && (['product','extracted'].includes(source.scope) || (id==='C3.shipping' || id==='C3.returns') && source.scope===id.split('.')[1]));
+  return bundle.sources.filter(source=>{
+    if (id.startsWith('C5.')) return true;
+    if (id.startsWith('S7.')) return source.scope==='llms';
+    if (id.startsWith('S8.')) return source.scope==='agents';
+    if (id==='C3.shipping' || id==='C3.returns') return ['product','extracted',id.split('.')[1]].includes(source.scope);
+    return ['product','extracted'].includes(source.scope);
+  });
+}
 function validateItem(bundle, item, id, inspections, group = null, slot = null, inspected = false, snapshot = null) {
   if (!item || item.id!==id || !['measured','not_measured','not_applicable'].includes(item.status) || !Array.isArray(item.evidence)) fail();
   const evidence=refs(bundle,item.evidence);
+  const sourceCheck=isSourceCheck(bundle,id), contentCheck=isContentCheck(bundle,id);
+  if (contentCheck && evidence.some(ref=>!contentAllowed(bundle.sources.find(source=>source.id===ref.sourceId)))) fail();
+  if (sourceCheck && evidence.some(ref=>!sourceAllowed(bundle.sources.find(source=>source.id===ref.sourceId),id))) fail();
+  const complete=sourceCheck ? bundle.coverage.initial === true : bundle.coverage.complete;
+  const checkInspected=sourceCheck || contentCheck ? inspectionComplete(bundle,inspections,id) : inspected;
   if (item.status==='not_measured') { if (item.fraction!==null || !text(item.reason)) fail(); return {status:'not_measured',reason:item.reason}; }
   if (!evidence.length || !text(item.reason)) fail();
   if (item.status==='not_applicable') {
     if (item.fraction!==null || !bundle.coverage.complete) fail();
-    if (slot?.applicability==='conditional' && group?.startsWith('C4.') && item.rule==='category_conditions_absent' && inspected && conditionAbsent(bundle,inspections,slot.id) && evidence.some(e=>e.scope==='product')) {
+    if (slot?.applicability==='conditional' && group?.startsWith('C4.') && item.rule==='category_conditions_absent' && checkInspected && conditionAbsent(bundle,inspections,slot.id) && evidence.some(e=>e.scope==='product')) {
       const ref=evidence.find(e=>e.scope==='product');
       return {status:'not_applicable',rule:item.rule,justification:item.reason,reason:item.reason,evidence,conditions:[{questionId:slot.id,condition:slot.condition,status:'absent',evidence:ref.excerpt,location:ref.location,method:'complete retained-source condition inspection'}]};
     }
@@ -59,9 +84,9 @@ function validateItem(bundle, item, id, inspections, group = null, slot = null, 
   if (![0,0.5,1].includes(item.fraction)) fail();
   if ((id.startsWith('C1.') || group?.startsWith('C2.') || group?.startsWith('C4.')) && !evidence.some(e=>e.scope==='product')) fail();
   // Negative findings require an entire source inspection, not an inference from a fragment.
-  if (item.fraction===0 && item.basis==='absence' && (!inspected || !bundle.coverage.complete || !allAbsent(bundle,inspections,id))) fail();
+  if (item.fraction===0 && item.basis==='absence' && (!checkInspected || !complete || !allAbsent(bundle,inspections,id))) fail();
   if (item.fraction===0 && item.basis==='generic') {
-    if (!inspected || !inspectionComplete(bundle,inspections,id) || !inspections.some(section=>section.checks.some(check=>check.id===id && check.status==='present' && check.evidence.some(ref=>evidence.some(e=>e.sourceId===ref.sourceId && e.quote===ref.quote))))) fail();
+    if (!checkInspected || (sourceCheck && !complete) || !inspectionComplete(bundle,inspections,id) || !inspections.some(section=>section.checks.some(check=>check.id===id && check.status==='present' && check.evidence.some(ref=>evidence.some(e=>e.sourceId===ref.sourceId && e.quote===ref.quote))))) fail();
   } else if (item.fraction===0 && item.basis!=='absence' && !(item.basis==='contradiction' && id==='C5.consistency' && evidence.length>=2)) fail();
   if (id==='C3.shipping' || id==='C3.returns') {
     const scope=id.split('.')[1];
@@ -75,33 +100,32 @@ function validateItem(bundle, item, id, inspections, group = null, slot = null, 
   return {status:'measured',fraction:item.fraction,reason:item.reason,evidence};
 }
 function allAbsent(bundle, inspections, id) {
-  const relevant = bundle.sources.filter(source => {
-    if (id.startsWith('C5.')) return true;
-    if (id.startsWith('S7.')) return source.scope==='llms';
-    if (id.startsWith('S8.')) return source.scope==='agents';
-    if (id==='C3.shipping' || id==='C3.returns') return ['product','extracted',id.split('.')[1]].includes(source.scope);
-    return ['product','extracted'].includes(source.scope);
-  });
-  return relevant.length>0 && Array.isArray(inspections) && inspections.length===bundle.sources.length && relevant.every(source=>{
-    const section=inspections.find(x=>x?.sourceId===source.id);
+  const relevant = relevantSources(bundle,id);
+  return relevant.length>0 && Array.isArray(inspections) && (isSourceCheck(bundle,id) || isContentCheck(bundle,id) || (isBrowser(bundle) && id==='C5.claim-support') || inspections.length===bundle.sources.length) && relevant.every(source=>{
+    const sections=inspections.filter(x=>x?.sourceId===source.id);
+    if (sections.length!==1) return false;
+    const section=sections[0];
     const matches=section?.checks?.filter(x=>x?.id===id);
     return matches?.length===1 && matches[0].status==='absent';
   });
 }
 function inspectionComplete(bundle, inspections, id) {
-  const relevant=bundle.sources.filter(s=>['product','extracted'].includes(s.scope));
+  const relevant=isSourceCheck(bundle,id) || isContentCheck(bundle,id) ? relevantSources(bundle,id) : bundle.sources.filter(s=>['product','extracted'].includes(s.scope));
+  if (!Array.isArray(inspections)) return false;
   return relevant.length>0 && relevant.every(source=>{
-    const section=inspections.find(x=>x.sourceId===source.id);
-    const item=section?.checks?.find(x=>x.id===id);
-    return item && (item.status==='present' || item.status==='absent');
+    const sections=inspections.filter(x=>x?.sourceId===source.id);
+    const items=sections[0]?.checks?.filter(x=>x?.id===id);
+    if (sections.length!==1 || items?.length!==1 || !['present','absent'].includes(items[0].status) || !Array.isArray(items[0].evidence)) return false;
+    try { const evidence=refs(bundle,items[0].evidence); return evidence.every(e=>e.sourceId===source.id) && (items[0].status!=='present' || evidence.length>0); } catch { return false; }
   });
 }
 function conditionAbsent(bundle, inspections, id) {
-  const relevant=bundle.sources;
-  return relevant.length>0 && Array.isArray(inspections) && inspections.length===bundle.sources.length && relevant.every(source=>{
+  const relevant=isContentCheck(bundle,id) ? relevantSources(bundle,id) : bundle.sources;
+  return relevant.length>0 && Array.isArray(inspections) && (isContentCheck(bundle,id) || inspections.length===bundle.sources.length) && relevant.every(source=>{
     const sections=inspections.filter(x=>x?.sourceId===source.id);
     const found=sections[0]?.conditions?.filter(x=>x?.id===id);
-    return sections.length===1 && found?.length===1 && found[0].status==='absent';
+    if (sections.length!==1 || found?.length!==1 || found[0].status!=='absent' || !Array.isArray(found[0].evidence)) return false;
+    try { return refs(bundle,found[0].evidence).every(e=>e.sourceId===source.id); } catch { return false; }
   });
 }
 function validateInspections(bundle, profile, inspections) {
@@ -128,8 +152,8 @@ function c5Inventory(bundle, inspections) {
   const claims=[], comparisons=[];
   for (const section of inspections) {
     if (section.claimsComplete!==true || section.comparisonsComplete!==true || !Array.isArray(section.claims) || !Array.isArray(section.comparisons)) fail();
-    section.claims.forEach((item,i)=>claims.push({id:`${section.sourceId}-claim-${i}`,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]}));
-    section.comparisons.forEach((item,i)=>{if (!text(item.field,160) || !text(item.context,300)) fail(); comparisons.push({id:`${section.sourceId}-comparison-${i}`,field:item.field,context:item.context,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]});});
+    if (!isBrowser(bundle) || (bundle.sources.find(source=>source.id===section.sourceId)?.origin==='rendered' && bundle.sources.find(source=>source.id===section.sourceId)?.scope==='product' && bundle.sources.find(source=>source.id===section.sourceId)?.kind==='text')) section.claims.forEach((item,i)=>claims.push({id:`${section.sourceId}-claim-${i}`,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]}));
+    if (!isBrowser(bundle) || (()=>{ const source=bundle.sources.find(s=>s.id===section.sourceId); return (source?.origin==='initial' && source.kind==='structured_product') || (source?.origin==='rendered' && source.scope==='product' && source.kind==='text') || (source?.origin==='shared' && ['llms','agents'].includes(source.scope)); })()) section.comparisons.forEach((item,i)=>{if (!text(item.field,160) || !text(item.context,300)) fail(); comparisons.push({id:`${section.sourceId}-comparison-${i}`,field:item.field,context:item.context,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]});});
   }
   if (claims.length>100 || comparisons.length>200) fail();
   return {claims,comparisons};
@@ -162,7 +186,7 @@ function supportReferenceCaptured(bundle, section, reference) {
     return bundle.sources.some(source=>{
       const url=new URL(source.url); url.hash='';
       if (url.href!==target.href) return false;
-      if (source.scope==='product') return bundle.coverage.complete===true;
+      if (source.scope==='product') return bundle.coverage.complete===true && (!isBrowser(bundle) || source.origin==='rendered');
       return bundle.coverage.scopes?.[source.scope]===true;
     });
   } catch { return false; }
@@ -175,8 +199,8 @@ function assessC5(bundle, inspections, raw, supportInspections) {
   let supportsValid=true; try {validateClaimInspections(bundle,inventory,supportInspections);} catch {supportsValid=false;}
   if (supportsValid && !inventory.claims.length) {
     if (allAbsent(bundle,inspections,'C5.claim-support')) {
-      const product=bundle.sources.find(s=>s.scope==='product' && s.text.trim());
-      if (product) result.claim={status:'not_applicable',rule:'no_material_claims',justification:'No material claims were identified in the complete captured source inspection.',evidence:[{url:product.url,location:product.location,excerpt:product.text.slice(0,200)}]};
+      const product=bundle.sources.find(s=>s.scope==='product' && s.text.trim() && (!isBrowser(bundle) || contentAllowed(s)));
+      if (product) result.claim={status:'not_applicable',rule:'no_material_claims',justification:'No material claims were identified in the complete captured source inspection.',evidence:[{url:product.url,location:product.location,excerpt:product.text.slice(0,200),...(product.method ? {method:product.method} : {})}]};
     }
   } else if (supportsValid) {
     try {
@@ -184,8 +208,8 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       const seen=new Set(); const entries=inventory.claims.map(candidate=>{
         const matches=raw.claims.filter(x=>x?.id===candidate.id); if (matches.length!==1) fail(); const item=matches[0]; seen.add(item.id);
         if (item.status!=='measured' || ![0,0.5,1].includes(item.fraction) || !text(item.reason)) fail();
-        const evidence=refs(bundle,item.evidence); if (!evidence.some(e=>e.sourceId===candidate.evidence.sourceId && e.quote===candidate.evidence.quote)) fail();
-        if (item.fraction===0 && !supportInspections.every(section=>{const inspection=section.claims.find(x=>x.id===candidate.id); return inspection?.status==='absent' && inspection.references.every(ref=>supportReferenceCaptured(bundle,section,ref));})) fail();
+        const evidence=refs(bundle,item.evidence); if (isBrowser(bundle) && evidence.some(e=>!contentAllowed(bundle.sources.find(source=>source.id===e.sourceId)))) fail(); if (!evidence.some(e=>e.sourceId===candidate.evidence.sourceId && e.quote===candidate.evidence.quote)) fail();
+        if (item.fraction===0 && !supportInspections.filter(section=>!isBrowser(bundle) || contentAllowed(bundle.sources.find(source=>source.id===section.sourceId))).every(section=>{const inspection=section.claims.find(x=>x.id===candidate.id); return inspection?.status==='absent' && inspection.references.every(ref=>supportReferenceCaptured(bundle,section,ref));})) fail();
         if (item.fraction>0 && !evidence.some(e=>(e.sourceId!==candidate.evidence.sourceId || e.quote!==candidate.evidence.quote) && supportInspections.some(section=>section.claims.some(x=>x.id===candidate.id && x.status==='present' && x.evidence.some(r=>r.sourceId===e.sourceId && r.quote===e.quote))))) fail();
         return {id:item.id,status:'measured',fraction:item.fraction,reason:item.reason,evidence};
       });
@@ -193,7 +217,7 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       result.claim={status:'measured',fraction:entries.reduce((n,x)=>n+x.fraction,0)/entries.length,evidence:entries.flatMap(x=>x.evidence),claims:entries};
     } catch { /* Any missing or uncertain claim withholds this subcheck. */ }
   }
-  if (inventory.comparisons.length) try {
+  if (inventory.comparisons.length && (!isBrowser(bundle) || bundle.sources.some(source=>source.origin==='initial' && source.kind==='structured_product'))) try {
     const used=new Set(), entries=[];
     if (!raw.comparisons.length || raw.comparisons.length>100) fail();
     for (const group of raw.comparisons) {
@@ -262,13 +286,13 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     const bundle=await prepareAssessmentSources(snapshot,extracted); checkBundle(bundle);
     if (!bundle.coverage.complete) return unavailable('Retained source coverage is incomplete.');
     const observations=[], primaryObservations=[];
-    for (const source of bundle.sources.filter(source=>source.scope==='product')) {
+    for (const source of bundle.sources.filter(source=>source.scope==='product' && (!isBrowser(bundle) || contentAllowed(source)))) {
       const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Extract relevant exact quotations for product identity, attributes, selection, purchase, policies, claims, structured data and site guides. Return {evidence:[{sourceId,quote}],primaryEvidence:[{sourceId,quote}]}, at most 12 quotes in each. Identify candidate primary product heading or title separately from recommendations and accessories; preserve exact quotations. Omit irrelevant material.`,{source},1000)});
       const found=refs(bundle,out?.evidence), primary=refs(bundle,out?.primaryEvidence ?? []); if ([...found,...primary].some(e=>e.sourceId!==source.id)) fail(); observations.push(...found.map(({sourceId,quote})=>({sourceId,quote}))); primaryObservations.push(...primary.map(({sourceId,quote})=>({sourceId,quote})));
       if (encoder.encode(JSON.stringify([observations,primaryObservations])).length>40000) throw new Error('observation_limit');
     }
     
-    const identity=await call({AI,allowance,now,remaining,input:request(`${BASE} Identify only the primary product category from the supplied quotations and heading, excluding recommendations, accessories and related items. If primary identity is ambiguous, do not guess. Return {status,category,evidence}; status is classified or ambiguous. For ambiguous use null category and empty evidence. Classified evidence must quote the primary product.`,{primaryObservations,observations,heading:extracted?.productHtml?.identity ?? null},512)});
+    const identity=await call({AI,allowance,now,remaining,input:request(`${BASE} Identify only the primary product category from the supplied quotations and heading, excluding recommendations, accessories and related items. If primary identity is ambiguous, do not guess. Return {status,category,evidence}; status is classified or ambiguous. For ambiguous use null category and empty evidence. Classified evidence must quote the primary product.${isBrowser(bundle) ? ' For browser captures cite only visible scoped product text sources, not raw HTML or metadata.' : ''}`,{primaryObservations,observations,heading:extracted?.productHtml?.identity ?? null,...(isBrowser(bundle) ? {sourceCatalog:bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.method ? {method:s.method} : {})}))} : {})},512)});
     if (identity?.status!=='classified' || !text(identity.category,160) || !refs(bundle,identity.evidence).some(e=>e.scope==='product')) fail();
     const proposal=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently of any individual product page, define category-specific shopper expectations for the supplied category. Produce slots for every group: ${GROUPS.join(', ')}. Each slot has unique id, group, label, relevance, full, partial, zero, missingExpectation, applicability, condition, conditionWhy. Default applicability to always with null condition and conditionWhy. Only C4 slots may be conditional; use conditional solely for a specific observable condition, supplying the condition and why it determines applicability. Choose an appropriate number; no fixed attribute list. Use distinct concrete anchors. Return {slots}.`,{category:identity.category},1800)});
     const conditional=(proposal?.slots || []).filter(slot=>slot.applicability==='conditional');
@@ -293,7 +317,7 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
       supportInspections.push(out);
     }
     validateClaimInspections(bundle,inventory,supportInspections);
-    const response=await call({AI,allowance,now,remaining,input:request(`${BASE} Judge every listed check and slot against its rubric anchors. Return {judgments:[{id,status,fraction,reason,rule,basis,comparisonContext,comparisonValue,evidence,inspectedSourceIds}]}. status measured, not_measured or not_applicable; measured fraction 0, 0.5 or 1; others null. Cite exact source quotations. For zero set basis to absence, generic (explicit unusable or generic information), or contradiction; generic requires a quote of the unusable information and a completed inspection; contradiction is permitted only for C5.consistency with two distinct quotations. For absence supply all inspected source IDs. C4 conditional slots may be not_applicable only with rule category_conditions_absent when every relevant section confirms the stated condition is absent. An absent answer is not proof the condition is absent. C5.claim-support may use rule no_material_claims when complete inspection finds no material claims. For C5 consistency provide two distinct comparable quotes and comparisonContext; recognize semantically equivalent values, including equivalent units; explain the equivalence and cite the exact distinct observations. Shipping and returns require policy evidence. Ambiguity is not_measured. Also return c5:{claims:[{id,status,fraction,reason,evidence}],comparisons:[{candidateIds,status,fraction,reason,context,value}]}. Judge EVERY claim individually including unsupported claims, citing claim and support or qualification for nonzero credit. Group EVERY comparable observation exactly once by same field and product context; never drop candidates. Use not_measured if unclear. Do not compute scores.`,{checks,profile,observations,inspections,inventory,supportInspections,sourceIds:bundle.sources.map(s=>s.id),coverage:bundle.coverage},4000)});
+    const response=await call({AI,allowance,now,remaining,input:request(`${BASE} Judge every listed check and slot against its rubric anchors. ${bundle.sources.some(s=>s.origin != null) ? 'For browser captures, S1 and S2 concern the initial document only: cite sources with origin initial, never rendered or ordinary shared metadata. S1.supporting-access may also cite shared supporting resources. Prove absence using initial-source inspections only (and supporting-resource inspections for supporting access). For C1-C4 use scoped rendered product text excerpts and shared supporting resources, not raw HTML or initial-only product content. Claim-support candidates cover rendered product claims; C5 consistency may compare the associated initial structured product with visible scoped product text and relevant guides; do not use full HTML or metadata. ' : ''}Return {judgments:[{id,status,fraction,reason,rule,basis,comparisonContext,comparisonValue,evidence,inspectedSourceIds}]}. status measured, not_measured or not_applicable; measured fraction 0, 0.5 or 1; others null. Cite exact source quotations. For zero set basis to absence, generic (explicit unusable or generic information), or contradiction; generic requires a quote of the unusable information and a completed inspection; contradiction is permitted only for C5.consistency with two distinct quotations. For absence supply all inspected source IDs. C4 conditional slots may be not_applicable only with rule category_conditions_absent when every relevant section confirms the stated condition is absent. An absent answer is not proof the condition is absent. C5.claim-support may use rule no_material_claims when complete inspection finds no material claims. For C5 consistency provide two distinct comparable quotes and comparisonContext; recognize semantically equivalent values, including equivalent units; explain the equivalence and cite the exact distinct observations. Shipping and returns require policy evidence. Ambiguity is not_measured. Also return c5:{claims:[{id,status,fraction,reason,evidence}],comparisons:[{candidateIds,status,fraction,reason,context,value}]}. Judge EVERY claim individually including unsupported claims, citing claim and support or qualification for nonzero credit. Group EVERY comparable observation exactly once by same field and product context; never drop candidates. Use not_measured if unclear. Do not compute scores.`,{checks,profile,observations,inspections,inventory,supportInspections,sourceIds:bundle.sources.map(s=>s.id),...(bundle.sources.some(s=>s.origin != null) ? {sourceCatalog:bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.method ? {method:s.method} : {})}))} : {}),coverage:bundle.coverage},4000)});
     if (JSON.stringify([snapshot,extracted])!==original) throw new Error('inputs_changed');
     const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections}), replayArtifact={version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response)};
     if (encoder.encode(JSON.stringify(replayArtifact)).length > 256*1024) throw new Error('artifact_limit');

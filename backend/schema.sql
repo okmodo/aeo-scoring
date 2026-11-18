@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS audits (
   completed_at INTEGER,
   cache_until INTEGER,
   report_json TEXT,
-  error_json TEXT
+  error_json TEXT,
+  lease_ms INTEGER NOT NULL DEFAULT 60000
 );
 CREATE INDEX IF NOT EXISTS audits_cache ON audits(cache_key, status, cache_until);
 CREATE INDEX IF NOT EXISTS audits_expiry ON audits(expires_at);
@@ -151,3 +152,11 @@ CREATE TRIGGER IF NOT EXISTS allowance_settlement_v2_insert AFTER INSERT ON allo
   INSERT INTO allowance_settled_v2 SELECT NEW.account_id, 'aiNeurons', r.ai_day, NEW.actual_ai FROM allowance_reservations r WHERE r.account_id = NEW.account_id AND r.id = NEW.id ON CONFLICT(account_id, metric, period) DO UPDATE SET amount = amount + excluded.amount;
   INSERT INTO allowance_settled_v2 SELECT NEW.account_id, 'aiNeurons', NEW.completion_day, NEW.actual_ai FROM allowance_reservations r WHERE r.account_id = NEW.account_id AND r.id = NEW.id AND NEW.completion_day <> r.ai_day ON CONFLICT(account_id, metric, period) DO UPDATE SET amount = amount + excluded.amount;
 END;
+
+CREATE TABLE IF NOT EXISTS browser_audit_work (
+  audit_id TEXT PRIMARY KEY,
+  state TEXT NOT NULL CHECK (state IN ('capturing','ready','assessing','finished')),
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS browser_audit_work_expiry ON browser_audit_work(expires_at);
