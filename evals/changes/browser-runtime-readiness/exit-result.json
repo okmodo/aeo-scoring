@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "browser-runtime-readiness",
+  "sourceDigest": "efa8dac8646ecc7619224abecf36fb3e940d16a414c93c2ef1a102d59427d5c3",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/browser_runtime_exit",
+  "exportSha256": "c02f99b6e4bcdd17b83edbf28db4ea80648c0ab38a879bb14e745bc74493b079",
+  "interruptionPoint": "Frozen owned-session record persisted; earlier unknown hold has not yet settled in a fresh SQLite instance.",
+  "observedContinuation": "Fresh Terra agent read only export and tasksource; canonical provider verified2070ms with postresponse observation1794981371400. Canonical guard settledactual_ms2070, settled_at1794981371400. Future/missinghistory retainednullactual/settled. BothfocusedNode24files passed34tests.",
+  "limitations": "SyntheticinmemorySQLite andmockSDK, not productionevidence. No network/browser/model orsourceedits. Missingretrycount is timingdependent; onlyboundedunknownretention asserted."
+}
