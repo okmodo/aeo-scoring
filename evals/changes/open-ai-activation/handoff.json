@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "task": "Merge PR41 and activate AI scoring only after bounded native validation.",
+  "state": "PR41 merged7ab5ddb. Activation failed validation; production remains6517eb55 at100% withCPU1000. PR42 candidate correction is reviewed/CIgreen but open. All temporary validation versions/tail/credentials removed; only inactive exact production clone remains.",
+  "decisions": [
+    "Never enable a pipeline that has not completed source-grounded model assessment and replay.",
+    "Narrow category source fix prepared in separate branch/PR42; all later sections and strict quotations preserved.",
+    "Native a2 known CPU unavailable; prospectively reviewed weaker control substitution recorded, never relabeled as measured.",
+    "Uncertain368-neuron call remains held alongside older1004; no automatic retry or zero refund."
+  ],
+  "constraints": [
+    "Preserve60% included limits,CPU1000,24hretention,existingaccess/secrets/monitoring.",
+    "Frontend and unrelated services untouched.",
+    "Provider traces and raw source remain private outsideGit; only proofhashes and sanitized metadata committed."
+  ],
+  "completed": [
+    "PR41 merged after green hostedCI.",
+    "Verified existing bucket lifecycle and DBtables; reserved infrastructure beforevalidation.",
+    "Two frozen native cohorts and independent reviews, actual private input/output capture, conservative settlement and complete cleanup.",
+    "Narrow correction PR42 passesallnine recordedNode24checks andhostedCI; failed realmodelresults recordedaccurately."
+  ],
+  "remaining": [
+    "NewAI release remains off: provider call returned no usableoutput beforestage deadline in corrected cohort.",
+    "Address slow/unsupported model stages, preserving exactevidence andcostguards; freeze/reviewanothercohort before anynewprovidercalls.",
+    "Merge/deploy andenable only after actualcalibrationpasses; keepPR42openpending nextdecision."
+  ],
+  "resumeCommands": [
+    "cd /private/tmp/aeo-open-ai-activation",
+    "npm run evaluate -- --change open-ai-activation --base 7ab5ddb03f69ee5886c25aaf8faa94bd5e684966",
+    "node --test evals/changes/open-ai-activation/runtime-worker.test.mjs"
+  ]
+}

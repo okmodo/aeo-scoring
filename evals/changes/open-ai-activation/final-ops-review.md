@@ -1,0 +1,9 @@
+# Operational activation review
+
+PR 41 was merged, but its open AI scoring release was not enabled in production. The a1 synthetic provider run stopped on a non-verbatim metadata quotation. The narrow candidate-source correction is in PR 42; its offline and hosted checks do not establish live model quality.
+
+The a2 native-known control completed with simulated responses, retained its profile and replay artifact, and passed all four replay checks. No attributable a2 native-known CPU observation was available; the prospective amendment recorded this limitation and accepted weaker supporting control evidence only for the one-shot provider probe.
+
+The a2 synthetic provider probe returned HTTP 200 with accepted infrastructure settlement, but the AI assessment was unavailable after one issued provider call. No provider output was captured, no profile was retained, and no replay was possible. The elapsed time was 17.557 seconds, consistent with the 12-second model-stage timeout after preparation; the available trace does not independently identify a provider-side cause. The operator recorded a single attributable platform analytics observation of 114.175 ms CPU, subject to sampling and reporting limitations. This does not establish successful inference or semantic quality.
+
+The operator reports that the uncertain 368-neuron reservation remains held, alongside 1,004 neurons in older unknown holds. This is the correct conservative treatment; no completed provider usage is inferred. The provider case failed the prospective protocol, so activation must stop. No additional model call or retry is authorized by this review. Production remains on the previous active version. Preserve the private proofs and account holds, complete temporary preview cleanup without changing active traffic, and require a newly reviewed plan and live calibration before any later activation attempt.

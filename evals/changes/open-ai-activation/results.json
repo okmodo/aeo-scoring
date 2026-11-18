@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "activation": "not_performed",
+  "reason": "Neither real-model cohort completed a supported retained assessment.",
+  "pr41": {
+    "merged": true,
+    "commit": "7ab5ddb03f69ee5886c25aaf8faa94bd5e684966"
+  },
+  "pr42": {
+    "url": "https://github.com/okmodo/aeo-scoring/pull/42",
+    "state": "open",
+    "sourceCommit": "4bd3c61cdc4b8b2e3bcb8607a7a6dd822678fc20",
+    "checks": "All nine Node24 evaluation commands, independent affected tests and hostedCI passed; not live calibration."
+  },
+  "a1": {
+    "control": {
+      "cpuTimeUs": 18839,
+      "requests": 1
+    },
+    "nativeKnown": {
+      "assessed": true,
+      "simulatedCalls": 13,
+      "providerCalls": 0,
+      "allReplayChecks": true,
+      "cpuTimeUs": 165610,
+      "requests": 1
+    },
+    "provider": {
+      "assessed": false,
+      "calls": 2,
+      "profileRetained": false,
+      "replay": null,
+      "cpuTimeUs": 69684,
+      "requests": 1,
+      "cause": "Second candidate response included a non-verbatim serialized metadata quote; offline prefix replay reproduced strict rejection.",
+      "roundedSettledNeurons": 101
+    }
+  },
+  "a2": {
+    "control": {
+      "cpuTimeUs": 20575,
+      "requests": 1
+    },
+    "nativeKnown": {
+      "assessed": true,
+      "simulatedCalls": 11,
+      "providerCalls": 0,
+      "allReplayChecks": true,
+      "cpuTimeUs": null,
+      "measurement": "Unavailable after isolated/wider analytics, event-query and tail attempts; never called measured.",
+      "prospectiveAmendment": "provider-protocol-amendment.md accepted prior control CPU plus enforced configured cap as weaker control evidence only before the provider request."
+    },
+    "provider": {
+      "assessed": false,
+      "calls": 1,
+      "elapsedMs": 17557,
+      "providerTraceCount": 0,
+      "profileRetained": false,
+      "replay": null,
+      "cpuTimeUs": 114175,
+      "requests": 1,
+      "cause": "No provider response captured before the model-stage wait expired; timing is consistent with the12s call limit. Provider-side cause is not established.",
+      "uncertainReservationNeurons": 368,
+      "reservationId": "d45a7e51-56d0-410a-9dae-3e78b4fd60d4"
+    }
+  },
+  "cpuMeasurement": "Accepted adaptive platform workersInvocationsAdaptive sum.cpuTimeUs in isolated singleton request windows; estimates may sample/lag, not wall-time measurements.",
+  "pendingAiNeurons": 1372,
+  "pendingAiExplanation": "Older1004 plus new uncertain368; neither released as zero.",
+  "production": {
+    "version": "6517eb55-3ee8-434f-818e-dd46f6d159e4",
+    "trafficPercent": 100,
+    "cpuMs": 1000,
+    "moduleSha256": "b22770089272937791da249d55d2b9e58fbd87ec3205229a218f406f8eceb53d",
+    "newRubricEnabled": false
+  },
+  "cleanup": {
+    "deletedValidationVersions": [
+      "32a03441-ce4e-4ebd-96cb-b67d01ddf0bd",
+      "d5c1ee24-3eaf-4a0b-bbd6-07b8971af99a"
+    ],
+    "deletedTail": "d8fdc300442b4433a714885445a849cd",
+    "inactiveNormalClone": "8b21b8bf-fb03-462d-9f04-a1c48902fef1",
+    "explanation": "Latest-version deletion returned10339; exact byte-hash-verified inactive copy of current production created without deployment, then validation version deleted. Temporary local keys/envelopes removed.",
+    "infraReservationSettled": true
+  },
+  "limits": "Existing60% account ceilings andCPU1000 unchanged; no frontend/shared-dependency/unrelated-service changes.",
+  "finalObservedUsage": {
+    "requests": 214,
+    "cpuMs": 13083,
+    "d1Reads": 15033,
+    "d1Writes": 2201,
+    "d1StorageBytes": 872448,
+    "aiNeurons": 280,
+    "r2StorageBytes": 1152784,
+    "r2ClassA": 59,
+    "r2ClassB": 50,
+    "qualification": "Sampled/delayed provider estimates; local known settlements and unknown holds remain enforced."
+  },
+  "privateProofSha256": {
+    "aeo-open-a1-control.json": "51040044ec0d1dff90cbee09008bea3fb72853129385594857bd0b2377209a31",
+    "aeo-open-a1-native-known.json": "56ad536c076bc0992ef694cbefcbd5d8c2a20a75fc576b97ef9b68af0a1da60a",
+    "aeo-open-a1-synthetic.json": "be14c0b1e238c95c3a3beee02e5495e3e7b1168580182badc5465abb1d330540",
+    "aeo-open-a2-control.json": "3fa79aa071a9dbaf280c8aad7027c07c8142460826423244657f982037b65dee",
+    "aeo-open-a2-native-known.json": "19dad6c9510c92289f6ca4a5457a9786c53143d6efe8831f627786b75342559e",
+    "aeo-open-a2-synthetic.json": "89fa230a1ddfc187b1f807157f39366d8e19e54e3121d3fc6750aeda77f7f1bb"
+  },
+  "remaining": [
+    "Handle model-stage latency and source-grounded output reliably, then validate again under the same budgets before activation.",
+    "PR42 corrects category source preparation but its native provider assessment did not complete; no successful semantic calibration or complete real-page report is claimed."
+  ]
+}
