@@ -49,6 +49,7 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
   };
   const controller = new AbortController();
   const deadline = new Promise((_, reject) => { timeout = setTimeout(() => { controller.abort(); reject(new Error('browser capture timeout')); }, sessionTimeoutMs); });
+  let captureError; let captureFailed = false;
   try {
     const work = (async () => {
       const create = launch || (await import('@cloudflare/playwright')).launch;
@@ -149,26 +150,39 @@ export async function captureBrowserProduct(input, { binding, egress, guard, id,
       return {support,url:initial.url, observedAt:new Date(now()).toISOString(), initialHtml:initial.body.slice(0, MAX_DOCUMENT), initialLimited:initial.limited, renderedHtml:dom.renderedHtml, initialExtracted:dom.initialExtracted, extracted:dom.extracted, selectedVariant:dom.selectedVariant, coverage:{expanded:dom.expanded, complete:dom.extracted.coverage?.html === true, initialLimited:initial.limited, renderedLimited:dom.renderedLimited, subresourceLimited, stable:stability?.stable === true}};
     })().finally(async () => { if (controller.signal.aborted) await close(); });
     return await Promise.race([work, deadline]);
+  } catch (error) {
+    captureError = error; captureFailed = true;
+    throw error;
   } finally {
     clearTimeout(timeout); controller.abort();
-    await close();
-    if (browser && !closeConfirmed) throw new Error('browser closure unconfirmed');
-    if (sessionBound && closeConfirmed) {
-      const settled = await guard.settle({id, now:now()});
-      if (!settled?.accepted) throw new Error('browser closure or usage unconfirmed');
+    let cleanupCode;
+    try {
+      await close();
+      if (browser && !closeConfirmed) cleanupCode = 'browser_close_unconfirmed';
+      else if (sessionBound && closeConfirmed) {
+        const settled = await guard.settle({id, now:now()});
+        if (!settled?.accepted) cleanupCode = 'browser_settlement_unconfirmed';
+      }
+    } catch { cleanupCode = 'browser_settlement_unconfirmed'; }
+    if (cleanupCode) {
+      if (captureFailed) {
+        if (captureError && typeof captureError === 'object' && Object.isExtensible(captureError)) {
+          try { Object.defineProperty(captureError,'cleanupCode',{value:cleanupCode,configurable:true}); } catch { /* Preserve the original error. */ }
+        }
+      } else throw Object.assign(new Error(cleanupCode === 'browser_close_unconfirmed' ? 'browser closure unconfirmed' : 'browser closure or usage unconfirmed'),{code:cleanupCode});
     }
   }
 }
 
-async function providerTimeout(promise) {
+async function providerTimeout(promise, timeoutMs = 5000) {
   let timer;
-  try { return await Promise.race([promise, new Promise((_,reject)=>{ timer=setTimeout(()=>reject(new Error('browser provider timeout')),5000); })]); }
+  try { return await Promise.race([promise, new Promise((_,reject)=>{ timer=setTimeout(()=>reject(new Error('browser provider timeout')),timeoutMs); })]); }
   finally { clearTimeout(timer); }
 }
 
 // The caller must only pass closeOwnedSession IDs loaded from its own lease.
-export function createBrowserProvider(binding, { sdk } = {}) {
-  if (!binding || typeof binding.closeSession !== 'function') throw new TypeError('Browser session binding required');
+export function createBrowserProvider(binding, { sdk, clock = Date.now, confirmationTimeoutMs = 3000, retryMs = 100 } = {}) {
+  if (!binding || typeof binding.closeSession !== 'function' || typeof clock !== 'function' || !Number.isSafeInteger(confirmationTimeoutMs) || confirmationTimeoutMs < 1 || confirmationTimeoutMs > 3000 || !Number.isSafeInteger(retryMs) || retryMs < 1 || retryMs > 3000) throw new TypeError('Browser session binding and bounded confirmation required');
   const api = async () => sdk || await import('@cloudflare/playwright');
   return {
     async launch(options) { return (await api()).launch(binding, options); },
@@ -177,14 +191,26 @@ export function createBrowserProvider(binding, { sdk } = {}) {
       if (!Array.isArray(sessions)) throw new Error('invalid browser sessions');
       return sessions;
     },
-    async verifyClosed({sessionId, now = Date.now()}) {
-      const history = await providerTimeout((await api()).history(binding));
-      if (!Array.isArray(history)) throw new Error('browser closure unknown');
-      const matches = history.filter(item => item?.sessionId === sessionId);
-      if (matches.length !== 1) throw new Error('browser closure unknown');
-      const session = matches[0];
-      if (!Number.isSafeInteger(session.startTime) || !Number.isSafeInteger(session.endTime) || session.startTime < 1_000_000_000_000 || session.endTime < session.startTime || session.endTime > now) throw new Error('browser closure unknown');
-      return {sessionId, closed:true, durationMs:session.endTime-session.startTime, observedAt:now};
+    async verifyClosed({sessionId}) {
+      const deadline = Date.now() + confirmationTimeoutMs;
+      for (;;) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) throw new Error('browser closure unknown');
+        const history = await providerTimeout(api().then(client=>{ if (Date.now() >= deadline) throw new Error('browser closure unknown'); return client.history(binding); }), remaining);
+        if (Date.now() >= deadline) throw new Error('browser closure unknown');
+        const observedAt = clock();
+        if (!Number.isSafeInteger(observedAt) || observedAt < 0 || !Array.isArray(history) || history.some(item=>!item || typeof item.sessionId !== 'string' || !item.sessionId)) throw new Error('browser closure unknown');
+        const matches = history.filter(item => item.sessionId === sessionId);
+        if (matches.length > 1) throw new Error('browser closure unknown');
+        if (matches.length === 1) {
+          const session = matches[0];
+          if (!Number.isSafeInteger(session.startTime) || !Number.isSafeInteger(session.endTime) || session.startTime < 1_000_000_000_000 || session.endTime < session.startTime || session.endTime > observedAt) throw new Error('browser closure unknown');
+          return {sessionId, closed:true, durationMs:session.endTime-session.startTime, observedAt};
+        }
+        const wait = Math.min(retryMs, deadline - Date.now());
+        if (wait <= 0) throw new Error('browser closure unknown');
+        await new Promise(resolve=>setTimeout(resolve,wait));
+      }
     },
     async closeOwnedSession(sessionId) {
       if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('session ID required');

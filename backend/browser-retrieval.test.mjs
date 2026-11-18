@@ -144,10 +144,60 @@ test('binding provider only confirms closure from a valid finished session', asy
   const start = 1_800_000_000_000;
   const binding = {closeSession:async()=>({status:'closing'})};
   const sdk = {sessions:async()=>[{sessionId:'active'}],history:async()=>[{sessionId:'ours',startTime:start,endTime:start+120}]};
-  const provider = createBrowserProvider(binding,{sdk});
+  const provider = createBrowserProvider(binding,{sdk,clock:()=>start+200,confirmationTimeoutMs:20,retryMs:2});
   assert.equal((await provider.listSessions()).length,1);
   assert.equal((await provider.verifyClosed({sessionId:'ours',now:start+200})).durationMs,120);
   assert.equal((await provider.closeOwnedSession('ours')).status,'closing');
   sdk.history = async()=>[];
   await assert.rejects(provider.verifyClosed({sessionId:'ours',now:start+200}));
+});
+
+test('closure timestamp is checked against a clock sampled after history returns',async()=>{
+  const {createBrowserProvider} = await import('./browser-retrieval.mjs');
+  const start=1_800_000_000_000; let time=start+100;
+  const sdk={history:async()=>{time=start+210;return [{sessionId:'s',startTime:start,endTime:start+200}];}};
+  const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>time});
+  assert.deepEqual(await provider.verifyClosed({sessionId:'s',now:start+100}),{sessionId:'s',closed:true,durationMs:200,observedAt:start+210});
+});
+
+test('missing history is retried within one deadline, then confirmed with fresh time',async()=>{
+  const {createBrowserProvider} = await import('./browser-retrieval.mjs');
+  const start=1_800_000_000_000;let calls=0;
+  const sdk={history:async()=>++calls===1 ? [] : [{sessionId:'s',startTime:start,endTime:start+10}]};
+  const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>start+20,confirmationTimeoutMs:100,retryMs:2});
+  assert.equal((await provider.verifyClosed({sessionId:'s'})).durationMs,10);
+  assert.equal(calls,2);
+});
+
+test('malformed, duplicate and future closure records are not retried',async()=>{
+  const {createBrowserProvider} = await import('./browser-retrieval.mjs');
+  const start=1_800_000_000_000;
+  for (const data of [null,[{sessionId:'s',startTime:start,endTime:'bad'}],[{sessionId:'s',startTime:start,endTime:start+30}],[{sessionId:'s',startTime:start,endTime:start+10},{sessionId:'s',startTime:start,endTime:start+10}]]) {
+    let calls=0;const sdk={history:async()=>{calls++;return data}};
+    const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,clock:()=>start+20,confirmationTimeoutMs:100,retryMs:2});
+    await assert.rejects(provider.verifyClosed({sessionId:'s'}));
+    assert.equal(calls,1);
+  }
+});
+
+test('history timeout and visibility retries share a bounded deadline',async()=>{
+  const {createBrowserProvider} = await import('./browser-retrieval.mjs');
+  let calls=0; const sdk={history:async()=>{calls++;return new Promise(()=>{})}};
+  const provider=createBrowserProvider({closeSession:async()=>({status:'closed'})},{sdk,confirmationTimeoutMs:20,retryMs:2});
+  await assert.rejects(provider.verifyClosed({sessionId:'s'}),/timeout/);
+  assert.equal(calls,1);
+});
+
+test('capture error survives failed closure with only a sanitized cleanup code',async()=>{
+  const f=fixture();const launch=f.launch;const original=new Error('capture fixture failed');
+  f.launch=async()=>({...await launch(),newContext:async()=>{throw original},close:async()=>{throw new Error('merchant-secret')}});
+  await assert.rejects(captureBrowserProduct('https://store.com/product',f),error=>error===original && error.cleanupCode==='browser_close_unconfirmed' && !JSON.stringify(error).includes('merchant-secret'));
+  assert.equal(f.calls.some(x=>x[0]==='settle'),false);
+});
+
+test('capture failure is preserved if settlement throws',async()=>{
+  const f=fixture();const launch=f.launch;const original=new Error('capture fixture failed');
+  f.launch=async()=>({...await launch(),newContext:async()=>{throw original}});
+  f.guard.settle=async()=>{throw new Error('sensitive settlement details')};
+  await assert.rejects(captureBrowserProduct('https://store.com/product',f),error=>error===original && error.cleanupCode==='browser_settlement_unconfirmed' && !JSON.stringify(error).includes('sensitive'));
 });
