@@ -1,0 +1,35 @@
+# Browser product retrieval
+
+Implementation branch: `codex/browser-product-retrieval`, based on merged backend PR #40 and integrated with PR #41 (`7ab5ddb`). The existing engine 2.2.0 retained-source assessor and release gating are preserved. This changes retrieval, not the rubric: Structure /40, Content /60, credit rules, conditional fixes and numerical-score eligibility are unchanged. The browser cache namespace is `browser-product-v1`; historical HTTP reports are not reused as browser captures.
+
+## Capture and assessment
+
+The public Worker requires `AUDIT_BROWSER` and private `AUDIT_SNAPSHOTS`. It has no HTTP product-page fallback. Submission reserves account usage and one project browser lease before launch. Capture runs in deferred work; a subsequent status poll atomically claims assessment of the retained input. Polling twice does not launch two browsers or run assessment twice. The pending audit lease is 120 seconds; an abandoned report is not silently restarted.
+
+A fresh Cloudflare Playwright context downloads the product once. Redirect headers are intercepted and validated before a separate navigation to the destination. A redirect that sets cookies fails closed because an aborted redirect cannot install those cookies in Chromium; this remains a compatibility limitation. The final document response supplies initial HTML and source observations. Rendered DOM supplies product observations after bounded stabilization and selective native details expansion. Selected configuration is preserved, and recommendation regions are excluded. Unsupported controls, extraction limits and unstable content retain incomplete coverage; a browser cannot guarantee every merchant will yield a complete report.
+
+Every HTTP(S) browser request passes through the strictly public Worker transport. No route continues directly to the browser network. Redirect responses are never fulfilled to Chromium, because later requests in a redirect chain can bypass Playwright routing. Service workers, WebSockets, frame navigation, downloads and non-GET requests are blocked. Only browser-scoped Cookie, Accept and Accept-Language headers are forwarded; authorization and auditor credentials are excluded. No credentials supplied by an auditor are sent to a merchant. Supporting-resource observations remain optional evidence, including robots.txt: they never block the product audit on robots permissions.
+
+Private R2 stores the bounded original HTML, rendered HTML, original and rendered extraction, final URL/time, selected configuration and coverage. Existing manifests bind sizes and hashes. Reads expire exactly 24 hours after capture; physical cleanup uses the existing one-day lifecycle and bounded hourly deletion. Reports expire 24 hours after submission. R2 is temporary evidence storage; D1 stores assessment/work state and reservations.
+
+S1 source-delivery and S2 structured-data checks consume original-response observations. Content checks consume scoped visible rendered product excerpts; full HTML remains context and cannot independently ground content credit. Consistency comparisons can additionally use initial Product data after technical association. Unhandled visible text makes coverage incomplete. source-specific evidence retains raw provenance. Identical original/rendered observations preserve all score fractions, totals and fixes. Browser rendering does not alter grade thresholds or turn unknown checks into zero-credit checks.
+
+## Cost controls
+
+Keep Worker CPU configured at 1,000 ms and every existing account operating allowance at 60%. Workers Paid includes 10 browser hours per month: the browser-time ceiling is 21,600,000 ms (6 hours). The included concurrency allowance is a monthly average of daily peaks of 10; our operating ceiling is 6. One unsettled project lease serializes project browser launches.
+
+Before launch, reserve 3,720,000 ms (62 minutes), including cleanup contingency. Application capture times out at 20 seconds, attempts bounded forced close and verifies the provider's session history before releasing the hold. The hourly watchdog closes only session IDs persisted in this project's leases. Unknown acquisition, closure or usage remains held and blocks another project launch. A lease proven never to have started may be canceled; a started lease without an ID cannot be assumed unused.
+
+Cloudflare's keep-alive timeout is an idle timeout, not a hard session lifetime. The user accepted application timeout, forced close, holds and watchdog with the existing analytics limitations. These controls do not establish an absolute provider billing cap or guaranteed termination during a provider outage.
+
+Browser analytics use the account-wide browser-time dataset over a conservative rolling 31 days, not only sessions created by this Worker. Concurrency admission uses a deliberately conservative daily-presence bound: twice the represented session count, plus total duration rounded up to days, plus 28 units per active or newly proposed session, against 168 units (6 × 28). This can reject work far earlier than the browser-hours allowance. Sampled data, reporting delay, event-time attribution and simultaneous outside-account work remain limitations. Local completed-session anchors avoid adding the same measured work to reservations again; unknown holds remain charged.
+
+The existing ledger settles conservative Worker CPU reservations rather than measuring per-invocation CPU. A minute cron would charge 89.28 million ms over 31 days, exceeding the 18 million ms operating allocation. An hourly watchdog charges 1.488 million ms; hourly snapshot cleanup has a separate reservation. The 62-minute browser hold covers the next hourly cleanup attempt, not a guaranteed provider lifetime.
+
+## Build, review and rollout
+
+`npm run test:browser-build` installs backend-only pinned dependencies, bundles the real Worker with `@cloudflare/playwright` 1.3.6 and runs offline browser regressions. It makes no native browser or model calls. Root frontend dependencies and shared contracts are unchanged. Existing API statuses remain pending, complete, incomplete and unable_to_assess; browser retrieval failure has no numerical score.
+
+Before activation: review and merge the PR; apply migrations 0006 and 0007 to the dedicated project D1 only; bind the existing private project R2 bucket and project browser; preserve the currently deployed secrets, frontend assets, observability and CPU limit; verify account usage and reserve a measured native validation budget. Validate binding session/history shapes, session closure visibility, browser egress behavior, retained replay, real product extraction and per-invocation CPU before enabling production browser traffic. No production rollout or native runtime validation is claimed by offline tests.
+
+Primary references: [pricing](https://developers.cloudflare.com/browser-run/pricing/), [limits](https://developers.cloudflare.com/browser-run/limits/), [browser binding](https://developers.cloudflare.com/browser-run/reference/browser-binding-api/), [Playwright routing](https://playwright.dev/docs/network).

@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "id": "browser-application-controls",
+  "task": "Apply the user-approved browser application timeout, forced closure, retained unknown holds and cleanup watchdog while preserving60% ceilings and accepted analytics limitations.",
+  "scope": [
+    "backend/**",
+    "docs/browser-product-retrieval.md",
+    "docs/included-allowance-policy.md",
+    "evals/changes/browser-product-retrieval/**",
+    "test/feasibility.test.mjs",
+    "package.json",
+    "scripts/browser-build-check.mjs",
+    "evals/changes/browser-application-controls/**"
+  ],
+  "nonGoals": [
+    "No scoring criteria/weights/fullpartialzeroNA rules, category/profile rules, fixranking or arithmetic changes. Metadata/provenance adaptations only; do not import unmerged grading/prompt fixes from previous rollout branch.",
+    "No frontend/sharedtypes/rootdependencies orrootlockfile changes; rootpackage scripts only for mandatory backend bundle check. Playwright dependency belongs exclusively tobackend package andlock.",
+    "No separate product-page HTTP fetch or HTTP fallback, paid externalAPIs, raising60%ceilings orCPU1000, unrelated Cloudflare services, or merge/productiondeploy withoutauthorization. No livebrowser/modelcalls inCI."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "One browser navigation perproduct target, bounded DOMstabilization/selective details expansion without variantchange, initialdocument response captured fromsamenavigation and finalrendered HTML/data extracted inbrowser. Use private freshcontexts, scopedproductrecords andselectedstate, exclude recommendations; inspect needed supportingresources in samecontext withsharedbounds. Missing/failedbrowser hasnoHTTPfallback. URLredirectsubrequestsecurity must coverremote browser networking, notonly Workers fetch.",
+      "verification": "automated",
+      "evidence": "FrozenJSshell/renderedrich, variant/recommendation, accordion, redirect/privateIP/subresource, timeout/block,largeinput fixtures andactual pinnedSDK bundle check."
+    },
+    {
+      "id": "O2",
+      "description": "Accountwide estimated browserusage admission at60%included10hmonthly=21600000ms and60%includedconcurrency10=6, projectoneatime. Userexplicitlyaccepts applicationtimeout+forcedclose+unknownholds+cleanupwatchdog with existinganalyticslimitations insteadofunavailableproviderhardlifetimeproof. Reserve conservativebrowserdurationincludingcleanupcontingency beforelaunch; persist sessionID, closebeforeAI, verifyproviderclosure/usage, retainunknownholds/leaseandblocknewlaunch. Watchdog onlyoperatesontask-ownedrecordedsessionIDs; nootheraccountsessionsmodified. No claimofabsolute providerbillingcap; CPU1000 andother60%guardsunchanged.",
+      "verification": "automated",
+      "evidence": "Verifiedprimaryprices/API schema, frozen accountmetricfixtures, concurrent/duplicate/startfail/latecompletion/unknownusage/reconciliation tests; nativebrowsercheck only withfreshadmission andbudget."
+    },
+    {
+      "id": "O3",
+      "description": "Persist initialHTML/renderedHTML/extractedstate/URL/time/selectedvariant/coverage inprivateR2 atsame24h expiry. Keep source-specific structure checks initialresponse-grounded whilecontent usesrendered evidence. Expose accurate raw/rendered provenance without changing APIenvelope orscoringpolicy; sameevidence fixtures preservefractions. Versionretrieval/cacheidentity, keep incomplete/no-score andretrievalfailure semantics.",
+      "verification": "automated",
+      "evidence": "R2integrity/expiry/replay tests, source-versus-rendered score/provenance tests andunchanged scorer/rubric/history filehashes."
+    },
+    {
+      "id": "O4",
+      "description": "Compact or deterministically partition AIrequest evidence tofitexisting60KiB limit withoutdropping applicablechecks orinventingcompleteabsence; preserve originalsource IDs/quotes, explicitcoverage of omissions, anddeterministicvalidated replay. Browser-side extraction andbounded Worker processing must be CPUvalidated beforeactivation; noclaimthatbrowseralonesolvesCPU.",
+      "verification": "automated",
+      "evidence": "Frozenlargepayloadregressions around60KiB, mixedsources/omission/grounding/replay tests; livevalidation gates or explicitlimitations ifnativeaccountaccess unavailable."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separatelycommit immutableplan beforecode. Agents ownbrowsercapture/dependency, accountbudgetcollector andindependentreview; rootownsservice/storage/provenance/buildintegration. Isolatedworktreecodex/browser-product-retrieval frommergeda39cdf4 preservespreviousrolloutbranch. Freeze inputs, genuinefreshagentexit, real sourceboundevaluation andhostedCI; no secrets/rawmerchantdata committed.",
+      "verification": "human",
+      "evidence": "Git history, agentreview, handoff, exitresult, actualevaluationtrace andPRCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep capture andsource processingbounded, performDOM extractionremotely, closebrowserpromptly andavoidbusywaits/unlimitedclicks/retries. Preserveinitial/renderedmeaning andexistingAPI semantics; reportnativeCPU/browserbilling limitations honestly.",
+      "verification": "human",
+      "evidence": "Diff, boundedfixtures, byte/time/sessionmetrics and review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Retrieval andretainedcapture/replay inputs change, requiringfresh-agent continuation froma frozen exported browsercapture withoutpriorchat orlivebrowser/modelcalls."
+  },
+  "planningContext": "Originalplan0679d89 remainsimmutable. User explicitlyselected application timeout, forcedclose, usageholds andcleanupwatchdog retaining acceptedanalyticslimitations afterdocumentation showedidle ratherthanhard session lifetime. Thischanges O2 implementationrequirement; it doesnotauthorize raisingcostceilings or touchingotherCloudflareservices. Originalguard drafts rejected launch withoutproviderhardTTL; the accepted application-control implementation starts onlyafter thissupplementalplanningcommit."
+}

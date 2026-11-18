@@ -45,8 +45,11 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 // Explicit v1 replay preserves historical tests; service requests always use v2.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, aiAssessment = null, requireAiAssessment = false } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
+  // Browser retrieval supplies two observations from one navigation. Source
+  // checks retain their original input; content checks use the rendered input.
+  const sourceExtracted = legacy ? extracted : (initialExtracted ?? extracted);
   const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
   const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, extracted);
   let categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
@@ -60,8 +63,8 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   let currency = null;
   const sourceUrl = snapshot?.url;
   const observedAt = snapshot?.observedAt;
-  const addEvidence = (url, location, excerpt) => {
-    const item = { id: `e${evidence.length + 1}`, url, method: 'raw', kind: 'derived_observation',
+  const addEvidence = (url, location, excerpt, method = 'raw') => {
+    const item = { id: `e${evidence.length + 1}`, url, method, kind: 'derived_observation',
       observedAt, location, excerpt };
     evidence.push(item);
     return item.id;
@@ -227,7 +230,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   }
   if (extracted?.productHtml || !legacy) {
     const hasHtml = Boolean(extracted?.productHtml);
-    const schema = hasHtml ? inspectProductSchema(snapshot, extracted) : {findings:{},product:null};
+    const schema = hasHtml ? inspectProductSchema(snapshot, sourceExtracted) : {findings:{},product:null};
     const content = !hasHtml ? {findings:{},facts:{},category,productName:null} : validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, categoryProfile: profile, product: schema.product });
     if (!validatedFacts && semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
     category = content.category;
@@ -236,7 +239,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     currency = content.currency || currency;
     const semanticFindings = !validatedFacts && semantic?.version === '1.0.0' && semantic?.status === 'assessed' ? Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured')) : {};
     const structure = assessStructure(snapshot, extracted, { schema, content });
-    const revisedSchema = legacy ? null : inspectRevisedProductSchema(snapshot, extracted);
+    const revisedSchema = legacy ? null : inspectRevisedProductSchema(snapshot, sourceExtracted);
     if (!legacy && !productName && typeof revisedSchema.product?.name === 'string') productName = revisedSchema.product.name.trim().slice(0,160);
     if (!legacy && !hasHtml && revisedSchema.product) {
       for (const [id, finding] of Object.entries(scoreProductLabels(revisedSchema.product, extracted?.labelEvidence))) {
@@ -246,21 +249,26 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     }
     const observations = { ...(legacy ? schema.findings : revisedSchema.findings),
       ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
-      ...(!legacy ? assessSourceAccessibility(snapshot, extracted) : {}),
+      ...(!legacy ? assessSourceAccessibility(snapshot, sourceExtracted) : {}),
       ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
     // Replace legacy observations so unresolved new extraction cannot inherit old credit.
     for (const id of Object.keys(checks)) if (hasHtml || id.startsWith('S2.')) checks[id] = { status: 'not_measured' };
     for (const [id, finding] of Object.entries(observations)) {
       if (!Object.hasOwn(checks, id)) continue;
       const evidenceIds = [];
-      if (finding.excerpt) evidenceIds.push(addEvidence(finding.url || sourceUrl, finding.location || 'product region', finding.excerpt));
+      const methodFor = ref => snapshot?.retrievalMethod === 'browser' &&
+        !id.startsWith('S1.') && !id.startsWith('S2.') &&
+        (!ref.url || ref.url === sourceUrl) &&
+        !/json.?ld|application\/ld\+json|initial:/i.test(ref.location || '') ? 'rendered' : 'raw';
+      if (finding.excerpt) evidenceIds.push(addEvidence(finding.url || sourceUrl, finding.location || 'product region', finding.excerpt,
+        methodFor(finding)));
       const addRefs = (refs, prefix = '') => {
-        for (const ref of refs || []) if (ref.excerpt) evidenceIds.push(addEvidence(ref.url || sourceUrl, prefix + (ref.location || 'product region'), ref.excerpt));
+        for (const ref of refs || []) if (ref.excerpt) evidenceIds.push(addEvidence(ref.url || sourceUrl, prefix + (ref.location || 'product region'), ref.excerpt, methodFor(ref)));
       };
       addRefs(finding.evidence);
       for (const key of ['attributes','questions','comparisons','claims','policyTerms']) for (const item of finding[key] || []) {
         const label = `${item.id || item.questionId || item.field || key}: `;
-        if (item.excerpt) evidenceIds.push(addEvidence(item.url || sourceUrl, label + (item.location || 'product region'), `${item.status || 'measured'}${item.fraction == null ? '' : ' fraction ' + item.fraction}. ${item.excerpt}`));
+        if (item.excerpt) evidenceIds.push(addEvidence(item.url || sourceUrl, label + (item.location || 'product region'), `${item.status || 'measured'}${item.fraction == null ? '' : ' fraction ' + item.fraction}. ${item.excerpt}`, methodFor(item)));
         addRefs(item.evidence, label); addRefs(item.observations, label);
       }
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
@@ -348,6 +356,6 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
         ...((aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
-        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? [profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.' : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
+        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' ? 'Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit.' : profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.' : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
   };
 }

@@ -210,3 +210,172 @@ test('conditional profile uses separate category-only model review before freezi
  const review=calls.find(x=>x.messages[0].content.includes('Independently review each proposed')); const payload=JSON.parse(review.messages[1].content); assert.deepEqual(Object.keys(payload).sort(),['category','slots']); assert.equal(result.profile.conditionReview[0].valid,true);
  reviewedValid=false; result=await assessRetainedRubric(args); assert.equal(result.status,'unavailable');
 });
+
+test('browser S1 and S2 only accept initial evidence while supporting access accepts supporting metadata',async()=>{
+ const f=await fixture();
+ f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Client-only information</p><script type="application/ld+json">Client-only schema</script></main>',initialExtracted:{productHtml:{complete:true,blocks:[{text:'Six cups',location:'initial:1'}]},jsonLd:['Initial schema']},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.snapshot.policies={shipping:{state:'read',url:'https://example.com/shipping',extraction:{complete:true,blocks:[{text:'Ships in two days',location:'policy:1'}]}}};
+ f.extracted.productHtml.blocks.push({text:'Client-only information',location:'rendered:1'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ const rendered=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ const supporting=f.bundle.sources.find(s=>s.origin==='shared'&&s.scope==='shipping');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections:[]}).findings;
+ for (const id of ['S1.delivery','S1.scope','S2.entity','S2.offer']) {
+  const item=f.judgments.judgments.find(x=>x.id===id);
+  Object.assign(item,{status:'measured',fraction:1,reason:'Found',evidence:[{sourceId:rendered.id,quote:'Client-only'}]});
+  assert.equal(check()[id].status,'not_measured');
+  item.evidence=[{sourceId:initial.id,quote:'Solar kettle'}];
+  assert.equal(check()[id].status,'measured');
+ }
+ const access=f.judgments.judgments.find(x=>x.id==='S1.supporting-access');
+ Object.assign(access,{status:'measured',fraction:1,reason:'Read supporting page',evidence:[{sourceId:supporting.id,quote:'Ships in two days'}]});
+ assert.equal(check()['S1.supporting-access'].status,'measured');
+ Object.assign(access,{evidence:[{sourceId:rendered.id,quote:'Client-only'}]});
+ assert.equal(check()['S1.supporting-access'].status,'not_measured');
+ const content=f.judgments.judgments.find(x=>x.id==='C1.identity');
+ Object.assign(content,{status:'measured',fraction:1,reason:'Visible product',evidence:[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Client-only information').id,quote:'Client-only information'}]});
+ assert.equal(check()['C1.identity'].status,'measured');
+});
+
+test('browser source absence inspects only initial sections and requires initial completeness',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Client schema</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ const id='S2.entity';
+ Object.assign(f.judgments.judgments.find(x=>x.id===id),{status:'measured',fraction:0,basis:'absence',reason:'No source schema',evidence:[{sourceId:initial.id,quote:'Solar kettle'}]});
+ const inspections=f.bundle.sources.filter(s=>s.origin==='initial').map(source=>({sourceId:source.id,checks:[{id,status:'absent',evidence:[]}]}));
+ const check=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections}).findings[id];
+ assert.equal(check().fraction,0);
+ inspections[0].checks[0].status='unknown'; assert.equal(check().status,'not_measured');
+ inspections[0].checks[0].status='absent'; f.bundle.coverage.initial=false; assert.equal(check().status,'not_measured');
+});
+
+test('browser source provenance survives retained assessment replay',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Rendered details</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ Object.assign(f.judgments.judgments.find(x=>x.id==='S1.delivery'),{status:'measured',fraction:1,reason:'Initial product',evidence:[{sourceId:initial.id,quote:'Solar kettle'}]});
+ const inspections=f.bundle.sources.map(source=>({sourceId:source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))}));
+ const artifact={version:'1',sourceDigest:f.bundle.sourceDigest,profileDigest:await rubricProfileDigest(f.profile),profile:f.profile,inspections,judgments:f.judgments};
+ const restored=await restoreRubricAssessment(f.snapshot,f.extracted,artifact);
+ assert.equal(restored.findings['S1.delivery'].status,'measured');
+ assert.equal(restored.findings['S1.delivery'].evidence[0].method,initial.method);
+});
+
+test('browser final model request includes the trusted source origin catalog and replay rejects rendered S1',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Hydrated product</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ const rendered=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ Object.assign(f.judgments.judgments.find(x=>x.id==='S1.delivery'),{status:'measured',fraction:1,reason:'Hydrated',evidence:[{sourceId:rendered.id,quote:'Hydrated product'}]});
+ const requests=[];
+ const AI={run(_model,input){
+  requests.push(input); const system=input.messages[0].content,payload=JSON.parse(input.messages[1].content); let response;
+  if(system.includes('Extract relevant exact quotations')) response={evidence:[]};
+  else if(system.includes('Identify only the primary')) response={status:'classified',category:f.profile.category,evidence:f.profile.evidence};
+  else if(system.includes('Independently of any individual')) response={slots:f.profile.slots};
+  else if(system.includes('Inspect this entire source')) response={sourceId:payload.source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))};
+  else response=f.judgments;
+  return {response,usage:{prompt_tokens:100,completion_tokens:100},choices:[{finish_reason:'stop'}]};
+ }};
+ const result=await assessRetainedRubric({AI,allowance:{reserve(){return {accepted:true,duplicate:false}},settle(){}},calibrationApproved:true,...f});
+ assert.equal(result.status,'assessed');
+ const final=requests.find(input=>input.messages[0].content.includes('Judge every listed check'));
+ const payload=JSON.parse(final.messages[1].content);
+ assert.deepEqual(payload.sourceCatalog,f.bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.method?{method:s.method}:{})})));
+ assert.equal(result.assessment.findings['S1.delivery'].status,'not_measured');
+ const restored=await restoreRubricAssessment(f.snapshot,f.extracted,result.replayArtifact);
+ assert.equal(restored.findings['S1.delivery'].status,'not_measured');
+});
+
+test('browser content checks reject source-only content and assess absence from rendered product',async()=>{
+ const f=await fixture(); f.snapshot.rawHtml='<h1>Solar kettle</h1><p>Initial-only fabric detail</p>'; f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Rendered fabric detail</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.extracted.productHtml.blocks.push({text:'Rendered fabric detail',location:'rendered:1'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ const rendered=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ const checks=['C1.identity','C3.price','slot-0','slot-2'];
+ for(const id of checks){
+  const item=f.judgments.judgments.find(x=>x.id===id);
+  Object.assign(item,{status:'measured',fraction:1,reason:'Claimed',evidence:[{sourceId:initial.id,quote:'Initial-only fabric detail'}]});
+ }
+ const run=(inspections=[])=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections});
+ const result=run();
+ assert.equal(result.findings['C1.identity'].status,'not_measured');
+ assert.equal(result.findings['C3.price'].status,'not_measured');
+ assert.equal(result.findings['C2.essential'].status,'not_measured');
+ assert.equal(result.findings['C4.intended-use'].status,'not_measured');
+ const item=f.judgments.judgments.find(x=>x.id==='C1.identity');
+ Object.assign(item,{fraction:0,basis:'absence',evidence:[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}]});
+ const sections=f.bundle.sources.filter(s=>s.origin==='rendered'&&s.kind==='text'&&s.scope==='product').map(source=>({sourceId:source.id,checks:[{id:'C1.identity',status:'absent',evidence:[]}]}));
+ assert.equal(run(sections).findings['C1.identity'].fraction,0);
+ item.fraction=1; delete item.basis; item.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Rendered fabric detail').id,quote:'Rendered fabric detail'}];
+ const measured=run().findings['C1.identity']; assert.equal(measured.status,'measured'); assert.equal(measured.evidence[0].method,'rendered');
+});
+
+test('browser claim inventory excludes source-only claims and unassociated comparisons',async()=>{
+ const f=await fixture(); f.snapshot.rawHtml='<h1>Solar kettle</h1><p>Initial-only claim.</p><p>Weight: 1 kg</p>'; f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Weight: 1000 g</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ const rendered=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:s.id===initial.id?[{quote:'Initial-only claim.'}]:[],comparisons:s.id===initial.id?[{field:'weight',context:'same product',quote:'Weight: 1 kg'}]:s.id===rendered.id?[{field:'weight',context:'same product',quote:'Weight: 1000 g'}]:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ f.judgments.c5={claims:[],comparisons:[{candidateIds:[`${initial.id}-comparison-0`,`${rendered.id}-comparison-0`],status:'measured',fraction:1,reason:'Equivalent units',context:'same product'}]};
+ const findings=validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings;
+ assert.equal(findings['C5.claim-support'].status,'not_applicable');
+ assert.equal(findings['C5.claim-support'].evidence[0].method,'rendered');
+ assert.equal(findings['C5.consistency'].status,'not_measured');
+ const artifact={version:'1',sourceDigest:f.bundle.sourceDigest,profileDigest:await rubricProfileDigest(f.profile),profile:f.profile,inspections,supportInspections:[],judgments:f.judgments};
+ const restored=await restoreRubricAssessment(f.snapshot,f.extracted,artifact);
+ assert.equal(restored.findings['C5.claim-support'].evidence[0].method,'rendered');
+});
+
+test('hidden or recommended rendered HTML cannot ground browser product content or category',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p hidden>Invisible 100% silk.</p><product-recommendations><p>Other product is leather.</p></product-recommendations><p>Visible cotton.</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.extracted.productHtml.blocks.push({text:'Visible cotton.',location:'rendered:1'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const raw=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ const visible=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Visible cotton.');
+ const identity=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle');
+ f.profile.evidence=[{sourceId:identity.id,quote:'Solar kettle'}];
+ const item=f.judgments.judgments.find(x=>x.id==='C1.explanation');
+ const evaluate=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,f).findings['C1.explanation'];
+ for (const quote of ['Invisible 100% silk.','Other product is leather.']) {
+  Object.assign(item,{status:'measured',fraction:1,reason:'Claimed content',evidence:[{sourceId:raw.id,quote}]});
+  assert.equal(evaluate().status,'not_measured');
+  assert.throws(()=>validateRubricProfile(f.bundle,{...f.profile,evidence:[{sourceId:raw.id,quote}]}));
+ }
+ item.evidence=[{sourceId:visible.id,quote:'Visible cotton.'}];
+ assert.equal(evaluate().fraction,1);
+});
+
+test('associated initial product and visible rendered observations can support consistency',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Weight: 1000 g</p><p hidden>Weight: 7 kg</p></main>',initialExtracted:{productHtml:{complete:true,identity:{mainH1:'Solar kettle'},unsupportedProductMarkup:false},jsonLd:['{"@context":"https://schema.org","@type":"Product","name":"Solar kettle","weight":"1 kg"}'],coverage:{jsonLdTruncated:false}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.extracted.productHtml.blocks.push({text:'Weight: 1000 g',location:'rendered:weight'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const initial=f.bundle.sources.find(s=>s.kind==='structured_product');
+ const visible=f.bundle.sources.find(s=>s.kind==='text'&&s.origin==='rendered'&&s.text==='Weight: 1000 g');
+ const rendered=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='html');
+ assert.ok(initial); assert.equal(initial.method,'raw');
+ f.profile.evidence=[{sourceId:f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle').id,quote:'Solar kettle'}];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:s.id===initial.id?[{field:'weight',context:'same product',quote:'1 kg'}]:s.id===visible.id?[{field:'weight',context:'same product',quote:'Weight: 1000 g'}]:s.id===rendered.id?[{field:'weight',context:'same product',quote:'Weight: 7 kg'}]:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ f.judgments.c5={claims:[],comparisons:[{candidateIds:[`${initial.id}-comparison-0`,`${visible.id}-comparison-0`],status:'measured',fraction:1,reason:'Equivalent units',context:'same product'}]};
+ const result=validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C5.consistency'];
+ assert.equal(result.fraction,1); assert.deepEqual(result.evidence.map(x=>x.method),['raw','rendered']);
+ f.judgments.c5.comparisons[0].candidateIds[1]=`${rendered.id}-comparison-0`;
+ assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[]}).findings['C5.consistency'].status,'not_measured');
+});

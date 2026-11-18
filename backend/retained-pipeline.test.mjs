@@ -72,9 +72,9 @@ test('scheduled cleanup reserves its bounded invocation before any deletion and 
   for(const accepted of [false,true]) {
     const events=[];const allowance={reserve:async ({costs})=>{events.push('reserve');assert.equal(costs.cpuMs,2000);assert.equal(costs.d1Writes,200);return{accepted,duplicate:false};},settle:async()=>events.push('settle')};
     const snapshots={cleanup:async ({limit})=>{events.push('cleanup');assert.equal(limit,10);return{deleted:2};}};
-    const db={prepare(sql){assert.match(sql,/LIMIT 100/);return{bind(at){assert.equal(at,now);return{run:async()=>events.push('diagnostics')};}};}};
+    const db={prepare(sql){assert.match(sql,/LIMIT 100/);return{bind(at){assert.equal(at,now);return{run:async()=>events.push(sql.includes('browser_audit_work') ? 'browser_prune' : 'diagnostics')};}};}};
     const result=await cleanupRetainedSnapshots({db,snapshots,allowance,now});
-    assert.deepEqual(events,accepted?['reserve','cleanup','diagnostics','settle']:['reserve']);assert.equal(result.status,accepted?'completed':'skipped');
+    assert.deepEqual(events,accepted?['reserve','cleanup','diagnostics','browser_prune','settle']:['reserve']);assert.equal(result.status,accepted?'completed':'skipped');
   }
   let settled=false;
   await assert.rejects(cleanupRetainedSnapshots({db:{},snapshots:{cleanup:async()=>{throw Error('delete unknown');}},allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>{settled=true;}},now}));

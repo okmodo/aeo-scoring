@@ -21,7 +21,7 @@ export default defineConfig({
     limits: { cpuMs: MAX_INVOCATION_CPU_MS },
     entrypoint,
     compatibilityDate: '2026-11-05',
-    compatibilityFlags: ['global_fetch_strictly_public', 'cache_option_enabled'],
+    compatibilityFlags: ['global_fetch_strictly_public', 'cache_option_enabled', 'nodejs_compat'],
     workersDev: true,
     previewUrls: false,
     env: {
@@ -29,6 +29,7 @@ export default defineConfig({
       AUDIT_RATE_SECRET: bindings.secret(),
       AUDIT_USAGE_READ_TOKEN: bindings.secret(),
       AUDIT_AI: bindings.ai(),
+      AUDIT_BROWSER: process.env.AEO_BROWSER_ENABLED === 'enabled' ? bindings.browser() : undefined,
       AUDIT_CONTENT_RELEASE: contentRelease ? bindings.text(contentRelease) : undefined,
       AUDIT_PREVIEW_PASSWORD: bindings.secret(),
       AUDIT_PUBLIC_ACCESS: bindings.text('disabled'),

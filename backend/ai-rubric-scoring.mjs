@@ -45,7 +45,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
         checks[id] = { status: 'not_measured', reason: 'The conditional exclusion was not established.' };
         continue;
       }
-      const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt));
+      const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt, ref.method || 'raw'));
       checks[id] = { ...finding, evidence: ids[0], evidenceIds: [...new Set(ids)] };
       continue;
     }
@@ -54,7 +54,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
       continue;
     }
     if (finding.status === 'not_applicable' && id === 'C5.claim-support' && finding.rule === 'no_material_claims') {
-      const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt));
+      const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt, ref.method || 'raw'));
       checks[id] = { ...finding, evidence: ids[0], evidenceIds: [...new Set(ids)] };
       continue;
     }
@@ -75,7 +75,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
     const hardCap = requireTechnicalMeasurement.has(id);
     const fraction = hardCap && prior.status === 'measured' ? Math.min(prior.fraction, finding.fraction) :
       technicalCaps.has(id) && prior.status === 'measured' && prior.fraction === 0 ? 0 : finding.fraction;
-    const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt));
+    const ids = finding.evidence.map(ref => addEvidence(ref.url, ref.location, ref.excerpt, ref.method || 'raw'));
     checks[id] = { ...finding, fraction, evidence: ids[0], evidenceIds: [...new Set(ids)] };
   }
 }

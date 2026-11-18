@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "browser-upstream-integration",
+  "task": "Integrate browser retrieval with newly merged PR41 retained-source AI assessment without reverting upstream scoring behavior or altering rubric policy.",
+  "scope": [
+    "backend/**",
+    "docs/browser-product-retrieval.md",
+    "docs/included-allowance-policy.md",
+    "evals/changes/browser-product-retrieval/**",
+    "test/feasibility.test.mjs",
+    "package.json",
+    "scripts/browser-build-check.mjs",
+    "evals/changes/browser-application-controls/**",
+    "evals/changes/browser-upstream-integration/**"
+  ],
+  "nonGoals": [
+    "Do not revert PR41 or change its rubric, decision rules, model policy, or release gating. Existing browser plans continue to govern capture/security/cost boundaries.",
+    "No frontend/sharedtypes/rootdependencies orrootlockfile changes; rootpackage scripts only for mandatory backend bundle check. Playwright dependency belongs exclusively tobackend package andlock.",
+    "No separate product-page HTTP fetch or HTTP fallback, paid externalAPIs, raising60%ceilings orCPU1000, unrelated Cloudflare services, or merge/productiondeploy withoutauthorization. No livebrowser/modelcalls inCI."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Merge current backend base7ab5ddb, preserve upstream engine2.2/openrubric release behavior, and route browser initial/rendered retained observations into the selected assessor without duplicate product fetch. Keep existing no-score failure semantics andsourcebound validation.",
+      "verification": "automated",
+      "evidence": "Upstream regression suite, browser retained replay, initial/rendered source routing andpipeline integration tests; actualWorkerbundle."
+    },
+    {
+      "id": "O2",
+      "description": "Preserve60%limits, CPU1000, browser20sdeadline, hourlywatchdog and62minute contingency hold. No frontend or unrelatedservices modified.",
+      "verification": "human",
+      "evidence": "Diff and independent review against7ab5ddb; no live deployment."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separatelycommit immutableplan beforecode. Agents ownbrowsercapture/dependency, accountbudgetcollector andindependentreview; rootownsservice/storage/provenance/buildintegration. Isolatedworktreecodex/browser-product-retrieval frommergeda39cdf4 preservespreviousrolloutbranch. Freeze inputs, genuinefreshagentexit, real sourceboundevaluation andhostedCI; no secrets/rawmerchantdata committed.",
+      "verification": "human",
+      "evidence": "Git history, agentreview, handoff, exitresult, actualevaluationtrace andPRCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep capture andsource processingbounded, performDOM extractionremotely, closebrowserpromptly andavoidbusywaits/unlimitedclicks/retries. Preserveinitial/renderedmeaning andexistingAPI semantics; reportnativeCPU/browserbilling limitations honestly.",
+      "verification": "human",
+      "evidence": "Diff, boundedfixtures, byte/time/sessionmetrics and review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Retrieval andretainedcapture/replay inputs change, requiringfresh-agent continuation froma frozen exported browsercapture withoutpriorchat orlivebrowser/modelcalls."
+  },
+  "planningContext": "While evaluating browser work, shared origin/codex/complete-report-assessment advanced froma39cdf4 to7ab5ddb (PR41). Originalbrowser plans remain immutable. This plan precedes merging/resolving upstream and adapting browser sources to the new assessor. Evaluationbase will be immutable7ab5ddb ratherthan mutableoriginref."
+}
