@@ -1,3 +1,4 @@
+// Engine 2.2 isolates cached reports for the new rubric-assessment path.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -38,7 +39,7 @@ test('validated open category reaches scoring without entering the fixed categor
   const classification=validateCategoryResponse(p,{status:'classified',label:'Hiking Shorts',evidence:[{sourceId:'s1',quote:'Acme Hiking Shorts'}]});
   const profile=validateProfileResponse(classification,{essential:['Waist size','Inseam','Fabric composition'],supporting:['Care instructions','Pocket configuration','Closure type']});
   const report=scoreAudit(input,input.extracted,{categoryProfile:profile});
-  assert.equal(report.category,'open:hiking-shorts');assert.equal(report.coverage.categoryAssessment.label,'Hiking Shorts');assert.equal(report.engineVersion,'2.1.0');assert.equal(report.score,null);
+  assert.equal(report.category,'open:hiking-shorts');assert.equal(report.coverage.categoryAssessment.label,'Hiking Shorts');assert.equal(report.engineVersion,'2.2.0');assert.equal(report.score,null);
   const forged=scoreAudit(input,input.extracted,{categoryProfile:structuredClone(profile)});assert.equal(forged.coverage.categoryAssessment,undefined);
 });
 

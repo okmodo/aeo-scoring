@@ -9,6 +9,7 @@ import { createPipelineState, PIPELINE_VERSION } from './pipeline-state.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
 import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow, BROWSER_RETRIEVAL_VERSION } from './browser-workflow.mjs';
+import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -111,8 +112,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, browser = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + (browser ? ':retrieval-'+BROWSER_RETRIEVAL_VERSION : '') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION : '') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -133,7 +134,7 @@ export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
   snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
-  browserFlow, requireBrowser = false,
+  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -153,7 +154,7 @@ export function createAuditService({
     let extracted;
     let report;
     let aiAttempted = false, profileRetained = false;
-    const retained = Boolean(snapshotStore) || requireSnapshots || Boolean(browserFlow);
+    const retained = Boolean(snapshotStore) || requireSnapshots || Boolean(browserFlow) || openRubricEnabled;
     const pipeline = retained ? createPipelineState({ db: pipelineDb, auditId: audit.id, now }) : null;
     let stage = 'retrieval';
     try {
@@ -166,10 +167,10 @@ export function createAuditService({
         await pipeline?.load();
         stage = 'snapshot';
         const captured = await browserFlow.read(audit.id);
-        snapshot = captured.snapshot;
+        snapshot = openRubricEnabled ? { ...captured.snapshot, rawHtml: captured.rawHtml } : captured.snapshot;
         extracted = captured.extracted;
         if (!snapshot?.browser?.initialExtracted || !extracted || typeof extracted !== 'object') throw new Error('Invalid browser snapshot');
-        report = scorePage(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted});
+        report = scorePage(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted, ...(openRubricEnabled ? {requireAiAssessment:true} : {})});
       } else {
       await pipeline?.record('retrieval', 'running', 'downloading');
       snapshot = await retrievePage(audit.url, {
@@ -177,10 +178,10 @@ export function createAuditService({
       });
       const observedAt = new Date(now()).toISOString();
       extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
-      if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
+      if (extracted.coverage?.usable !== true && !snapshot.htmlLimited && !openRubricEnabled) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
       await pipeline?.record('retrieval', 'completed', 'downloaded');
-      report = scorePage(snapshot, extracted);
+      report = scorePage(snapshot, extracted, openRubricEnabled ? { requireAiAssessment: true } : undefined);
       if (retained) {
         stage = 'snapshot';
         if (!snapshotStore) throw new Error('Snapshot storage unavailable');
@@ -189,17 +190,18 @@ export function createAuditService({
         const captured = await snapshotStore.read(audit.id);
         if (!captured) throw new Error('Snapshot expired or unavailable');
         snapshot = captured.snapshot;
+        if (openRubricEnabled) snapshot = { ...snapshot, rawHtml: captured.rawHtml };
         extracted = captured.extracted;
         await pipeline.record('snapshot', 'completed', 'snapshot_retained');
       }
       }
-      if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
+      if (AI && (openRubricEnabled || extracted.productHtml) && (openRubricEnabled || report.coverage?.notMeasured !== 0)) {
         stage = 'content';
         await pipeline?.record('category', 'running', 'classification_started');
         aiAttempted = true;
-        const contentFacts = await assessContent({AI,allowance,now,snapshot,extracted,report,deadlineAt,calibrationApproved:contentCalibrationApproved,
+        const contentFacts = await (openRubricEnabled ? assessRubric : assessContent)({AI,allowance,now,snapshot,extracted,report,deadlineAt,calibrationApproved:contentCalibrationApproved,
           ...(retained ? {onProfile: async categoryProfile => {
-            await snapshotStore.saveAssessment({ auditId: audit.id, kind: 'profile', artifact: {version:'1',categoryProfile} });
+            await snapshotStore.saveAssessment({ auditId: audit.id, kind: 'profile', artifact: openRubricEnabled ? categoryProfile : {version:'1',categoryProfile} });
             profileRetained = true;
             await pipeline.record('category', 'completed', 'profile_retained');
             await pipeline.record('content', 'running', 'facts_preparing');
@@ -213,12 +215,12 @@ export function createAuditService({
             await pipeline.record('snapshot', 'completed', 'assessment_retained');
             stage = 'content';
           }
-          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts, categoryProfile: contentFacts.categoryProfile,
-            ...(resumeBrowser ? {initialExtracted:snapshot.browser.initialExtracted} : {})});
+          report = scorePage(snapshot, extracted, { ...(openRubricEnabled ? {aiAssessment:contentFacts.assessment} : {validatedFacts:contentFacts.facts, categoryProfile:contentFacts.categoryProfile}),
+            ...(resumeBrowser ? {initialExtracted:snapshot.browser.initialExtracted} : {}) });
           if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
         }
         else {
-          if (contentFacts.categoryProfile && (!retained || profileRetained)) report = scorePage(snapshot, extracted, { categoryProfile: contentFacts.categoryProfile,
+          if (!openRubricEnabled && contentFacts.categoryProfile && (!retained || profileRetained)) report = scorePage(snapshot, extracted, { categoryProfile: contentFacts.categoryProfile,
             ...(resumeBrowser ? {initialExtracted:snapshot.browser.initialExtracted} : {}) });
           if (retained) { report.status = 'incomplete'; report.score = null; }
           report.coverage.limitations.push(contentFacts.reason);
@@ -286,7 +288,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots, Boolean(browserFlow)),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow)),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
           ...(browserFlow ? {leaseMs:120000} : {}),
@@ -368,6 +370,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     ) : undefined,
     egress, allowsProduct, normalizeUrl, retrievePage,
     contentCalibrationApproved: contentCalibrationApproved && env.AUDIT_PIPELINE_RELEASE === PIPELINE_VERSION,
+    openRubricEnabled: env.AUDIT_RUBRIC_RELEASE === OPEN_RUBRIC_RELEASE_ID,
     snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI) || requireBrowser, browserFlow, requireBrowser,
     secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });

@@ -1,6 +1,6 @@
 # Browser product retrieval
 
-Implementation branch: `codex/browser-product-retrieval`, based on merged backend PR #40. This changes retrieval, not the rubric: Structure /40, Content /60, credit rules, conditional fixes and numerical-score eligibility are unchanged. The browser cache namespace is `browser-product-v1`; historical HTTP reports are not reused as browser captures.
+Implementation branch: `codex/browser-product-retrieval`, based on merged backend PR #40 and integrated with PR #41 (`7ab5ddb`). The existing engine 2.2.0 retained-source assessor and release gating are preserved. This changes retrieval, not the rubric: Structure /40, Content /60, credit rules, conditional fixes and numerical-score eligibility are unchanged. The browser cache namespace is `browser-product-v1`; historical HTTP reports are not reused as browser captures.
 
 ## Capture and assessment
 
@@ -12,7 +12,7 @@ Every HTTP(S) browser request passes through the strictly public Worker transpor
 
 Private R2 stores the bounded original HTML, rendered HTML, original and rendered extraction, final URL/time, selected configuration and coverage. Existing manifests bind sizes and hashes. Reads expire exactly 24 hours after capture; physical cleanup uses the existing one-day lifecycle and bounded hourly deletion. Reports expire 24 hours after submission. R2 is temporary evidence storage; D1 stores assessment/work state and reservations.
 
-S1 source-delivery and S2 structured-data checks consume original-response observations. Content checks consume rendered observations; source-specific evidence retains raw provenance. Identical original/rendered observations preserve all score fractions, totals and fixes. Browser rendering does not alter grade thresholds or turn unknown checks into zero-credit checks.
+S1 source-delivery and S2 structured-data checks consume original-response observations. Content checks consume scoped visible rendered product excerpts; full HTML remains context and cannot independently ground content credit. Consistency comparisons can additionally use initial Product data after technical association. Unhandled visible text makes coverage incomplete. source-specific evidence retains raw provenance. Identical original/rendered observations preserve all score fractions, totals and fixes. Browser rendering does not alter grade thresholds or turn unknown checks into zero-credit checks.
 
 ## Cost controls
 

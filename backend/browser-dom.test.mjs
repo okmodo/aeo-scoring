@@ -49,3 +49,11 @@ test('stability requires persistent product text',async()=>{
     assert.equal((await waitForProductStability({maxMs:20,stableMs:5,intervalMs:5})).stable,false);
   } finally { globalThis.document=old; globalThis.getComputedStyle=oldStyle; }
 });
+test('table specifications are retained and unhandled custom visible text prevents absence credit',()=>{
+ const table=read('rendered').replace('</main>','<table><tr><th>Fabric</th><td>100% recycled polyester</td></tr></table></main>');
+ const result=run(read('initial'),table);
+ assert.ok(result.extracted.productHtml.blocks.some(b=>b.text==='100% recycled polyester'));
+ const custom=run(read('initial'),table.replace('</main>','<product-extra>Water resistant finish</product-extra></main>'));
+ assert.equal(custom.extracted.productHtml.complete,false);
+ assert.equal(custom.extracted.productHtml.sourceObservation.complete,false);
+});

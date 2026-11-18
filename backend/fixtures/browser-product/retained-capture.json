@@ -15,6 +15,10 @@
             {
               "text": "Loading product details.",
               "location": "initial:element:2"
+            },
+            {
+              "text": "Available size choices: Small; Medium. Selected value: m.",
+              "location": "initial:element:3"
             }
           ],
           "headings": [
@@ -61,6 +65,10 @@
               {
                 "text": "Loading product details.",
                 "location": "initial:element:2"
+              },
+              {
+                "text": "Available size choices: Small; Medium. Selected value: m.",
+                "location": "initial:element:3"
               }
             ],
             "headings": [
@@ -112,6 +120,14 @@
         {
           "text": "Warm recycled fleece.",
           "location": "rendered:element:2"
+        },
+        {
+          "text": "Available size choices: Small; Medium. Selected value: m.",
+          "location": "rendered:element:4"
+        },
+        {
+          "text": "Product details",
+          "location": "rendered:element:8"
         },
         {
           "text": "Care: machine wash cold.",
@@ -167,6 +183,14 @@
           {
             "text": "Warm recycled fleece.",
             "location": "rendered:element:2"
+          },
+          {
+            "text": "Available size choices: Small; Medium. Selected value: m.",
+            "location": "rendered:element:4"
+          },
+          {
+            "text": "Product details",
+            "location": "rendered:element:8"
           },
           {
             "text": "Care: machine wash cold.",

@@ -1,14 +1,16 @@
 {
   "version": 1,
   "task": "Browser-only product retrieval with source/rendered evidence, retained replay and user-approved application cost controls.",
-  "state": "Implementation prepared on codex/browser-product-retrieval from a39cdf4, with separate immutable planning commits0679d89 and0e978e6. Production and frontend unchanged. Source-bound evaluation and hosted CI recorded separately.",
+  "state": "Implementation on codex/browser-product-retrieval with immutable planning commits0679d89/0e978e6 and upstream-integration plan7384827. Integrates newly merged backend PR41 at7ab5ddb; preserves engine2.2 and open-rubric release behavior. Production/frontend unchanged; evaluation andCI recorded separately.",
   "decisions": [
     "Product page is downloaded only by one browser context; supporting files use same-context cookies and shared strict public egress bounds. No HTTP product fallback.",
     "S1/S2 use initial response observations; content uses rendered observations. Weights,grade rules,engine andrubric versions remain unchanged. Retrieval/cache namespace browser-product-v1 prevents historical capture reuse.",
     "Private R2 retains initial/rendered inputs and metadata24h. Capture closes before poll-claimed assessment; audit lease120s.",
     "Capture deadline20s,close wait2s; reserve62min browserusage and one projectlease beforelaunch; hourly watchdog targets only persistedowned session IDs. Minute cron rejected because reservedCPU would exceed60% ceiling in6days. Unknown launched usage remainsheld.",
     "Overflow-only request packing removes duplicated descriptions while preserving observations/IDs/eligibility/profiledefinitions/schema; existing small request bytes unchanged.",
-    "No nativebrowser/model/runtimeCPU claim. Readonlyaccountanalytics source verified but sampling/delay/concurrentoutsideusage remainacceptedlimitations."
+    "No nativebrowser/model/runtimeCPU claim. Readonlyaccountanalytics source verified but sampling/delay/concurrentoutsideusage remainacceptedlimitations.",
+    "Newly merged PR41 is preserved. Browser initial/rendered source separation is passed into its retained-source assessor; no rubric or credit rule changed.",
+    "Browser AI judgments use initial sources for S1/S2 and scoped visible product excerpts for content. Full HTML remains contextual; C5 comparisons may also use a technically associated initial Product record. Unsupported visible text forces incomplete coverage."
   ],
   "constraints": [
     "Workers CPU1000, existing account60%ceilings, browser6hmonthly andmonthlyaverageconcurrency6 unchanged. No paidexternalAPI/addons.",
@@ -21,7 +23,8 @@
     "Atomic usage/session lease,reconciliation,unstartedcancel,lateacquisitionholds,ownedwatchdog andhourlyboundedcleanup.",
     "Public submission/capture/statusclaim/retainedassessment withsourceprovenance,APIenvelope unchanged.",
     "Frozen offline capture/replay,sourcegrade invariance,payloadpacking,redirect/privateegress,timeout/close/cookie/support/claim tests; actualSDKWorkerbundlecheck.",
-    "GenuinefreshTerraagent resumedonlyexport+source: exactfrozenreportmatch and19tests passed; syntheticreport correctlyincomplete."
+    "GenuinefreshTerraagent resumedonlyexport+source: exactfrozenreportmatch and19tests passed; syntheticreport correctlyincomplete.",
+    "Integrated PR41 sources, release/cache and engine2.2 behavior; fixed source catalogs, raw/rendered provenance, scoped hidden/recommendation evidence and DOM completeness through independent review."
   ],
   "remaining": [
     "Review finalsource-bound evaluation, independentreview andhostedCI beforemerge.",
@@ -34,8 +37,9 @@
     "cd /private/tmp/aeo-browser-product-retrieval",
     "npm ci --ignore-scripts",
     "npm run test:browser-build",
-    "npm run evaluate -- --change browser-product-retrieval --base origin/codex/complete-report-assessment",
-    "npm run evaluate -- --change browser-application-controls --base origin/codex/complete-report-assessment",
-    "EVALUATION_BASE=origin/codex/complete-report-assessment npm run ci:gate"
+    "npm run evaluate -- --change browser-product-retrieval --base 7ab5ddb03f69ee5886c25aaf8faa94bd5e684966",
+    "npm run evaluate -- --change browser-application-controls --base 7ab5ddb03f69ee5886c25aaf8faa94bd5e684966",
+    "EVALUATION_BASE=7ab5ddb03f69ee5886c25aaf8faa94bd5e684966 npm run ci:gate",
+    "npm run evaluate -- --change browser-upstream-integration --base 7ab5ddb03f69ee5886c25aaf8faa94bd5e684966"
   ]
 }

@@ -39,5 +39,32 @@
       "Review does not establish hosted CI or independently verify final evaluation and fresh-agent process evidence.",
       "Analytics sampling and reporting delay remain accepted limitations; watchdog or provider failure can outlast the reservation."
     ]
+  },
+  "integrationReview": {
+    "base": "7ab5ddb",
+    "planningCommit": "7384827",
+    "result": "accepted_for_source_pr_with_limitations",
+    "scope": "Browser retrieval integration with upstream retained-source AI assessment, source provenance and selected-product grounding; code was reviewed in the working tree before final evaluation.",
+    "findingsResolved": [
+      "Rendered AI evidence initially lacked method labels; trusted source methods now survive assessment and replay, including no-material-claims evidence.",
+      "Final AI judgment request now carries a source origin catalog.",
+      "S1/S2 restrict evidence to initial sources with scoped shared supporting evidence where applicable. Content and category evidence is restricted to selected visible product excerpts or applicable support; associated initial Product data is separately scoped for consistency. Hidden and recommendation HTML cannot ground product content.",
+      "Uncovered visible DOM text marks extraction incomplete, and table, summary, button and variant-choice text is retained, preventing unsupported absence deductions."
+    ],
+    "verification": [
+      {
+        "command": "node --test backend/assessment-sources.test.mjs backend/ai-rubric-assessment.test.mjs backend/ai-rubric-scoring.test.mjs backend/browser-scoring.test.mjs backend/browser-dom.test.mjs backend/browser-workflow-service.test.mjs",
+        "result": "59 passed, 0 failed before final DOM completeness change"
+      },
+      {
+        "command": "node --test backend/browser-dom.test.mjs backend/browser-retrieval.test.mjs",
+        "result": "20 passed, 0 failed after DOM completeness change"
+      }
+    ],
+    "limitations": [
+      "Targeted static and offline review, not proof of absence of defects or full evaluation. Hosted CI and final fresh-agent exit/evaluation were not independently verified.",
+      "Native browser, provider usage/closure APIs, Worker CPU and billing remain unvalidated; production was not changed.",
+      "Application timeout, hourly watchdog and contingency hold do not guarantee a provider-enforced billing cap; accepted analytics sampling and lag remain."
+    ]
   }
 }

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "open-ai-scoring",
+  "sourceDigest": "11474c649d221a75d272ae2ecdce062291e885341ae29f182ac6f994ee48d1e8",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/open_ai_final_exit",
+  "exportSha256": "6c7cc838b7cf90184f870f4b9da9748114896ced20ebbccaeabb0b7465fe0241",
+  "interruptionPoint": "Stopped at retained synthetic snapshot/profile/section judgments before replay on frozen source a16e574c78a57e359d973b62fd5ec2e0c3fcf969. A fresh Terra agent received only the exported state and clean task source files, without inherited conversation, handoff or review.",
+  "observedContinuation": "Fresh agent ran /private/tmp/node-v24.11.1-darwin-arm64/bin/node backend/open-rubric-exit.mjs evals/changes/open-ai-scoring/exit-export.json in /private/tmp/aeo-open-ai-scoring-review using Node24.11.1. Command exited0 and returned measured claim credit0.5, consistency and identity not_measured, changedSourceRejected true and changedProfileRejected true. It independently verified the export hash and source HEAD. No edits, network, model or resource calls were made.",
+  "limitations": "Offline fictional retained artifact rather than production R2 retrieval or real model inference. The two mutation assertions establish rejection, not specific rejection causes or general tamper-proofing. Profile/digest integrity relies on private authenticated storage; this does not establish model quality, native CPU cost, live calibration or cross-engine portability. Earlier replay on the original authoring branch is prior-source evidence and is not used as final-source validation."
+}

@@ -15,9 +15,11 @@ import { assessSupport } from './support-assessment.mjs';
 import { inspectProductSchema, assessStructure } from './structure-assessment.mjs';
 import { scoreReference } from '../scripts/scoring-foundations.mjs';
 import { isValidatedCategoryProfile } from './category-profile.mjs';
+import { isValidatedRubricAssessment } from './ai-rubric-assessment.mjs';
+import { applyRubricAssessment } from './ai-rubric-scoring.mjs';
 
 export const RUBRIC_VERSION = rubricV2.version;
-export const ENGINE_VERSION = '2.1.0';
+export const ENGINE_VERSION = '2.2.0';
 const CRAWLER_GROUPS = [
   ['S5.search', crawlerRegistry.scoring.search.botIds],
   ['S5.ai-retrieval', crawlerRegistry.scoring.aiRetrieval.botIds],
@@ -43,13 +45,14 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 // Explicit v1 replay preserves historical tests; service requests always use v2.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
   // Browser retrieval supplies two observations from one navigation. Source
   // checks retain their original input; content checks use the rendered input.
   const sourceExtracted = legacy ? extracted : (initialExtracted ?? extracted);
   const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
-  const categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
+  const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, extracted);
+  let categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
   const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
   const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
   const checks = Object.fromEntries(SUBCHECKS.map(check => [check.id, { status: 'not_measured' }]));
@@ -270,6 +273,22 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
     }
+    if (!legacy && requireAiAssessment && !aiValidated) {
+      const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S7.links','S8.guidance']);
+      for (const id of Object.keys(checks)) {
+        const needsJudgment = /^C[1-5]\./.test(id) || id.startsWith('S4.') ||
+          ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
+        const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
+          technicalFailures.has(id) && checks[id].status === 'measured' && checks[id].fraction === 0);
+        if (needsJudgment && !establishedTechnical) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
+      }
+      category = null;
+    }
+    if (aiValidated) {
+      category = 'open-rubric';
+      categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile.category, decisionSupport: aiAssessment.profile.slots.filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
+      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted, addEvidence });
+    }
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
     fixes.length = 0;
@@ -296,7 +315,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       const recoverablePoints = unknown ? null : deducted.reduce((sum,s) => sum+s.maxPoints*(1-checks[s.id].fraction),0)*criterion.maxPoints/denominator;
       const affected = criterion.subchecks.filter(s => checks[s.id].status === 'not_measured' || deducted.includes(s));
       fixes.push({ id: 'improve-' + criterion.id.toLowerCase(), title: unknown && !deducted.length ? `Complete the ${criterion.id} assessment` : actions[criterion.id][0], owner: unknown && !deducted.length ? 'Audit reviewer' : actions[criterion.id][1],
-        checkIds: affected.map(s=>s.id), evidenceIds: affected.flatMap(s=>checks[s.id].evidenceIds || [checks[s.id].evidence]).filter(Boolean), recoverablePoints,
+        checkIds: affected.map(s=>s.id), evidenceIds: [...new Set(affected.flatMap(s=>checks[s.id].evidenceIds || [checks[s.id].evidence]).filter(Boolean))], recoverablePoints,
         condition: unknown ? 'Complete the affected evidence inspections before recovery can be calculated.' :
           'If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions.' });
     }
@@ -330,13 +349,13 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,
-    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
+    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(aiValidated ? {assessment:{mode:'ai_rubric',version:aiAssessment.version,category:aiAssessment.profile.category}} : validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
       total: allChecks.length, category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
       ...(profile ? {categoryAssessment:{version:'1',label:profile.label,profileId:profile.id,evidence:profile.evidence}} : {}),
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
-        ...(semantic?.status === 'assessed' ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
+        ...((aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
         ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' ? 'Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit.' : profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.' : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
   };
 }

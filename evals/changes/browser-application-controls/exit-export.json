@@ -9,7 +9,9 @@
     "tests": [
       "backend/browser-scoring.test.mjs",
       "backend/browser-workflow-service.test.mjs",
-      "backend/browser-allowance.test.mjs"
+      "backend/browser-allowance.test.mjs",
+      "backend/assessment-sources.test.mjs",
+      "backend/ai-rubric-assessment.test.mjs"
     ]
   },
   "constraints": [
@@ -20,10 +22,11 @@
   "remaining": [
     "Read retained JSON and call scoreAudit(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted}); compare exact result with frozen expected JSON.",
     "Verify initial capture omits rendered product prose while rendered extraction retains it; source schema is not replaced by client-added schema.",
-    "Run the three named test files under Node24, review single claim/no-refetch behavior and explain the absent facts that keep this synthetic score incomplete."
+    "Run the three named test files under Node24, review single claim/no-refetch behavior and explain the absent facts that keep this synthetic score incomplete.",
+    "Verify browser source separation rejects rendered-only S1/S2 citations while preserving the newly merged PR41 assessment and release behavior."
   ],
   "resumeCommands": [
-    "node --test backend/browser-scoring.test.mjs backend/browser-workflow-service.test.mjs backend/browser-allowance.test.mjs"
+    "node --test backend/browser-scoring.test.mjs backend/browser-workflow-service.test.mjs backend/browser-allowance.test.mjs backend/assessment-sources.test.mjs backend/ai-rubric-assessment.test.mjs"
   ],
   "expectedStatus": "incomplete",
   "expectedScore": null

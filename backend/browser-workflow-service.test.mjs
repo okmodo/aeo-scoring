@@ -57,3 +57,14 @@ test('scheduled watchdog reserves usage and limits hourly pruning to 100 expired
   events.length=0;allow=true;await runScheduledMaintenance({scheduledTime:hour},env,options);assert.deepEqual(events,['reserve','watchdog','settle','reserve','cleanup','settle']);
   assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM browser_audit_work').get().n,2);assert.equal(sqlite.prepare("SELECT state FROM browser_audit_work WHERE audit_id='active'").get().state,'capturing');sqlite.close();
 });
+
+test('browser open rubric assessment reads retained initial bytes and rendered extraction after capture',async()=>{
+  const rawHtml=new TextEncoder().encode('<div id="app"></div>'), initial={productHtml:null}, rendered={productHtml:{identity:'Rendered product'}};
+  let audit={id,url,status:'pending',createdAt:now,expiresAt:now+86400000}, ready=false, task, assessCalls=0, scoreCalls=0;
+  const flow={prepare:async()=>({accepted:true}),capture:async()=>{ready=true;},claim:async()=>{if(!ready)return false;ready=false;return true;},read:async()=>({snapshot:{url,browser:{initialExtracted:initial}},extracted:rendered,rawHtml}),finish:async()=>{}};
+  const handle=createAuditService({store:{reserve:async()=>({kind:'created',audit}),get:async()=>audit,finish:async(_id,result)=>{audit={...audit,...result};}},allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>{}},browserFlow:flow,requireBrowser:true,openRubricEnabled:true,AI:{},snapshotStore:{saveAssessment:async()=>{}},egress:{fetch:()=>assert.fail('no HTTP fallback')},secret:'x'.repeat(32),normalizeUrl:x=>x,now:()=>now,
+    scorePage:(_snapshot,extracted,options)=>{scoreCalls++;assert.deepEqual(extracted,rendered);assert.deepEqual(options.initialExtracted,initial);if(scoreCalls===1)assert.equal(options.requireAiAssessment,true);else assert.deepEqual(options.aiAssessment,{verified:true});return{status:'incomplete',score:null,coverage:{notMeasured:1,limitations:[]}};},
+    assessRubric:async args=>{assessCalls++;assert.deepEqual(args.snapshot.rawHtml,rawHtml);assert.deepEqual(args.extracted,rendered);await args.onProfile({version:'1'});return{status:'assessed',assessment:{verified:true},replayArtifact:{version:'1'}};}});
+  const call=async(method,path,body)=>handle(new Request('https://audit.test'+path,{method,...(body?{headers:{'content-type':'application/json'},body:JSON.stringify(body)}:{})}),{address:'192.0.2.1',defer:p=>{task=p;}});
+  await call('POST','/api/v1/audits',{url});await task;assert.equal(assessCalls,0);await call('GET','/api/v1/audits/'+id);await task;assert.equal(assessCalls,1);assert.equal(scoreCalls,2);assert.equal(audit.status,'incomplete');
+});

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "task": "Assess retained downloaded product data with open-ended AI expectations, evidence and credit under the existing rubric.",
+  "state": "Backend implementation reviewed on codex/open-ai-scoring-review in /private/tmp/aeo-open-ai-scoring-review from merged PR40 base a39cdf4ed4acaf61305ce3f039deaab2c003514c. Corrected plan513f7d5 precedes source import0d3137f and further review fixes; it does not predate original authoring. Original plan2a117d0 and implementation commits are preserved on codex/open-ai-scoring; original-plan.json and planning-correction.md disclose the scope-format mistake. Independent review, fresh-agent replay and source-bound evaluation are recorded separately. No merge, deployment or live model call is authorized in this task.",
+  "decisions": [
+    "All retained HTML and extraction/support records are represented in bounded identifiable sections. Capture and per-scope completeness are separate; unread content cannot establish absence.",
+    "AI identifies the product, generates category-specific expectations independently of observed completeness, freezes the profile, inspects sections and judges evidence. No fixed product category or attribute vocabulary is used on the new path.",
+    "Code validates source references, input binding, technical facts, exclusions and arithmetic. Structure40/Content60 weights remain unchanged; applicable unknowns withhold the numerical final score.",
+    "C2 attribute and C4 question leaves are averaged within their fixed weighted groups; C5 discoveries require individual evidence and assessment before aggregation.",
+    "Private R2 profile and replay artifacts use existing objects and the original24-hour access cutoff. Source digest and revalidation permit replay without inference.",
+    "Engine2.2.0 and OPEN_RUBRIC_RELEASE_ID isolate the new cache path. Explicit AUDIT_RUBRIC_RELEASE selection plus existing calibration/pipeline gates is required; no live binding is changed."
+  ],
+  "constraints": [
+    "Existing60% included-allowance ceilings and1,000ms CPU configuration remain; every model call reserves before invocation and unknown usage stays held.",
+    "No frontend/shared contracts/shared dependencies, historical gold, unrelated services, credentials, paid integrations, merge or deployment changes.",
+    "The25-second deadline and conservative AI allowance may prevent large captured pages from completing. Fail closed; do not imply universal real-page completion.",
+    "Offline mocked tests do not establish live model correctness, native CPU cost or production activation readiness."
+  ],
+  "completed": [
+    "Terra implementation of sectioned retained sources, dynamic profile/evidence assessment and scoring integration.",
+    "Service reads verified retained bytes and persists profile before grading and replay artifact before scoring, including when product extraction is unavailable.",
+    "Frozen fictional tests cover prose attributes, applicable care, contradictions, ambiguous identity, corrupt replay, budgets, storage failures and technical score caps.",
+    "Canonical architecture, criterion ownership, limits and activation prerequisites documented in docs/open-ai-scoring.md."
+  ],
+  "remaining": [
+    "Confirm recorded evaluation, independent review, fresh-agent replay and hosted CI are current for final source before merge readiness.",
+    "With separate authorization, perform bounded native runtime/live model calibration and independently review real-page findings before selecting the new release.",
+    "Resolve any measured large-page runtime constraints with bounded continuation or a separately calibrated efficiency change; no new services are provisioned here."
+  ],
+  "resumeCommands": [
+    "cd /private/tmp/aeo-open-ai-scoring-review",
+    "npm run evaluate -- --change open-ai-scoring --base a39cdf4ed4acaf61305ce3f039deaab2c003514c",
+    "EVALUATION_BASE=a39cdf4ed4acaf61305ce3f039deaab2c003514c npm run ci:gate"
+  ]
+}
