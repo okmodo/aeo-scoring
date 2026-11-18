@@ -1,13 +1,13 @@
 {
   "version": 1,
   "changeId": "browser-runtime-readiness",
-  "sourceDigest": "efa8dac8646ecc7619224abecf36fb3e940d16a414c93c2ef1a102d59427d5c3",
+  "sourceDigest": "aa8d82ade343d202147ecaec72fae96842ca95c171153937075fe7805cfa2d43",
   "kind": "fresh-agent",
   "priorConversationProvided": false,
   "status": "passed",
-  "agentId": "/root/browser_runtime_exit",
-  "exportSha256": "c02f99b6e4bcdd17b83edbf28db4ea80648c0ab38a879bb14e745bc74493b079",
-  "interruptionPoint": "Frozen owned-session record persisted; earlier unknown hold has not yet settled in a fresh SQLite instance.",
-  "observedContinuation": "Fresh Terra agent read only export and tasksource; canonical provider verified2070ms with postresponse observation1794981371400. Canonical guard settledactual_ms2070, settled_at1794981371400. Future/missinghistory retainednullactual/settled. BothfocusedNode24files passed34tests.",
-  "limitations": "SyntheticinmemorySQLite andmockSDK, not productionevidence. No network/browser/model orsourceedits. Missingretrycount is timingdependent; onlyboundedunknownretention asserted."
+  "agentId": "/root/browser_final_runtime_exit",
+  "exportSha256": "9b877f903295692f33e5a7f406e6abab04c1ad7b3e0830542b16a878d11159a7",
+  "interruptionPoint": "Frozen closed owned session retained after earlier unknownusage, beforefreshagentreconciliation.",
+  "observedContinuation": "FreshTerraagent readexport+tasksource only. Canonicalprovider andfreshSQLiteguard settled2070ms atverifiedobservation1794981371400. Future/missingrecords returnedunknown_usage withnullactual/settled. BothfocusedNode24files passed43tests includingblockedbeacon/productPOST,futuretimewait,callbackdrain,noegressafterfreeze andlatenavigationrejection.",
+  "limitations": "Syntheticmock provider+SQLite,notnativeproductionproof. No network/browser/model/sourceedits; retrycounts timingdependent. UserrequesteddeploymentbeforefurtherliveURLtests; no additionalmerchanttests performedbyfreshagent."
 }
