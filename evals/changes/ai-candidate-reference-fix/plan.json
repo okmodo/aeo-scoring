@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "id": "ai-candidate-reference-fix",
+  "task": "Correct category-candidate preparation exposed by actual native validation without relaxing evidence validation or scoring.",
+  "scope": [
+    "backend/**",
+    "docs/ai-candidate-references.md",
+    "evals/changes/ai-candidate-reference-fix/**"
+  ],
+  "nonGoals": [
+    "No frontend/shared dependencies/types, allowance or CPU changes, relaxed quotation/absence/scoring validation, unrelated services, live activation before independently accepted calibration."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Category candidates derive from primary product sources rather than serialized retrieval metadata; all captured sections remain mandatory for subsequent assessment. Preserve exact quotations, ambiguous primary identity handling and strict final evidence validation.",
+      "verification": "automated",
+      "evidence": "Frozen derived-metadata mismatch, product/mixed recommendation and full-section inspection regressions."
+    },
+    {
+      "id": "O2",
+      "description": "Actual recorded failing preparation can advance past metadata without accepting fabricated product references; source/engine/cache revisions and historical replay remain honest.",
+      "verification": "human",
+      "evidence": "Offline replay of private provider outputs plus synthetic frozen tests; no private source/provider response committed."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Immutable plan before Terra implementation, independent review, real all-nine source-bound evaluation and hosted CI before any merge/deployment. New live cohort requires frozen reviewed protocol and fresh account admission.",
+      "verification": "human",
+      "evidence": "Git chronology, actual test trace and review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Narrow correction using existing source scopes; do not redesign runtime or retry uncertain model calls.",
+      "verification": "human",
+      "evidence": "Focused diff and explicit limitations."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Candidate source selection does not change retained replay/artifact interfaces; existing PR41 fresh-agent replay remains, and private failing outputs are replayed offline for this defect."
+  }
+}
