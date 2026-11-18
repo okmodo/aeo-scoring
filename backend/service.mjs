@@ -8,6 +8,7 @@ import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FAC
 import { createPipelineState, PIPELINE_VERSION } from './pipeline-state.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
 import { createR2AllowanceGuard } from './allowance-r2.mjs';
+import { createBrowserWorkflow, BROWSER_RETRIEVAL_VERSION } from './browser-workflow.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -110,8 +111,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, browser = false) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + (browser ? ':retrieval-'+BROWSER_RETRIEVAL_VERSION : '') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -132,6 +133,7 @@ export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
   snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
+  browserFlow, requireBrowser = false,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -145,21 +147,36 @@ export function createAuditService({
   function admissionError(result) {
     return result === 'exhausted' ? errorResponse(429, 'rate_limited') : errorResponse(503, 'service_unavailable');
   }
-  async function run(audit) {
+  async function run(audit, {resumeBrowser = false, grant} = {}) {
     const deadlineAt = now() + 25_000;
     let snapshot;
+    let extracted;
     let report;
     let aiAttempted = false, profileRetained = false;
-    const retained = Boolean(snapshotStore) || requireSnapshots;
+    const retained = Boolean(snapshotStore) || requireSnapshots || Boolean(browserFlow);
     const pipeline = retained ? createPipelineState({ db: pipelineDb, auditId: audit.id, now }) : null;
     let stage = 'retrieval';
     try {
+      if (browserFlow && !resumeBrowser) {
+        await pipeline?.record('retrieval','running','browser_loading');
+        await browserFlow.capture(audit,grant,pipeline);
+        return;
+      }
+      if (resumeBrowser) {
+        await pipeline?.load();
+        stage = 'snapshot';
+        const captured = await browserFlow.read(audit.id);
+        snapshot = captured.snapshot;
+        extracted = captured.extracted;
+        if (!snapshot?.browser?.initialExtracted || !extracted || typeof extracted !== 'object') throw new Error('Invalid browser snapshot');
+        report = scorePage(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted});
+      } else {
       await pipeline?.record('retrieval', 'running', 'downloading');
       snapshot = await retrievePage(audit.url, {
         egress, captureHtml: retained, consumeHtml: page => extractPage(page, { HTMLRewriter }),
       });
       const observedAt = new Date(now()).toISOString();
-      let extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
+      extracted = snapshot.extracted ?? await extractPage(snapshot, { HTMLRewriter });
       if (extracted.coverage.usable !== true && !snapshot.htmlLimited) throw new Error('Unusable HTML');
       snapshot = { ...snapshot, observedAt };
       await pipeline?.record('retrieval', 'completed', 'downloaded');
@@ -174,6 +191,7 @@ export function createAuditService({
         snapshot = captured.snapshot;
         extracted = captured.extracted;
         await pipeline.record('snapshot', 'completed', 'snapshot_retained');
+      }
       }
       if (AI && extracted.productHtml && report.coverage?.notMeasured !== 0) {
         stage = 'content';
@@ -195,11 +213,13 @@ export function createAuditService({
             await pipeline.record('snapshot', 'completed', 'assessment_retained');
             stage = 'content';
           }
-          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts, categoryProfile: contentFacts.categoryProfile});
+          report = scorePage(snapshot, extracted, {validatedFacts: contentFacts.facts, categoryProfile: contentFacts.categoryProfile,
+            ...(resumeBrowser ? {initialExtracted:snapshot.browser.initialExtracted} : {})});
           if (contentFacts.limitation) report.coverage.limitations.push(contentFacts.limitation);
         }
         else {
-          if (contentFacts.categoryProfile && (!retained || profileRetained)) report = scorePage(snapshot, extracted, { categoryProfile: contentFacts.categoryProfile });
+          if (contentFacts.categoryProfile && (!retained || profileRetained)) report = scorePage(snapshot, extracted, { categoryProfile: contentFacts.categoryProfile,
+            ...(resumeBrowser ? {initialExtracted:snapshot.browser.initialExtracted} : {}) });
           if (retained) { report.status = 'incomplete'; report.score = null; }
           report.coverage.limitations.push(contentFacts.reason);
         }
@@ -235,6 +255,7 @@ export function createAuditService({
       status: report.status, report, assessedUrl: snapshot.url,
       completedAt, cacheUntil: Math.min(completedAt + HOUR, audit.expiresAt),
     });
+    if (resumeBrowser) await browserFlow.finish(audit.id);
   }
 
   return async function handle(request, { defer, address } = {}) {
@@ -256,7 +277,7 @@ export function createAuditService({
           error.message = 'This preview accepts only its approved demo product URL.';
           return json({ version: '1', error }, 400);
         }
-        if (!store || !egress?.fetch || typeof HTMLRewriter !== 'function' || typeof defer !== 'function' ||
+        if (!store || !egress?.fetch || (!browserFlow && typeof HTMLRewriter !== 'function') || typeof defer !== 'function' || (requireBrowser && !browserFlow) ||
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
         const admission = await admit(INVOCATION_COSTS);
@@ -265,18 +286,29 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots, Boolean(browserFlow)),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
+          ...(browserFlow ? {leaseMs:120000} : {}),
         });
         if (result.kind === 'limited') return errorResponse(429, 'rate_limited', result.retryAfter);
         if (result.kind === 'cached') {
           if (encoding.encode(JSON.stringify(result.audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
           return json(assessment(result.audit, true), 200);
         }
+        let grant;
+        try { grant = browserFlow ? await browserFlow.prepare(result.audit) : undefined; }
+        catch {
+          await store.finish(result.audit.id, {status:'unable_to_assess',error:'service_unavailable',completedAt:now()});
+          return errorResponse(503,'service_unavailable');
+        }
+        if (browserFlow && !grant?.accepted) {
+          await store.finish(result.audit.id,{status:'unable_to_assess',error:'service_unavailable',completedAt:now()});
+          return grant?.reason==='allowance_exhausted' ? errorResponse(429,'rate_limited') : errorResponse(503,'service_unavailable');
+        }
         // If persistence becomes unavailable, polling resolves the abandoned lease.
         backgroundDone = false;
-        defer(run(result.audit).catch(() => {}).finally(async () => {
+        defer(run(result.audit,{grant}).catch(() => {}).finally(async () => {
           backgroundDone = true;
           await settleCompleted();
         }));
@@ -288,10 +320,14 @@ export function createAuditService({
         const id = path.slice(ROUTE.length + 1);
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return errorResponse(404, 'not_found');
         if (!store) return errorResponse(503, 'service_unavailable');
-        const admission = await admit(POLL_COSTS);
+        const admission = await admit(browserFlow ? {...POLL_COSTS,d1Writes:100,d1StorageBytes:512*1024} : POLL_COSTS);
         if (!admission?.id) return admissionError(admission);
         reservationId = admission.id;
         const audit = await store.get(id, now());
+        if (browserFlow && audit?.status==='pending' && typeof defer==='function' && await browserFlow.claim(id)) {
+          backgroundDone = false;
+          defer(run(audit,{resumeBrowser:true}).catch(()=>{}).finally(async()=>{backgroundDone=true;await settleCompleted();}));
+        }
         if (audit && encoding.encode(JSON.stringify(audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
         return audit ? json(assessment(audit), 200) : errorResponse(404, 'not_found');
       }
@@ -306,7 +342,7 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID, requireBrowser = false } = {}) {
   const db = env.AUDIT_DB;
   const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
   const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;
@@ -318,6 +354,11 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     snapshotStore = createSnapshotStore({ db, bucket: env.AUDIT_SNAPSHOTS,
       allowance: createR2AllowanceGuard(db, { accountId, token: analyticsToken }) });
   }
+  let browserFlow;
+  if (db && snapshotStore && billingScopeConfigured && analyticsToken && env.AUDIT_BROWSER) {
+    try { browserFlow = createBrowserWorkflow({db, binding:env.AUDIT_BROWSER, snapshots:snapshotStore, egress, accountId, subscriptionId, token:analyticsToken}); }
+    catch { /* Invalid browser capabilities fail closed below. */ }
+  }
   const service = createAuditService({
     store: db ? createStore(db) : null,
     allowance: db && billingScopeConfigured ? (
@@ -327,7 +368,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     ) : undefined,
     egress, allowsProduct, normalizeUrl, retrievePage,
     contentCalibrationApproved: contentCalibrationApproved && env.AUDIT_PIPELINE_RELEASE === PIPELINE_VERSION,
-    snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI),
+    snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI) || requireBrowser, browserFlow, requireBrowser,
     secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
   });
   return service(request, {
@@ -343,21 +384,37 @@ export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now =
   if (!admission?.accepted || admission.duplicate !== false) return { status: 'skipped' };
   const result = await snapshots.cleanup({ limit: 10 });
   await db.prepare('DELETE FROM audit_pipeline_state WHERE audit_id IN (SELECT audit_id FROM audit_pipeline_state WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
+  // Work records contain no browser allowance holds; those are managed only by the watchdog.
+  await db.prepare('DELETE FROM browser_audit_work WHERE audit_id IN (SELECT audit_id FROM browser_audit_work WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
   await allowance.settle?.({ id });
   return { status: 'completed', ...result };
 }
 
-export default {
-  fetch: handleAuditRequest,
-  async scheduled(_event, env) {
-    if (!env.AUDIT_DB || !env.AUDIT_SNAPSHOTS || !env.AUDIT_USAGE_READ_TOKEN) return;
-    const db = env.AUDIT_DB, now = Date.now();
+export async function runScheduledMaintenance(event, env, {now = Date.now(), allowance: injectedAllowance, makeWorkflow = createBrowserWorkflow, makeSnapshots = createSnapshotStore} = {}) {
+    if (!env.AUDIT_DB || !env.AUDIT_USAGE_READ_TOKEN) return;
+    const db = env.AUDIT_DB;
     const scope = { accountId: env.AUDIT_BILLING_ACCOUNT_ID, subscriptionId: env.AUDIT_BILLING_SUBSCRIPTION_ID, token: env.AUDIT_USAGE_READ_TOKEN };
-    const allowance = createAnalyticsAllowanceGuard(db, scope);
-    // Keep the scheduled invocation bounded. More expired snapshots remain indexed
-    // for the next run, with the bucket lifecycle serving as an independent fallback.
-    const snapshots = createSnapshotStore({ db, bucket: env.AUDIT_SNAPSHOTS,
+    const allowance = injectedAllowance ?? createAnalyticsAllowanceGuard(db, scope);
+    // Every scheduled invocation must reserve its Worker and D1 costs first.
+    const id = `browser-watchdog-${crypto.randomUUID()}`;
+    try {
+      const admitted = await allowance.reserve({id, now, costs: {requests:1, cpuMs:RESERVED_INVOCATION_CPU_MS, d1Reads:10000, d1Writes:100, d1StorageBytes:4096}});
+      if (!admitted?.accepted || admitted.duplicate !== false) return;
+      if (env.AUDIT_BROWSER) {
+        const workflow = makeWorkflow({db, binding:env.AUDIT_BROWSER, ...scope});
+        await workflow.watchdog();
+      }
+      await allowance.settle?.({id});
+    } catch { return; } // Unknown work retains its reservation.
+    // Keep retained-data cleanup hourly even if a scheduled event fires off the hour.
+    const scheduledTime = Number(event?.scheduledTime ?? now);
+    if (new Date(scheduledTime).getUTCMinutes() !== 0 || !env.AUDIT_SNAPSHOTS) return;
+    const snapshots = makeSnapshots({ db, bucket: env.AUDIT_SNAPSHOTS,
       allowance: createR2AllowanceGuard(db, scope) });
     await cleanupRetainedSnapshots({ db, snapshots, allowance, now });
-  },
+}
+
+export default {
+  fetch: handleAuditRequest,
+  scheduled: runScheduledMaintenance,
 };

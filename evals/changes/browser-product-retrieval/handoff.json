@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "task": "Browser-only product retrieval with source/rendered evidence, retained replay and user-approved application cost controls.",
+  "state": "Implementation prepared on codex/browser-product-retrieval from a39cdf4, with separate immutable planning commits0679d89 and0e978e6. Production and frontend unchanged. Source-bound evaluation and hosted CI recorded separately.",
+  "decisions": [
+    "Product page is downloaded only by one browser context; supporting files use same-context cookies and shared strict public egress bounds. No HTTP product fallback.",
+    "S1/S2 use initial response observations; content uses rendered observations. Weights,grade rules,engine andrubric versions remain unchanged. Retrieval/cache namespace browser-product-v1 prevents historical capture reuse.",
+    "Private R2 retains initial/rendered inputs and metadata24h. Capture closes before poll-claimed assessment; audit lease120s.",
+    "Capture deadline20s,close wait2s; reserve62min browserusage and one projectlease beforelaunch; hourly watchdog targets only persistedowned session IDs. Minute cron rejected because reservedCPU would exceed60% ceiling in6days. Unknown launched usage remainsheld.",
+    "Overflow-only request packing removes duplicated descriptions while preserving observations/IDs/eligibility/profiledefinitions/schema; existing small request bytes unchanged.",
+    "No nativebrowser/model/runtimeCPU claim. Readonlyaccountanalytics source verified but sampling/delay/concurrentoutsideusage remainacceptedlimitations."
+  ],
+  "constraints": [
+    "Workers CPU1000, existing account60%ceilings, browser6hmonthly andmonthlyaverageconcurrency6 unchanged. No paidexternalAPI/addons.",
+    "Frontend,sharedtypes,rootdependencies/lockfile,unrelatedservices untouched; backend-only pinnedSDKdependency.",
+    "No merge or productiondeployment. Nativevalidation andactivation require separately reviewedbudgeted rollout.",
+    "Browseridle timeout isnot hardlifetime; applicationclose/watchdog failure canoutlast reservation. Holdsblocknewlaunch butdonot guaranteeabsoluteinvoicecap."
+  ],
+  "completed": [
+    "Browser capture, strictpublic routing/manual redirects, scopedcookies, original/renderedDOM extraction, stabilitywait/details andlimits.",
+    "Atomic usage/session lease,reconciliation,unstartedcancel,lateacquisitionholds,ownedwatchdog andhourlyboundedcleanup.",
+    "Public submission/capture/statusclaim/retainedassessment withsourceprovenance,APIenvelope unchanged.",
+    "Frozen offline capture/replay,sourcegrade invariance,payloadpacking,redirect/privateegress,timeout/close/cookie/support/claim tests; actualSDKWorkerbundlecheck.",
+    "GenuinefreshTerraagent resumedonlyexport+source: exactfrozenreportmatch and19tests passed; syntheticreport correctlyincomplete."
+  ],
+  "remaining": [
+    "Review finalsource-bound evaluation, independentreview andhostedCI beforemerge.",
+    "After separate rolloutauthorization: applymigrations0006/0007 toprojectD1,configurebrowserbinding/existingR2binding/secrets andreleaseflag, preserve liveobservability/frontendassets.",
+    "Reserve measurednativevalidationbudget andverifyprovider list/history/close shape andvisibility,publicegress,realproductquality,CPU perstage and modelquality beforeactivation.",
+    "Known compatibilitylimits: cookie-settingmainredirects failclosed, subresourceredirects/unsupportedcontrols leavecoverage incomplete, oversizedirreducibleAIrequests fail explicitly.",
+    "Source/R2capturebounds andoptionalresource deadlines stilllimit realpages; complete realpagereports are notproven."
+  ],
+  "resumeCommands": [
+    "cd /private/tmp/aeo-browser-product-retrieval",
+    "npm ci --ignore-scripts",
+    "npm run test:browser-build",
+    "npm run evaluate -- --change browser-product-retrieval --base origin/codex/complete-report-assessment",
+    "npm run evaluate -- --change browser-application-controls --base origin/codex/complete-report-assessment",
+    "EVALUATION_BASE=origin/codex/complete-report-assessment npm run ci:gate"
+  ]
+}

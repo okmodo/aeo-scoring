@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Resume deterministic scoring after a browser capture has been persisted.",
+  "interruptionPoint": "Synthetic browser capture stored as retained-capture.json; scoring has not run in the new agent session.",
+  "files": {
+    "capture": "backend/fixtures/browser-product/retained-capture.json",
+    "expected": "backend/fixtures/browser-product/replay-report.json",
+    "scorer": "backend/scoring.mjs",
+    "tests": [
+      "backend/browser-scoring.test.mjs",
+      "backend/browser-workflow-service.test.mjs",
+      "backend/browser-allowance.test.mjs"
+    ]
+  },
+  "constraints": [
+    "No live browser, model, network, merge or deployment. Use only this export and task source files; no prior conversation.",
+    "Keep Structure40/Content60,60% allowance ceilings andCPU1000 unchanged. Frontend and unrelated services untouched.",
+    "Unknown session closure must remain held; no reservation may be released as zero unless launch was provably unstarted."
+  ],
+  "remaining": [
+    "Read retained JSON and call scoreAudit(snapshot,extracted,{initialExtracted:snapshot.browser.initialExtracted}); compare exact result with frozen expected JSON.",
+    "Verify initial capture omits rendered product prose while rendered extraction retains it; source schema is not replaced by client-added schema.",
+    "Run the three named test files under Node24, review single claim/no-refetch behavior and explain the absent facts that keep this synthetic score incomplete."
+  ],
+  "resumeCommands": [
+    "node --test backend/browser-scoring.test.mjs backend/browser-workflow-service.test.mjs backend/browser-allowance.test.mjs"
+  ],
+  "expectedStatus": "incomplete",
+  "expectedScore": null
+}

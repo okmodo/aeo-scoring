@@ -1,0 +1,937 @@
+{
+  "status": "incomplete",
+  "score": null,
+  "earnedPoints": 20.488095238095237,
+  "rubricVersion": "2.0.0",
+  "engineVersion": "2.1.0",
+  "categoryVersion": "1.2.0",
+  "category": null,
+  "productName": "Trail Vest",
+  "variant": null,
+  "market": null,
+  "currency": null,
+  "criteria": [
+    {
+      "id": "S1",
+      "pillar": "structure",
+      "maxPoints": 13,
+      "points": 11.916666666666666,
+      "complete": true,
+      "subchecks": [
+        {
+          "id": "S1.delivery",
+          "maxPoints": 4,
+          "availablePoints": 4.333333333333333,
+          "status": "measured",
+          "fraction": 1,
+          "points": 4.333333333333333,
+          "evidenceIds": [
+            "e12"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S1.readability",
+          "maxPoints": 3,
+          "availablePoints": 3.25,
+          "status": "measured",
+          "fraction": 1,
+          "points": 3.25,
+          "evidenceIds": [
+            "e13"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S1.scope",
+          "maxPoints": 3,
+          "availablePoints": 3.25,
+          "status": "measured",
+          "fraction": 1,
+          "points": 3.25,
+          "evidenceIds": [
+            "e14"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S1.configuration",
+          "maxPoints": 2,
+          "availablePoints": 2.1666666666666665,
+          "status": "measured",
+          "fraction": 0.5,
+          "points": 1.0833333333333333,
+          "evidenceIds": [
+            "e15"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S1.supporting-access",
+          "maxPoints": 1,
+          "availablePoints": 0,
+          "status": "not_applicable",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [
+            "e16"
+          ],
+          "reason": "Complete source inspection found no referenced guides, specifications, or policies."
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "pillar": "structure",
+      "maxPoints": 9,
+      "points": 4,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "S2.syntax",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "measured",
+          "fraction": 1,
+          "points": 2,
+          "evidenceIds": [
+            "e1"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S2.entity",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "measured",
+          "fraction": 1,
+          "points": 2,
+          "evidenceIds": [
+            "e2"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S2.offer",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e3"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S2.identifiers",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Identifier applicability or assignment was not established."
+        },
+        {
+          "id": "S2.variants",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e4"
+          ],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "pillar": "structure",
+      "maxPoints": 9,
+      "points": 2.5714285714285716,
+      "complete": true,
+      "subchecks": [
+        {
+          "id": "S3.identity",
+          "maxPoints": 2,
+          "availablePoints": 2.5714285714285716,
+          "status": "measured",
+          "fraction": 1,
+          "points": 2.5714285714285716,
+          "evidenceIds": [
+            "e8"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S3.price",
+          "maxPoints": 3,
+          "availablePoints": 3.857142857142857,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e9"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S3.availability",
+          "maxPoints": 2,
+          "availablePoints": 2.5714285714285716,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e10"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S3.optional-claims",
+          "maxPoints": 2,
+          "availablePoints": 0,
+          "status": "not_applicable",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [
+            "e11"
+          ],
+          "reason": "The completely inspected associated Product supplies no optional claim groups."
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "pillar": "structure",
+      "maxPoints": 3,
+      "points": 0.5,
+      "complete": true,
+      "subchecks": [
+        {
+          "id": "S4.title",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "measured",
+          "fraction": 0.5,
+          "points": 0.5,
+          "evidenceIds": [
+            "e5"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S4.organization",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e6"
+          ],
+          "reason": null
+        },
+        {
+          "id": "S4.image-alternatives",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e7"
+          ],
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "pillar": "structure",
+      "maxPoints": 2,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "S5.search",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        },
+        {
+          "id": "S5.ai-retrieval",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "pillar": "structure",
+      "maxPoints": 2,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "S6.usable",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        },
+        {
+          "id": "S6.inclusion",
+          "maxPoints": 1,
+          "availablePoints": 1,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        }
+      ]
+    },
+    {
+      "id": "S7",
+      "pillar": "structure",
+      "maxPoints": 1,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "S7.identity",
+          "maxPoints": 0.5,
+          "availablePoints": 0.5,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        },
+        {
+          "id": "S7.links",
+          "maxPoints": 0.5,
+          "availablePoints": 0.5,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "pillar": "structure",
+      "maxPoints": 1,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "S8.context",
+          "maxPoints": 0.5,
+          "availablePoints": 0.5,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        },
+        {
+          "id": "S8.guidance",
+          "maxPoints": 0.5,
+          "availablePoints": 0.5,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "Available inspection does not establish this check."
+        }
+      ]
+    },
+    {
+      "id": "C1",
+      "pillar": "content",
+      "maxPoints": 10,
+      "points": 1.5,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "C1.identity",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "measured",
+          "fraction": 0.5,
+          "points": 1.5,
+          "evidenceIds": [
+            "e17"
+          ],
+          "reason": null
+        },
+        {
+          "id": "C1.explanation",
+          "maxPoints": 4,
+          "availablePoints": 4,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The product text may describe a product explanation in wording this rule cannot interpret."
+        },
+        {
+          "id": "C1.configuration",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The product text may describe configuration and included items in wording this rule cannot interpret."
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "pillar": "content",
+      "maxPoints": 20,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "C2.essential",
+          "maxPoints": 14,
+          "availablePoints": 14,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C2.supporting",
+          "maxPoints": 6,
+          "availablePoints": 6,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "pillar": "content",
+      "maxPoints": 10,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "C3.price",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The product text may describe price in wording this rule cannot interpret."
+        },
+        {
+          "id": "C3.availability",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The product text may describe availability in wording this rule cannot interpret."
+        },
+        {
+          "id": "C3.shipping",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C3.returns",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "pillar": "content",
+      "maxPoints": 10,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "C4.intended-use",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C4.compatibility",
+          "maxPoints": 3,
+          "availablePoints": 3,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C4.limitations",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C4.selection",
+          "maxPoints": 2,
+          "availablePoints": 2,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        }
+      ]
+    },
+    {
+      "id": "C5",
+      "pillar": "content",
+      "maxPoints": 10,
+      "points": 0,
+      "complete": false,
+      "subchecks": [
+        {
+          "id": "C5.consistency",
+          "maxPoints": 5,
+          "availablePoints": 5,
+          "status": "not_measured",
+          "fraction": null,
+          "points": null,
+          "evidenceIds": [],
+          "reason": "The evidence does not establish this assessment."
+        },
+        {
+          "id": "C5.claim-support",
+          "maxPoints": 5,
+          "availablePoints": 5,
+          "status": "measured",
+          "fraction": 0,
+          "points": 0,
+          "evidenceIds": [
+            "e18",
+            "e19"
+          ],
+          "reason": null
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected structured product markup",
+      "excerpt": "Recognized structured markup parses with supported value formats."
+    },
+    {
+      "id": "e2",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected structured product markup",
+      "excerpt": "A Product is uniquely associated with the audited page."
+    },
+    {
+      "id": "e3",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected structured product markup",
+      "excerpt": "The associated Product has no Offer relationship."
+    },
+    {
+      "id": "e4",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected structured product markup",
+      "excerpt": "Variant controls were observed without a structured family relationship."
+    },
+    {
+      "id": "e5",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected product HTML",
+      "excerpt": "Complete title and product-heading inspection found incomplete or absent labels."
+    },
+    {
+      "id": "e6",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected product HTML",
+      "excerpt": "Complete scoped HTML inspection found no informative section headings."
+    },
+    {
+      "id": "e7",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "rendered:element:3",
+      "excerpt": "0 of 1 inspected product images have useful text alternatives."
+    },
+    {
+      "id": "e8",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "product h1; associated Product.name",
+      "excerpt": "Raw product heading: Trail Vest; structured name: Trail Vest."
+    },
+    {
+      "id": "e9",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected product HTML",
+      "excerpt": "Complete raw and associated structured-price inspection found a missing comparison component."
+    },
+    {
+      "id": "e10",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "inspected product HTML",
+      "excerpt": "Complete raw and structured-availability inspection found a missing comparison component."
+    },
+    {
+      "id": "e11",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "associated Product",
+      "excerpt": "No optional structured claim groups supplied."
+    },
+    {
+      "id": "e12",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "initial product HTML",
+      "excerpt": "Product content is present in the initial HTML."
+    },
+    {
+      "id": "e13",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "initial product HTML",
+      "excerpt": "Observed product information is available as ordinary source text."
+    },
+    {
+      "id": "e14",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "initial product HTML",
+      "excerpt": "A single source product region contains the product heading and text."
+    },
+    {
+      "id": "e15",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "initial product HTML",
+      "excerpt": "A selection is present, but its association with displayed values is not established."
+    },
+    {
+      "id": "e16",
+      "url": "https://shop.example/trail-vest",
+      "method": "raw",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "initial product HTML",
+      "excerpt": "Complete source inspection found no referenced guides, specifications, or policies."
+    },
+    {
+      "id": "e17",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "product region",
+      "excerpt": "Product heading: Trail Vest"
+    },
+    {
+      "id": "e18",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "rendered:element:2",
+      "excerpt": "Warm recycled fleece."
+    },
+    {
+      "id": "e19",
+      "url": "https://shop.example/trail-vest",
+      "method": "rendered",
+      "kind": "derived_observation",
+      "observedAt": "2026-11-17T12:00:00.000Z",
+      "location": "claims: rendered:element:2",
+      "excerpt": "measured fraction 0. Warm recycled fleece."
+    }
+  ],
+  "fixes": [
+    {
+      "id": "improve-s3",
+      "title": "Align structured data with product content",
+      "owner": "Web developer",
+      "checkIds": [
+        "S3.price",
+        "S3.availability"
+      ],
+      "evidenceIds": [
+        "e9",
+        "e10"
+      ],
+      "recoverablePoints": 6.428571428571429,
+      "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+    },
+    {
+      "id": "improve-s4",
+      "title": "Improve product labels and organization",
+      "owner": "Content editor",
+      "checkIds": [
+        "S4.title",
+        "S4.organization",
+        "S4.image-alternatives"
+      ],
+      "evidenceIds": [
+        "e5",
+        "e6",
+        "e7"
+      ],
+      "recoverablePoints": 2.5,
+      "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+    },
+    {
+      "id": "improve-s1",
+      "title": "Make product information accessible in source HTML",
+      "owner": "Web developer",
+      "checkIds": [
+        "S1.configuration"
+      ],
+      "evidenceIds": [
+        "e15"
+      ],
+      "recoverablePoints": 1.0833333333333333,
+      "condition": "If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions."
+    },
+    {
+      "id": "improve-s2",
+      "title": "Repair product structured data",
+      "owner": "Web developer",
+      "checkIds": [
+        "S2.offer",
+        "S2.identifiers",
+        "S2.variants"
+      ],
+      "evidenceIds": [
+        "e3",
+        "e4"
+      ],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-s5",
+      "title": "Complete the S5 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "S5.search",
+        "S5.ai-retrieval"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-s6",
+      "title": "Complete the S6 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "S6.usable",
+        "S6.inclusion"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-s7",
+      "title": "Complete the S7 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "S7.identity",
+        "S7.links"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-s8",
+      "title": "Complete the S8 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "S8.context",
+        "S8.guidance"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-c1",
+      "title": "Clarify product identity and explanation",
+      "owner": "Content editor",
+      "checkIds": [
+        "C1.identity",
+        "C1.explanation",
+        "C1.configuration"
+      ],
+      "evidenceIds": [
+        "e17"
+      ],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-c2",
+      "title": "Complete the C2 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "C2.essential",
+        "C2.supporting"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-c3",
+      "title": "Complete the C3 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "C3.price",
+        "C3.availability",
+        "C3.shipping",
+        "C3.returns"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-c4",
+      "title": "Complete the C4 assessment",
+      "owner": "Audit reviewer",
+      "checkIds": [
+        "C4.intended-use",
+        "C4.compatibility",
+        "C4.limitations",
+        "C4.selection"
+      ],
+      "evidenceIds": [],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    },
+    {
+      "id": "improve-c5",
+      "title": "Resolve contradictions and support material claims",
+      "owner": "Product specialist",
+      "checkIds": [
+        "C5.consistency",
+        "C5.claim-support"
+      ],
+      "evidenceIds": [
+        "e18",
+        "e19"
+      ],
+      "recoverablePoints": null,
+      "condition": "Complete the affected evidence inspections before recovery can be calculated."
+    }
+  ],
+  "coverage": {
+    "notApplicable": 2,
+    "measured": 16,
+    "notMeasured": 22,
+    "total": 40,
+    "category": null,
+    "extraction": {
+      "html": true,
+      "jsonLdTruncated": false
+    },
+    "limitations": [
+      "Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit."
+    ]
+  }
+}

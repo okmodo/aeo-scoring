@@ -357,6 +357,65 @@ async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
   } finally { clearTimeout(timer); signal.removeEventListener('abort', abort); }
 }
 
+// Inspect optional supporting resources without fetching the product document.
+// The supplied fetchBounded transport owns the network boundary and deadline.
+export async function inspectSupportingResources(snapshot, { fetchBounded, signal, maxRobotsBytes = DEFAULTS.maxRobotsBytes, observeSitemap = true, observeGuides = true, HTMLRewriter } = {}) {
+  if (typeof fetchBounded !== 'function' || !signal || !Number.isSafeInteger(maxRobotsBytes) || maxRobotsBytes < 1) throw failure('invalid_limits', 'Invalid supporting resource transport or limits');
+  const url = checkedUrl(snapshot.url);
+  const budget = { work: 0 };
+  const options = { observeSitemap, observeGuides, HTMLRewriter };
+  // Robots is optional evidence and has its own short deadline within the
+  // overall retrieval deadline. It never controls which resources are fetched.
+  const robotsUrl = new URL('/robots.txt', url);
+  const optional = new AbortController();
+  const abortRobots = () => optional.abort();
+  signal.addEventListener('abort', abortRobots, { once: true });
+  if (signal.aborted) abortRobots();
+  const robotsTimer = setTimeout(abortRobots, 500);
+  let policy = null, declarations = [], httpStatus = null, missingPolicy = false;
+  try {
+    const robotsResponse = await fetchBounded(robotsUrl, optional.signal);
+    httpStatus = robotsResponse.status;
+    missingPolicy = httpStatus === 404 || httpStatus === 410;
+    if (missingPolicy || httpStatus !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) discard(robotsResponse);
+    else {
+      const text = await boundedResponse(robotsResponse, maxRobotsBytes, optional.signal, { fatal: true });
+      if (options.observeSitemap === true) declarations = sitemapDeclarations(text);
+      try { policy = parseRobots(text); } catch { /* Unverified policy remains unmeasured. */ }
+    }
+  } catch { /* Optional evidence must not fail a completed page retrieval. */ }
+  finally {
+    clearTimeout(robotsTimer);
+    signal.removeEventListener('abort', abortRobots);
+  }
+  const observations = scoredBots.map(bot => {
+    let status = 'not_measured';
+    if (missingPolicy && bot.robots.missingFilePolicy === 'allow') status = 'allowed';
+    else if (policy !== null && bot.robots.respectsRules === true) {
+      try { status = robotsAllowed(policy, url, bot.userAgentToken, budget) ? 'allowed' : 'disallowed'; }
+      catch (error) { if (error.code !== 'robots_unknown' && !(error instanceof RangeError)) throw error; }
+    }
+    return { botId: bot.id, status };
+  });
+  snapshot.crawlerPolicy = { version: crawlers.version, url: robotsUrl.toString(), httpStatus, observations };
+  if (options.observeSitemap === true) {
+    try { const html = snapshot.extracted?.productHtml;
+      const associated = html?.structuredRecords?.filter(item=>item.complete && item.record?.['@type']==='Product' &&
+        typeof item.record.name==='string' && item.record.name.trim().replace(/\s+/g,' ')===html.identity?.mainH1);
+      const productPartition = html?.complete === true && html.platform === 'bigcommerce.stencil' && associated?.length === 1;
+      snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal, productPartition }); }
+    catch { /* Optional evidence must not fail a completed page retrieval. */ }
+  }
+  if (options.observeGuides === true) {
+    try { snapshot.guides = await inspectGuides({ url, fetchBounded, signal }); }
+    catch { snapshot.guides = { llms: null, agents: null }; }
+  }
+  if (options.observeGuides === true && snapshot.extracted?.productHtml) {
+    snapshot.policies = await inspectPolicies({ url, links: snapshot.extracted.productHtml.discoveryLinks, fetchBounded, signal, Rewriter: options.HTMLRewriter || globalThis.HTMLRewriter });
+  }
+  return snapshot;
+}
+
 export async function retrieve(input, options = {}) {
   const { egress, maxBytes, maxStreamBytes, maxRobotsBytes, timeoutMs, maxRedirects } = { ...DEFAULTS, ...options };
   if (!egress || typeof egress.fetch !== 'function') throw failure('egress_required', 'Trusted public-network egress required');
@@ -365,7 +424,6 @@ export async function retrieve(input, options = {}) {
   let url = checkedUrl(input);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const budget = { work: 0 };
   const fetchBounded = async (target, signal = controller.signal) => {
     try {
       const pending = Promise.resolve(egress.fetch(target.toString(), { method: 'GET', redirect: 'manual', headers: { 'user-agent': 'AEOAuditBot/1.0', accept: 'text/html,text/plain;q=0.9' }, signal }));
@@ -405,55 +463,7 @@ export async function retrieve(input, options = {}) {
           for (const chunk of captured) { snapshot.rawHtml.set(chunk, offset); offset += chunk.byteLength; }
         }
       }
-      // Robots is optional evidence and has its own short deadline within the
-      // overall retrieval deadline. It never controls which resources are fetched.
-      const robotsUrl = new URL('/robots.txt', url);
-      const optional = new AbortController();
-      const abortRobots = () => optional.abort();
-      controller.signal.addEventListener('abort', abortRobots, { once: true });
-      if (controller.signal.aborted) abortRobots();
-      const robotsTimer = setTimeout(abortRobots, 500);
-      let policy = null, declarations = [], httpStatus = null, missingPolicy = false;
-      try {
-        const robotsResponse = await fetchBounded(robotsUrl, optional.signal);
-        httpStatus = robotsResponse.status;
-        missingPolicy = httpStatus === 404 || httpStatus === 410;
-        if (missingPolicy || httpStatus !== 200 || !/^text\/plain(?:\s*;|\s*$)/i.test(robotsResponse.headers.get('content-type') || '')) discard(robotsResponse);
-        else {
-          const text = await boundedResponse(robotsResponse, maxRobotsBytes, optional.signal, { fatal: true });
-          if (options.observeSitemap === true) declarations = sitemapDeclarations(text);
-          try { policy = parseRobots(text); } catch { /* Unverified policy remains unmeasured. */ }
-        }
-      } catch { /* Optional evidence must not fail a completed page retrieval. */ }
-      finally {
-        clearTimeout(robotsTimer);
-        controller.signal.removeEventListener('abort', abortRobots);
-      }
-      const observations = scoredBots.map(bot => {
-        let status = 'not_measured';
-        if (missingPolicy && bot.robots.missingFilePolicy === 'allow') status = 'allowed';
-        else if (policy !== null && bot.robots.respectsRules === true) {
-          try { status = robotsAllowed(policy, url, bot.userAgentToken, budget) ? 'allowed' : 'disallowed'; }
-          catch (error) { if (error.code !== 'robots_unknown' && !(error instanceof RangeError)) throw error; }
-        }
-        return { botId: bot.id, status };
-      });
-      snapshot.crawlerPolicy = { version: crawlers.version, url: robotsUrl.toString(), httpStatus, observations };
-      if (options.observeSitemap === true) {
-        try { const html = snapshot.extracted?.productHtml;
-          const associated = html?.structuredRecords?.filter(item=>item.complete && item.record?.['@type']==='Product' &&
-            typeof item.record.name==='string' && item.record.name.trim().replace(/\s+/g,' ')===html.identity?.mainH1);
-          const productPartition = html?.complete === true && html.platform === 'bigcommerce.stencil' && associated?.length === 1;
-          snapshot.sitemap = await inspectSitemap({ url, declarations, fetchBounded, signal: controller.signal, productPartition }); }
-        catch { /* Optional evidence must not fail a completed page retrieval. */ }
-      }
-      if (options.observeGuides === true) {
-        try { snapshot.guides = await inspectGuides({ url, fetchBounded, signal: controller.signal }); }
-        catch { snapshot.guides = { llms: null, agents: null }; }
-      }
-      if (options.observeGuides === true && snapshot.extracted?.productHtml) {
-        snapshot.policies = await inspectPolicies({ url, links: snapshot.extracted.productHtml.discoveryLinks, fetchBounded, signal: controller.signal, Rewriter: options.HTMLRewriter || globalThis.HTMLRewriter });
-      }
+      await inspectSupportingResources(snapshot, {fetchBounded, signal:controller.signal, maxRobotsBytes, observeSitemap:options.observeSitemap === true, observeGuides:options.observeGuides === true, HTMLRewriter:options.HTMLRewriter});
       return snapshot;
     }
   } finally { clearTimeout(timer); }
