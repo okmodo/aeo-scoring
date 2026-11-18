@@ -5,7 +5,7 @@ const technicalCaps = new Set([
   'S2.offer', 'S2.identifiers', 'S2.variants',
   'S3.price', 'S3.availability', 'S7.links', 'S8.guidance',
 ]);
-const requireTechnicalMeasurement = new Set(['S1.delivery', 'S1.readability', 'S1.supporting-access', 'S3.price', 'S3.availability', 'S7.links', 'S8.guidance']);
+const requireTechnicalMeasurement = new Set(['S1.delivery', 'S1.readability', 'S1.supporting-access', 'S2.entity', 'S2.offer', 'S2.identifiers', 'S2.variants', 'S3.price', 'S3.availability', 'S7.links', 'S8.guidance']);
 const semanticChecks = new Set([
   'S1.delivery', 'S1.readability', 'S1.scope', 'S1.configuration', 'S1.supporting-access',
   'S2.entity', 'S2.offer', 'S2.identifiers', 'S2.variants',
@@ -37,7 +37,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
       checks[id] = { ...finding, evidence: ids[0], evidenceIds: [...new Set(ids)] };
       continue;
     }
-    const aggregate = id.startsWith('C2.') || id.startsWith('C4.');
+    const aggregate = id.startsWith('C2.') || id.startsWith('C4.') || id.startsWith('C5.');
     if (finding.status !== 'measured' || typeof finding.fraction !== 'number' ||
         !Number.isFinite(finding.fraction) || finding.fraction < 0 || finding.fraction > 1 ||
         (!aggregate && ![0, 0.5, 1].includes(finding.fraction))) continue;
