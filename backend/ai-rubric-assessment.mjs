@@ -105,9 +105,28 @@ function validateClaimInspections(bundle, inventory, sections) {
     for (const item of section.claims) {
       if (!inventory.claims.some(c=>c.id===item?.id) || ids.has(item.id) || !['present','absent','unknown'].includes(item.status)) fail();
       ids.add(item.id); const evidence=refs(bundle,item.evidence);
-      if (evidence.some(e=>e.sourceId!==section.sourceId) || (item.status==='present' && !evidence.length)) fail();
+      if (evidence.some(e=>e.sourceId!==section.sourceId) || (item.status==='present' && !evidence.length) || !Array.isArray(item.references) || item.references.length>30) fail();
+      for (const ref of item.references) {
+        if (!text(ref?.quote,1000) || (ref.target!==null && !text(ref.target,1000))) fail();
+        refs(bundle,[{sourceId:section.sourceId,quote:ref.quote}]);
+      }
     }
   }
+}
+function supportReferenceCaptured(bundle, section, reference) {
+  if (!reference.target) return false;
+  try {
+    const from=bundle.sources.find(s=>s.id===section.sourceId);
+    if (!from || !from.text.includes(reference.target)) return false;
+    const target=new URL(reference.target,from.url); target.hash='';
+    if (!['http:','https:'].includes(target.protocol)) return false;
+    return bundle.sources.some(source=>{
+      const url=new URL(source.url); url.hash='';
+      if (url.href!==target.href) return false;
+      if (source.scope==='product') return bundle.coverage.complete===true;
+      return bundle.coverage.scopes?.[source.scope]===true;
+    });
+  } catch { return false; }
 }
 function assessC5(bundle, inspections, raw, supportInspections) {
   const unknown=reason=>({status:'not_measured',reason});
@@ -127,7 +146,7 @@ function assessC5(bundle, inspections, raw, supportInspections) {
         const matches=raw.claims.filter(x=>x?.id===candidate.id); if (matches.length!==1) fail(); const item=matches[0]; seen.add(item.id);
         if (item.status!=='measured' || ![0,0.5,1].includes(item.fraction) || !text(item.reason)) fail();
         const evidence=refs(bundle,item.evidence); if (!evidence.some(e=>e.sourceId===candidate.evidence.sourceId && e.quote===candidate.evidence.quote)) fail();
-        if (item.fraction===0 && !supportInspections.every(section=>section.claims.find(x=>x.id===candidate.id)?.status==='absent')) fail();
+        if (item.fraction===0 && !supportInspections.every(section=>{const inspection=section.claims.find(x=>x.id===candidate.id); return inspection?.status==='absent' && inspection.references.every(ref=>supportReferenceCaptured(bundle,section,ref));})) fail();
         if (item.fraction>0 && !evidence.some(e=>supportInspections.some(section=>section.claims.some(x=>x.id===candidate.id && x.status==='present' && x.evidence.some(r=>r.sourceId===e.sourceId && r.quote===e.quote))))) fail();
         return {id:item.id,status:'measured',fraction:item.fraction,reason:item.reason,evidence};
       });
@@ -142,6 +161,7 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       if (!Array.isArray(group.candidateIds) || group.candidateIds.length<2 || group.candidateIds.length>16 || !text(group.context,300) || group.status!=='measured' || ![0,0.5,1].includes(group.fraction) || !text(group.reason)) fail();
       const candidates=group.candidateIds.map(id=>{if (used.has(id)) fail(); used.add(id); const candidate=inventory.comparisons.find(c=>c.id===id); if (!candidate) fail(); return candidate;});
       const evidence=candidates.map(c=>c.evidence);
+      if (new Set(candidates.map(c=>c.field.trim().toLowerCase())).size!==1 || new Set(candidates.map(c=>c.context.trim().toLowerCase())).size!==1) fail();
       if (new Set(evidence.map(e=>`${e.sourceId}:${e.quote}`)).size<2 || !evidence.some(e=>e.scope==='product')) fail();
       if (group.fraction===1 && (!text(group.value,200) || evidence.filter(e=>e.quote.includes(group.value)).length<2)) fail();
       entries.push({status:'measured',fraction:group.fraction,reason:group.reason,evidence,context:group.context});
@@ -218,7 +238,7 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     const inventory=c5Inventory(bundle,inspections);
     const supportInspections=[];
     if (inventory.claims.length) for (const source of bundle.sources) {
-      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Inspect this entire section for relevant support or qualification for each individual claim. Return {sourceId,claims:[{id,status,evidence:[{sourceId,quote}]}]}. Include every claim once. status present requires exact support quotation from this section, absent means no relevant support here, unknown means uncertain.`,{source,claims:inventory.claims},2500)});
+      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Inspect this entire section for relevant support or qualification for each individual claim. Return {sourceId,claims:[{id,status,evidence:[{sourceId,quote}],references:[{quote,target}]}]}. For every claim list all references in this section to a potentially relevant substantiation source, even when its target was not captured; quote the exact reference and give its URL or null when unknown. Include every claim once. status present requires exact support quotation from this section, absent means no relevant support here, unknown means uncertain.`,{source,claims:inventory.claims},2500)});
       supportInspections.push(out);
     }
     validateClaimInspections(bundle,inventory,supportInspections);

@@ -121,10 +121,18 @@ test('all material claims receive credit individually, with support absence prov
  f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted); f.source=f.bundle.sources[0];
  const inspections=f.bundle.sources.map(source=>({sourceId:source.id,claimsComplete:true,comparisonsComplete:true,claims:source.id===f.source.id?[{quote:'Boils in 5 minutes.'},{quote:'Removes 99% of toxins.'}]:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'unknown',evidence:[]}))}));
  const one=`${f.source.id}-claim-0`, two=`${f.source.id}-claim-1`;
- const supportInspections=f.bundle.sources.map(source=>({sourceId:source.id,claims:[{id:one,status:source.id===f.source.id?'present':'absent',evidence:source.id===f.source.id?[{sourceId:source.id,quote:'Lab test measured 5 minutes.'}]:[]},{id:two,status:'absent',evidence:[]}]}));
+ const supportInspections=f.bundle.sources.map(source=>({sourceId:source.id,claims:[{id:one,references:[],status:source.id===f.source.id?'present':'absent',evidence:source.id===f.source.id?[{sourceId:source.id,quote:'Lab test measured 5 minutes.'}]:[]},{id:two,references:[],status:'absent',evidence:[]}]}));
  f.judgments.c5={claims:[{id:one,status:'measured',fraction:1,reason:'Lab test stated',evidence:[{sourceId:f.source.id,quote:'Boils in 5 minutes.'},{sourceId:f.source.id,quote:'Lab test measured 5 minutes.'}]},{id:two,status:'measured',fraction:0,reason:'No support found',evidence:[{sourceId:f.source.id,quote:'Removes 99% of toxins.'}]}],comparisons:[]};
  const options={...f,inspections,supportInspections};
  assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,options).findings['C5.claim-support'].fraction,0.5);
  supportInspections[0].claims[1].status='unknown'; assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,options).findings['C5.claim-support'].status,'not_measured');
  supportInspections[0].claims[1].status='absent'; f.judgments.c5.claims.pop(); assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,options).findings['C5.claim-support'].status,'not_measured');
+});
+test('unread claim substantiation reference withholds unsupported-claim zero',async()=>{
+ const f=await fixture(); f.snapshot.rawHtml='<h1>Solar kettle</h1><p>Removes 99% of toxins.</p><a href="/test-report">test report</a>';
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted); f.source=f.bundle.sources[0];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:s.id===f.source.id?[{quote:'Removes 99% of toxins.'}]:[],comparisons:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'unknown',evidence:[]}))}));
+ const id=`${f.source.id}-claim-0`, supportInspections=f.bundle.sources.map(s=>({sourceId:s.id,claims:[{id,status:'absent',evidence:[],references:s.id===f.source.id?[{quote:'test report',target:'/test-report'}]:[]}]}));
+ f.judgments.c5={claims:[{id,status:'measured',fraction:0,reason:'No captured support',evidence:[{sourceId:f.source.id,quote:'Removes 99% of toxins.'}]}],comparisons:[]};
+ assert.equal(validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections}).findings['C5.claim-support'].status,'not_measured');
 });
