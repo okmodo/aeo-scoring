@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "browser-api-content",
+  "task": "Replace proxied Playwright product retrieval with one native Cloudflare Browser Quick Action content request, persist complete returned rendered HTML in private R2 before assessment, and keep existing budget/scoring constraints.",
+  "scope": [
+    "backend/**",
+    "scripts/browser-build-check.mjs",
+    "docs/browser-api-content.md",
+    "docs/included-allowance-policy.md",
+    "evals/changes/browser-api-content/**"
+  ],
+  "nonGoals": [
+    "No frontend/sharedcontracts/rootdependencies orrootlockfile changes; no criterionweights/grade rules changes andno fabricatedinitial-response evidence.",
+    "No app-managed browser sessions, interception, customuseragent, perresourcefetches, manualredirect/cookiehandling orHTTPproductfallback innewcapturepath.",
+    "No increase to60%allowances/CPU1000; no paidexternalAPIs, unrelatedservice changes, publicbucket or permanentrawarchive. Historicalsessionrecords/unknownholds remainaccounted."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Call existingAUDIT_BROWSER.quickAction(content,{url,gotoOptions:{waitUntil:networkidle2,timeout:20000},actionTimeout:5000}) once peradmittedcapture. Useprovider-ownednavigation/resources. ValidateJSONsuccess/meta/finalURL/originstatus andboundedresponse; persistentirereturnedHTML upto8MiB withouttruncation beforeanyHTMLextraction/modelwork. Recordproviderfailurecodes safely.",
+      "verification": "automated",
+      "evidence": "FrozennativeResponseenvelope,lateproducttext,redirectmeta,providererrors,malformed/oversized/emptybody,deadline andnoproxy/noextra-fetch regressions."
+    },
+    {
+      "id": "O2",
+      "description": "Useaccountwidebrowserhours60%=21600000ms andconservativepre-callreservations; QuickActions billbrowserhours only. ReconciletrustedouterX-Browser-Ms-Used (notoriginheaders), retainunknowns, preserveexistinglegacyunknownholds andlocalusagefloorwithoutdoublecount. PreserveallWorkersAI/R2/D1guardsandCPU1000.",
+      "verification": "automated",
+      "evidence": "Frozenbillingheader/accountmetric,concurrency/duplicate/unknown/overrun/history-floor tests; primaryQuickActions pricing andbinding docs."
+    },
+    {
+      "id": "O3",
+      "description": "Keep24hprivateR2integrity/expiry. StoreHTMLfirst; nextassessmentinvocation derivesandretainsimmutableassessmentinputs beforeAI. Versioncache/retrievalidentity. TreatQuickActionHTMLasrenderedonly: source-onlyS1/S2 remainunmeasured whereinitialresponse unavailable, andcontentmayuselegitimatestoredrenderedobservations withoutglobalinitialcoveragegate. Neverclaimcomputedvisibility fromserializedHTML orscoremissingapplicablechecks aszero.",
+      "verification": "automated",
+      "evidence": "R2roundtrip/hash/expiry/derivedinputsreplay,legacyoracleunchanged,rendered-v-initial/no-finalscore,storeddata-access andcapture-before-parse tests."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separateplanbeforeimplementation,isolatedcodexworktreefrommerged8798453, frozeninputs, independentTerrareview,genuinefresh-agentretainedresult replay, sourceboundeval/CI. No livebrowser/modelcalls inCI orsecrets/rawmerchantdata inrepo.",
+      "verification": "human",
+      "evidence": "Commits,review,handoff/exit/run/trace andPRCI; nativeAPI+R2 verificationonlyunderreservedincludedbudget."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keepcapturetooneproviderrequestanddurablestore; assessment isseparate. Preferexistingbindingandstoragehelpers overmanualsessions ornewservices. Limitlocalbuffering anddo notaddcustombrowserbehaviors.",
+      "verification": "human",
+      "evidence": "Diff,APIrequestassertions,bundle andreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:foundations",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Retained capture representation and assessmentinput handoff change; a freshagent mustresume usingonlyexportedrenderedcapture andproof withoutlivecalls."
+  },
+  "context": "User explicitlydirected simpleCloudflareBrowserAPIrequest ->R2 afterCFUIworkedwhilecustomproxyfailed. Primarydocs confirmnativebinding.quickAction(content), noAPI token,JSONresult/meta plusouterX-Browser-Ms-Used. Workerscompatdate2026-11-05 supportsit. RenderingdoesnotestablishinitialHTML; agreedincomplete/nullscore semanticsmustremainhonest."
+}
