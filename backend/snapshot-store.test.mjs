@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSnapshotStore, MAX_HTML_BYTES, SNAPSHOT_TTL_MS } from './snapshot-store.mjs';
+import { createSnapshotStore, MAX_HTML_BYTES, MAX_RENDERED_HTML_BYTES, SNAPSHOT_TTL_MS } from './snapshot-store.mjs';
 
 function fixture() {
   let clock = 1000, deny = false, failPut = false, failArtifact = false;
@@ -10,12 +10,12 @@ function fixture() {
     async all() { return { results: [...rows.values()].filter(r => r.expires_at <= a[0]).slice(0, a[1]) }; },
     async run() {
       if (sql.startsWith('INSERT')) { if (rows.has(a[0])) return {meta:{changes:0}}; rows.set(a[0], { audit_id:a[0], object_prefix:a[1], created_at:a[2], expires_at:a[3], state:'pending' }); }
-      else if (sql.includes("SET profile_state = 'pending'") || sql.includes("SET facts_state = 'pending'")) {
-        const kind = sql.includes('profile_state') ? 'profile' : 'facts', record = rows.get(a[0]);
+      else if (sql.includes("SET profile_state = 'pending'") || sql.includes("SET facts_state = 'pending'") || sql.includes("SET inputs_state = 'pending'")) {
+        const kind = sql.includes('profile_state') ? 'profile' : sql.includes('facts_state') ? 'facts' : 'inputs', record = rows.get(a[0]);
         if (!record || record[`${kind}_state`] || record.expires_at <= a[2]) return {meta:{changes:0}};
         record[`${kind}_state`] = 'pending';
-      } else if (sql.includes("SET profile_state = 'ready'") || sql.includes("SET facts_state = 'ready'")) {
-        const kind = sql.includes('profile_state') ? 'profile' : 'facts', record = rows.get(a[0]);
+      } else if (sql.includes("SET profile_state = 'ready'") || sql.includes("SET facts_state = 'ready'") || sql.includes("SET inputs_state = 'ready'")) {
+        const kind = sql.includes('profile_state') ? 'profile' : sql.includes('facts_state') ? 'facts' : 'inputs', record = rows.get(a[0]);
         if (!record || record[`${kind}_state`] !== 'pending' || record.expires_at <= a[4]) return {meta:{changes:0}};
         Object.assign(record, {[`${kind}_state`]:'ready',[`${kind}_size`]:a[2],[`${kind}_hash`]:a[3]});
       } else if (sql.startsWith('UPDATE')) Object.assign(rows.get(a[0]), {state:'ready',html_size:a[2],html_hash:a[3],snapshot_size:a[4],snapshot_hash:a[5]});
@@ -116,4 +116,33 @@ test('assessment rejects oversized, malformed and corrupt artifacts', async () =
   await f.store.saveAssessment({auditId:input.auditId,artifact:{answer:'yes'},kind:'facts'});
   f.objects.get([...f.objects.keys()].find(k=>k.endsWith('/facts')))[0] ^= 1;
   await assert.rejects(f.store.readAssessment(input.auditId), {code:'snapshot_corrupt'});
+});
+
+
+test('rendered content retains full bytes and only its provenance permits the larger limit', async () => {
+  const f = fixture(), html = new Uint8Array(MAX_HTML_BYTES + 1).fill(65);
+  await assert.rejects(f.store.preserve({...input, rawHtml:html}), {code:'snapshot_oversize'});
+  await assert.rejects(f.store.preserve({...input, snapshot:{retrievalMethod:'browser_api_content'}, rawHtml:new Uint8Array(MAX_RENDERED_HTML_BYTES + 1)}), {code:'snapshot_oversize'});
+  await f.store.preserve({...input, snapshot:{retrievalMethod:'browser_api_content'}, rawHtml:html});
+  assert.deepEqual((await f.store.read(input.auditId)).rawHtml, html);
+  const record = f.rows.get(input.auditId);
+  const key = [...f.objects.keys()].find(k => k.endsWith('/snapshot'));
+  const bytes = new TextEncoder().encode(JSON.stringify({snapshot:{retrievalMethod:'legacy'},extracted:input.extracted}));
+  f.objects.set(key, bytes); record.snapshot_size = bytes.length;
+  record.snapshot_hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(b => b.toString(16).padStart(2,'0')).join('');
+  await assert.rejects(f.store.read(input.auditId), {code:'snapshot_corrupt'});
+});
+
+test('inputs are bounded, immutable, integrity checked, and expire with capture', async () => {
+  const f = fixture(); await f.store.preserve(input);
+  const artifact = {version:'1',snapshot:input.snapshot,extracted:input.extracted};
+  await assert.rejects(f.store.saveAssessment({auditId:input.auditId,kind:'inputs',artifact:{data:'x'.repeat(512*1024)}}), {code:'snapshot_oversize'});
+  await f.store.saveAssessment({auditId:input.auditId,kind:'inputs',artifact});
+  assert.deepEqual(await f.store.readAssessment(input.auditId,'inputs'), artifact);
+  await assert.rejects(f.store.saveAssessment({auditId:input.auditId,kind:'inputs',artifact}), {code:'snapshot_exists'});
+  const bytes = f.objects.get([...f.objects.keys()].find(k => k.endsWith('/inputs'))); bytes[0] ^= 1;
+  await assert.rejects(f.store.readAssessment(input.auditId,'inputs'), {code:'snapshot_corrupt'});
+  f.advance(SNAPSHOT_TTL_MS);
+  await assert.rejects(f.store.readAssessment(input.auditId,'inputs'), {code:'snapshot_expired'});
+  await f.store.cleanup(); assert.equal(f.objects.size,0);
 });

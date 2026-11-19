@@ -69,3 +69,20 @@ test('browser product sources use scoped visible extraction and only associated 
     assert.ok(!(await prepareAssessmentSources(bad,extracted)).sources.some(s=>s.kind==='structured_product'));
   }
 });
+
+test('content API capture retains one rendered HTML document with replayable provenance',async()=>{
+  const html='<main><h1>Example</h1><p>Product detail</p></main>';
+  const snapshot={url,retrievalMethod:'browser_api_content',rawHtml:html,browser:{version:'browser-content-v1',captureType:'content-api',initialExtracted:{productHtml:null,jsonLd:[],coverage:{html:false}},renderedHtml:html,coverage:{complete:true,initialAvailable:false,initialLimited:false,renderedLimited:false}}};
+  const extracted={productHtml:{blocks:[{text:'Product detail',location:'visible block'}]}};
+  const bundle=await prepareAssessmentSources(snapshot,extracted);
+  assert.equal(bundle.coverage.complete,true); assert.equal(bundle.coverage.initial,false);
+  assert.equal(bundle.sources.filter(s=>s.kind==='html').length,1);
+  assert.equal(bundle.sources.find(s=>s.kind==='html').origin,'rendered');
+  assert.ok(!bundle.sources.some(s=>s.origin==='initial' || s.kind==='structured_product'));
+  assert.ok(!bundle.sources.filter(s=>s.kind==='metadata').some(s=>s.text.includes(html)));
+  assert.match(bundle.sources.find(s=>s.kind==='text').location,/parsed rendered HTML/);
+  assert.equal((await prepareAssessmentSources(structuredClone(snapshot),structuredClone(extracted))).sourceDigest,bundle.sourceDigest);
+  await assert.rejects(prepareAssessmentSources({...snapshot,browser:{...snapshot.browser,renderedHtml:'different'}},extracted),/Invalid rendered-only/);
+  const large='x'.repeat(4*1024*1024+1);
+  await assert.rejects(prepareAssessmentSources({...snapshot,rawHtml:large,browser:{...snapshot.browser,renderedHtml:large}},extracted),/Assessment source limit/);
+});

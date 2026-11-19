@@ -8,7 +8,8 @@ import { assessWithContentFacts, CONTENT_FACTS_CALIBRATION_APPROVED, CONTENT_FAC
 import { createPipelineState, PIPELINE_VERSION } from './pipeline-state.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
 import { createR2AllowanceGuard } from './allowance-r2.mjs';
-import { createBrowserWorkflow, BROWSER_RETRIEVAL_VERSION } from './browser-workflow.mjs';
+import { createBrowserWorkflow } from './browser-workflow.mjs';
+import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
 
 const ROUTE = '/api/v1/audits';
@@ -235,7 +236,7 @@ export function createAuditService({
       if (encoding.encode(JSON.stringify(report)).byteLength > REPORT_LIMIT) throw new Error('Report exceeds storage limit');
     } catch (error) {
       if (pipeline) {
-        try { await pipeline.record(stage, 'failed', stage === 'retrieval' ? 'retrieval_failed' : stage === 'snapshot' ? 'snapshot_unavailable' : 'assessment_failed'); } catch { /* D1 may be unavailable; terminal report still records safe diagnostics. */ }
+        try { await pipeline.record(stage, 'failed', stage === 'retrieval' ? (/^browser_api_[a-z_]+$/.test(error?.diagnosticCode||'') ? error.diagnosticCode : 'retrieval_failed') : stage === 'snapshot' ? 'snapshot_unavailable' : 'assessment_failed'); } catch { /* D1 may be unavailable; terminal report still records safe diagnostics. */ }
       }
       if (pipeline && stage !== 'retrieval' && report) {
         report.status = 'incomplete';
@@ -358,7 +359,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
   }
   let browserFlow;
   if (db && snapshotStore && billingScopeConfigured && analyticsToken && env.AUDIT_BROWSER) {
-    try { browserFlow = createBrowserWorkflow({db, binding:env.AUDIT_BROWSER, snapshots:snapshotStore, egress, accountId, subscriptionId, token:analyticsToken}); }
+    try { browserFlow = createBrowserContentWorkflow({db, binding:env.AUDIT_BROWSER, snapshots:snapshotStore, accountId, subscriptionId, token:analyticsToken}); }
     catch { /* Invalid browser capabilities fail closed below. */ }
   }
   const service = createAuditService({

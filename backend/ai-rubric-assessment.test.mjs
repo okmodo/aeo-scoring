@@ -408,3 +408,31 @@ test('category candidates use only product sections while inspections cover ever
  assert.equal((await assessRetainedRubric({...args,AI:badAI})).status,'unavailable');
  assert.equal(calls,1);
 });
+
+test('content API rendered observations support content while initial checks remain unmeasured',async()=>{
+ const f=await fixture();
+ const html='<main><h1>Solar kettle</h1><p>Product details</p></main>';
+ f.snapshot.rawHtml=html; f.snapshot.retrievalMethod='browser_api_content';
+ f.snapshot.browser={version:'browser-content-v1',captureType:'content-api',renderedHtml:html,initialExtracted:{productHtml:null,jsonLd:[],coverage:{html:false}},coverage:{complete:true,initialAvailable:false,initialLimited:false,renderedLimited:false}};
+ f.snapshot.policies={shipping:{state:'read',url:'https://example.com/shipping',extraction:{complete:true,blocks:[{text:'Ships in two days',location:'policy'}]}}};
+ f.extracted.productHtml.blocks.push({text:'Product details',location:'parsed'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const rendered=f.bundle.sources.find(s=>s.kind==='text'&&s.text==='Product details');
+ const identity=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle');
+ f.profile.evidence=[{sourceId:identity.id,quote:'Solar kettle'}];
+ for (const id of ['S1.delivery','S2.entity','C1.identity']) {
+  const item=f.judgments.judgments.find(x=>x.id===id);
+  if (item) Object.assign(item,{status:'measured',fraction:1,reason:'Found',evidence:[{sourceId:rendered.id,quote:'Product details'}]});
+ }
+ const findings=validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections:[]}).findings;
+ assert.equal(findings['S1.delivery'].status,'not_measured');
+ assert.equal(findings['S2.entity'].status,'not_measured');
+ assert.equal(findings['C1.identity'].status,'measured');
+ const supporting=f.bundle.sources.find(s=>s.scope==='shipping' && s.kind==='text');
+ const access=f.judgments.judgments.find(x=>x.id==='S1.supporting-access');
+ Object.assign(access,{status:'measured',fraction:1,reason:'Supporting page read',evidence:[{sourceId:supporting.id,quote:'Ships in two days'}]});
+ const evaluate=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections:[]}).findings['S1.supporting-access'];
+ assert.equal(evaluate().status,'not_measured');
+ Object.assign(access,{status:'not_applicable',fraction:null,rule:'no_material_claims'});
+ assert.equal(evaluate().status,'not_measured');
+});

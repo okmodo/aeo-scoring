@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Use one native Cloudflare Browser content request and retain the HTML in R2 before assessment.",
+  "state": "Implemented native Quick Action capture, retained-input replay, rendered-only provenance and account usage reconciliation. Offline review complete; full evaluation, hosted CI and production rollout recorded separately.",
+  "decisions": [
+    "One existing AUDIT_BROWSER.quickAction content call; provider owns navigation/resources. No additional token or service.",
+    "Persist full returned rendered HTML before extraction; next invocation reads R2, derives and retains immutable inputs. R2 remains private with 24-hour retention.",
+    "Capture permits 8 MiB decoded HTML subject to a separate 16 MiB JSON transport bound. Highly escaped envelopes can fail before storage. Existing 4 MiB aggregate model-source bound remains explicit; no truncation or increased model budget.",
+    "Rendered-only HTML cannot establish initial response evidence; S1/S2 are deterministically unmeasured without initial coverage. Criterion weights are unchanged.",
+    "Quick Actions use browser hours only. Trusted outer X-Browser-Ms-Used settles conservative holds; unknowns remain held. Old legacy admission is blocked after the account switches to started Quick Actions, while legacy cleanup remains possible."
+  ],
+  "constraints": [
+    "Preserve all 60% included-allowance limits and 1,000 ms CPU cap, existing authentication/release flags/monitoring/hourly cron.",
+    "No frontend, shared dependencies, merchant-site or unrelated Cloudflare service changes; no native browser/model calls in CI.",
+    "Accepted analytics sampling/reporting delay remains; client timeout is not a provider billing hard cap."
+  ],
+  "completed": [
+    "Separate plan a980920 committed before implementation; Terra implementation and independent review.",
+    "Frozen provider envelope, R2-first boundary tests, private retained inputs, old/new interlock and deterministic source guards."
+  ],
+  "remaining": [
+    "Finish source-bound evaluation/fresh-agent exit and hosted CI; open PR against codex/complete-report-assessment.",
+    "Apply project-only migrations 0008/0009 before authorized deployment; preserve active runtime bindings and secrets rather than copying an incomplete example config.",
+    "After deployment, verify one guarded real URL capture and R2 integrity; native merchant parity/CPU consumption is not established by mocks. User requested deployment before further merchant testing."
+  ],
+  "resumeCommands": [
+    "node evals/changes/browser-api-content/export-capture.mjs",
+    "npm run evaluate -- --change browser-api-content --base 87984538e7a0171af6c0e84e4cdb4a027b904568",
+    "EVALUATION_BASE=87984538e7a0171af6c0e84e4cdb4a027b904568 npm run ci:gate"
+  ]
+}

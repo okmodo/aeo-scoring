@@ -1,0 +1,22 @@
+// Offline export at the R2-persisted / extraction-not-started boundary.
+import {readFileSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createSnapshotStore} from '../../../backend/snapshot-store.mjs';
+import {createBrowserContentWorkflow} from '../../../backend/browser-content-workflow.mjs';
+const frozen=JSON.parse(readFileSync(new URL('./fixtures/content-response.json',import.meta.url)));
+const dir=mkdtempSync(join(tmpdir(),'aeo-content-exit-')),dbPath=join(dir,'retained.sqlite');
+const sqlite=new DatabaseSync(dbPath);sqlite.exec(readFileSync(new URL('../../../backend/schema.sql',import.meta.url),'utf8'));
+const db={prepare(sql){return{bind(...args){const s=sqlite.prepare(sql);return{first:async()=>s.get(...args)??null,run:async()=>({meta:{changes:Number(s.run(...args).changes)}})}}}}};
+const objects=new Map();const now=Date.UTC(2026,10,18);
+const snapshots=createSnapshotStore({db,now:()=>now,bucket:{put:async(k,v)=>objects.set(k,v.slice()),get:async k=>{const v=objects.get(k);return v&&{size:v.length,body:new Response(v).body}},delete:async()=>{}},allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>({accepted:true})}});
+let calls=0;
+const guard={reserve:async()=>({accepted:true,duplicate:false}),start:async()=>({accepted:true}),settle:async()=>({accepted:true}),cancelUnstarted:async()=>({accepted:true})};
+const flow=createBrowserContentWorkflow({db,snapshots,guard,now:()=>now,binding:{quickAction:async()=>{calls++;return Response.json(frozen.body,{status:frozen.responseStatus,headers:frozen.responseHeaders})}},extractPage:async()=>{throw Error('Extraction must not start before export')}});
+const audit={id:'d9428888-122b-4c77-8d11-666666666666',url:frozen.url,createdAt:now,expiresAt:now+86400000};
+await flow.capture(audit,await flow.prepare(audit));
+writeFileSync(join(dir,'objects.json'),JSON.stringify([...objects].map(([k,v])=>[k,Buffer.from(v).toString('base64')])));
+sqlite.close();
+writeFileSync(new URL('./exit-export.json',import.meta.url),JSON.stringify({version:1,task:'Resume retained content assessment after capture and before extraction',interruptionPoint:'One mocked native content response stored in R2-compatible private objects; extraction has not run.',priorProviderCalls:calls,audit,now,dbPath,objectsPath:join(dir,'objects.json'),sourceFiles:['backend/browser-content-workflow.mjs','backend/snapshot-store.mjs','backend/schema.sql','evals/changes/browser-api-content/fixtures/content-response.json'],constraints:['Read only this export and listed clean task files; no prior chat or handoff context.','No network, native browser/model calls, production mutation, merge or deployment.','Restore DB and object bytes; instantiate fresh store and workflow, throw if quickAction is called. Inject deterministic extraction returning complete product observations. Claim ready audit, read/derive immutable inputs, then read again without re-extraction. Confirm HTML byte identity, initialAvailable false, persisted inputs ready and no additional capture.','Write observed result in exit-result.json; sourceDigest will be filled by primary agent after final source commit.'],resumeCommands:['node evals/changes/browser-api-content/export-capture.mjs']},null,2)+'\n');
+console.log(JSON.stringify({boundary:'retained',providerCalls:calls,objects:objects.size}));
