@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Default native Browser content request and production R2 verification",
+  "state": "Provider-default comparison succeeded and retained full HTML in private R2. Targeted implementation and independent Terra review complete; source-bound evaluation, hosted CI and deployment follow.",
+  "decisions": [
+    "Use exactly quickAction(content,{url}) without custom wait or actionTimeout options; preserve client28s deadline and late-response handling.",
+    "Bump retrieval identity to browser-content-v2 so cached reports from different readiness policies do not mix.",
+    "Faherty comparison succeeded with HTTP200 and product HTML; earlier custom settings returned422/6002. This does not isolate which overridden setting caused the timeout.",
+    "No retained representation, rubric, initial-response provenance, model budget or report contract change."
+  ],
+  "constraints": [
+    "Keep60% ceilings/CPU1000, privateR2/24h expiry, global/native/R2 reservation and settlement guards.",
+    "No frontend/dependency/unrelated-service changes or raw merchant HTML/secrets in Git.",
+    "No native browser/model calls in CI; accepted analytics reporting limitation remains."
+  ],
+  "completed": [
+    "Separate planning commit57446d7 before implementation in isolatedcodex branch.",
+    "Guarded provider-default request:HTTP200,1,353,581 HTML bytes,product title/schema present,2231ms charged reservation settled. R2GET SHA256 matched D1 metadata.",
+    "IndependentTerra review and13 focused tests passed; frozen default request regression."
+  ],
+  "remaining": [
+    "Finish planned evaluation/CI, merge and deploy authorized backend fix; preserve active bindings/secrets/monitoring/hourlycron/CPU1000.",
+    "Verify production URLcapture and R2hash/expiry after deployment, independently from this preview result; record native CPU where production logs available.",
+    "Delete only task-created never-deployed comparison version f22650f6-d1b6-4a52-8c4d-9f3a8d524beb after a clean version supersedes it; keep production and rollback versions."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change browser-content-defaults --base d7182ad0545b0796880495cb7c061849a9fc88aa",
+    "EVALUATION_BASE=d7182ad0545b0796880495cb7c061849a9fc88aa npm run ci:gate"
+  ]
+}

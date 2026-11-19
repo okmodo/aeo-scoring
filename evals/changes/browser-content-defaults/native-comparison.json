@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "mode": "guarded-native-preview",
+  "providerRequest": "content with url only",
+  "providerStatus": 200,
+  "originStatus": 200,
+  "htmlBytes": 1353581,
+  "htmlSha256": "323089ad6f93a3f0f18d6a9529c9b5b99be82f8241cd638437f8b2204a3fae96",
+  "r2ReadbackHashMatchesD1": true,
+  "productTitlePresent": true,
+  "productSchemaPresent": true,
+  "browserMsUsed": 2230.630615234375,
+  "settledBrowserMs": 2231,
+  "retentionMs": 86400000,
+  "priorCustomRequest": {
+    "status": 422,
+    "code": 6002,
+    "detail": "Request timed out"
+  },
+  "limitations": "Single merchant comparison, not general completeness or quality validation; exact failing override not isolated. No production CPU claim from preview. Merchant HTML and private provider metadata remain outside Git."
+}

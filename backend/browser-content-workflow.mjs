@@ -3,7 +3,7 @@ import {extract} from './retrieval.mjs';
 import {createQuickActionAllowanceGuard,QUICK_ACTION_HOLD_MS} from './quick-action-allowance.mjs';
 import {MAX_RENDERED_HTML_BYTES} from './snapshot-store.mjs';
 
-export const BROWSER_CONTENT_VERSION = 'browser-content-v1';
+export const BROWSER_CONTENT_VERSION = 'browser-content-v2';
 const encoder = new TextEncoder();
 const emptyExtraction = () => ({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
 const failure = (code,diagnosticCode) => Object.assign(new Error('Browser content capture unavailable'),{code,diagnosticCode});
@@ -46,7 +46,6 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
       const work=(async()=>{
         response=await binding.quickAction('content',{
           url:target,
-          gotoOptions:{waitUntil:'networkidle2',timeout:20000},actionTimeout:5000,
         });
         // A response proves provider-reported usage even if its body or storage
         // later fails. A missing usage header leaves the original hold intact.

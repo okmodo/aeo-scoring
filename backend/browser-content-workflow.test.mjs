@@ -8,6 +8,7 @@ const id='d9428888-122b-4c77-8d11-666666666666';
 const url='https://shop.example.com/products/shorts',time=Date.UTC(2026,10,18);
 const frozen=JSON.parse(readFileSync(new URL('../evals/changes/browser-api-content/fixtures/content-response.json',import.meta.url),'utf8'));
 const html=frozen.body.result;
+const defaults=JSON.parse(readFileSync(new URL('../evals/changes/browser-content-defaults/default-request.json',import.meta.url),'utf8'));
 const response=(result=html,options={})=>Response.json({success:true,result,meta:{finalUrl:url,status:200,title:'Everyday Shorts'},...options},{headers:{'X-Browser-Ms-Used':'2500'}});
 function fixture({provider=async()=>response(),failPut=false,failPrepare=false}={}) {
  const sqlite=new DatabaseSync(':memory:');sqlite.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
@@ -24,7 +25,9 @@ test('one native API call persists complete rendered HTML before any extraction 
  const large=html.replace('</main>','<!--'+'x'.repeat(1024*1024)+'--><p>LAST PRODUCT DETAIL</p></main>');
  const f=fixture({provider:async()=>response(large)}),grant=await f.flow.prepare(f.audit);
  await f.flow.capture(f.audit,grant);
- assert.deepEqual(f.calls,[['content',{url,gotoOptions:{waitUntil:'networkidle2',timeout:20000},actionTimeout:5000}]]);
+ assert.deepEqual(f.calls,[['content',{url}]]);
+ assert.deepEqual(Object.keys(f.calls[0][1]),defaults.expectation.optionsKeys);
+ assert.equal(f.flow.version,defaults.expectation.retrievalVersion);
  assert.equal(f.extracted,0);assert.deepEqual(f.events,['provider','store','store']);
  const retained=await f.snapshots.read(id);assert.equal(new TextDecoder().decode(retained.rawHtml),large);
  assert.equal(retained.snapshot.representation,'rendered_html');assert.deepEqual(retained.extracted,{pending:true});
