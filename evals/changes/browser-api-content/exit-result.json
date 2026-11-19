@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "browser-api-content",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/native_content_exit",
+  "sourceDigest": "0ed74412c3fbb252ecbc634089fa32891a6d4dc76f99ec1d2336cfe85ef171f9",
+  "observedContinuation": "Fresh Terra agent restored prior SQLite and R2-compatible object bytes: ready audit claimed, exact 157 HTML bytes verified, immutable inputs persisted, initialAvailable false, one extraction across two reads and zero additional quickAction calls. {\"initialWorkState\":\"ready\",\"initialInputsState\":null,\"claim\":true,\"htmlBytes\":157,\"htmlMatchesFixture\":true,\"initialAvailable\":false,\"inputsState\":\"ready\",\"extractionCalls\":1,\"quickActionCalls\":0,\"additionalObjectWrites\":[\"retained/d9428888-122b-4c77-8d11-666666666666/d9dbb65f-7d6f-4639-be14-784ccd4eb6e2/inputs\"],\"secondReadReusedInputs\":true,\"originalObjectsUnchanged\":true}",
+  "limitations": "Local SQLite and in-memory R2-compatible adapter; extraction and allowance were deterministic test doubles. No network or provider calls.",
+  "exportSha256": "c7ca64f07ca1b9b53c7e60061bbd29f8fe590a5206e9d10c068b0012c1121482",
+  "interruptionPoint": "Captured native content result persisted; extraction not started."
+}

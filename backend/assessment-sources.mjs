@@ -14,7 +14,8 @@ export async function prepareAssessmentSources(snapshot, extracted) {
   const raw = snapshot.rawHtml;
   if (!(raw instanceof Uint8Array) && typeof raw !== 'string') throw new TypeError('Missing retained HTML');
   const rawBytes = typeof raw === 'string' ? encoder.encode(raw) : raw;
-  if (rawBytes.length > 1024 * 1024) throw new RangeError('Retained HTML exceeds limit');
+  const renderedOnly = snapshot.retrievalMethod === 'browser_api_content';
+  if (rawBytes.length > (renderedOnly ? 8 : 1) * 1024 * 1024) throw new RangeError('Retained HTML exceeds limit');
   // Reject undecodable bytes instead of replacing them and claiming full inspection.
   const html = new TextDecoder('utf-8', { fatal: true }).decode(rawBytes);
   const { rawHtml, extracted: ignoredExtracted, body, ...metadata } = snapshot;
@@ -25,7 +26,8 @@ export async function prepareAssessmentSources(snapshot, extracted) {
         !browser.initialExtracted || typeof browser.initialExtracted !== 'object' || Array.isArray(browser.initialExtracted) ||
         !browser.coverage || typeof browser.coverage !== 'object') throw new TypeError('Invalid retained browser capture');
     renderedHtml = browser.renderedHtml;
-    if (encoder.encode(renderedHtml).length > 1024 * 1024) throw new RangeError('Rendered HTML exceeds limit');
+    if (encoder.encode(renderedHtml).length > (renderedOnly ? 8 : 1) * 1024 * 1024) throw new RangeError('Rendered HTML exceeds limit');
+    if (renderedOnly && (browser.coverage.initialAvailable !== false || renderedHtml !== html)) throw new TypeError('Invalid rendered-only browser capture');
     initialExtracted = browser.initialExtracted;
     const {initialExtracted: ignoredInitial, renderedHtml: ignoredRendered, ...rest} = browser;
     browserMetadata = rest;
@@ -35,33 +37,36 @@ export async function prepareAssessmentSources(snapshot, extracted) {
       if (Object.hasOwn(metadata,key)) { supportMetadata[key] = metadata[key]; delete metadata[key]; }
     }
   }
+  if (renderedOnly && browser === undefined) throw new TypeError('Invalid rendered-only browser capture');
   const documents = [
-    { kind: 'html', scope: 'product', location: 'captured initial HTML', text: html },
+    { kind: 'html', scope: 'product', location: renderedOnly ? 'captured rendered HTML' : 'captured initial HTML', text: html },
     { kind: 'metadata', scope: 'metadata', location: 'retained retrieval metadata and supporting observations', text: JSON.stringify(canonical(metadata)) },
     { kind: 'extracted', scope: 'extracted', location: 'complete retained extraction', text: JSON.stringify(canonical(extracted)) },
   ];
   if (browser !== undefined) {
     // Each source has explicit provenance so initial-document checks can exclude
     // rendered content while content checks can inspect the complete capture.
-    documents[0].origin = 'initial';
+    documents[0].origin = renderedOnly ? 'rendered' : 'initial';
     documents[1].origin = 'shared';
     documents[2].origin = 'rendered';
-    const associated = inspectProductSchema(snapshot,initialExtracted);
-    if (associated.complete && !associated.ambiguous && !associated.malformed && associated.product && !snapshot.htmlLimited && browser.coverage.initialLimited === false) {
+    const associated = renderedOnly ? null : inspectProductSchema(snapshot,initialExtracted);
+    if (associated && associated.complete && !associated.ambiguous && !associated.malformed && associated.product && !snapshot.htmlLimited && browser.coverage.initialLimited === false) {
       documents.push({kind:'structured_product',scope:'product',location:'associated initial Product schema',text:JSON.stringify(canonical(associated.product)),origin:'initial'});
     }
-    documents.push(
+    if (!renderedOnly) documents.push(
       {kind:'html',scope:'product',location:'captured rendered HTML',text:renderedHtml,origin:'rendered'},
-      {kind:'extracted',scope:'extracted',location:'complete retained initial extraction',text:JSON.stringify(canonical(initialExtracted)),origin:'initial'},
+      {kind:'extracted',scope:'extracted',location:'complete retained initial extraction',text:JSON.stringify(canonical(initialExtracted)),origin:'initial'}
+    );
+    documents.push(
       {kind:'metadata',scope:'metadata',location:'retained browser metadata',text:JSON.stringify(canonical(browserMetadata)),origin:'rendered'},
       {kind:'support',scope:'support',location:'retained supporting observations',text:JSON.stringify(canonical(supportMetadata)),origin:'shared'}
     );
   }
   // Plain excerpts supplement, rather than replace, the complete retained records.
-  for (const block of extracted.productHtml?.blocks || []) if (typeof block.text === 'string' && block.text) documents.push({ kind: 'text', scope: 'product', location: block.location || 'product extraction', text: block.text });
+  for (const block of extracted.productHtml?.blocks || []) if (typeof block.text === 'string' && block.text) documents.push({ kind: 'text', scope: 'product', location: renderedOnly ? 'parsed rendered HTML product text' : block.location || 'product extraction', text: block.text });
   if (browser !== undefined) {
     for (const [field, property, fallback] of [['headings','text','rendered heading'],['selectedControls','value','rendered selected control'],['images','alt','rendered image alternative']]) {
-      for (const item of extracted.productHtml?.[field] || []) if (typeof item[property] === 'string' && item[property]) documents.push({kind:'text',scope:'product',location:item.location || fallback,text:item[property],origin:'rendered'});
+      for (const item of extracted.productHtml?.[field] || []) if (typeof item[property] === 'string' && item[property]) documents.push({kind:'text',scope:'product',location:renderedOnly ? 'parsed rendered HTML product ' + field : item.location || fallback,text:item[property],origin:'rendered'});
     }
   }
   for (const name of ['shipping', 'returns']) {
@@ -95,8 +100,8 @@ export async function prepareAssessmentSources(snapshot, extracted) {
     }
   }
   const sourceDigest = await hash(encoder.encode(JSON.stringify(sources)));
-  const initialComplete = !snapshot.htmlLimited && rawBytes.length > 0;
-  const complete = initialComplete && (browser === undefined || (browser.coverage.complete === true && browser.coverage.initialLimited === false && browser.coverage.renderedLimited === false && renderedHtml.length > 0));
+  const initialComplete = !renderedOnly && !snapshot.htmlLimited && rawBytes.length > 0;
+  const complete = renderedOnly ? !snapshot.htmlLimited && rawBytes.length > 0 && browser.coverage.complete === true && browser.coverage.renderedLimited === false : initialComplete && (browser === undefined || (browser.coverage.complete === true && browser.coverage.initialLimited === false && browser.coverage.renderedLimited === false && renderedHtml.length > 0));
   const scopes = {product: complete};
   for (const name of ['shipping', 'returns']) scopes[name] = snapshot.policies?.[name]?.state === 'read' && snapshot.policies[name].extraction?.complete === true;
   for (const name of ['llms', 'agents']) scopes[name] = snapshot.guides?.[name + 'State'] === 'found' && typeof snapshot.guides?.[name]?.text === 'string';

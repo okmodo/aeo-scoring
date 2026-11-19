@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Resume retained content assessment after capture and before extraction",
+  "interruptionPoint": "One mocked native content response stored in R2-compatible private objects; extraction has not run.",
+  "priorProviderCalls": 1,
+  "audit": {
+    "id": "d9428888-122b-4c77-8d11-666666666666",
+    "url": "https://shop.example.com/products/shorts",
+    "createdAt": 1794960000000,
+    "expiresAt": 1795046400000
+  },
+  "now": 1794960000000,
+  "dbPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-content-exit-8mSwlH/retained.sqlite",
+  "objectsPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-content-exit-8mSwlH/objects.json",
+  "sourceFiles": [
+    "backend/browser-content-workflow.mjs",
+    "backend/snapshot-store.mjs",
+    "backend/schema.sql",
+    "evals/changes/browser-api-content/fixtures/content-response.json"
+  ],
+  "constraints": [
+    "Read only this export and listed clean task files; no prior chat or handoff context.",
+    "No network, native browser/model calls, production mutation, merge or deployment.",
+    "Restore DB and object bytes; instantiate fresh store and workflow, throw if quickAction is called. Inject deterministic extraction returning complete product observations. Claim ready audit, read/derive immutable inputs, then read again without re-extraction. Confirm HTML byte identity, initialAvailable false, persisted inputs ready and no additional capture.",
+    "Write observed result in exit-result.json; sourceDigest will be filled by primary agent after final source commit."
+  ],
+  "resumeCommands": [
+    "node evals/changes/browser-api-content/export-capture.mjs"
+  ]
+}

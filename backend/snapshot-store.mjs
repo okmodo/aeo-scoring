@@ -1,9 +1,10 @@
 // R2 objects are private bindings. D1 owns their lifecycle and association to audits.
 export const SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 export const MAX_HTML_BYTES = 1024 * 1024;
+export const MAX_RENDERED_HTML_BYTES = 8 * 1024 * 1024;
 export const MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024;
 export const MAX_ASSESSMENT_BYTES = 256 * 1024;
-const artifactLimits = Object.freeze({ profile: 32 * 1024, facts: MAX_ASSESSMENT_BYTES });
+const artifactLimits = Object.freeze({ profile: 32 * 1024, facts: MAX_ASSESSMENT_BYTES, inputs: 512 * 1024 });
 const encoder = new TextEncoder();
 const fail = code => Object.assign(new Error('Retained snapshot unavailable'), { code });
 const validId = id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
@@ -65,7 +66,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
     if (!validRecord(record)) throw fail('snapshot_corrupt');
     // R2 DeleteObject is free; caller still admits Workers and D1 costs.
     // Keep the reference until both deletes succeed; repeating either delete is safe.
-    await bucket.delete([`${record.object_prefix}/html`, `${record.object_prefix}/snapshot`, `${record.object_prefix}/profile`, `${record.object_prefix}/facts`]);
+    await bucket.delete([`${record.object_prefix}/html`, `${record.object_prefix}/snapshot`, `${record.object_prefix}/profile`, `${record.object_prefix}/facts`, `${record.object_prefix}/inputs`]);
     await db.prepare('DELETE FROM retained_snapshots WHERE audit_id = ?1 AND object_prefix = ?2').bind(record.audit_id, record.object_prefix).run();
   }
   return {
@@ -75,7 +76,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
       let json;
       const { rawHtml: ignoredRawHtml, extracted: ignoredExtracted, body: ignoredBody, ...metadata } = snapshot;
       try { json = encoder.encode(JSON.stringify({ snapshot: metadata, extracted })); } catch { throw fail('snapshot_invalid'); }
-      if (html.byteLength > MAX_HTML_BYTES || json.byteLength > MAX_SNAPSHOT_BYTES) throw fail('snapshot_oversize');
+      if (html.byteLength > (metadata.retrievalMethod === 'browser_api_content' ? MAX_RENDERED_HTML_BYTES : MAX_HTML_BYTES) || json.byteLength > MAX_SNAPSHOT_BYTES) throw fail('snapshot_oversize');
       const created = time(now), prefix = `retained/${auditId}/${crypto.randomUUID()}`;
       const htmlHash = await digest(html), snapshotHash = await digest(json);
       await guarded({ r2StorageBytes: html.byteLength + json.byteLength, r2ClassA: 2, r2ClassB: 0 }, async () => {
@@ -96,7 +97,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
       if (!record || record.state !== 'ready') throw fail('snapshot_unavailable');
       if (!validRecord(record) || record.audit_id !== auditId) throw fail('snapshot_corrupt');
       if (time(now) >= record.expires_at || time(now) < record.created_at) throw fail('snapshot_expired');
-      if (record.expires_at !== record.created_at + SNAPSHOT_TTL_MS || !Number.isSafeInteger(record.html_size) || record.html_size < 0 || record.html_size > MAX_HTML_BYTES || !Number.isSafeInteger(record.snapshot_size) || record.snapshot_size < 0 || record.snapshot_size > MAX_SNAPSHOT_BYTES || !/^[a-f0-9]{64}$/.test(record.html_hash || '') || !/^[a-f0-9]{64}$/.test(record.snapshot_hash || '')) throw fail('snapshot_corrupt');
+      if (record.expires_at !== record.created_at + SNAPSHOT_TTL_MS || !Number.isSafeInteger(record.html_size) || record.html_size < 0 || record.html_size > MAX_RENDERED_HTML_BYTES || !Number.isSafeInteger(record.snapshot_size) || record.snapshot_size < 0 || record.snapshot_size > MAX_SNAPSHOT_BYTES || !/^[a-f0-9]{64}$/.test(record.html_hash || '') || !/^[a-f0-9]{64}$/.test(record.snapshot_hash || '')) throw fail('snapshot_corrupt');
       return guarded({ r2StorageBytes: 0, r2ClassA: 0, r2ClassB: 2 }, async () => {
       try {
         const [htmlObject, jsonObject] = await Promise.all([bucket.get(`${record.object_prefix}/html`), bucket.get(`${record.object_prefix}/snapshot`)]);
@@ -106,6 +107,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
         let parsed;
         try { parsed = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(json)); } catch { throw fail('snapshot_corrupt'); }
         if (!parsed || typeof parsed.snapshot !== 'object' || !parsed.snapshot || typeof parsed.extracted !== 'object' || !parsed.extracted) throw fail('snapshot_corrupt');
+        if (record.html_size > MAX_HTML_BYTES && parsed.snapshot.retrievalMethod !== 'browser_api_content') throw fail('snapshot_corrupt');
         if (time(now) >= record.expires_at) throw fail('snapshot_expired');
         return { ...parsed, rawHtml: new Uint8Array(html) };
       } catch (error) { if (error.code === 'snapshot_expired' || error.code === 'snapshot_corrupt') throw error; throw fail('snapshot_unavailable'); }

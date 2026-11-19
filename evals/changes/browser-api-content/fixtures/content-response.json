@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "url": "https://shop.example.com/products/shorts",
+  "responseStatus": 200,
+  "responseHeaders": {"X-Browser-Ms-Used": "2500"},
+  "body": {
+    "success": true,
+    "result": "<html><head><title>Everyday Shorts</title></head><body><main><h1>Everyday Shorts</h1><p>Soft cotton shorts with an adjustable waist.</p></main></body></html>",
+    "meta": {"finalUrl": "https://shop.example.com/products/shorts", "status": 200, "title": "Everyday Shorts"}
+  },
+  "expected": {"providerCalls": 1, "storedRepresentation": "rendered_html", "initialAvailable": false, "usageMs": 2500, "extractionsBeforeStore": 0}
+}
