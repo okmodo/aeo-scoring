@@ -5,10 +5,10 @@ The product-page capture path makes one request through the existing Cloudflare 
 ```js
 const response = await env.AUDIT_BROWSER.quickAction('content', {
   url: publicProductUrl,
-  gotoOptions: { waitUntil: 'networkidle2', timeout: 20000 },
-  actionTimeout: 5000,
 });
 ```
+
+The request uses provider defaults without `gotoOptions`, `waitForSelector`, `waitForTimeout` or `actionTimeout` overrides. In the guarded Faherty comparison, the custom settings returned HTTP 422 / 6002; the default request returned HTTP 200 and rendered product HTML. This comparison does not isolate which custom setting caused the timeout. The existing 28-second application deadline still applies, including when provider defaults would wait longer.
 
 Cloudflare handles navigation and page resources. The application does not intercept requests, set a custom browser identity, create Playwright sessions, proxy resources through the Worker, or fetch an HTTP fallback in this path. The native binding needs no additional API token. Historical session cleanup remains for previously recorded sessions.
 

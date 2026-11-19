@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "request": {
+    "action": "content",
+    "url": "https://shop.example.com/products/shorts"
+  },
+  "expectation": {
+    "optionsKeys": [
+      "url"
+    ],
+    "applicationDeadlineMs": 28000,
+    "retrievalVersion": "browser-content-v2"
+  },
+  "rationale": "Guarded native Faherty default request succeeded while previous custom networkidle2/action timeout request returned 422/6002. Live merchant HTML stays private; this frozen request regression prevents reintroducing those overrides without claiming general merchant completeness."
+}

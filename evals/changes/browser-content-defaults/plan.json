@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "id": "browser-content-defaults",
+  "task": "Compare guarded Faherty native content capture using provider defaults, remove the demonstrated timeout override failure, and verify private R2 capture without changing budgets/scoring/frontend.",
+  "scope": [
+    "backend/browser-content-workflow.mjs",
+    "backend/browser-content-workflow.test.mjs",
+    "docs/browser-api-content.md",
+    "evals/changes/browser-content-defaults/**"
+  ],
+  "nonGoals": [
+    "No frontend, shared dependencies, rubric changes, new services, paid add-ons or unrelated Cloudflare resources.",
+    "No increase to 60% account ceilings or 1000 ms CPU cap; no bypass of native capture/global/R2 guards.",
+    "No fabricated initial-response evidence, silent truncation or unverified provider lifetime guarantee."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Perform one guarded live content call using exactly {url} in an inactive version of the existing Worker and capture native HTTP/error/usage evidence. Choose provider defaults if capture succeeds; keep the existing application deadline and error on late/oversized responses. Version the retrieval cache identity.",
+      "verification": "automated",
+      "evidence": "Frozen request/default regression, retained HTML roundtrip, existing timeout/provider/error/size tests; private native response evidence."
+    },
+    {
+      "id": "O2",
+      "description": "After required checks and independent review, deploy the reviewed backend only and verify one real Faherty HTML object in private R2 by byte size, hash and product markers with 24-hour expiry. Report any model/assessment limitations separately from successful capture. If live evidence requires provider-envelope compatibility, accept only documented metadata while keeping unknown fields honest.",
+      "verification": "human",
+      "evidence": "PR/CI, active version/hash/CPU1000, provider usage settlement, private R2 object and D1 integrity evidence; primary API docs."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate planning commit, isolated codex worktree, frozen deterministic tests, actual source-bound evaluation, independent Terra review and hosted CI before merge/deploy. Keep merchant HTML, secrets and raw private artifacts out of Git.",
+      "verification": "human",
+      "evidence": "Commit history, review, run/trace/handoff, PR and private validation artifacts."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep the change to native capture settings and directly required compatibility. One native call then R2 storage; reuse existing bindings and avoid request interception or extra browser sessions.",
+      "verification": "human",
+      "evidence": "Diff and exact request assertion."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:browser-build",
+    "npm run test:feasibility",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Only native request settings/response validation change; retained storage representation and resumability protocol remain unchanged. Existing fresh-agent R2 replay from PR45 remains regression coverage, not a new exit-test claim."
+  },
+  "context": "Provider returned HTTP422 error6002 timeout under custom networkidle2/navigation20000/action5000. User authorizes default request comparison, targeted fix, deployment and Faherty R2 verification while preserving all cost and ownership boundaries."
+}
