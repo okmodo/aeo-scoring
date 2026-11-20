@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "id": "prepared-publication-cpu",
+  "task": "Avoid optional parser extraction after prepared-ready publication in automatic preparation, following native2026msCPU observation withconfigured1000mscap.",
+  "scope": [
+    "backend/browser-content-workflow.mjs",
+    "backend/browser-content-workflow.test.mjs",
+    "backend/service.mjs",
+    "backend/browser-prepared-service.test.mjs",
+    "docs/prepared-ai-consumer.md",
+    "evals/changes/prepared-publication-cpu/**"
+  ],
+  "nonGoals": [
+    "NoCPU/allowanceincreases,frontend/rubric/model/jobpolicychanges or unrelatedservices.",
+    "Noreset/retryofuncertainmodelcheckpoints; nooriginalHTML/parsinginAIconsumer.",
+    "Nochangelegacyexplicitworkflow.read behavior orpreparedartifact/retentioncontract."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Automaticpreparationstopsafterverifiedpreparedpublicationandnotification; nooptionalextractor orinputsartifactwriteonthispath. Explicitlegacyreadstillderivesinputswhenrequested.",
+      "verification": "automated",
+      "evidence": "Frozenforbiddenextractor test,readyartifactstate,notificationorderingandserviceargumentregression."
+    },
+    {
+      "id": "O2",
+      "description": "AfterCI/reviewdeploybackendonly,preserveCPU1000and60%,verifyfreshFahertynativepreparation/AIstageCPUandreadydispatch. RecordconfiguredcapandactualCPUhonestly; Cloudflaremayallowoccasionaloverrunandcannotbeclaimedhardinvoicecap.",
+      "verification": "human",
+      "evidence": "HostedCI,independentTerrareview,productionversion/bindings/nativeCPU/privatevalidationrecords."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separateplanbeforefix,isolatedcodexbranch,sourceboundevaluation,independentTerrareview,CIthenauthorizedrollout;no nativecallsinCI.",
+      "verification": "human",
+      "evidence": "Gitplanhistory,run/trace/handoff/review,PR/CI andprivatebudgetednativechecks."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "SmallpreparedOnlyworkflowoptionreusesexistingpublicationlogicandkeepsAIprepared-onlyreaderunchanged.",
+      "verification": "human",
+      "evidence": "Diffandtests."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:browser-build",
+    "npm run test:feasibility",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Removeoptionalpost-publicationworkonly;preparedartifact,AIjobs/checkpointsandresumeprotocolunchangedandcoveredbyPR49fresh-agentexit."
+  },
+  "context": "PostdeployPR49nativecheck confirmedprepared_state ready\u2192AIcallwithoutpolling;modelhitexisting12sinferencetimeoutwith633neuronholdretained. PreparationRPCmeasured2026msandAIconsumer375ms. UserrequiresCPU1000unchanged;fixunneededpreparationworkandremeasure. No specific timeoutsettings/modelchange authorizedinthisfix."
+}
