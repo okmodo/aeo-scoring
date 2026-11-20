@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "automatic-html-preprocessing",
+  "task": "Automatically preprocess retained browser HTML and store an integrity-checked cleaned R2 artifact before AI review, preserving original data and all limits. Use Terra implementation and independent review, open an unmerged PR only.",
+  "scope": [
+    "backend/**",
+    "test/feasibility.test.mjs",
+    "docs/automatic-html-preprocessing.md",
+    "evals/changes/automatic-html-preprocessing/**"
+  ],
+  "nonGoals": [
+    "No production or temporary Cloudflare deployment, remote schema/resource/data changes, live model/browser calls, frontend or shared dependency changes.",
+    "No changes to 60% included allowance ceilings,1000ms CPU cap, admission/settlement rules, authentication, rubric weights, AI deadlines or unrelated services.",
+    "No automatic site-specific attribute list, silent truncation, deletion of original capture, extension of24-hour retention or claim cleaned HTML proves visibility/exhaustive absence."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "A deterministic bounded native HTMLRewriter cleaner removes non-JSON scripts, styles/comments/presentation attributes and SVG geometry while preserving semantic text, headings, JSON-LD/embedded JSON, tables, links, form values, accessibility labels/descriptions and references. Limits fail explicitly; no text-block count cap determines cleaned-source completeness.",
+      "verification": "automated",
+      "evidence": "Frozen semantic/geometry/script/hostile/size/UTF8 preservation fixtures and local native runtime replay; source/output hashes and reduction measurements."
+    },
+    {
+      "id": "O2",
+      "description": "Original HTML/snapshot stay immutable in R2. A versioned cleaned artifact with source reference/hash,output hash/size and original expiry is persisted and read back with existing R2 admission before assessment. Prepared publication is atomic/fail-closed, retries/concurrency cannot mix artifacts, and cleanup removes prepared objects.",
+      "verification": "automated",
+      "evidence": "Real SQLite/fake-R2 integration tests for save/read/tampering/partial writes/expiry/budget denial/concurrency and workflow restart from stored prepared artifact."
+    },
+    {
+      "id": "O3",
+      "description": "The browser-content assessment path derives retained inputs from the persisted cleaned artifact and supplies PR47 verified preprocessing metadata; initial-response evidence remains unavailable, parser completeness stays diagnostic, and no AI runs before required durable artifacts verify.",
+      "verification": "automated",
+      "evidence": "Service/workflow/source integration regressions, version/cache identity regression, existing rubric/report regressions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this valid named-command plan before implementation, use isolated codex branch, Terra agents with disjoint file ownership, real source-bound evaluation/handoff/exit test and independent review, then open PR and check hosted CI. Do not merge/deploy.",
+      "verification": "human",
+      "evidence": "Git history,review/exit evidence,run/trace/handoff and GitHub PR/CI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse installed native parser, snapshot store, R2 allowance guards and browser workflow. Keep one cleaned artifact rather than a new orchestration subsystem, reuse prepared data on retries and keep merchant captures private.",
+      "verification": "human",
+      "evidence": "Diff and operation-order/reuse tests, private Faherty local replay, no new dependencies/services."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Prepared R2 persistence changes the resumable boundary. Export frozen synthetic capture/index/prepared artifact after storage and have a fresh agent with only export and clean task files resume assessment-input preparation, proving it does not rerun preprocessing and still rejects tampered/expired artifacts."
+  },
+  "context": "Base is unmerged PR47 (e18d2a7) for direct cleaned-HTML AI review; this PR will be stacked on that branch until integration. Manual Faherty cleaner reduced1,353,581bytes to218,948bytes locally, but exact native output need not match serializer byte formatting. No live AI retries or production work are authorized in this task."
+}
