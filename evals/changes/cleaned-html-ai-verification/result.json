@@ -1,0 +1,44 @@
+{
+  "status": "parser_gate_removed_live_assessment_incomplete",
+  "liveAttempt": {
+    "version": "5bfa8667-02ce-4250-b876-87e5174c4358",
+    "httpStatus": 200,
+    "startedAt": "2026-11-20T17:07:03.420Z",
+    "finishedAt": "2026-11-20T17:07:24.271Z",
+    "retainedBytes": 218948,
+    "preparedSections": 30,
+    "parserComplete": false,
+    "sourceComplete": true,
+    "aiCalls": 1,
+    "providerResponsesReturned": 0,
+    "assessmentStatus": "unavailable",
+    "finalScore": null,
+    "reason": "The first provider call remained pending when the pipeline inference wait expired; no model response or validated findings were returned.",
+    "unknownAiReservationNeurons": 629,
+    "unknownUsageHoldRetained": true,
+    "cpuLimitVerifiedMs": 1000,
+    "actualInvocationCpuMs": null,
+    "cpuEvidenceLimitation": "Version CPU1000 was read back. Telemetry event query returned no matching event; no actual CPU measurement is claimed.",
+    "productionTrafficChanged": false,
+    "auditSnapshotChangedByTest": false,
+    "validationVersionDeleted": true
+  },
+  "privateResultSha256": "be4bb858d0cacdd4c24bd7ded99ca38a876a6cb12c908fd4d2d7825e1910ae64",
+  "offlineChecks": {
+    "targeted": 55,
+    "feasibility": 719,
+    "browser": 80,
+    "repository": "passed",
+    "evaluationTests": 43,
+    "exitSmoke": 3,
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "limitations": [
+    "This is not a completed AI score or calibration pass.",
+    "The first AI call was invoked but did not return before the existing bounded wait; unknown usage remains reserved.",
+    "Original document checks and exhaustive absence from cleaned HTML remain unavailable.",
+    "No production deploy, frontend change, unrelated service change, limit increase or new paid integration."
+  ]
+}

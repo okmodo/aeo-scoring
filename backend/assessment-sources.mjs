@@ -18,6 +18,18 @@ export async function prepareAssessmentSources(snapshot, extracted) {
   if (rawBytes.length > (renderedOnly ? 8 : 1) * 1024 * 1024) throw new RangeError('Retained HTML exceeds limit');
   // Reject undecodable bytes instead of replacing them and claiming full inspection.
   const html = new TextDecoder('utf-8', { fatal: true }).decode(rawBytes);
+  // A verified preprocessing artifact is the model input, not the parser's
+  // bounded excerpts. The original response remains separate source evidence.
+  const preparedHtml = renderedOnly && snapshot.preprocessing !== undefined;
+  if (preparedHtml) {
+    const p = snapshot.preprocessing;
+    if (!p || p.version !== 'simplified-html-v1' || p.representation !== 'cleaned_rendered_html' ||
+        p.originalCapturePreserved !== true || !/^[a-f0-9]{64}$/.test(p.sourceSha256 || '') ||
+        typeof p.sourceObjectKey !== 'string' || !/^retained\/[a-f0-9-]{36}\/[a-f0-9-]{36}\/html$/.test(p.sourceObjectKey) ||
+        !Number.isSafeInteger(p.sourceBytes) || p.sourceBytes < rawBytes.length ||
+        p.outputBytes !== rawBytes.length || p.outputSha256 !== await hash(rawBytes))
+      throw new TypeError('Invalid retained cleaned HTML provenance');
+  }
   const { rawHtml, extracted: ignoredExtracted, body, ...metadata } = snapshot;
   const browser = snapshot.browser;
   let renderedHtml, initialExtracted, browserMetadata, supportMetadata;
@@ -38,17 +50,19 @@ export async function prepareAssessmentSources(snapshot, extracted) {
     }
   }
   if (renderedOnly && browser === undefined) throw new TypeError('Invalid rendered-only browser capture');
-  const documents = [
-    { kind: 'html', scope: 'product', location: renderedOnly ? 'captured rendered HTML' : 'captured initial HTML', text: html },
+  let documents = [
+    { kind: 'html', scope: 'product', location: preparedHtml ? 'cleaned rendered HTML; visibility unknown' : renderedOnly ? 'captured rendered HTML' : 'captured initial HTML', text: html },
     { kind: 'metadata', scope: 'metadata', location: 'retained retrieval metadata and supporting observations', text: JSON.stringify(canonical(metadata)) },
     { kind: 'extracted', scope: 'extracted', location: 'complete retained extraction', text: JSON.stringify(canonical(extracted)) },
   ];
+  if (preparedHtml) documents = documents.filter(document => document.kind !== 'extracted');
   if (browser !== undefined) {
     // Each source has explicit provenance so initial-document checks can exclude
     // rendered content while content checks can inspect the complete capture.
     documents[0].origin = renderedOnly ? 'rendered' : 'initial';
     documents[1].origin = 'shared';
-    documents[2].origin = 'rendered';
+    if (!preparedHtml) documents[2].origin = 'rendered';
+    else documents[0].preparedHtml = true;
     const associated = renderedOnly ? null : inspectProductSchema(snapshot,initialExtracted);
     if (associated && associated.complete && !associated.ambiguous && !associated.malformed && associated.product && !snapshot.htmlLimited && browser.coverage.initialLimited === false) {
       documents.push({kind:'structured_product',scope:'product',location:'associated initial Product schema',text:JSON.stringify(canonical(associated.product)),origin:'initial'});
@@ -63,8 +77,8 @@ export async function prepareAssessmentSources(snapshot, extracted) {
     );
   }
   // Plain excerpts supplement, rather than replace, the complete retained records.
-  for (const block of extracted.productHtml?.blocks || []) if (typeof block.text === 'string' && block.text) documents.push({ kind: 'text', scope: 'product', location: renderedOnly ? 'parsed rendered HTML product text' : block.location || 'product extraction', text: block.text });
-  if (browser !== undefined) {
+  for (const block of preparedHtml ? [] : extracted.productHtml?.blocks || []) if (typeof block.text === 'string' && block.text) documents.push({ kind: 'text', scope: 'product', location: renderedOnly ? 'parsed rendered HTML product text' : block.location || 'product extraction', text: block.text });
+  if (browser !== undefined && !preparedHtml) {
     for (const [field, property, fallback] of [['headings','text','rendered heading'],['selectedControls','value','rendered selected control'],['images','alt','rendered image alternative']]) {
       for (const item of extracted.productHtml?.[field] || []) if (typeof item[property] === 'string' && item[property]) documents.push({kind:'text',scope:'product',location:renderedOnly ? 'parsed rendered HTML product ' + field : item.location || fallback,text:item[property],origin:'rendered'});
     }
@@ -95,16 +109,16 @@ export async function prepareAssessmentSources(snapshot, extracted) {
       const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(start, end));
       sources.push({ id: 's' + (sources.length + 1), documentId: 'd' + (documentIndex + 1), kind: document.kind,
         url: document.url || snapshot.url, location: document.location + `; UTF-8 bytes ${start}-${end}`, scope: document.scope,
-        start, end, text, ...(document.origin ? {origin:document.origin,method:document.origin === 'rendered' ? 'rendered' : 'raw'} : {}) });
+        start, end, text, ...(document.preparedHtml ? {preparedHtml:true} : {}), ...(document.origin ? {origin:document.origin,method:document.origin === 'rendered' ? 'rendered' : 'raw'} : {}) });
       start = end;
     }
   }
   const sourceDigest = await hash(encoder.encode(JSON.stringify(sources)));
   const initialComplete = !renderedOnly && !snapshot.htmlLimited && rawBytes.length > 0;
-  const complete = renderedOnly ? !snapshot.htmlLimited && rawBytes.length > 0 && browser.coverage.complete === true && browser.coverage.renderedLimited === false : initialComplete && (browser === undefined || (browser.coverage.complete === true && browser.coverage.initialLimited === false && browser.coverage.renderedLimited === false && renderedHtml.length > 0));
+  const complete = renderedOnly ? !snapshot.htmlLimited && rawBytes.length > 0 && (preparedHtml || browser.coverage.complete === true) && browser.coverage.renderedLimited === false : initialComplete && (browser === undefined || (browser.coverage.complete === true && browser.coverage.initialLimited === false && browser.coverage.renderedLimited === false && renderedHtml.length > 0));
   const scopes = {product: complete};
   for (const name of ['shipping', 'returns']) scopes[name] = snapshot.policies?.[name]?.state === 'read' && snapshot.policies[name].extraction?.complete === true;
   for (const name of ['llms', 'agents']) scopes[name] = snapshot.guides?.[name + 'State'] === 'found' && typeof snapshot.guides?.[name]?.text === 'string';
   return { version: ASSESSMENT_SOURCE_VERSION, sources, sourceDigest,
-    coverage: { complete, ...(browser !== undefined ? {initial:initialComplete && browser.coverage.initialLimited === false} : {}), scopes, reason: complete ? null : snapshot.htmlLimited || (browser && (!browser.coverage.complete || browser.coverage.initialLimited || browser.coverage.renderedLimited)) ? 'capture_limited' : 'empty_capture', bytes: total, sections: sources.length } };
+    coverage: { complete, ...(preparedHtml ? {preparedHtml:true,absenceComplete:false,originalProvenance:'declared',parserComplete:extracted.productHtml?.complete === true,visibility:'unknown'} : {}), ...(browser !== undefined ? {initial:initialComplete && browser.coverage.initialLimited === false} : {}), scopes, reason: complete ? null : snapshot.htmlLimited || (browser && (!browser.coverage.complete || browser.coverage.initialLimited || browser.coverage.renderedLimited)) ? 'capture_limited' : 'empty_capture', bytes: total, sections: sources.length } };
 }

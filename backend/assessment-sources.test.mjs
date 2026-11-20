@@ -86,3 +86,23 @@ test('content API capture retains one rendered HTML document with replayable pro
   const large='x'.repeat(4*1024*1024+1);
   await assert.rejects(prepareAssessmentSources({...snapshot,rawHtml:large,browser:{...snapshot.browser,renderedHtml:large}},extracted),/Assessment source limit/);
 });
+
+test('verified cleaned HTML is complete model input despite partial parser excerpts',async()=>{
+  const html='<main><h1>Solar kettle</h1>'+('<p>Context</p>'.repeat(900))+'<p>LAST DECISIVE FACT</p></main>';
+  const bytes=new TextEncoder().encode(html),digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  const preprocessing={version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:'retained/00000000-0000-4000-8000-000000000000/11111111-1111-4111-8111-111111111111/html',sourceSha256:'a'.repeat(64),sourceBytes:bytes.length+100,outputBytes:bytes.length,outputSha256:digest};
+  const snapshot={url,retrievalMethod:'browser_api_content',rawHtml:bytes,preprocessing,browser:{renderedHtml:html,initialExtracted:{},coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false}}};
+  const extracted={productHtml:{complete:false,blocks:[{text:'ONLY FIRST PARSED BLOCK',location:'partial'}]}};
+  const bundle=await prepareAssessmentSources(snapshot,extracted);
+  assert.equal(bundle.coverage.complete,true);assert.equal(bundle.coverage.parserComplete,false);assert.equal(bundle.coverage.initial,false);assert.equal(bundle.coverage.visibility,'unknown');
+  const sources=bundle.sources.filter(s=>s.scope==='product');
+  assert.equal(sources.map(s=>s.text).join(''),html);assert.ok(sources.every(s=>s.kind==='html'&&s.preparedHtml===true&&s.origin==='rendered'));
+  assert.ok(sources.at(-1).text.includes('LAST DECISIVE FACT'));
+  assert.ok(!bundle.sources.some(s=>s.kind==='extracted'||s.kind==='text'));
+  assert.equal((await prepareAssessmentSources(structuredClone(snapshot),structuredClone(extracted))).sourceDigest,bundle.sourceDigest);
+  for (const changed of [{outputBytes:bytes.length+1},{outputSha256:'b'.repeat(64)},{sourceSha256:'not a hash'},{originalCapturePreserved:false}]) await assert.rejects(prepareAssessmentSources({...snapshot,preprocessing:{...preprocessing,...changed}},extracted),/cleaned HTML provenance/);
+  assert.equal((await prepareAssessmentSources({...snapshot,htmlLimited:'bytes'},extracted)).coverage.complete,false);
+  assert.equal((await prepareAssessmentSources({...snapshot,browser:{...snapshot.browser,coverage:{...snapshot.browser.coverage,renderedLimited:true}}},extracted)).coverage.complete,false);
+  const ordinary={...snapshot};delete ordinary.preprocessing;
+  assert.equal((await prepareAssessmentSources(ordinary,extracted)).coverage.complete,false);
+});

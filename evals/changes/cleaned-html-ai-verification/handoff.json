@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "task": "Remove parser completeness gate for verified cleaned R2 HTML and attempt isolated Faherty AI review.",
+  "state": "Implementation and independent review complete; isolated native attempt reached AI but first provider call did not return in time. Final source-bound evaluation/hosted CI recorded separately.",
+  "decisions": [
+    "Verified cleaned output digest/size allows full retained HTML review independent of bounded parser excerpts.",
+    "Cleaned source documents omit duplicated parser excerpts/extraction JSON: actual capture prepares30 sections instead of444.",
+    "Cleaned locations and preparedHtml marker are explicit; rendered-only initial=false and unknown visibility remain.",
+    "Absence-based zero/N/A and full C5 inventories remain unavailable for cleaned artifacts because original transformation completeness is not established.",
+    "Source metadata declares original provenance; snapshot store verifies retained R2 integrity and24-hour expiry.",
+    "Existing source-count/input-size/model deadline/budget constraints remain.",
+    "Preserve629-neuron unresolved reservation f7bf503a-cb5d-4ab5-9dec-74d8b4cf32d9; never clear as zero or retry automatically.",
+    "Process recovery: old branch codex/cleaned-html-ai preserves invalid first-plan command/deletion failure. New codex/cleaned-html-direct-review branch commits explicit reuse plan before copying reviewed implementation. No history/evaluator rewrite; real named-command evaluation rerun here."
+  ],
+  "constraints": [
+    "No production merge or deployment; active production remains2e0fca5b-e1d2-4c58-b3b0-fbfa3c2fbdc7 at100%.",
+    "All60% ceilings and CPU1000 remain.",
+    "Frontend, dependencies, unrelated services and source record remain unchanged.",
+    "Private model results/auth/raw capture stay outsideGit; private validation version5bfa8667 was deleted."
+  ],
+  "completed": [
+    "Earlier planning attempt retained on separate branch; valid explicit reuse plan committed first on replacement branch.",
+    "55targeted,719feasibility,80browser tests and repository/lint/type/build/test/exit checks passed.",
+    "Independent Terra source/harness review and inline native readiness.",
+    "One actual authenticated inactive-version live attempt; account/R2 reservations used and infrastructure settled; unknown model hold retained."
+  ],
+  "remaining": [
+    "Finish source-bound evaluation, commit evidence, open PR and check hosted CI.",
+    "Provider responsiveness/deadline is the next runtime blocker; no completed score or calibration established.",
+    "Automatic preprocessing production rollout remains outside this change."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change cleaned-html-ai-verification --base aea006f7b89a540bcb0006ff4110683953a1caec",
+    "EVALUATION_BASE=aea006f7b89a540bcb0006ff4110683953a1caec npm run ci:gate"
+  ]
+}
