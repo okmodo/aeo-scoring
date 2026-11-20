@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "changeId": "automatic-html-preprocessing",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/automatic_exit_fresh",
+  "sourceDigest": "e58a53566d841e9371cbcfde9b78aabd58c56d30c1cbc229adc3dd3fc18bef31",
+  "testedSourceCommit": "0bd4e02",
+  "observedContinuation": "Fresh Terra agent restored only the frozen synthetic prepared-ready/inputs-absent export in clean checkout0bd4e02. Actual workflow/store and native extraction produced inputs ready with retrieval0,preprocessing0,extraction1; original/cleaned hashes and source expiry preserved. Tamperedprepared failedsnapshot_corrupt and expiration failedsnapshot_expired beforeextraction. See exit-observations.json for actual command and environment evidence.",
+  "limitations": "Synthetic clock and in-memorySQLite/R2 adapter; native extractor in localMiniflare. No production/network/model/browser retrieval. Initial sandbox loopback EPERM; approvedlocalrun passed. Final source digest binds this record after evaluation; fresh continuation tested app source commit0bd4e02.",
+  "exportSha256": "d5b07de9fcb72a35d1b328b77b0fdf273c1be73f4b2ed03a501f404b12f72263",
+  "interruptionPoint": "prepared-artifact-ready-before-input-extraction"
+}
