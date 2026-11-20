@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Release merged HTML preprocessing backend without frontend/unrelated service changes.",
+  "state": "PR47/48 merged; migration0010 applied underguard; exactmergedbackenddeployed100%; productionauth/CORS/invalidinputchecks passed.",
+  "decisions": [
+    "Use exactmergedsource7507f9916b55979539b35096d39a54d88c4e5d77 and hashverified2-modulebundle.",
+    "Inheritsecrets fromactiveversion2e0fca5b; preservebindingvalues,compatibilityflags,monitoring,access andhourlycron.",
+    "Add onlythree nullablepreparedcolumns inprojectD1; nooriginalcapture/reportrewrite.",
+    "Reserveverificationusagebeforework; initialtestclientformaterrorcorrectedandextra4requests/8000CPUms reservedbefore retry.",
+    "Settleonlyourtwooperationreservations; prior629-neuronunknownmodelholdremains."
+  ],
+  "constraints": [
+    "All60%limits andCPU1000unchanged; nofrontend/unrelatedservice deployment ornewpaidresource.",
+    "No validURLaudit/model/browsercall duringreleaseverification.",
+    "Operationalplan/evidencedocsdo notchange deployedappcode."
+  ],
+  "completed": [
+    "PR47mergedf812da00 afterCI44781188757 passed.",
+    "PR48retargetedthenCI44823063996 passed; merged7507f991.",
+    "Schema/previewmodulehashes/configbindingsverifiedbeforeproductiondeployment.",
+    "Productionversion353c79e9 at100%; auth401/unlock204/CORS204/invalidinput400verified.",
+    "Bothreleaseusageholdssettled; globalsettings/hourlycronreadbackunchanged."
+  ],
+  "remaining": [
+    "ExistingAIresponse-timeout issue is outside thisrelease; no completedliveAEOscoreisclaimed."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change html-preprocessing-release --base 7507f9916b55979539b35096d39a54d88c4e5d77",
+    "EVALUATION_BASE=7507f9916b55979539b35096d39a54d88c4e5d77 npm run ci:gate"
+  ]
+}

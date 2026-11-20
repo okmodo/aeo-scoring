@@ -1,0 +1,91 @@
+{
+  "status": "deployed",
+  "sourceCommit": "7507f9916b55979539b35096d39a54d88c4e5d77",
+  "mergedPRs": {
+    "47": "f812da00f1a617037531b4b9875ebaa31d7375eb",
+    "48": "7507f9916b55979539b35096d39a54d88c4e5d77"
+  },
+  "worker": "aeo-audit-public-20261105",
+  "version": "353c79e9-37d0-491d-bda6-bf5cbc3c1067",
+  "deployment": "cc7a68dc-eae5-4c73-ac35-be09f6d01d48",
+  "trafficPercent": 100,
+  "migration": {
+    "name": "0010-prepared-html.sql",
+    "verified": true,
+    "added": [
+      "prepared_state",
+      "prepared_size",
+      "prepared_hash"
+    ],
+    "existingCaptureDataRewritten": false
+  },
+  "modules": [
+    {
+      "name": "chunk-ByLwz9Se.mjs",
+      "bytes": 1878907,
+      "sha256": "efec6db533d5e41658969b585e39f056a012f2139568abec835bc1451446ed41"
+    },
+    {
+      "name": "worker.mjs",
+      "bytes": 421932,
+      "sha256": "8a7e22ca0ddf8c8f08b0c0651ead85757aaef587eed66cb02b06f50a4fbc4394"
+    }
+  ],
+  "preserved": {
+    "cpuCapMs": 1000,
+    "operatingLimitPercent": 60,
+    "bindings": true,
+    "authentication": true,
+    "monitoring": true,
+    "hourlySchedule": true,
+    "frontend": true,
+    "unrelatedServices": true
+  },
+  "smoke": {
+    "previewPassed": true,
+    "productionPassed": true,
+    "productionResults": [
+      {
+        "name": "unauthorized_audit",
+        "status": 401,
+        "expected": 401,
+        "errorCode": "preview_password_required",
+        "passed": true
+      },
+      {
+        "name": "frontend_cors",
+        "status": 204,
+        "expected": 204,
+        "errorCode": null,
+        "cors": "https://aeo-scoring-preview-20261105-kk7.pages.dev",
+        "passed": true
+      },
+      {
+        "name": "preserved_preview_password",
+        "status": 204,
+        "expected": 204,
+        "errorCode": null,
+        "passed": true
+      },
+      {
+        "name": "invalid_input_without_audit",
+        "status": 400,
+        "expected": 400,
+        "errorCode": "invalid_input",
+        "passed": true
+      }
+    ],
+    "validAuditSubmissions": 0,
+    "modelCalls": 0,
+    "browserCalls": 0,
+    "initialClientFormatFailure": "First preview unlock check sent password in body instead of existing Bearer header. Corrected local test client; additional verification requests reserved before retry."
+  },
+  "verificationReservationsSettled": true,
+  "priorUncertainAiUsageHeldNeurons": 629,
+  "privateProofSha256": "4474930c4a1097912220ad2ac24ff30a40a0e50b1b33c33004826556c03dda61",
+  "limitations": [
+    "No live product audit or AI scoring calibration was rerun.",
+    "Previously observed model response wait remains a separate issue.",
+    "ConfiguredCPUcap is verified; no actual invocationCPUtime claim."
+  ]
+}
