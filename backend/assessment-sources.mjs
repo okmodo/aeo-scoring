@@ -26,7 +26,7 @@ export async function prepareAssessmentSources(snapshot, extracted) {
     if (!p || p.version !== 'simplified-html-v1' || p.representation !== 'cleaned_rendered_html' ||
         p.originalCapturePreserved !== true || !/^[a-f0-9]{64}$/.test(p.sourceSha256 || '') ||
         typeof p.sourceObjectKey !== 'string' || !/^retained\/[a-f0-9-]{36}\/[a-f0-9-]{36}\/html$/.test(p.sourceObjectKey) ||
-        !Number.isSafeInteger(p.sourceBytes) || p.sourceBytes < rawBytes.length ||
+        !Number.isSafeInteger(p.sourceBytes) || p.sourceBytes < 1 || p.sourceBytes > 8 * 1024 * 1024 ||
         p.outputBytes !== rawBytes.length || p.outputSha256 !== await hash(rawBytes))
       throw new TypeError('Invalid retained cleaned HTML provenance');
   }

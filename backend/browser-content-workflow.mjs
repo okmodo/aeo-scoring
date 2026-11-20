@@ -2,8 +2,10 @@ import {normalizePublicTarget} from './public-egress.mjs';
 import {extract} from './retrieval.mjs';
 import {createQuickActionAllowanceGuard,QUICK_ACTION_HOLD_MS} from './quick-action-allowance.mjs';
 import {MAX_RENDERED_HTML_BYTES} from './snapshot-store.mjs';
+import {preprocessHtml,MAX_CLEANED_HTML_BYTES} from './html-preprocessing.mjs';
 
-export const BROWSER_CONTENT_VERSION = 'browser-content-v2';
+export const BROWSER_CONTENT_VERSION = 'browser-content-v3';
+const CAPTURE_VERSION = 'browser-content-v2';
 const encoder = new TextEncoder();
 const emptyExtraction = () => ({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
 const failure = (code,diagnosticCode) => Object.assign(new Error('Browser content capture unavailable'),{code,diagnosticCode});
@@ -25,7 +27,7 @@ async function responseJson(response,signal) {
 // session, page routing, resource proxy, cookie handling or HTML extraction here.
 export function createBrowserContentWorkflow({db,binding,snapshots,accountId,subscriptionId,token,now=Date.now,
   guard=createQuickActionAllowanceGuard(db,{accountId,subscriptionId,token}),extractPage=extract,
-  HTMLRewriter=globalThis.HTMLRewriter,captureTimeoutMs=28000}={}) {
+  HTMLRewriter=globalThis.HTMLRewriter,preprocess=preprocessHtml,captureTimeoutMs=28000}={}) {
   if(typeof binding?.quickAction!=='function'||!snapshots||!db?.prepare||!Number.isSafeInteger(captureTimeoutMs)||captureTimeoutMs<1||captureTimeoutMs>28000)throw new TypeError('Browser content binding and private store required');
   return {
     version:BROWSER_CONTENT_VERSION,
@@ -60,7 +62,7 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
         if(!meta||typeof meta!=='object'||!Number.isInteger(meta.status)||meta.status<100||meta.status>599||typeof meta.finalUrl!=='string')throw failure('retrieval_failed','browser_api_invalid_metadata');
         const url=normalizePublicTarget(meta.finalUrl);
         return{html,snapshot:{url,submittedUrl:audit.url,status:meta.status,contentType:'text/html',observedAt:new Date(now()).toISOString(),htmlLimited:null,
-          retrievalMethod:'browser_api_content',representation:'rendered_html',captureVersion:BROWSER_CONTENT_VERSION,
+          retrievalMethod:'browser_api_content',representation:'rendered_html',captureVersion:CAPTURE_VERSION,
           provider:{name:'cloudflare-browser-content',httpStatus:response.status,originStatus:meta.status,title:typeof meta.title==='string'?meta.title.slice(0,1000):null,
             browserMsUsed:response.headers.get('X-Browser-Ms-Used')}}};
       })();
@@ -79,19 +81,34 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
     async read(id) {
       const captured=await snapshots.read(id);
       if(captured.snapshot?.retrievalMethod!=='browser_api_content')throw failure('retrieval_failed','browser_api_invalid_snapshot');
-      const state=await db.prepare('SELECT inputs_state FROM retained_snapshots WHERE audit_id=?1').bind(id).first();
+      const state=await db.prepare('SELECT inputs_state, prepared_state FROM retained_snapshots WHERE audit_id=?1').bind(id).first();
       if(!state)throw failure('retrieval_failed','browser_api_invalid_snapshot');
+      if(state.prepared_state===null) {
+        const result=await preprocess({rawHtml:captured.rawHtml,sourceObjectKey:captured.source.objectKey,expiresAt:captured.source.expiresAt},{HTMLRewriter,now});
+        const html=new TextDecoder('utf-8',{fatal:true}).decode(result.html);
+        try {await snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html,preprocessing:result.preprocessing}});}
+        catch(error) {if(error.code!=='snapshot_exists')throw error;}
+      }
+      const prepared=await snapshots.readAssessment(id,'prepared');
+      const p=prepared?.preprocessing, bytes=encoder.encode(prepared?.html ?? '');
+      const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+      if(prepared?.version!=='1'||typeof prepared.html!=='string'||bytes.byteLength>MAX_CLEANED_HTML_BYTES||
+        p?.version!=='simplified-html-v1'||p.representation!=='cleaned_rendered_html'||p.originalCapturePreserved!==true||
+        p.sourceObjectKey!==captured.source.objectKey||p.sourceSha256!==captured.source.sha256||p.sourceBytes!==captured.source.bytes||
+        p.expiresAt!==captured.source.expiresAt||!Number.isSafeInteger(p.preparedAt)||p.preparedAt<0||p.preparedAt>=p.expiresAt||p.outputBytes!==bytes.byteLength||p.outputSha256!==hash)throw failure('retrieval_failed','browser_api_invalid_prepared');
       if(state.inputs_state===null) {
-        const extracted=await extractPage({...captured.snapshot,body:captured.rawHtml},{HTMLRewriter});
-        // This is parsed rendered HTML, not an original response or a proof of
-        // computed visibility. Source-only checks cannot inherit its observations.
-        const snapshot={...captured.snapshot,browser:{version:BROWSER_CONTENT_VERSION,captureType:'content-api',initialExtracted:emptyExtraction(),
+        const extracted=await extractPage({...captured.snapshot,body:bytes},{HTMLRewriter});
+        // Parsed rendered HTML cannot establish initial-response or computed-visibility evidence.
+        const snapshot={...captured.snapshot,preprocessing:p,browser:{version:BROWSER_CONTENT_VERSION,captureType:'content-api',initialExtracted:emptyExtraction(),
           coverage:{complete:extracted.productHtml?.complete===true&&extracted.coverage?.html===true,initialAvailable:false,initialLimited:false,renderedLimited:false}}};
-        await snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'1',snapshot,extracted}});
+        try {await snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'2',snapshot,extracted}});}
+        catch(error) {if(error.code!=='snapshot_exists')throw error;}
       }
       const inputs=await snapshots.readAssessment(id,'inputs');
-      if(inputs?.version!=='1'||inputs.snapshot?.captureVersion!==BROWSER_CONTENT_VERSION||inputs.snapshot?.url!==captured.snapshot.url||!inputs.extracted||inputs.snapshot?.browser?.coverage?.initialAvailable!==false)throw failure('retrieval_failed','browser_api_invalid_inputs');
-      return{...captured,snapshot:{...inputs.snapshot,browser:{...inputs.snapshot.browser,renderedHtml:new TextDecoder('utf-8',{fatal:true}).decode(captured.rawHtml)}},extracted:inputs.extracted};
+      if(inputs?.version!=='2'||inputs.snapshot?.captureVersion!==captured.snapshot.captureVersion||inputs.snapshot?.url!==captured.snapshot.url||
+        JSON.stringify(inputs.snapshot?.preprocessing)!==JSON.stringify(p)||inputs.snapshot?.browser?.version!==BROWSER_CONTENT_VERSION||
+        !inputs.extracted||inputs.snapshot?.browser?.coverage?.initialAvailable!==false)throw failure('retrieval_failed','browser_api_invalid_inputs');
+      return{...captured,rawHtml:bytes,snapshot:{...inputs.snapshot,browser:{...inputs.snapshot.browser,renderedHtml:prepared.html}},extracted:inputs.extracted};
     },
     async finish(id){await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1").bind(id).run();},
   };

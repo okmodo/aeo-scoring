@@ -1,0 +1,48 @@
+{
+  "sourceCommit": "0bd4e02",
+  "boundary": "prepared-artifact-ready-before-input-extraction",
+  "clock": {
+    "kind": "synthetic",
+    "initial": 1795176000000,
+    "expiry": 1795262400000
+  },
+  "command": "/private/tmp/node-v24.11.1-darwin-arm64/bin/node evals/changes/automatic-html-preprocessing/exit-replay.mjs",
+  "executionHistory": [
+    {
+      "environment": "sandbox",
+      "outcome": "EPERM listening on 127.0.0.1 during Miniflare startup"
+    },
+    {
+      "environment": "approved local loopback",
+      "outcome": "passed"
+    }
+  ],
+  "continuation": {
+    "inputsState": "ready",
+    "sourceSha256": "8ef01dcc30964094b023302c38733f17d4962cd7a9ddf50caa77a8b3be1e1c7f",
+    "preparedArtifactSha256": "8441e5a7b89466428f0c9afb6d77e21dff724eca99685b16f70c05976de80ff0",
+    "cleanedSha256": "23f26a42520318f39c9d4d762a92be6ba9c34f905211e4c9a1080413f13e69ec",
+    "sourceObjectKey": "retained/d9428888-122b-4c77-8d11-666666666666/a24acc78-a149-4f19-a6aa-3c1e1d55df9c/html",
+    "expiresAt": 1795262400000,
+    "retrieval": 0,
+    "preprocessing": 0,
+    "extraction": 1
+  },
+  "tamperedPrepared": {
+    "error": "snapshot_corrupt",
+    "retrieval": 0,
+    "preprocessing": 0,
+    "extraction": 0
+  },
+  "expiredAtBoundary": {
+    "error": "snapshot_expired",
+    "retrieval": 0,
+    "preprocessing": 0,
+    "extraction": 0
+  },
+  "limitations": [
+    "Synthetic exported data and virtual clock; no claim about real capture time.",
+    "In-memory SQLite and object store; native extractor runs in local Miniflare.",
+    "No production, network, model, or browser retrieval calls."
+  ]
+}

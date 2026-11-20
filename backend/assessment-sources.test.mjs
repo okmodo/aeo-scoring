@@ -100,7 +100,10 @@ test('verified cleaned HTML is complete model input despite partial parser excer
   assert.ok(sources.at(-1).text.includes('LAST DECISIVE FACT'));
   assert.ok(!bundle.sources.some(s=>s.kind==='extracted'||s.kind==='text'));
   assert.equal((await prepareAssessmentSources(structuredClone(snapshot),structuredClone(extracted))).sourceDigest,bundle.sourceDigest);
-  for (const changed of [{outputBytes:bytes.length+1},{outputSha256:'b'.repeat(64)},{sourceSha256:'not a hash'},{originalCapturePreserved:false}]) await assert.rejects(prepareAssessmentSources({...snapshot,preprocessing:{...preprocessing,...changed}},extracted),/cleaned HTML provenance/);
+  // Native HTML serialization may expand a small original document. Integrity
+  // checks bind the output; original byte count is a separately verified fact.
+  assert.equal((await prepareAssessmentSources({...snapshot,preprocessing:{...preprocessing,sourceBytes:bytes.length-1}},extracted)).coverage.complete,true);
+  for (const changed of [{sourceBytes:0},{sourceBytes:8*1024*1024+1},{outputBytes:bytes.length+1},{outputSha256:'b'.repeat(64)},{sourceSha256:'not a hash'},{originalCapturePreserved:false}]) await assert.rejects(prepareAssessmentSources({...snapshot,preprocessing:{...preprocessing,...changed}},extracted),/cleaned HTML provenance/);
   assert.equal((await prepareAssessmentSources({...snapshot,htmlLimited:'bytes'},extracted)).coverage.complete,false);
   assert.equal((await prepareAssessmentSources({...snapshot,browser:{...snapshot.browser,coverage:{...snapshot.browser.coverage,renderedLimited:true}}},extracted)).coverage.complete,false);
   const ordinary={...snapshot};delete ordinary.preprocessing;

@@ -174,7 +174,9 @@ CREATE TABLE IF NOT EXISTS retained_snapshots (
   facts_state TEXT CHECK (facts_state IS NULL OR facts_state IN ('pending', 'ready')),
   facts_size INTEGER, facts_hash TEXT,
   inputs_state TEXT CHECK (inputs_state IS NULL OR inputs_state IN ('pending', 'ready')),
-  inputs_size INTEGER, inputs_hash TEXT
+  inputs_size INTEGER, inputs_hash TEXT,
+  prepared_state TEXT CHECK (prepared_state IS NULL OR prepared_state IN ('pending', 'ready')),
+  prepared_size INTEGER, prepared_hash TEXT
 );
 CREATE INDEX IF NOT EXISTS retained_snapshots_expiry ON retained_snapshots(expires_at);
 

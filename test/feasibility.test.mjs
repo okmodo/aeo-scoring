@@ -1,3 +1,4 @@
+import '../backend/browser-content-workflow.test.mjs';
 import '../backend/ai-rubric-scoring.test.mjs';
 import '../backend/ai-rubric-assessment.test.mjs';
 import '../backend/assessment-sources.test.mjs';
