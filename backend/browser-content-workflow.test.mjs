@@ -33,7 +33,7 @@ test('one native API call persists complete rendered HTML before any extraction 
  const retained=await f.snapshots.read(id);assert.equal(new TextDecoder().decode(retained.rawHtml),large);
  assert.equal(retained.snapshot.representation,'rendered_html');assert.deepEqual(retained.extracted,{pending:true});
  assert.deepEqual(await Promise.all([f.flow.claim(id),f.flow.claim(id)]),[true,false]);
- const input=await f.flow.read(id);assert.equal(f.extracted,1);assert.equal(input.snapshot.browser.renderedHtml,large.replace(/<!--[\s\S]*?-->/g,''));assert.deepEqual(input.rawHtml,new TextEncoder().encode(input.snapshot.browser.renderedHtml));
+ const input=await f.flow.read(id,{onPrepared:()=>{assert.equal(f.extracted,0);f.events.push('notified');}});assert.equal(f.extracted,1);assert.ok(f.events.indexOf('notified')<f.events.indexOf('extract'));assert.equal(input.snapshot.browser.renderedHtml,large.replace(/<!--[\s\S]*?-->/g,''));assert.deepEqual(input.rawHtml,new TextEncoder().encode(input.snapshot.browser.renderedHtml));
  assert.equal(input.snapshot.browser.coverage.initialAvailable,false);assert.equal(input.snapshot.browser.initialExtracted.productHtml,null);
  assert.ok(input.snapshot.browser.renderedHtml.includes('LAST PRODUCT DETAIL'));assert.equal(f.settlements[0],'2500');
  assert.deepEqual((await f.flow.read(id)).extracted,input.extracted);assert.equal(f.extracted,1);
@@ -119,4 +119,20 @@ test('prepared migration preserves a legacy capture and adds absent prepared sta
  assert.equal(after.prepared_state,null);assert.equal(after.prepared_size,null);assert.equal(after.prepared_hash,null);
  for(const [key,value]of Object.entries(before))assert.equal(after[key],value);
  sqlite.close();
+});
+test('prepared-only reader verifies provenance without original reads or parsing',async()=>{
+ const reads=[];const f=fixture({onGet:key=>reads.push(key)}),grant=await f.flow.prepare(f.audit);await f.flow.capture(f.audit,grant);
+ await assert.rejects(f.snapshots.readPrepared(id),{code:'snapshot_unavailable'});
+ const raw=await f.snapshots.read(id),bytes=new TextEncoder().encode('<p>clean</p>');
+ const digest=async v=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',v))].map(b=>b.toString(16).padStart(2,'0')).join('');
+ await f.snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html:'<p>clean</p>',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:raw.source.objectKey,sourceSha256:raw.source.sha256,sourceBytes:raw.source.bytes,expiresAt:raw.source.expiresAt,preparedAt:time,outputBytes:bytes.length,outputSha256:await digest(bytes)}}});
+ f.objects.delete(raw.source.objectKey);
+ const result=await f.snapshots.readPrepared(id);assert.deepEqual(result.snapshot.rawHtml,bytes);assert.equal(result.snapshot.browser.renderedHtml,'<p>clean</p>');assert.equal(result.extracted.productHtml,null);assert.equal(f.extracted,0);
+ await f.snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'2',snapshot:{},extracted:{productHtml:{identity:'different'}}}});
+ reads.length=0;const after=await f.snapshots.readPrepared(id);assert.deepEqual(after,result);assert.ok(reads.every(key=>!key.endsWith('/html')&&!key.endsWith('/inputs')));
+ const expired=createSnapshotStore({db:f.db,now:()=>time+86400000,bucket:{put:async()=>{},get:async()=>assert.fail('expired read'),delete:async()=>{}},allowance:{reserve:async()=>({accepted:true}),settle:async()=>({accepted:true})}});
+ await assert.rejects(expired.readPrepared(id),{code:'snapshot_expired'});
+ f.sqlite.prepare('UPDATE retained_snapshots SET html_hash=? WHERE audit_id=?').run('f'.repeat(64),id);await assert.rejects(f.snapshots.readPrepared(id),{code:'snapshot_corrupt'});
+ f.sqlite.prepare('UPDATE retained_snapshots SET html_hash=? WHERE audit_id=?').run(raw.source.sha256,id);
+ const key=result.source.objectKey;f.objects.set(key,new TextEncoder().encode('{}'));await assert.rejects(f.snapshots.readPrepared(id),{code:'snapshot_corrupt'});
 });

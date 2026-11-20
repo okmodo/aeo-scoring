@@ -34,7 +34,7 @@ try {
   assert.ok(bytes < 10 * 1024 * 1024, `Worker bundle exceeds paid-plan upload bound: ${bytes}`);
   console.log(`Browser Worker compiled: ${bytes} bytes (uncompressed; native validation remains separate).`);
 } finally { await rm(output, { recursive: true, force: true }); }
-const tests = (await readdir('backend')).filter(file => /^(?:browser-|quick-action-).*\.test\.mjs$/.test(file)).sort();
+const tests = (await readdir('backend')).filter(file => /^(?:browser-|quick-action-|prepared-).*\.test\.mjs$/.test(file)).sort();
 assert.ok(tests.length >= 6);
 const result = spawnSync(process.execPath, ['--test', ...tests.map(file => `backend/${file}`)], {stdio:'inherit',timeout:90000});
 assert.equal(result.status, 0, 'Browser regression suite failed');

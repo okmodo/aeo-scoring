@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Resume prepared-ready assessment after first model checkpoint",
+  "interruptionPoint": "Prepared artifact ready, inputs absent, first model call completed and persisted, job safely yielded",
+  "auditId": "22222222-2222-4222-8222-222222222222",
+  "now": 1795132800000,
+  "dbPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-prepared-handoff-Ljrso0/retained.sqlite",
+  "objectsPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-prepared-handoff-Ljrso0/objects.json",
+  "completedModelCalls": 1,
+  "sourceFiles": [
+    "backend/prepared-assessment-consumer.mjs",
+    "backend/prepared-assessment-engine.mjs",
+    "backend/prepared-assessment-jobs.mjs",
+    "backend/snapshot-store.mjs",
+    "backend/store.mjs",
+    "backend/fixtures/prepared-consumer/provider.mjs",
+    "backend/schema.sql"
+  ],
+  "instructions": [
+    "Use only this export and clean task source files, without prior conversation/review/handoff.",
+    "No network, live browser/model calls, production mutation or implementation edits.",
+    "Copy SQLite and load saved R2-compatible objects. Deny any /html or /inputs read; the AI must use prepared_state ready alone.",
+    "Use canonical snapshot store, consumer, job engine and deterministic syntheticProvider. Resume until completed. Confirm first completed checkpoint not called or reserved again, at most one new model call per invocation, positive C1.identity finding and profile/facts/report retained; report incomplete with null score is correct for sparse evidence.",
+    "Write exit-result.json with actual observations, kind fresh-agent, priorConversationProvided false, agentId, interruptionPoint, status, limitations. Primary agent will bind final sourceDigest and exportSha256."
+  ],
+  "replay": "node evals/changes/prepared-ai-consumer/export-state.mjs"
+}

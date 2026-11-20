@@ -26,6 +26,7 @@ export default defineConfig({
     previewUrls: false,
     env: {
       AUDIT_DB: bindings.d1({ id: databaseId }),
+      AUDIT_SELF: bindings.worker({ worker: 'aeo-audit-public-20261105', exportName: 'AuditContinuation' }),
       AUDIT_RATE_SECRET: bindings.secret(),
       AUDIT_USAGE_READ_TOKEN: bindings.secret(),
       AUDIT_AI: bindings.ai(),
