@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "cleaned-html-ai-verification",
+  "task": "Allow integrity-checked cleaned rendered HTML from R2 to reach AI review without requiring complete parser excerpts, then rerun the saved Faherty capture in a guarded isolated validation version without production rollout.",
+  "scope": [
+    "backend/assessment-sources.mjs",
+    "backend/assessment-sources.test.mjs",
+    "backend/ai-rubric-assessment.mjs",
+    "backend/ai-rubric-assessment.test.mjs",
+    "backend/ai-rubric-scoring.mjs",
+    "backend/browser-content-workflow.mjs",
+    "backend/browser-content-workflow.test.mjs",
+    "docs/cleaned-html-ai.md",
+    "evals/changes/cleaned-html-ai/**",
+    "evals/changes/cleaned-html-ai-verification/**",
+    "evals/changes/cleaned-html-ai/plan.json"
+  ],
+  "nonGoals": [
+    "No production traffic, deployment, configuration, frontend, dependency, rubric-weight or unrelated-service changes.",
+    "No increased 60% allowance, 1000 ms CPU cap, per-call size/deadline limits, citation weakening, fabricated original-response or visibility evidence, forced complete score, new paid service or external API.",
+    "Do not store merchant HTML, tokens, model transcripts or private telemetry in Git."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Complete retained cleaned HTML is eligible for model review even when parser excerpts are incomplete. Validate preprocessing output hash/size and retain actual capture truncation/expiry/integrity failures. Initial source-only checks remain unmeasured.",
+      "verification": "automated",
+      "evidence": "Frozen synthetic partial-parser, late-HTML fact, tampering, truncation, provenance and direct-HTML citation regressions."
+    },
+    {
+      "id": "O2",
+      "description": "Prepared cleaned sources avoid duplicating parser excerpts and admit exact HTML evidence with explicit unknown visibility, primary-product scope instructions and untrusted-source treatment; unknown model judgments remain unmeasured.",
+      "verification": "automated",
+      "evidence": "Source reconstruction, reference rejection and model input assertions; existing source and rubric tests."
+    },
+    {
+      "id": "O3",
+      "description": "After review/checks attempt one measured isolated live AI assessment of the cleaned R2 Faherty record under the same allowance guards and CPU1000, keeping production untouched and reporting actual completion or remaining failures truthfully.",
+      "verification": "human",
+      "evidence": "Private R2 hashes, admission/settlement IDs, inactive validation version config and result proof; actual source-bound evaluation and independent review."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate planning commit, isolated codex branch/worktree, independent Terra review, source-bound evaluation/handoff/hosted CI before any merge; do not merge/deploy production.",
+      "verification": "human",
+      "evidence": "Git history, evaluation trace, review and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use existing retained-source pipeline and budgets; avoid a new orchestrator, silent exclusions or repeated live model attempts.",
+      "verification": "human",
+      "evidence": "Diff, compact prepared-source count and one private live-attempt record."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "No new resumability, state handoff or execution workflow; existing retained replay remains, with provenance/digest regressions. Independent review still required."
+  },
+  "context": "Process recovery and explicit reuse plan. Prior isolated branch codex/cleaned-html-ai contains reviewed implementation and one guarded private AI test, but its initial immutable plan 4b9de44 contained an evaluator-invalid standalone node command. A replacement plan and deletion then failed immutable-plan validation. Preserve that branch and all commits as an audit trail; do not edit history or weaken evaluator. This new branch plans reuse of those already-written files and private evidence after committing this valid plan, and will rerun all named evaluation commands. No new live AI attempt is authorized or needed. User authorized direct review of cleaned HTML, unchanged production,60% ceilings andCPU1000. The prior run reached AI but returned no response before deadline; unknown629-neuron hold remains."
+}
