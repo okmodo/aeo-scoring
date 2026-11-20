@@ -42,7 +42,7 @@ test('authenticated submissions and report reads require current allowance evide
     const accountId = '0123456789abcdef0123456789abcdef';
     const subscriptionId = 'fixture-subscription';
     const now = Date.now();
-    const env = { ...configured, AUDIT_DB: db, AUDIT_RATE_SECRET: 'x'.repeat(32), AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId, AUDIT_USAGE_READ_TOKEN:'fixture-token', AUDIT_BROWSER:{quickAction:async()=>assert.fail('No browser action expected'),closeSession:async()=>assert.fail('No browser session expected')}, AUDIT_SNAPSHOTS:{put:async()=>{},get:async()=>{},delete:async()=>{}} };
+    const env = { ...configured, AUDIT_DB: db, AUDIT_RATE_SECRET: 'x'.repeat(32), AUDIT_BILLING_ACCOUNT_ID: accountId, AUDIT_BILLING_SUBSCRIPTION_ID: subscriptionId, AUDIT_USAGE_READ_TOKEN:'fixture-token', AUDIT_SELF:{prepare:async()=>{}}, AUDIT_BROWSER:{quickAction:async()=>assert.fail('No browser action expected'),closeSession:async()=>assert.fail('No browser session expected')}, AUDIT_SNAPSHOTS:{put:async()=>{},get:async()=>{},delete:async()=>{}} };
     const poll = scope => send('/' + id, { headers: authorized }, scope);
     const submit = scope => send('', {
       method: 'POST',

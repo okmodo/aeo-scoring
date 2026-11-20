@@ -41,7 +41,7 @@ test('scheduled watchdog reserves usage and limits hourly pruning to 100 expired
   const {DatabaseSync}=await import('node:sqlite');
   const {runScheduledMaintenance}=await import('./service.mjs');
   const sqlite=new DatabaseSync(':memory:');
-  sqlite.exec('CREATE TABLE browser_audit_work (audit_id TEXT PRIMARY KEY,state TEXT,created_at INTEGER,expires_at INTEGER); CREATE TABLE audit_pipeline_state (audit_id TEXT PRIMARY KEY,expires_at INTEGER)');
+  sqlite.exec('CREATE TABLE browser_audit_work (audit_id TEXT PRIMARY KEY,state TEXT,created_at INTEGER,expires_at INTEGER); CREATE TABLE audit_pipeline_state (audit_id TEXT PRIMARY KEY,expires_at INTEGER); CREATE TABLE retained_snapshots (audit_id TEXT PRIMARY KEY,state TEXT,expires_at INTEGER)');
   const insert=sqlite.prepare('INSERT INTO browser_audit_work VALUES (?, ?, ?, ?)');
   for(let i=0;i<101;i++) insert.run(String(i),'finished',now-1000,now-1);
   insert.run('active','capturing',now,now+1000);

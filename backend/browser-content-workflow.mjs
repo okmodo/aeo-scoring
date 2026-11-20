@@ -74,11 +74,13 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
       await pipeline?.record('snapshot','completed','browser_content_stored');
       // Keep even an origin error page available as evidence, but do not grade it.
       if(result.snapshot.status<200||result.snapshot.status>=300)throw failure('retrieval_failed','browser_api_origin_http_error');
-      const ready=await db.prepare("UPDATE browser_audit_work SET state='ready' WHERE audit_id=?1 AND state='capturing' AND expires_at>?2").bind(audit.id,now()).run();
+      const ready=await db.prepare("UPDATE browser_audit_work SET state='ready', expires_at=?3 WHERE audit_id=?1 AND state='capturing' AND expires_at>?2").bind(audit.id,now(),audit.expiresAt).run();
       if(ready.meta.changes!==1)throw failure('assessment_timeout','browser_api_lease_expired');
     },
-    async claim(id){return Boolean(await db.prepare("UPDATE browser_audit_work SET state='assessing' WHERE audit_id=?1 AND state='ready' AND expires_at>?2 RETURNING audit_id").bind(id,now()).first());},
-    async read(id) {
+    async claimPreparation(id){return await db.prepare("UPDATE browser_audit_work SET state='assessing', expires_at=MIN(?2+30000,(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1)) WHERE audit_id=?1 AND (state='ready' OR (state='assessing' AND expires_at<=?2)) AND EXISTS (SELECT 1 FROM retained_snapshots WHERE audit_id=?1 AND state='ready' AND expires_at>?2) RETURNING expires_at").bind(id,now()).first();},
+    async claim(id){return Boolean(await this.claimPreparation(id));},
+    async release(id,grant){await db.prepare("UPDATE browser_audit_work SET state='ready', expires_at=(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1) WHERE audit_id=?1 AND state='assessing' AND expires_at=?2 AND expires_at>?3").bind(id,grant.expires_at,now()).run();},
+    async read(id, {onPrepared} = {}) {
       const captured=await snapshots.read(id);
       if(captured.snapshot?.retrievalMethod!=='browser_api_content')throw failure('retrieval_failed','browser_api_invalid_snapshot');
       const state=await db.prepare('SELECT inputs_state, prepared_state FROM retained_snapshots WHERE audit_id=?1').bind(id).first();
@@ -96,6 +98,9 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
         p?.version!=='simplified-html-v1'||p.representation!=='cleaned_rendered_html'||p.originalCapturePreserved!==true||
         p.sourceObjectKey!==captured.source.objectKey||p.sourceSha256!==captured.source.sha256||p.sourceBytes!==captured.source.bytes||
         p.expiresAt!==captured.source.expiresAt||!Number.isSafeInteger(p.preparedAt)||p.preparedAt<0||p.preparedAt>=p.expiresAt||p.outputBytes!==bytes.byteLength||p.outputSha256!==hash)throw failure('retrieval_failed','browser_api_invalid_prepared');
+      // Ready publication is sufficient for the independent AI consumer;
+      // optional extraction below must not gate or roll back that notification.
+      if (onPrepared) { try { await onPrepared(id); } catch { /* Maintenance retries missed notifications. */ } }
       if(state.inputs_state===null) {
         const extracted=await extractPage({...captured.snapshot,body:bytes},{HTMLRewriter});
         // Parsed rendered HTML cannot establish initial-response or computed-visibility evidence.
@@ -110,6 +115,7 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
         !inputs.extracted||inputs.snapshot?.browser?.coverage?.initialAvailable!==false)throw failure('retrieval_failed','browser_api_invalid_inputs');
       return{...captured,rawHtml:bytes,snapshot:{...inputs.snapshot,browser:{...inputs.snapshot.browser,renderedHtml:prepared.html}},extracted:inputs.extracted};
     },
-    async finish(id){await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1").bind(id).run();},
+    async finish(id,grant){if(grant) await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1 AND state='assessing' AND expires_at=?2 AND expires_at>?3").bind(id,grant.expires_at,now()).run();
+      else await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1").bind(id).run();},
   };
 }

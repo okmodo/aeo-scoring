@@ -113,6 +113,38 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
       } catch (error) { if (error.code === 'snapshot_expired' || error.code === 'snapshot_corrupt') throw error; throw fail('snapshot_unavailable'); }
       });
     },
+    async readPrepared(auditId) {
+      const record = await row(auditId);
+      if (!record || record.state !== 'ready' || record.prepared_state !== 'ready') throw fail('snapshot_unavailable');
+      if (!validRecord(record) || record.audit_id !== auditId || record.expires_at !== record.created_at + SNAPSHOT_TTL_MS ||
+        !Number.isSafeInteger(record.html_size) || record.html_size < 1 || record.html_size > MAX_RENDERED_HTML_BYTES || !/^[a-f0-9]{64}$/.test(record.html_hash || '') ||
+        !Number.isSafeInteger(record.snapshot_size) || record.snapshot_size < 0 || record.snapshot_size > MAX_SNAPSHOT_BYTES || !/^[a-f0-9]{64}$/.test(record.snapshot_hash || '') ||
+        !Number.isSafeInteger(record.prepared_size) || record.prepared_size < 0 || record.prepared_size > artifactLimits.prepared || !/^[a-f0-9]{64}$/.test(record.prepared_hash || '')) throw fail('snapshot_corrupt');
+      if (time(now) >= record.expires_at || time(now) < record.created_at) throw fail('snapshot_expired');
+      return guarded({r2StorageBytes:0,r2ClassA:0,r2ClassB:2}, async () => {
+        const load = async (kind, size, hash) => {
+          const object = await bucket.get(`${record.object_prefix}/${kind}`);
+          if (!object || object.size !== size) throw fail('snapshot_corrupt');
+          const bytes = await readBounded(object, size);
+          if (await digest(bytes) !== hash) throw fail('snapshot_corrupt');
+          try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); } catch { throw fail('snapshot_corrupt'); }
+        };
+        const [metadata, prepared] = await Promise.all([
+          load('snapshot',record.snapshot_size,record.snapshot_hash), load('prepared',record.prepared_size,record.prepared_hash),
+        ]);
+        const base = metadata?.snapshot, p = prepared?.preprocessing;
+        if (!base || base.retrievalMethod !== 'browser_api_content' || prepared?.version !== '1' || typeof prepared.html !== 'string') throw fail('snapshot_corrupt');
+        const html = encoder.encode(prepared.html);
+        if (html.length > 4 * 1024 * 1024 - 64 * 1024 || p?.version !== 'simplified-html-v1' || p.representation !== 'cleaned_rendered_html' || p.originalCapturePreserved !== true ||
+          p.sourceObjectKey !== `${record.object_prefix}/html` || p.sourceSha256 !== record.html_hash || p.sourceBytes !== record.html_size || p.expiresAt !== record.expires_at ||
+          !Number.isSafeInteger(p.preparedAt) || p.preparedAt < 0 || p.preparedAt >= p.expiresAt || p.outputBytes !== html.length || p.outputSha256 !== await digest(html)) throw fail('snapshot_corrupt');
+        const empty = () => ({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
+        if (time(now) >= record.expires_at) throw fail('snapshot_expired');
+        const extracted = empty();
+        const browser = {version:'browser-content-v3',captureType:'content-api',initialExtracted:empty(),coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false},renderedHtml:prepared.html};
+        return {snapshot:{...base,preprocessing:p,rawHtml:html,browser},rawHtml:html,extracted,prepared,source:{preparedHash:record.prepared_hash,objectKey:`${record.object_prefix}/prepared`,sha256:record.prepared_hash,bytes:record.prepared_size,expiresAt:record.expires_at}};
+      });
+    },
     async saveAssessment({ auditId, artifact, kind }) {
       if (!validId(auditId) || !Object.hasOwn(artifactLimits, kind) || !artifact || typeof artifact !== 'object' || Array.isArray(artifact)) throw fail('snapshot_invalid');
       let json;

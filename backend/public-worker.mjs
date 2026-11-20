@@ -1,5 +1,25 @@
-import service, { handleAuditRequest } from './service.mjs';
+import service, { handleAuditRequest, runPreparation } from './service.mjs';
+import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPublicEgress, normalizePublicTarget } from './public-egress.mjs';
+
+// The fallback only permits offline Node tests to import this module; Workers
+// supplies the actual RPC superclass and exposes this entrypoint via binding.
+const { WorkerEntrypoint } = await import('cloudflare:workers').catch(() => ({WorkerEntrypoint: class {}}));
+
+export class AuditContinuation extends WorkerEntrypoint {
+  async prepare(auditId) {
+    this.ctx.waitUntil((async () => {
+      await runPreparation({env:this.env, auditId, onPrepared:id => this.env.AUDIT_SELF.assess(id)});
+    })().catch(() => {}));
+  }
+  async assess(auditId, hops = 0) {
+    if (!Number.isSafeInteger(hops) || hops < 0 || hops >= 8) return;
+    this.ctx.waitUntil((async () => {
+      const result = await runPreparedAudit({env:this.env, auditId});
+      if (result.status === 'yield' && hops < 7) await this.env.AUDIT_SELF.assess(auditId, hops + 1);
+    })().catch(() => {}));
+  }
+}
 
 const egress = createPublicEgress();
 const ALLOWED_ORIGIN = 'https://aeo-scoring-preview-20261105-kk7.pages.dev';

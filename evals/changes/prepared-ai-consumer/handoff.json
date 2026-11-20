@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "task": "Prepared-ready resumable AI consumer using existing project Worker/D1/R2/AI",
+  "state": "Terra implementation, focused regression/real SQLite-R2 roundtrip, local workerd continuation and fresh-agent replay passed. Final source-bound evaluation/CI and native activation remain.",
+  "decisions": [
+    "D1prepared_state ready is sole data-readiness gate; readerloads ONLY prepared plusretrievalmetadata, notoriginal HTML oroptionalparserinputs. Preparation owns itsflag.",
+    "Jobs bindaudit/preparedhash/policy/owner/lease; checkpoints replay knowncompletedmodelresponses withoutmodelcallornewneuronreservation. Unknownstartedcalls cannotberepeated automatically.",
+    "Preparedcontent hasonecanonicalrepresentation; extraction/identity/inspection/support/judgment areseparate individuallyreservedmodelpasses. Batchesbound18KB; requests60KiB/output4000/max128calls, oneNEWcallperinvocation. Conservativeplannerupperbounds mayexceedremainingdailybudget; percallguardremainsauthoritativeandlargerpagescanbudgetfail.",
+    "PrivateAUDIT_SELF servicebinding points existingprojectWorker AuditContinuation entrypoint; noHTTPinternalroute. ReadypublicationnotifiesAIbeforeoptionalparserinputs. Existinghourlymaintenance recoversupto3readyAIjobs+3missedpreparations.",
+    "SelfRPCchainscap8; nativeworkerdconfirmedafterHTTPresponseclose,chaincapandfreshrestart, plus3slowstepscompletedacross36s. Hourlyrecoverymaydelayinterrupted/cappedjobs.",
+    "Fivefailedclaims leadterminal-onlyfinalization, while safecheckpointyieldcontinuationsresetcrashattempts. Cleanupusesexpiryindexes andbounds100checkpoints/25jobs.",
+    "PreserveStructure40/Content60,initialresponseisolation,absenceCompletefalse,exactquotevalidation,existingpublicstatuses,noinventedscoreforunmeasuredapplicablechecks."
+  ],
+  "constraints": [
+    "All60%includedallowanceceilings andCPU1000 unchanged; unknownbillingusageholdsremain. NoexternalpaidAPI/newCloudflareproducts.",
+    "Nofrontend,rootdependencies/sharedcontracts/unrelatedCloudflareservicechanges. Original/prepareddataretain24h expiry.",
+    "No livebrowser/modelcalls inCI. Actualproductionmodelquality/runtimeCPU notprovenbylocalworkerd orsyntheticmockroundtrip."
+  ],
+  "completed": [
+    "Separateplan23aa740 beforeimplementation frommergedbackend7507f9916b55979539b35096d39a54d88c4e5d77.",
+    "Terraengine/storage/dispatch implementation andindependentreviewissuesaddressed; realprepared-onlyroundtrip yieldsvalidatedpositiveC1identity andretainedprofile/facts/reportwithinputsabsent.",
+    "FreshTerraagentrestoredSQLite+R2objectsafterfirstcheckpoint; fournewcallscompletedassessmentwithoutrepeatingfirstcheckpoint/reservationorreading/htmlor/inputs."
+  ],
+  "remaining": [
+    "Finalsource-boundevaluation/exitbinding andhostedCI; merge/deployonlyunderuserauthorization, notpartofCI.",
+    "Applyprojectmigration0011 afterexisting0010; preserveactiveproductionsecrets/releases/monitoring/cron/bindings/CPU1000 andaddAUDIT_SELF servicetargetself entrypointAuditContinuation.",
+    "Beforeclaiminglivesuccess,verifyanunexpiredpreparedreadyFahertyartifact causesactualmodelcall,typedfailureorvalidatedresultsretention,allowancereconciliationandnativeCPU. Do notretrievoriginal/reparseintheAIconsumer. Currentreadonlyinspectionfoundnoexistingreadyrows; useproducerownedreadinesspublicationafteractivation,donotmanuallyfakeready.",
+    "Keepmodeltimeoutsandconservativebudgetlimitationsvisible; donotclaimcomplete100pointreportswhensource-onlychecksareunmeasured."
+  ],
+  "resumeCommands": [
+    "node evals/changes/prepared-ai-consumer/export-state.mjs",
+    "npm run evaluate -- --change prepared-ai-consumer --base 7507f9916b55979539b35096d39a54d88c4e5d77",
+    "EVALUATION_BASE=7507f9916b55979539b35096d39a54d88c4e5d77 npm run ci:gate"
+  ]
+}

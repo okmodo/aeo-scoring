@@ -11,6 +11,7 @@ import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow } from './browser-workflow.mjs';
 import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
+import { recoverPreparedAudits, PREPARED_ASSESSMENT_POLICY } from './prepared-assessment-consumer.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -114,7 +115,7 @@ function hex(bytes) {
 }
 
 async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION : '') + ':' + url)));
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + PREPARED_ASSESSMENT_POLICY : '') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -135,7 +136,7 @@ export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
   snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
-  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric,
+  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric, dispatchPreparation, continuationRequired = false,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -162,6 +163,8 @@ export function createAuditService({
       if (browserFlow && !resumeBrowser) {
         await pipeline?.record('retrieval','running','browser_loading');
         await browserFlow.capture(audit,grant,pipeline);
+        // Notification is best effort: the persisted work remains authoritative.
+        if (dispatchPreparation) await dispatchPreparation(audit.id).catch(() => {});
         return;
       }
       if (resumeBrowser) {
@@ -287,7 +290,7 @@ export function createAuditService({
           error.message = 'This preview accepts only its approved demo product URL.';
           return json({ version: '1', error }, 400);
         }
-        if (!store || !egress?.fetch || (!browserFlow && typeof HTMLRewriter !== 'function') || typeof defer !== 'function' || (requireBrowser && !browserFlow) ||
+        if (!store || !egress?.fetch || (!browserFlow && typeof HTMLRewriter !== 'function') || typeof defer !== 'function' || (requireBrowser && !browserFlow) || (continuationRequired && !dispatchPreparation) ||
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
         const admission = await admit(INVOCATION_COSTS);
@@ -334,7 +337,7 @@ export function createAuditService({
         if (!admission?.id) return admissionError(admission);
         reservationId = admission.id;
         const audit = await store.get(id, now());
-        if (browserFlow && audit?.status==='pending' && typeof defer==='function' && await browserFlow.claim(id)) {
+        if (browserFlow && !continuationRequired && !dispatchPreparation && audit?.status==='pending' && typeof defer==='function' && await browserFlow.claim(id)) {
           backgroundDone = false;
           defer(run(audit,{resumeBrowser:true}).catch(()=>{}).finally(async()=>{backgroundDone=true;await settleCompleted();}));
         }
@@ -381,11 +384,71 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     openRubricEnabled: env.AUDIT_RUBRIC_RELEASE === OPEN_RUBRIC_RELEASE_ID,
     snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI) || requireBrowser, browserFlow, requireBrowser,
     secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
+    dispatchPreparation: env.AUDIT_SELF ? id => env.AUDIT_SELF.prepare(id) : undefined,
+    continuationRequired: requireBrowser,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),
     address: request.headers.get('cf-connecting-ip'),
   });
+}
+
+// Each private continuation is a distinct Worker invocation and reserves its
+// own account-wide allowance before touching D1 or retained data.
+export async function runPreparation({env, auditId, now = Date.now, allowance: injectedAllowance, workflow: injectedWorkflow, onPrepared} = {}) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(auditId ?? '')) return {status:'skipped'};
+  const db = env.AUDIT_DB;
+  if (!db || !env.AUDIT_USAGE_READ_TOKEN || !env.AUDIT_SNAPSHOTS || !env.AUDIT_BROWSER) return {status:'skipped'};
+  const scope = {accountId:env.AUDIT_BILLING_ACCOUNT_ID, subscriptionId:env.AUDIT_BILLING_SUBSCRIPTION_ID, token:env.AUDIT_USAGE_READ_TOKEN};
+  const allowance = injectedAllowance ?? createAnalyticsAllowanceGuard(db, scope);
+  const id = `prepare-${crypto.randomUUID()}`;
+  const admitted = await allowance.reserve({id, now:now(), costs:INVOCATION_COSTS});
+  if (!admitted?.accepted || admitted.duplicate !== false) return {status:'skipped'};
+  try {
+    const workflow = injectedWorkflow ?? createBrowserContentWorkflow({db, binding:env.AUDIT_BROWSER,
+      snapshots:createSnapshotStore({db, bucket:env.AUDIT_SNAPSHOTS, allowance:createR2AllowanceGuard(db, scope)}), ...scope, now});
+    const grant = workflow.claimPreparation ? await workflow.claimPreparation(auditId) : await workflow.claim(auditId);
+    if (!grant) return {status:'skipped'};
+    try {
+      if (Number.isSafeInteger(grant.expires_at)) {
+        const state = await db.prepare('SELECT prepared_state FROM retained_snapshots WHERE audit_id=?1').bind(auditId).first();
+        if (state?.prepared_state === 'pending') throw Object.assign(new Error('Prepared publication interrupted'),{code:'snapshot_unavailable'});
+        if (state?.prepared_state === 'ready') {
+          if (onPrepared) await onPrepared(auditId);
+          await workflow.finish?.(auditId,grant);
+          return {status:'ready'};
+        }
+      }
+      await workflow.read(auditId, {onPrepared});
+    }
+    catch (error) {
+      // An interrupted pending publication must not be overwritten or retried.
+      // Publish a safe incomplete report only while this exact claim is live and
+      // the prepared artifact has not concurrently become ready.
+      let reported = false;
+      if (Number.isSafeInteger(grant.expires_at)) {
+        const timestamp = now();
+        const audit = await db.prepare("SELECT url, expires_at FROM audits WHERE id=?1 AND status='pending' AND expires_at>?2").bind(auditId,timestamp).first();
+        if (audit) {
+          const report = scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});
+          report.status = 'incomplete'; report.score = null;
+          report.coverage.limitations.push('The retained page could not be prepared and verified for assessment; AI assessment did not start.');
+          const result = await db.prepare(`UPDATE audits SET status='incomplete',report_json=?2,error_json=NULL,completed_at=?3,cache_until=?4,assessed_url=?5
+            WHERE id=?1 AND status='pending' AND expires_at>?3 AND EXISTS
+            (SELECT 1 FROM browser_audit_work w JOIN retained_snapshots s ON s.audit_id=w.audit_id
+             WHERE w.audit_id=?1 AND w.state='assessing' AND w.expires_at=?6 AND w.expires_at>?3
+             AND s.state='ready' AND s.expires_at>?3 AND (s.prepared_state IS NULL OR s.prepared_state='pending'))`)
+            .bind(auditId,JSON.stringify(report),timestamp,Math.min(timestamp+HOUR,audit.expires_at),audit.url,grant.expires_at).run();
+          reported = result.meta.changes === 1;
+        }
+      }
+      if (reported) await workflow.finish?.(auditId,grant);
+      else await workflow.release?.(auditId,grant);
+      throw error;
+    }
+    await workflow.finish?.(auditId,grant);
+    return {status:'ready'};
+  } finally { await allowance.settle?.({id}); }
 }
 
 export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now() }) {
@@ -396,7 +459,7 @@ export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now =
   const result = await snapshots.cleanup({ limit: 10 });
   await db.prepare('DELETE FROM audit_pipeline_state WHERE audit_id IN (SELECT audit_id FROM audit_pipeline_state WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
   // Work records contain no browser allowance holds; those are managed only by the watchdog.
-  await db.prepare('DELETE FROM browser_audit_work WHERE audit_id IN (SELECT audit_id FROM browser_audit_work WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
+  await db.prepare("DELETE FROM browser_audit_work WHERE audit_id IN (SELECT w.audit_id FROM browser_audit_work w WHERE w.expires_at <= ?1 AND NOT (w.state IN ('ready','assessing') AND EXISTS (SELECT 1 FROM retained_snapshots s WHERE s.audit_id=w.audit_id AND s.state='ready' AND s.expires_at>?1)) LIMIT 100)").bind(now).run();
   await allowance.settle?.({ id });
   return { status: 'completed', ...result };
 }
@@ -408,6 +471,7 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
     const allowance = injectedAllowance ?? createAnalyticsAllowanceGuard(db, scope);
     // Every scheduled invocation must reserve its Worker and D1 costs first.
     const id = `browser-watchdog-${crypto.randomUUID()}`;
+    let preparationIds = [];
     try {
       const admitted = await allowance.reserve({id, now, costs: {requests:1, cpuMs:RESERVED_INVOCATION_CPU_MS, d1Reads:10000, d1Writes:100, d1StorageBytes:4096}});
       if (!admitted?.accepted || admitted.duplicate !== false) return;
@@ -415,8 +479,19 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
         const workflow = makeWorkflow({db, binding:env.AUDIT_BROWSER, ...scope});
         await workflow.watchdog();
       }
+      if (env.AUDIT_SELF) {
+        const rows = await db.prepare("SELECT w.audit_id FROM browser_audit_work w JOIN retained_snapshots s ON s.audit_id=w.audit_id JOIN audits a ON a.id=w.audit_id WHERE (w.state='ready' OR (w.state='assessing' AND w.expires_at<=?1)) AND s.state='ready' AND s.expires_at>?1 AND (s.prepared_state IS NULL OR s.prepared_state='pending') AND a.status='pending' AND a.expires_at>?1 ORDER BY w.created_at LIMIT 3").bind(now).all();
+        preparationIds = (rows.results ?? []).map(row => row.audit_id);
+      }
       await allowance.settle?.({id});
     } catch { return; } // Unknown work retains its reservation.
+    if (env.AUDIT_SELF) {
+      for (const auditId of preparationIds) await env.AUDIT_SELF.prepare(auditId).catch(() => {});
+      try {
+        const recovery = await recoverPreparedAudits({env, now:() => now});
+        for (const auditId of recovery.auditIds ?? []) await env.AUDIT_SELF.assess(auditId).catch(() => {});
+      } catch { /* Recovery is retried on the next existing maintenance event. */ }
+    }
     // Keep retained-data cleanup hourly even if a scheduled event fires off the hour.
     const scheduledTime = Number(event?.scheduledTime ?? now);
     if (new Date(scheduledTime).getUTCMinutes() !== 0 || !env.AUDIT_SNAPSHOTS) return;

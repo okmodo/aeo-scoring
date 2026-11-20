@@ -1,3 +1,4 @@
+import {PREPARED_ASSESSMENT_POLICY} from './prepared-assessment-policy.mjs';
 // A D1 batch is transactional; the quota check and admission commit together.
 const ADMIT = `INSERT INTO audit_admissions (id, rate_key, created_at)
 SELECT ?1, ?2, ?3
@@ -8,9 +9,9 @@ const CACHE = `SELECT * FROM audits WHERE cache_key = ?1 AND status IN ('complet
   ORDER BY completed_at DESC LIMIT 1`;
 const LEASE_MS = 60_000;
 
-function audit(row, now) {
+function audit(row, now, preparedPending = false) {
   if (!row) return null;
-  const stale = row.status === 'pending' && now >= row.created_at + (row.lease_ms ?? LEASE_MS);
+  const stale = row.status === 'pending' && !preparedPending && now >= row.created_at + (row.lease_ms ?? LEASE_MS);
   return {
     id: row.id, url: row.url, assessedUrl: row.assessed_url, status: stale ? 'unable_to_assess' : row.status, createdAt: row.created_at,
     expiresAt: row.expires_at, completedAt: row.completed_at, cacheUntil: row.cache_until,
@@ -49,7 +50,15 @@ export function createStore(db) {
     },
     async get(id, now) {
       const row = await db.prepare('SELECT * FROM audits WHERE id = ?1 AND expires_at >= ?2').bind(id, now).first();
-      return audit(row, now);
+      let preparedPending=false;
+      if(row?.status==='pending' && now>=row.created_at+(row.lease_ms??LEASE_MS)) {
+        try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
+          WHERE r.audit_id=?1 AND r.state='ready' AND r.created_at<=?2 AND r.expires_at>?2
+          AND (r.prepared_state='ready' OR EXISTS(SELECT 1 FROM browser_audit_work w WHERE w.audit_id=r.audit_id AND w.state='assessing' AND w.expires_at>?2))
+          AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND j.state IN ('complete','failed','uncertain'))`).bind(id,now,PREPARED_ASSESSMENT_POLICY).first());}
+        catch { /* Missing migrations or unreadable readiness cannot extend a lease. */ }
+      }
+      return audit(row, now, preparedPending);
     },
     async finish(id, { status, report = null, error = null, completedAt, cacheUntil = null, assessedUrl = null }) {
       if (!['complete', 'incomplete', 'unable_to_assess'].includes(status) || !Number.isSafeInteger(completedAt) ||
@@ -62,6 +71,16 @@ export function createStore(db) {
         .bind(id, status, report === null ? null : JSON.stringify(report), error === null ? null : JSON.stringify(error),
           completedAt, status !== 'unable_to_assess' ? cacheUntil : null, LEASE_MS, assessedUrl).run();
       return result.meta.changes === 1;
+    },
+    async finishPrepared(id, {grant,status,report,completedAt,cacheUntil,assessedUrl}) {
+      if(!grant||grant.auditId!==id||!['complete','incomplete'].includes(status)||!report||!Number.isSafeInteger(completedAt)||!Number.isSafeInteger(cacheUntil)||cacheUntil<=completedAt||typeof assessedUrl!=='string')throw new TypeError('Invalid prepared completion');
+      const result=await db.prepare(`UPDATE audits SET status=?2,report_json=?3,error_json=NULL,completed_at=?4,cache_until=?5,assessed_url=?6
+        WHERE id=?1 AND status='pending' AND created_at<=?4 AND expires_at>?4
+        AND EXISTS(SELECT 1 FROM prepared_assessment_jobs j JOIN retained_snapshots r ON r.audit_id=j.audit_id
+          WHERE j.audit_id=?1 AND j.prepared_hash=?7 AND j.policy_version=?8 AND j.owner=?9 AND j.state='running' AND j.lease_until>?4
+          AND r.state='ready' AND r.prepared_state='ready' AND r.prepared_hash=j.prepared_hash AND r.created_at<=?4 AND r.expires_at>?4)`)
+        .bind(id,status,JSON.stringify(report),completedAt,cacheUntil,assessedUrl,grant.preparedHash,grant.policyVersion,grant.owner).run();
+      return result.meta.changes===1;
     },
     async prune({ now, admissionBefore, limit = 100 }) {
       if (![now, admissionBefore, limit].every(Number.isSafeInteger) || admissionBefore > Math.floor(now / 3_600_000) * 3_600_000 || limit < 1 || limit > 1000) throw new TypeError('Invalid pruning');

@@ -1,0 +1,19 @@
+{
+  "reviewer": "independent runtime review agent",
+  "decision": "accepted_with_limitations",
+  "reviewedState": "Uncommitted runtime implementation observed during review; final source-bound evaluation and hosted CI were not available.",
+  "scope": ["Prepared-ready notification and recovery", "Private continuation and bounded hop chain", "Prepared input stability, admission, model checkpoints and diagnostics", "Bounded job cleanup"],
+  "findings": [
+    "Earlier recovery, changing parser-input, unbounded cleanup, and interrupted prepared-publication findings were addressed in the reviewed implementation.",
+    "The prepared input builder uses one canonical cleaned representation; assessment makes multiple separately reserved model passes. The 128-step cap and eight-hop continuation cap bound the chain, with maintenance recovery between chains.",
+    "A pending interrupted prepared publication produces an incomplete score-free report under a live claim unless publication has become ready. Model timeout, provider failure and invalid output are diagnosed without repeating uncertain calls."
+  ],
+  "verification": [
+    "Independently ran node --test backend/prepared-assessment-consumer.test.mjs backend/prepared-assessment-engine.test.mjs backend/prepared-assessment-jobs.test.mjs backend/browser-prepared-service.test.mjs: 21 passed.",
+    "Reviewed the recorded local-workerd continuation observations in native-runtime.json; this review did not independently rerun the 36-second experiment."
+  ],
+  "limitations": [
+    "Local workerd and offline tests do not establish deployed Cloudflare RPC cancellation, actual Worker CPU usage, live inference behavior, account-wide billing, or model quality.",
+    "Activation requires the separately authorized post-CI project-only native CPU and AI verification under existing admission limits; final source-bound evaluation, hosted CI and final committed source were not independently reviewed here."
+  ]
+}

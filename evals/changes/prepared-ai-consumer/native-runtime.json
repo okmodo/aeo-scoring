@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "mode": "local-workerd",
+  "source": "AuditContinuation class extracted from current backend/public-worker.mjs",
+  "observations": [
+    "Submitting HTTP response closed before asynchronous private RPC continuation completed.",
+    "Eight-hop cap left work pending; a new invocation resumed and reached twelve synthetic steps.",
+    "Separate 36-second experiment completed three 11-second synthetic steps after the initial HTTP response closed."
+  ],
+  "verification": "Named browser-build suite runs the short native RPC test; the 36-second local experiment output was {elapsedMs:36000,result:{calls:3}}.",
+  "limitations": "Local workerd and deterministic consumer doubles, no Cloudflare account model/browser calls. No deployed RPC, CPU or production cancellation guarantee; bounded hourly recovery remains required."
+}
