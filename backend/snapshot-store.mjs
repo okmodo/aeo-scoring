@@ -4,7 +4,7 @@ export const MAX_HTML_BYTES = 1024 * 1024;
 export const MAX_RENDERED_HTML_BYTES = 8 * 1024 * 1024;
 export const MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024;
 export const MAX_ASSESSMENT_BYTES = 256 * 1024;
-const artifactLimits = Object.freeze({ profile: 32 * 1024, facts: MAX_ASSESSMENT_BYTES, inputs: 512 * 1024 });
+const artifactLimits = Object.freeze({ profile: 32 * 1024, facts: MAX_ASSESSMENT_BYTES, inputs: 512 * 1024, prepared: 8 * 1024 * 1024 });
 const encoder = new TextEncoder();
 const fail = code => Object.assign(new Error('Retained snapshot unavailable'), { code });
 const validId = id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
@@ -66,7 +66,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
     if (!validRecord(record)) throw fail('snapshot_corrupt');
     // R2 DeleteObject is free; caller still admits Workers and D1 costs.
     // Keep the reference until both deletes succeed; repeating either delete is safe.
-    await bucket.delete([`${record.object_prefix}/html`, `${record.object_prefix}/snapshot`, `${record.object_prefix}/profile`, `${record.object_prefix}/facts`, `${record.object_prefix}/inputs`]);
+    await bucket.delete([`${record.object_prefix}/html`, `${record.object_prefix}/snapshot`, `${record.object_prefix}/profile`, `${record.object_prefix}/facts`, `${record.object_prefix}/inputs`, `${record.object_prefix}/prepared`]);
     await db.prepare('DELETE FROM retained_snapshots WHERE audit_id = ?1 AND object_prefix = ?2').bind(record.audit_id, record.object_prefix).run();
   }
   return {
@@ -109,7 +109,7 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
         if (!parsed || typeof parsed.snapshot !== 'object' || !parsed.snapshot || typeof parsed.extracted !== 'object' || !parsed.extracted) throw fail('snapshot_corrupt');
         if (record.html_size > MAX_HTML_BYTES && parsed.snapshot.retrievalMethod !== 'browser_api_content') throw fail('snapshot_corrupt');
         if (time(now) >= record.expires_at) throw fail('snapshot_expired');
-        return { ...parsed, rawHtml: new Uint8Array(html) };
+        return { ...parsed, rawHtml: new Uint8Array(html), source: { objectKey: `${record.object_prefix}/html`, sha256: record.html_hash, bytes: record.html_size, expiresAt: record.expires_at } };
       } catch (error) { if (error.code === 'snapshot_expired' || error.code === 'snapshot_corrupt') throw error; throw fail('snapshot_unavailable'); }
       });
     },

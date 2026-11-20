@@ -238,10 +238,17 @@ export function createAuditService({
       if (pipeline) {
         try { await pipeline.record(stage, 'failed', stage === 'retrieval' ? (/^browser_api_[a-z_]+$/.test(error?.diagnosticCode||'') ? error.diagnosticCode : 'retrieval_failed') : stage === 'snapshot' ? 'snapshot_unavailable' : 'assessment_failed'); } catch { /* D1 may be unavailable; terminal report still records safe diagnostics. */ }
       }
+      // A resumed browser assessment has already completed capture. Failure to
+      // prepare/verify its retained inputs is incomplete assessment, not a new
+      // retrieval failure; never manufacture observations or numeric credit.
+      if (pipeline && resumeBrowser && stage === 'snapshot' && !report) {
+        snapshot = { url: audit.url };
+        report = scorePage(snapshot, { coverage: { html: false, usable: false } }, { requireAiAssessment: true });
+      }
       if (pipeline && stage !== 'retrieval' && report) {
         report.status = 'incomplete';
         report.score = null;
-        report.coverage.limitations.push(stage === 'snapshot' ? (aiAttempted ? 'The assessment inputs or results could not be retained and verified; no final score is available.' : 'The downloaded page could not be retained and verified; AI assessment did not start.') : 'The assessment pipeline did not finish; unresolved checks remain unmeasured.');
+        report.coverage.limitations.push(stage === 'snapshot' ? (aiAttempted ? 'The assessment inputs or results could not be retained and verified; no final score is available.' : resumeBrowser ? 'The retained page could not be prepared and verified for assessment; AI assessment did not start.' : 'The downloaded page could not be retained and verified; AI assessment did not start.') : 'The assessment pipeline did not finish; unresolved checks remain unmeasured.');
         report.coverage.pipeline = pipeline.summary();
         const completedAt = now();
         await store.finish(audit.id, { status: 'incomplete', report, assessedUrl: snapshot.url, completedAt,
