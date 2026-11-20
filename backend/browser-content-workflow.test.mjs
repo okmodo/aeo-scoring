@@ -136,3 +136,11 @@ test('prepared-only reader verifies provenance without original reads or parsing
  f.sqlite.prepare('UPDATE retained_snapshots SET html_hash=? WHERE audit_id=?').run(raw.source.sha256,id);
  const key=result.source.objectKey;f.objects.set(key,new TextEncoder().encode('{}'));await assert.rejects(f.snapshots.readPrepared(id),{code:'snapshot_corrupt'});
 });
+
+test('automatic prepared publication stops before optional extraction and legacy explicit reads still work',async()=>{
+ const f=fixture();await f.flow.capture(f.audit,await f.flow.prepare(f.audit));let notified=0;
+ assert.deepEqual(await f.flow.read(id,{preparedOnly:true,onPrepared:async()=>{notified++;assert.equal(f.extracted,0);}}),{prepared:true});
+ assert.equal(notified,1);assert.equal(f.extracted,0);const row=f.sqlite.prepare('SELECT prepared_state,inputs_state FROM retained_snapshots').get();
+ assert.equal(row.prepared_state,'ready');assert.equal(row.inputs_state,null);
+ await f.flow.read(id);assert.equal(f.extracted,1);assert.equal(f.sqlite.prepare('SELECT inputs_state FROM retained_snapshots').get().inputs_state,'ready');
+});

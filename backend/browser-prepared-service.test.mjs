@@ -8,7 +8,7 @@ const env={AUDIT_DB:{},AUDIT_USAGE_READ_TOKEN:'token',AUDIT_SNAPSHOTS:{},AUDIT_B
 test('preparation reserves before claiming and publishes before notification', async () => {
   const events=[];
   const allowance={reserve:async()=>{events.push('reserve');return {accepted:true,duplicate:false};},settle:async()=>events.push('settle')};
-  const workflow={claim:async()=>{events.push('claim');return true;},read:async()=>events.push('publish')};
+  const workflow={claim:async()=>{events.push('claim');return true;},read:async(_id,options)=>{assert.equal(options.preparedOnly,true);events.push('publish')}};
   assert.deepEqual(await runPreparation({env,auditId:id,allowance,workflow}),{status:'ready'});
   assert.deepEqual(events,['reserve','claim','publish','settle']);
   events.length=0;

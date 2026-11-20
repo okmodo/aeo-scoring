@@ -1,0 +1,17 @@
+{
+  "reviewer": "independent runtime review agent",
+  "decision": "accepted_with_limitations",
+  "reviewedState": "Uncommitted implementation based on 186d637309f55d78f95fc6c3e188db5505ef306e; plan committed separately as cde102b. Final source-bound evaluation and hosted CI were not available during review.",
+  "scope": "Reviewed the prepared-only workflow option, its use by automatic preparation, focused tests, and the separately committed plan.",
+  "findings": [
+    "Automatic preparation now returns after prepared-artifact verification and notification, before optional extraction and inputs publication. Legacy explicit reads retain their existing extraction behavior.",
+    "The implementation leaves the configured CPU and allowance limits, consumer checkpoint policy, and prepared-artifact contract unchanged. No blocking finding identified within the reviewed scope."
+  ],
+  "verification": [
+    "Independently ran node --test backend/browser-content-workflow.test.mjs backend/browser-prepared-service.test.mjs: 19 passed, including prepared-only extraction avoidance and legacy read coverage."
+  ],
+  "limitations": [
+    "Offline tests do not measure Cloudflare CPU or demonstrate that the change brings preparation within 1000 ms. The observed earlier 2026 ms result cannot establish the CPU cost after this change.",
+    "Final source-bound evaluation, hosted CI, final committed source, deployment, and post-change native CPU and AI verification were not independently reviewed here. The plan requires native verification after CI and review."
+  ]
+}
