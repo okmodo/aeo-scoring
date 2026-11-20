@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "id": "prepared-ai-consumer",
+  "task": "Consume verified ready prepared artifacts for automatic resumable AI assessment, never original HTML or reparsing, with existing project infrastructure and budget controls.",
+  "scope": [
+    "backend/**",
+    "scripts/browser-build-check.mjs",
+    "docs/prepared-ai-consumer.md",
+    "evals/changes/prepared-ai-consumer/**"
+  ],
+  "nonGoals": [
+    "No frontend/shared contracts/root dependencies/rubric weights or unrelated Cloudflare service changes.",
+    "No original HTML in AI requests, no parser rerun or parser-completeness prerequisite after prepared_state ready, and no ready-state mutation by AI jobs.",
+    "No new paid products, increases to60% ceilings/CPU1000, unbounded calls/retries, fabricated model evidence or ignored uncertain usage."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Only prepared_state ready admits AI work. Read/verify existing prepared artifact size/hash/version/expiry and source reference against D1 metadata, without fetching original HTML or invoking parser. Bind consumer jobs to audit/prepared hash/assessment policy version.",
+      "verification": "automated",
+      "evidence": "Frozen ready/pending/null,missing/tampered/expired,original-read forbidden and exact prepared-byte fixtures."
+    },
+    {
+      "id": "O2",
+      "description": "Separate atomic AI job ownership from preparation, bounded invocation leases/checkpoints and duplicate suppression. Trigger internal existing-Worker continuation after ready publication; existing maintenance discovers unclaimed ready artifacts for recovery. No browser-tab dependence; no change to parsing rules.",
+      "verification": "automated",
+      "evidence": "Real SQLite interleavings,expired claims,idempotent notification,interrupted checkpoint replay,private dispatch/auth and bounded maintenance tests."
+    },
+    {
+      "id": "O3",
+      "description": "AI receives prepared content once with stable evidence/provenance and bounded batching. Eliminate original/extraction duplication and arbitrary512-section readiness gate for this path. Plan request/input/output/call/neuron bounds, reserve every real call, persist completed model steps and resume without repeated charges. Invalid/uncertain output and budgets produce explicit partial/failure statuses, never false absence or scores.",
+      "verification": "automated",
+      "evidence": "Frozen model scenarios,real request assertions/cost estimates,checkpoint replay/evidence validators,timeout/budget/size diagnoses,unchanged scoring oracle."
+    },
+    {
+      "id": "O4",
+      "description": "Persist category profile,validated findings and deterministic Structure40/Content60 report using existing response statuses. Version cache/input policy. Preserve initial-response isolation and24h retention. Distinguish prepared failures,budget/model/validation/persistence failures.",
+      "verification": "automated",
+      "evidence": "Complete/partial pipeline integration,R2/D1 result replay,policy/cache invalidation,error code tests."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Plan separately committed before implementation in isolatedcodexworktree; Terra implementation and independent review, genuine fresh-agent exit from prepared-ready/checkpoint boundary,actualsourceboundevaluation/CI. No live model/browser calls inCI.",
+      "verification": "human",
+      "evidence": "Git history,frozenfixtures,review/handoff/exit/run/trace andPRCI;livecalibrationonlyunderreservedbudget."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing Worker,D1,R2,AI bindings and policy helpers; minimal ready notification and bounded existing maintenance recovery; no parser work or UI changes in AI consumer.",
+      "verification": "human",
+      "evidence": "Diff,ownership,tests,measured input/call planning and independent review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "New durable AI job/checkpoint handoff must resume from ready prepared bytes and completed model step without raw retrieval,reparse or repeat model charges."
+  },
+  "context": "User explicitly authorizes agreed detailed plan with Terra agents; preparation assumed complete and D1 prepared_state is sourceofreadiness. Existing PR47/48 alreadymerged at backend origin; reuse their prepared storage and cleaned-evidence validators. Preserve60%/CPU1000 and frontend/unrelated services. Native deployment/livebudgetedverification follows passing checks/review as authorized continuation; do not claim fullmodelquality frommocktests."
+}
