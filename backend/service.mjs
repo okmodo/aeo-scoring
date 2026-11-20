@@ -419,7 +419,7 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
           return {status:'ready'};
         }
       }
-      await workflow.read(auditId, {onPrepared});
+      await workflow.read(auditId, {onPrepared, preparedOnly:true});
     }
     catch (error) {
       // An interrupted pending publication must not be overwritten or retried.

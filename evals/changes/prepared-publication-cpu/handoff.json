@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Skip optional extraction in automatic prepared publication",
+  "state": "Narrow preparedOnly option implemented and independently reviewed;19focusedtests passed. NativeCPU remeasurement remains afterfullchecks/CI/rollout.",
+  "decisions": [
+    "Automaticpreparationreturnsafterverifiedpreparedartifactpublicationandnotification;AIalreadyconsumespreparedcontentwithoutinputs.",
+    "Legacyexplicitreadretainsoldextractionbehavior;preparedartifactandAIcheckpoint/inputpolicyunchanged.",
+    "ModeltimeoutfromPR49 isseparate;unknown633neuronreservationremainsheldandjobuncertainisnotretried."
+  ],
+  "constraints": [
+    "Keep60%ceilings/CPU1000/auth/releases/monitoring/hourlycron/selfbinding andfrontend/unrelatedservices unchanged.",
+    "No newmodel/provider change orstate-reset; do notrelabelconfiguredCPUcapasguaranteeofobservedruntime."
+  ],
+  "completed": [
+    "Separatelycommittedplancde102b beforeimplementation.",
+    "19focusedtestsandindependentTerrareview;fullsourceboundevaluationfollows."
+  ],
+  "remaining": [
+    "Runfullplannedchecks+hostedCIthenauthorizedmerge/deployonlybackend.",
+    "FreshFahertyproductvalidationmustremeasureRPCstageCPU;previous2026ms prep/375msAIobservationdoesnotprovefix. Useproducer-readytransition,notmanualreadyflag.",
+    "Productionvalidationartifact/rolloutreservationmustbesettledconservatively;unknownAIusageholdsretained."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change prepared-publication-cpu --base 186d637309f55d78f95fc6c3e188db5505ef306e",
+    "EVALUATION_BASE=186d637309f55d78f95fc6c3e188db5505ef306e npm run ci:gate"
+  ]
+}

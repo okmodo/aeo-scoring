@@ -80,7 +80,7 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
     async claimPreparation(id){return await db.prepare("UPDATE browser_audit_work SET state='assessing', expires_at=MIN(?2+30000,(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1)) WHERE audit_id=?1 AND (state='ready' OR (state='assessing' AND expires_at<=?2)) AND EXISTS (SELECT 1 FROM retained_snapshots WHERE audit_id=?1 AND state='ready' AND expires_at>?2) RETURNING expires_at").bind(id,now()).first();},
     async claim(id){return Boolean(await this.claimPreparation(id));},
     async release(id,grant){await db.prepare("UPDATE browser_audit_work SET state='ready', expires_at=(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1) WHERE audit_id=?1 AND state='assessing' AND expires_at=?2 AND expires_at>?3").bind(id,grant.expires_at,now()).run();},
-    async read(id, {onPrepared} = {}) {
+    async read(id, {onPrepared, preparedOnly = false} = {}) {
       const captured=await snapshots.read(id);
       if(captured.snapshot?.retrievalMethod!=='browser_api_content')throw failure('retrieval_failed','browser_api_invalid_snapshot');
       const state=await db.prepare('SELECT inputs_state, prepared_state FROM retained_snapshots WHERE audit_id=?1').bind(id).first();
@@ -101,6 +101,7 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
       // Ready publication is sufficient for the independent AI consumer;
       // optional extraction below must not gate or roll back that notification.
       if (onPrepared) { try { await onPrepared(id); } catch { /* Maintenance retries missed notifications. */ } }
+      if (preparedOnly) return {prepared:true};
       if(state.inputs_state===null) {
         const extracted=await extractPage({...captured.snapshot,body:bytes},{HTMLRewriter});
         // Parsed rendered HTML cannot establish initial-response or computed-visibility evidence.
