@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "html-preprocessing-release",
+  "task": "Deploy merged PR47/48 backend and migration0010 to the existing project Worker/D1 with all limits and unrelated/frontend services unchanged.",
+  "scope": [
+    "evals/changes/html-preprocessing-release/**"
+  ],
+  "nonGoals": [
+    "No app/frontend/dependency/rubric/guard changes, otherCloudflare service changes, newpaidresources or model/browser audit retry.",
+    "No CPUcap beyond1000ms or60% ceiling changes, secret/access/monitoring/cron changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Build exact merged backend7507f9916b55979539b35096d39a54d88c4e5d77, apply onlymissingpreparedcolumns under existing budget guard, uploadwithouttraffic and readback modulehashes/bindings/CPU1000 beforedeploy.",
+      "verification": "human",
+      "evidence": "Private APIproofs, compiledmodulehashes, sourceSHA, pre/postcolumn/config comparisons."
+    },
+    {
+      "id": "O2",
+      "description": "Deploy existingprojectWorker only, preserveactivebindings/secrets/monitoring/access/cron and verify protectedinvalidinput/CORS/unauthorized responses without startingaudit/model/browser.",
+      "verification": "human",
+      "evidence": "Deployment/versionreadback, fixedsmokechecks and privatebefore/after evidence."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "User explicitlyauthorizesmergesanddeploy; bothPRsindependentlyreviewedandCIpassed. Commit thisoperationalplan beforemigration/deploy and reserveguardedusage. Neverprintsecrets.",
+      "verification": "human",
+      "evidence": "Userrequest, PR47/48mergeSHAs/CI andseparateplancommit."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use existingprojectresources andexactreviewedbundle; avoidextraaudits/liveAIcalls or unrelatedsettingschanges.",
+      "verification": "human",
+      "evidence": "TargetedAPIpaths andsmokeproofs."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Operationalreleaseofalreadytestedprepared-stateworkflow; no implementation/resumabilitychange. PR48freshagentcontinuationalreadyrecorded."
+  },
+  "context": "MergedPR47=f812da00f1a617037531b4b9875ebaa31d7375eb; mergedPR48=7507f9916b55979539b35096d39a54d88c4e5d77. Activebefore=2e0fca5b-e1d2-4c58-b3b0-fbfa3c2fbdc7. Userauthorizesproductionrelease; priorPRnondeploymentconditionwasforreviewstage."
+}
