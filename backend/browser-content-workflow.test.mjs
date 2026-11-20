@@ -108,3 +108,15 @@ test('concurrent prepared publication fails closed while pending and retries aft
  await assert.rejects(f.flow.read(id),{code:'snapshot_unavailable'});assert.equal(f.extracted,0);
  release();await writer;const result=await f.flow.read(id);assert.equal(f.extracted,1);assert.equal(result.snapshot.preprocessing.version,'simplified-html-v1');
 });
+
+test('prepared migration preserves a legacy capture and adds absent prepared state',()=>{
+ const sqlite=new DatabaseSync(':memory:');
+ for(const name of ['0003-retained-snapshots.sql','0008-browser-content-inputs.sql'])sqlite.exec(readFileSync(new URL('./migrations/'+name,import.meta.url),'utf8'));
+ sqlite.prepare("INSERT INTO retained_snapshots(audit_id,object_prefix,created_at,expires_at,state,html_size,html_hash,snapshot_size,snapshot_hash) VALUES(?,?,?,?,?,?,?,?,?)").run(id,'retained/'+id+'/'+id,time,time+86400000,'ready',7,'a'.repeat(64),2,'b'.repeat(64));
+ const before=sqlite.prepare('SELECT * FROM retained_snapshots').get();
+ sqlite.exec(readFileSync(new URL('./migrations/0010-prepared-html.sql',import.meta.url),'utf8'));
+ const after=sqlite.prepare('SELECT * FROM retained_snapshots').get();
+ assert.equal(after.prepared_state,null);assert.equal(after.prepared_size,null);assert.equal(after.prepared_hash,null);
+ for(const [key,value]of Object.entries(before))assert.equal(after[key],value);
+ sqlite.close();
+});

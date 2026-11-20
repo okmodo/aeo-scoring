@@ -1,0 +1,68 @@
+{
+  "status": "implemented_offline_validation",
+  "productionChanged": false,
+  "cloudflareWrites": 0,
+  "liveModelCalls": 0,
+  "liveBrowserCalls": 0,
+  "fahertyLocalReplay": {
+    "sourceBytes": 1353581,
+    "cleanedBytes": 428593,
+    "reductionPercent": 68.34,
+    "sourceSha256": "323089ad6f93a3f0f18d6a9529c9b5b99be82f8241cd638437f8b2204a3fae96",
+    "cleanedSha256": "a1fc9cc91df6b0f107f3d12baed60c20af3988f2e6a40917e4f667075af2aa4a",
+    "elapsedWallMs": 250.8875,
+    "actualCloudflareCpuMs": null,
+    "peakMemoryBytes": null,
+    "semanticInventoryChecks": {
+      "text": true,
+      "headings": true,
+      "images": true,
+      "links": true,
+      "controls": true,
+      "json": true
+    },
+    "preservedCounts": {
+      "headings": 99,
+      "images": 55,
+      "links": 368,
+      "controls": 72,
+      "jsonScripts": 16
+    }
+  },
+  "bounds": {
+    "inputBytes": 8388608,
+    "cleanedBytes": 4128768,
+    "preparedJsonBytes": 8388608,
+    "retentionMs": 86400000,
+    "cpuCapMs": 1000,
+    "operatingLimitPercent": 60
+  },
+  "nativeTests": {
+    "tests": 2,
+    "skipped": 0,
+    "includes": [
+      "strictUTF8",
+      "input/outputoverflow",
+      "350textblocks",
+      "JSON/SVG/ARIA/referencepreservation",
+      "recognizedeventsvscustomattributes",
+      "500007bytecontrolcharacterstress",
+      "malformednesting"
+    ]
+  },
+  "freshAgent": {
+    "agent": "/root/automatic_exit_fresh",
+    "sourceCommit": "0bd4e02",
+    "retrieval": 0,
+    "preprocessing": 0,
+    "extraction": 1,
+    "tamper": "snapshot_corrupt",
+    "expiry": "snapshot_expired"
+  },
+  "limitations": [
+    "Local replay is not aCloudflareCPU/memorybenchmark or fullAIcalibration.",
+    "Cleaning mayremove arbitraryclass/stylecontext; visibilityunknown andabsenceCompletefalse remain.",
+    "Pending interrupted artifactsfailclosed untilcleanup; thisisnotnewautomaticjobresumption.",
+    "Prepared v2inputs/schema0010 mustbe rolledout explicitlyafterPR47 integration; no deployperformed."
+  ]
+}

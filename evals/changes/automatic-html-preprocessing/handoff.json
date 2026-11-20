@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Automatic native HTML preprocessing and durable R2 prepared artifact before AI review.",
-  "state": "Implementation and targeted/native tests complete; original capture preserved. Genuine fresh-agent continuation, independent final review and final source-bound evaluation/CI are pending and recorded separately.",
+  "state": "Implementation, native/targeted checks, fresh-agent continuation and independent final review complete. Source-bound evaluation and hosted CI outcomes are recorded in run/trace and PR; production remains unchanged.",
   "decisions": [
     "Keep original /html and /snapshot immutable; persist one /prepared JSON artifact and readback before extraction/input publication.",
     "Prepared metadata binds original key/hash/size/expiry and cleanedhash/size; inputs version2 matches exactpreparedmetadata.",
@@ -21,11 +21,15 @@
     "Validplan cc6cbc7 committedbeforeTerraimplementation.",
     "DisjointTerraimplementation andongoingindependentreview.",
     "Targetedsource/store/workflow/service/native regressions passed; localFaherty replay withnativecleaner completedwithoutprovider calls.",
-    "Exportedprepared-ready/inputs-absent boundary viaactualnativecleaner, realSQLite andin-memoryR2."
+    "Exportedprepared-ready/inputs-absent boundary viaactualnativecleaner, realSQLite andin-memoryR2.",
+    "Fresh Terra agent incleancheckout0bd4e02 resumedonlyexportedpreparedstate; retrieval0/preprocessing0/extraction1; tampered/expired rejected.",
+    "Nativecontrolcharacter/malformedmarkupstress passed; actualprivateFahertysemanticinventories andall16JSONhashes matched.",
+    "Independent Terra final review identified no remaining implementation blocker, subject to source-bound evaluation, exit digest binding and hosted CI."
   ],
   "remaining": [
-    "Freshagentonly-export continuation andtampered/expiredreject replay.",
-    "Finalindependentreview, fullsource-boundevaluation, PR andhostedCI."
+    "PR47 integration and authorized production migration0010/rollout remain outside this task; neither PR is merged/deployed.",
+    "Existing model response deadline remains unresolved; no AI scoring completion is claimed.",
+    "Check final source-bound evaluation and hosted CI records before any future merge."
   ],
   "resumeCommands": [
     "npm run evaluate -- --change automatic-html-preprocessing --base e18d2a79d73651327b7f2a4608b5e21a7f3f723b",
