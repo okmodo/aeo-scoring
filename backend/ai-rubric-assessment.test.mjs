@@ -436,3 +436,25 @@ test('content API rendered observations support content while initial checks rem
  Object.assign(access,{status:'not_applicable',fraction:null,rule:'no_material_claims'});
  assert.equal(evaluate().status,'not_measured');
 });
+
+test('cleaned HTML citations reach AI and validate late facts without parser completeness',async()=>{
+ const f=await fixture(),html='<main><h1>Solar kettle</h1>'+(' '.repeat(9000))+'<p>Six cups</p></main>';
+ const bytes=new TextEncoder().encode(html),outputSha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+ Object.assign(f.snapshot,{rawHtml:html,retrievalMethod:'browser_api_content',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:'retained/00000000-0000-4000-8000-000000000000/11111111-1111-4111-8111-111111111111/html',sourceSha256:'a'.repeat(64),sourceBytes:bytes.length+1,outputBytes:bytes.length,outputSha256},browser:{renderedHtml:html,initialExtracted:{},coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false}}});
+ f.extracted.productHtml.complete=false;
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ const first=f.bundle.sources.find(s=>s.kind==='html'),last=f.bundle.sources.find(s=>s.kind==='html'&&s.text.includes('Six cups'));
+ f.profile.evidence=[{sourceId:first.id,quote:'Solar kettle'}];
+ const identity=f.judgments.judgments.find(x=>x.id==='C1.identity');Object.assign(identity,{status:'measured',fraction:1,reason:'Exact retained HTML product evidence',evidence:[{sourceId:last.id,quote:'Six cups'}]});
+ const sourceOnly=f.judgments.judgments.find(x=>x.id==='S1.delivery');Object.assign(sourceOnly,{status:'measured',fraction:1,reason:'Rendered fact',evidence:[{sourceId:first.id,quote:'Solar kettle'}]});
+ let assessment=validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections:[]});
+ assert.equal(assessment.findings['C1.identity'].fraction,1);assert.equal(assessment.findings['S1.delivery'].status,'not_measured');
+ Object.assign(identity,{fraction:0,basis:'absence'});
+ const inspections=f.bundle.sources.map(source=>({sourceId:source.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:[...direct,...f.profile.slots.map(s=>s.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ const evaluate=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections}).findings['C1.identity'];
+ assert.equal(evaluate().status,'not_measured');
+ inspections.find(s=>s.sourceId===first.id).checks.find(c=>c.id==='C1.identity').status='unknown';assert.equal(evaluate().status,'not_measured');
+ const inputSources=[];let calls=0;
+ const result=await assessRetainedRubric({...f,calibrationApproved:true,allowance:{reserve:async()=>({accepted:true,duplicate:false})},AI:{async run(model,input){calls++;const payload=JSON.parse(input.messages[1].content);if(payload.source){inputSources.push(payload.source);return{response:{evidence:[],primaryEvidence:[]}};}return{response:{status:'ambiguous',category:null,evidence:[]}};}}});
+ assert.equal(result.status,'unavailable');assert.ok(calls>0);assert.equal(inputSources.map(s=>s.text).join(''),html);assert.ok(inputSources.every(s=>s.kind==='html'&&s.preparedHtml));
+});
