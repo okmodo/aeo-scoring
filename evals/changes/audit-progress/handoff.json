@@ -1,7 +1,7 @@
 {
   "version": 1,
   "task": "Add a visible five-stage audit loading block and automatically open terminal results.",
-  "state": "Implemented in codex/audit-progress based on main0eb77e4. Targeted SSR tests, lint/typecheck/build and ten browser mock scenarios passed; independent final review and source-bound evaluation/hosted CI pending at this checkpoint.",
+  "state": "Implementation complete on codex/audit-progress based on main0eb77e4. All nine evaluation commands and ci:gate passed for422c53c. Independent code/style/permissions review approved. This final handoff checkpoint precedes refreshed source-bound evidence and hosted PR CI; no merge or deployment performed.",
   "decisions": [
     "Show all five requested stage labels while submission or polling is outstanding. Current API exposes pending/terminal only, so workflow uses an indeterminate indicator without invented per-stage completion.",
     "Only switch to report screen after a terminal response. Cached reports open immediately; partial reports have honest completion copy; failures and unsupported reports avoid success copy.",
@@ -15,12 +15,13 @@
   "completed": [
     "Plan811e572 committed before application edits.",
     "Browser verified slow initial request, pending polling, complete/partial/failed/cached responses,429/network errors, auth expiry, initial/poll timeout and cancel/retry stale response.",
-    "Desktop and390px mobile layout checked; no horizontal overflow, reduced-motion animation disabled."
+    "Desktop and390px mobile layout checked; no horizontal overflow, reduced-motion animation disabled.",
+    "Independent reviewer found no actionable source/UI findings and reviewed screenshots and browser proof. Browser interactions were performed by implementation agent, not independently rerun by reviewer.",
+    "Required local evaluation passed all nine named plan commands; gate passed with one immutable plan."
   ],
   "remaining": [
-    "Run source-bound evaluator and ci:gate, commit evidence, publish PR and verify hosted CI.",
-    "Finish independent review against final source/evidence.",
-    "Merge and deploy only when separately authorized."
+    "Refresh evaluation evidence for this handoff checkpoint, commit evidence and publish PR for hosted CI.",
+    "After hosted CI passes, report PR URL to user; merge and deploy remain separate authorized release steps."
   ],
   "resumeCommands": [
     "npm ci --ignore-scripts",
