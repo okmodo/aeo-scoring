@@ -1,8 +1,17 @@
-import { ALLOWANCE_VERSION, INCLUDED_CEILINGS, MAX_EVIDENCE_AGE_MS, METRICS, validAmounts } from './allowance-policy.mjs';
+import { ALLOWANCE_VERSION, INCLUDED_CEILINGS, MAX_EVIDENCE_AGE_MS, METRICS, WORKERS_AI_INCLUDED_NEURONS, validAmounts } from './allowance-policy.mjs';
 
 const columns = ['requests', 'cpu_ms', 'd1_reads', 'd1_writes', 'd1_storage_bytes', 'ai_neurons'];
 const deny = reason => ({ accepted: false, reason });
 const canonical = values => JSON.stringify(Object.fromEntries(METRICS.map(key => [key, values[key] ?? 0])));
+const defaultAllocationJson = canonical(INCLUDED_CEILINGS);
+const cycleMaximum = { ...INCLUDED_CEILINGS, aiNeurons: WORKERS_AI_INCLUDED_NEURONS };
+function matchesDefaultCycle(allocationJson) {
+  try {
+    const stored = JSON.parse(allocationJson);
+    return validAmounts(stored, { max: cycleMaximum }) &&
+      METRICS.every(key => key === 'aiNeurons' || stored[key] === INCLUDED_CEILINGS[key]);
+  } catch { return false; }
+}
 
 // Completed local usage is anchored against account estimates; unresolved holds remain additive.
 export function createAllowanceGuard(db, { accountId, subscriptionId, allocations = INCLUDED_CEILINGS } = {}) {
@@ -71,7 +80,11 @@ export function createAllowanceGuard(db, { accountId, subscriptionId, allocation
           SELECT 1 FROM allowance_cycles WHERE account_id = ?1 AND cycle_start <> ?2
           AND cycle_start < ?3 AND cycle_end > ?2)`).bind(accountId, e.cycleStart, e.cycleEnd, ALLOWANCE_VERSION, allocationJson).run();
       const cycle = await db.prepare(`SELECT cycle_end, policy_version, allocations_json FROM allowance_cycles WHERE account_id = ?1 AND cycle_start = ?2`).bind(accountId, e.cycleStart).first();
-      if (!cycle || cycle.cycle_end !== e.cycleEnd || cycle.policy_version !== ALLOWANCE_VERSION || cycle.allocations_json !== allocationJson) return deny('cycle_mismatch');
+      // The default AI ceiling is daily and configurable. A previously stored
+      // value does not change the billing cycle, other allocations, or counters.
+      if (!cycle || cycle.cycle_end !== e.cycleEnd || cycle.policy_version !== ALLOWANCE_VERSION ||
+          (cycle.allocations_json !== allocationJson &&
+            !(allocationJson === defaultAllocationJson && matchesDefaultCycle(cycle.allocations_json)))) return deny('cycle_mismatch');
       const existing = await db.prepare('SELECT cycle_start, ai_day, costs_json FROM allowance_reservations WHERE account_id = ?1 AND id = ?2 AND EXISTS (SELECT 1 FROM allowance_receipts WHERE account_id = ?1 AND subscription_id = ?4 AND active = 1 AND generation = ?3)').bind(accountId, id, generation, subscriptionId).first();
       if (existing) return existing.cycle_start === e.cycleStart && existing.ai_day === e.aiDay && existing.costs_json === costJson
         ? { accepted: true, duplicate: true } : deny('id_conflict');

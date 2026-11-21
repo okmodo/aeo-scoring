@@ -1,0 +1,13 @@
+{
+  "version":1,
+  "task":"Raise the daily Workers AI ceiling to 10,000 neurons in a configuration file.",
+  "state":"Follow-up on the existing Granite feature branch. Production remains on the previously deployed build.",
+  "decisions":[
+    "Set dailyNeuronLimit in config/workers-ai-allowance.json. Cap configured values at the Workers AI included allowance.",
+    "Apply the configured AI ceiling to persisted default-cycle records whose other allocation fields still match. Preserve the ledger, reservations, settled usage and custom cycle checks."
+  ],
+  "constraints":["Other allowance settings, CPU caps, provider rollout and front end are outside scope."],
+  "completed":["Verified reservations reaching 10,000 are accepted, additional reservations are denied, and existing default-cycle settled usage and holds remain accounted for."],
+  "remaining":["Production rollout and live model retest require separate authorization."],
+  "resumeCommands":["npm run evaluate -- --change workers-ai-daily-limit --base 5e22107f080a6d082483c513f038d45ea4586fa9","EVALUATION_BASE=5e22107f080a6d082483c513f038d45ea4586fa9 npm run ci:gate"]
+}

@@ -101,7 +101,7 @@ test('submitted audit reaches a polled report through Granite and retained prepa
     assert.equal(day.amount,calls.length*5);
     assert.equal(billingChecks,calls.length);
     assert.equal(sql.prepare("SELECT amount FROM allowance_pending_v2 WHERE account_id=? AND metric='aiNeurons'").get('fixture').amount,0);
-    assert.equal((await allowance.reserve({id:'over-limit',costs:{aiNeurons:6000},now:time})).reason,'allowance_exhausted');
-    t.diagnostic(JSON.stringify({submission:202,preparedState:'ready',gateway:'default',billingChecks,modelCalls:calls.length,polled:200,status:completed.status,score:completed.report.score,identityPoints:identity.points,verifiedExcerpt:'Solar kettle',unverifiedCheck:'C1.explanation',fixtureNeurons:day.amount,dailyCeiling:6000}));
+    assert.equal((await allowance.reserve({id:'over-limit',costs:{aiNeurons:INCLUDED_CEILINGS.aiNeurons},now:time})).reason,'allowance_exhausted');
+    t.diagnostic(JSON.stringify({submission:202,preparedState:'ready',gateway:'default',billingChecks,modelCalls:calls.length,polled:200,status:completed.status,score:completed.report.score,identityPoints:identity.points,verifiedExcerpt:'Solar kettle',unverifiedCheck:'C1.explanation',fixtureNeurons:day.amount,dailyCeiling:INCLUDED_CEILINGS.aiNeurons}));
   } finally { sql.close(); }
 });

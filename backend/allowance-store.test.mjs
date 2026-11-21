@@ -24,8 +24,8 @@ const reserve = (guard, id, costs, at = now) => guard.reserve({ id, costs, now: 
 
 test('all metrics are reserved atomically, idempotently and without refunds', async () => {
   const { guard, sqlite } = setup();
-  assert.deepEqual(await reserve(guard, 'one', { requests: 1, aiNeurons: 5999 }), { accepted: true, duplicate: false });
-  assert.deepEqual(await reserve(guard, 'one', { aiNeurons: 5999, requests: 1 }), { accepted: true, duplicate: true });
+  assert.deepEqual(await reserve(guard, 'one', { requests: 1, aiNeurons: INCLUDED_CEILINGS.aiNeurons - 1 }), { accepted: true, duplicate: false });
+  assert.deepEqual(await reserve(guard, 'one', { aiNeurons: INCLUDED_CEILINGS.aiNeurons - 1, requests: 1 }), { accepted: true, duplicate: true });
   assert.equal((await reserve(guard, 'one', { requests: 2 })).reason, 'id_conflict');
   assert.equal((await reserve(guard, 'two', { requests: 10, aiNeurons: 2 })).reason, 'allowance_exhausted');
   assert.equal(sqlite.prepare('SELECT SUM(requests) AS n FROM allowance_reservations').get().n, 1);
@@ -54,16 +54,34 @@ test('other usage counts, limits cannot change within a cycle, and bad amounts f
   assert.equal((await reserve(changed, 'd', { requests: 1 })).reason, 'cycle_mismatch');
 });
 
+test('existing default cycles use the configured 10,000 ceiling without resetting usage', async () => {
+  assert.equal(INCLUDED_CEILINGS.aiNeurons, 10_000);
+  for (const previousLimit of [6_000, 8_000]) {
+    const e = evidence();
+    const { db, guard: legacy, sqlite } = setup(e, { ...INCLUDED_CEILINGS, aiNeurons: previousLimit });
+    assert.equal((await reserve(legacy, 'held', { aiNeurons: 4_000 })).accepted, true);
+    assert.equal((await reserve(legacy, 'completed', { aiNeurons: 2_000 })).accepted, true);
+    assert.equal((await legacy.settle({ id: 'completed', costs: { aiNeurons: 2_000 }, now })).accepted, true);
+    e.usage.aiNeurons = 2_000;
+    const updated = createTestAllowanceGuard(db, { accountId: 'account', evidence: e });
+    assert.equal((await reserve(updated, 'reaches-cap', { aiNeurons: 4_000 })).accepted, true);
+    assert.equal((await reserve(updated, 'over-cap', { aiNeurons: 1 })).reason, 'allowance_exhausted');
+    assert.equal(JSON.parse(sqlite.prepare('SELECT allocations_json FROM allowance_cycles').get().allocations_json).aiNeurons, previousLimit);
+    assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 8_000);
+    assert.equal(sqlite.prepare("SELECT amount FROM allowance_settled_v2 WHERE metric='aiNeurons'").get().amount, 2_000);
+  }
+});
+
 test('daily AI resets while storage reservations persist and overlapping cycles fail', async () => {
   const start = Date.UTC(2026, 10, 10, 23, 59);
   const e = { ...evidence(), observedAt: start, cycleStart: start - 1000, cycleEnd: start + 600000 };
   const { db, guard } = setup(e, { ...INCLUDED_CEILINGS, d1StorageBytes: 10 });
-  assert.equal((await reserve(guard, 'a', { aiNeurons: 6000, d1StorageBytes: 9 }, start)).accepted, true);
+  assert.equal((await reserve(guard, 'a', { aiNeurons: INCLUDED_CEILINGS.aiNeurons, d1StorageBytes: 9 }, start)).accepted, true);
   const tomorrow = start + 120000;
   const nextEvidence = { ...e, observedAt: tomorrow, aiDay: '2026-11-11' };
   const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
-  assert.equal((await reserve(next, 'b', { aiNeurons: 6000, d1StorageBytes: 2 }, tomorrow)).reason, 'allowance_exhausted');
-  assert.equal((await reserve(next, 'c', { aiNeurons: 6000 }, tomorrow)).reason, 'allowance_exhausted');
+  assert.equal((await reserve(next, 'b', { aiNeurons: INCLUDED_CEILINGS.aiNeurons, d1StorageBytes: 2 }, tomorrow)).reason, 'allowance_exhausted');
+  assert.equal((await reserve(next, 'c', { aiNeurons: INCLUDED_CEILINGS.aiNeurons }, tomorrow)).reason, 'allowance_exhausted');
   const overlap = createTestAllowanceGuard(db, { accountId: 'account', evidence: { ...nextEvidence, cycleStart: start }, allocations: { ...INCLUDED_CEILINGS, d1StorageBytes: 10 } });
   assert.equal((await reserve(overlap, 'd', { requests: 1 }, tomorrow)).reason, 'cycle_mismatch');
 });
@@ -179,7 +197,7 @@ test('migration holds legacy rows, is idempotent, and anchors verified preexisti
   assert.equal((await guard.settle({ id: 'legacy', costs: { aiNeurons: 809 }, now })).accepted, true);
   sqlite.exec(migration);
   assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 1);
-  assert.equal((await reserve(guard, 'new', { aiNeurons: 5190 })).accepted, true);
+  assert.equal((await reserve(guard, 'new', { aiNeurons: INCLUDED_CEILINGS.aiNeurons - 810 })).accepted, true);
   assert.equal((await reserve(guard, 'over', { aiNeurons: 1 })).reason, 'allowance_exhausted');
   assert.deepEqual({ ...sqlite.prepare("SELECT baseline, cutoff FROM allowance_anchors_v2 WHERE metric='aiNeurons'").get() }, { baseline: 809, cutoff: 809 });
 });
@@ -188,13 +206,13 @@ test('unresolved AI holds carry across midnight and settlement charges both days
   const start = Date.UTC(2026, 10, 10, 23, 59);
   const e = { ...evidence(), observedAt: start, cycleStart: start - 1000, cycleEnd: start + 600000 };
   const { db, guard, sqlite } = setup(e);
-  assert.equal((await reserve(guard, 'late', { aiNeurons: 6000 }, start)).accepted, true);
+  assert.equal((await reserve(guard, 'late', { aiNeurons: INCLUDED_CEILINGS.aiNeurons }, start)).accepted, true);
   const tomorrow = start + 120000;
   const nextEvidence = { ...e, observedAt: tomorrow, aiDay: '2026-11-11' };
   const next = createTestAllowanceGuard(db, { accountId: 'account', evidence: nextEvidence });
   assert.equal((await reserve(next, 'blocked', { aiNeurons: 1 }, tomorrow)).reason, 'allowance_exhausted');
   assert.equal((await next.settle({ id: 'late', costs: { aiNeurons: 20 }, now: tomorrow })).accepted, true);
-  assert.equal((await reserve(next, 'available', { aiNeurons: 5980 }, tomorrow)).accepted, true);
+  assert.equal((await reserve(next, 'available', { aiNeurons: INCLUDED_CEILINGS.aiNeurons - 20 }, tomorrow)).accepted, true);
   assert.equal((await reserve(next, 'blocked-again', { aiNeurons: 1 }, tomorrow)).reason, 'allowance_exhausted');
   assert.deepEqual(sqlite.prepare("SELECT period, amount FROM allowance_settled_v2 WHERE metric='aiNeurons' ORDER BY period").all().map(r => ({...r})), [
     { period: '2026-11-10', amount: 20 }, { period: '2026-11-11', amount: 20 },
