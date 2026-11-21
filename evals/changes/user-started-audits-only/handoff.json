@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "task": "Disable automatic audit recovery while preserving guarded cleanup",
+  "state": "Implementation, independent Terra review and genuine fresh-agent maintenance continuation complete. Frozen-source evaluation/hosted CI and authorized operational rollout remain.",
+  "decisions": [
+    "Scheduled maintenance no longer queries for resumable audits or accesses AUDIT_SELF. User POST initiation and its bounded private continuation remain unchanged.",
+    "Move expired checkpoint/job pruning into guarded hourly cleanup; reserve 500 D1 writes to cover bounded deletions and ledger overhead. Do not change any 60% ceiling.",
+    "Keep hourly cron and project browser watchdog, 24-hour data expiration and private R2 lifecycle unchanged. Preserve uncertain usage holds.",
+    "Interrupted or eight-hop-limited jobs will not resume automatically; no new manual-resume API or automatic retry is introduced."
+  ],
+  "constraints": [
+    "Preserve CPU1000, model timeout30s, all account operating limits and admission safeguards; no AI/browser launches in maintenance or CI.",
+    "Leave frontend, dependencies, active bindings/secrets/releases/monitoring, R2 lifecycle and unrelated Cloudflare services unchanged.",
+    "User operational disable request authorizes reviewed project production rollout after CI; verify deployed artifact/config and hourly cleanup schedule."
+  ],
+  "completed": [
+    "Plan7ad2eb0 committed separately before implementation on codex/user-started-audits-only.",
+    "Fifteen targeted tests passed, including real SQLite/R2 expiration, unexpired waiting-job preservation, no execution-binding access and denied-admission behavior.",
+    "Independent Terra review found no blocking technical or documentation issue.",
+    "Genuine fresh-agent maintenance continuation deleted expired objects and snapshot/work/pipeline/checkpoint/job rows, preserved ready data, made zero execution-binding/RPC/model/page-read calls, and verified both watchdog and cleanup denial paths."
+  ],
+  "remaining": [
+    "Commit implementation, run frozen source-bound checks/gate, open PR and verify hosted CI.",
+    "Merge reviewed PR and deploy exact merged project Worker; verify no scheduled audit dispatch and unchanged safeguards/cron."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change user-started-audits-only --base 7feb5c9b6639ec6dc8c83fba548d60472840737d",
+    "EVALUATION_BASE=7feb5c9b6639ec6dc8c83fba548d60472840737d npm run ci:gate"
+  ]
+}

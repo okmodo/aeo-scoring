@@ -11,7 +11,8 @@ import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow } from './browser-workflow.mjs';
 import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
-import { recoverPreparedAudits, PREPARED_ASSESSMENT_POLICY } from './prepared-assessment-consumer.mjs';
+import { PREPARED_ASSESSMENT_POLICY } from './prepared-assessment-consumer.mjs';
+import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 
 const ROUTE = '/api/v1/audits';
 const HOUR = 3_600_000;
@@ -454,12 +455,15 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
 export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now() }) {
   const id = `snapshot-cleanup-${crypto.randomUUID()}`;
   const admission = await allowance.reserve({ id, now,
-    costs: { requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 200, d1StorageBytes: 4096 } });
+    // Up to 10 snapshot rows, 100 pipeline rows, 100 work rows,
+    // 100 checkpoints and 25 jobs, plus ledger overhead.
+    costs: { requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 500, d1StorageBytes: 4096 } });
   if (!admission?.accepted || admission.duplicate !== false) return { status: 'skipped' };
   const result = await snapshots.cleanup({ limit: 10 });
   await db.prepare('DELETE FROM audit_pipeline_state WHERE audit_id IN (SELECT audit_id FROM audit_pipeline_state WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
   // Work records contain no browser allowance holds; those are managed only by the watchdog.
   await db.prepare("DELETE FROM browser_audit_work WHERE audit_id IN (SELECT w.audit_id FROM browser_audit_work w WHERE w.expires_at <= ?1 AND NOT (w.state IN ('ready','assessing') AND EXISTS (SELECT 1 FROM retained_snapshots s WHERE s.audit_id=w.audit_id AND s.state='ready' AND s.expires_at>?1)) LIMIT 100)").bind(now).run();
+  await createPreparedAssessmentJobs(db, {now:() => now}).cleanup();
   await allowance.settle?.({ id });
   return { status: 'completed', ...result };
 }
@@ -471,7 +475,6 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
     const allowance = injectedAllowance ?? createAnalyticsAllowanceGuard(db, scope);
     // Every scheduled invocation must reserve its Worker and D1 costs first.
     const id = `browser-watchdog-${crypto.randomUUID()}`;
-    let preparationIds = [];
     try {
       const admitted = await allowance.reserve({id, now, costs: {requests:1, cpuMs:RESERVED_INVOCATION_CPU_MS, d1Reads:10000, d1Writes:100, d1StorageBytes:4096}});
       if (!admitted?.accepted || admitted.duplicate !== false) return;
@@ -479,19 +482,10 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
         const workflow = makeWorkflow({db, binding:env.AUDIT_BROWSER, ...scope});
         await workflow.watchdog();
       }
-      if (env.AUDIT_SELF) {
-        const rows = await db.prepare("SELECT w.audit_id FROM browser_audit_work w JOIN retained_snapshots s ON s.audit_id=w.audit_id JOIN audits a ON a.id=w.audit_id WHERE (w.state='ready' OR (w.state='assessing' AND w.expires_at<=?1)) AND s.state='ready' AND s.expires_at>?1 AND (s.prepared_state IS NULL OR s.prepared_state='pending') AND a.status='pending' AND a.expires_at>?1 ORDER BY w.created_at LIMIT 3").bind(now).all();
-        preparationIds = (rows.results ?? []).map(row => row.audit_id);
-      }
       await allowance.settle?.({id});
     } catch { return; } // Unknown work retains its reservation.
-    if (env.AUDIT_SELF) {
-      for (const auditId of preparationIds) await env.AUDIT_SELF.prepare(auditId).catch(() => {});
-      try {
-        const recovery = await recoverPreparedAudits({env, now:() => now});
-        for (const auditId of recovery.auditIds ?? []) await env.AUDIT_SELF.assess(auditId).catch(() => {});
-      } catch { /* Recovery is retried on the next existing maintenance event. */ }
-    }
+    // Maintenance never starts or resumes audits. Only an explicit user
+    // submission may initiate the private preparation/assessment chain.
     // Keep retained-data cleanup hourly even if a scheduled event fires off the hour.
     const scheduledTime = Number(event?.scheduledTime ?? now);
     if (new Date(scheduledTime).getUTCMinutes() !== 0 || !env.AUDIT_SNAPSHOTS) return;
