@@ -1,3 +1,4 @@
+import {createTerraByokProvider} from './terra-byok-provider.mjs';
 import { createStore } from './store.mjs';
 import { createAllowanceGuard } from './allowance-store.mjs';
 import { createAnalyticsAllowanceGuard } from './analytics-allowance.mjs';
@@ -383,8 +384,8 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     egress, allowsProduct, normalizeUrl, retrievePage,
     contentCalibrationApproved: contentCalibrationApproved && env.AUDIT_PIPELINE_RELEASE === PIPELINE_VERSION,
     openRubricEnabled: env.AUDIT_RUBRIC_RELEASE === OPEN_RUBRIC_RELEASE_ID,
-    snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI) || requireBrowser, browserFlow, requireBrowser,
-    secret: env.AUDIT_RATE_SECRET, AI: env.AUDIT_AI, HTMLRewriter: globalThis.HTMLRewriter,
+    snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI_GATEWAY_TOKEN) || requireBrowser, browserFlow, requireBrowser,
+    secret: env.AUDIT_RATE_SECRET, AI: createTerraByokProvider(env), HTMLRewriter: globalThis.HTMLRewriter,
     dispatchPreparation: env.AUDIT_SELF ? id => env.AUDIT_SELF.prepare(id) : undefined,
     continuationRequired: requireBrowser,
   });

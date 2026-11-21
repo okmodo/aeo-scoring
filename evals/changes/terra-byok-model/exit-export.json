@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "task": "Resume Terra BYOK mixed-evidence prepared assessment after first checkpoint",
+  "interruptionPoint": "Prepared artifact ready, original inputs absent, first mocked Terra HTTP call completed and persisted, job safely yielded",
+  "auditId": "22222222-2222-4222-8222-222222222222",
+  "now": 1795132800000,
+  "dbPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-prepared-handoff-7YhjoM/retained.sqlite",
+  "objectsPath": "/var/folders/cx/0jf3r_2n06113w9zk8z_m6_80000gn/T/aeo-prepared-handoff-7YhjoM/objects.json",
+  "completedHttpCalls": 1,
+  "firstCheckpoint": {
+    "audit_id": "22222222-2222-4222-8222-222222222222",
+    "prepared_hash": "1bbb0539a8c5880a1511b6a33444ceea438a2b2c1efe2bb6dc592a89b7c8b4b9",
+    "policy_version": "prepared-assessment-v3",
+    "checkpoint_key": "0001",
+    "input_digest": "87e1ea80d775ecb1285f13d9d9b4afd2081344baa66995d13f945abf2f2a4f1e",
+    "owner": "e3c00dab-70f0-4c87-89f1-1879a2fec73c",
+    "status": "completed",
+    "output_json": "{\"evidence\":[{\"sourceId\":\"s1\",\"quote\":\"Solar kettle\"}],\"primaryEvidence\":[{\"sourceId\":\"s1\",\"quote\":\"Solar kettle\"}]}",
+    "code": null,
+    "updated_at": 1795132800000,
+    "expires_at": 1795219200000
+  },
+  "sourceFiles": [
+    "config/ai-model.json",
+    "backend/ai-model-config.mjs",
+    "backend/terra-byok-provider.mjs",
+    "backend/ai-rubric-assessment.mjs",
+    "backend/prepared-assessment-consumer.mjs",
+    "backend/prepared-assessment-engine.mjs",
+    "backend/prepared-assessment-jobs.mjs",
+    "backend/snapshot-store.mjs",
+    "backend/store.mjs",
+    "backend/fixtures/prepared-consumer/provider.mjs",
+    "backend/schema.sql"
+  ],
+  "instructions": [
+    "Use only this export and clean task source files, without prior conversation/review/handoff.",
+    "No network, live browser/model calls, production mutation or implementation edits.",
+    "Copy SQLite to a new private path and load saved R2-compatible objects. Deny all /html or /inputs reads; use prepared_state ready alone.",
+    "Set globalThis.HTMLRewriter from backend/html-product-test-helper.mjs HtmlTestRewriter for offline native-compatible extraction. Use canonical snapshot store and consumer with fake AUDIT_AI_GATEWAY_TOKEN and injected fetch. For each request assert Terra endpoint and model; pass envelope.input to mixedProvider with max_tokens mapped from max_completion_tokens, and return a valid Cloudflare success envelope with choices[0].finish_reason stop and message.content JSON string.",
+    "Resume until completed. Confirm the first completed checkpoint remains unchanged, at most one new HTTP call per invocation, no aiNeurons reservation or settlement, positive C1.identity and deterministic S4.title findings, rejected C1.explanation finding, retained diagnostics and profile/facts/report; report incomplete with null score is correct for sparse evidence.",
+    "Write exit-result.json with actual observations, kind fresh-agent, priorConversationProvided false, agentId, interruptionPoint, status, limitations. Primary agent will bind final sourceDigest and exportSha256."
+  ],
+  "replay": "node evals/changes/terra-byok-model/export-state.mjs"
+}

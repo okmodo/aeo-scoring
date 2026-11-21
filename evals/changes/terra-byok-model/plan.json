@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "terra-byok-model",
+  "task": "Switch only the active audit model connection to Terra through the user original Cloudflare ai/run endpoint and existing BYOK; centralize model settings; open a reviewed PR without merge/deploy.",
+  "scope": [
+    "config/ai-model.json",
+    "backend/**",
+    "docs/terra-byok-model.md",
+    "evals/changes/terra-byok-model/**"
+  ],
+  "nonGoals": [
+    "No frontend/dependencies/rubric/prompts/scoring/request-stage redesign, automatic recovery, retention, Cloudflare limit or unrelated service changes. Keep60%ceilings,CPU1000,one30smodeltimer,existingstage outputcaps and input/output byte bounds.",
+    "No new OpenAI spending system, no Cloudflare credits/topup/providerfallback, no resets/releases of legacy uncertain holds, no old-audit migration, no gateway/config/secret mutations.",
+    "No live model calls, paid validation, merge or deployment; use mocked HTTP and existing BYOK documentation. Secrets never belong in JSON/config/logs."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Model settings in config/ai-model.json specify exact endpoint https://api.cloudflare.com/client/v4/accounts/495d788b994070692b54c46945a5e577/ai/run and model openai/gpt-6.1-terra; keep existing JSON response mode, streamfalse,30s timeout and per-stage token limits. Use low reasoning and only required provider-compatible parameter mappings.",
+      "verification": "automated",
+      "evidence": "Frozen config/request fixtures verify endpoint/model/envelope, messagesunchanged,max_completion_tokens preservingcaps, omitted incompatibletemperature, config secret exclusion and failclosed invalid settings."
+    },
+    {
+      "id": "O2",
+      "description": "BYOK transport POSTs model/input to original endpoint with a Cloudflare auth secret, never an OpenAI provider header, no Unified Billing fallback or implicit retries. Boundresponse reads, reject Cloudflare errors/refusals/truncation/malformedJSON and preserve single30stimeout with abort. No inference reservation/settlement in WorkersAIneurons for BYOK calls; infrastructure guards untouched.",
+      "verification": "automated",
+      "evidence": "Mocked HTTP success/failures/headers/abort/oversize/partialstream fixtures and counters showingzeroaiNeurons charges while consumer admission still reservesbefore work."
+    },
+    {
+      "id": "O3",
+      "description": "Integrate adapter into active prepared and existing rubric call boundaries, normalize provider content without changing grading/evidence/report behavior. Bind checkpoint request identity to configured model/settings; completed outputs replay without duplicate HTTP call and uncertain calls never retry. Retire only obsolete Llama model-accounting metadata.",
+      "verification": "automated",
+      "evidence": "Existing rubric/scoring/runtime oracles, realSQLite/R2 mock-BYOK roundtrip, modelidentity/replay/noretry regressions and genuine fresh-agent continuation."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable plan before implementation in isolated codexworktree, Terraimplementation/independentreview, genuinefresh exit, sourcebound checks and hostedCIbefore PRcompletion. No livecalls or deploy.",
+      "verification": "human",
+      "evidence": "Gitplanhistory,review/handoff/export/exit/run/trace andPRCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Small model/provider/config substitution only; preserve APIs and pipeline stages wherever possible, add no SDK dependencies or external infrastructure.",
+      "verification": "human",
+      "evidence": "Scoped diff, unchanged guard/rubric/frontend files and independentreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Provider request normalization and modelidentity in checkpoints require genuinefresh continuation with no duplicate model request and unchanged prepared-data/report evidence."
+  },
+  "context": "User approved only original endpoint/existingBYOK modelchange+centralconfig, Terraagents, tested/independentlyreviewedPR. Earlier broader spend/pipeline proposals are withdrawn. Gateway uses stored default-provider alias; runtime requires CFauth (WorkersAIRead), not OpenAIkeyinWorker. No livecredentials needed for mockedPR tests."
+}

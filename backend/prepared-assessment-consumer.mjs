@@ -1,3 +1,4 @@
+import {createTerraByokProvider} from './terra-byok-provider.mjs';
 import {createAnalyticsAllowanceGuard} from './analytics-allowance.mjs';
 import {createR2AllowanceGuard} from './allowance-r2.mjs';
 import {RESERVED_INVOCATION_CPU_MS} from './allowance-policy.mjs';
@@ -23,7 +24,7 @@ const safeCode=error=>/^[a-z][a-z0-9_]{0,63}$/.test(error?.code||'')?error.code:
 // Only this consumer performs AI work. Preparation readiness is never changed.
 // Dependencies are injectable for offline tests; production uses canonical guards.
 export async function runPreparedAudit({env,auditId,now=Date.now,allowance:givenAllowance,snapshots:givenSnapshots,jobs:givenJobs,
-  engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
+  modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const reservation='prepared-worker-'+crypto.randomUUID();
@@ -71,7 +72,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     await jobs.assertLease(grant);
     if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
     await record('category','running','classification_started');
-    const result=await engine({grant,jobs,preparedInput:input,AI:env.AUDIT_AI,allowance,now,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
+    const result=await engine({grant,jobs,preparedInput:input,AI:modelProvider??createTerraByokProvider(env,{fetch:fetchImpl}),allowance,now,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
     if(result.status==='yield') {await jobs.release(grant,{state:'waiting',code:'checkpoint_yield',retryAt:now()});return{status:'yield',code:'checkpoint_yield'};}
     if(result.status!=='completed') {
       const code=safeCode(result);await publish(code);

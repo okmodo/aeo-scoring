@@ -1,4 +1,5 @@
 import { assessRetainedRubric } from './ai-rubric-assessment.mjs';
+import { AI_MODEL_CONFIG } from './ai-model-config.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
 
 const encoder = new TextEncoder();
@@ -21,9 +22,8 @@ export async function planPreparedAssessment({preparedInput}) {
   // Product extraction, identity, proposal, optional review, inspection,
   // optional support inspection, and final judgment. Support/review depend on output.
   const potentialCalls=productBatches+inspectionBatches*2+4;
-  const requestBytesLimit=60*1024, outputTokensLimit=4000;
-  const neuronsPerCallUpperBound=Math.ceil((requestBytesLimit+2048)*26668/1e6+outputTokensLimit*204805/1e6)+64;
-  return {sourceBytes:bundle.coverage.bytes,sourceSections:bundle.sources.length,productBatches,inspectionBatches,potentialCalls,maxCalls:MAX_STEPS,requestBytesLimit,outputTokensLimit,neuronsPerCallUpperBound,neuronsUpperBound:Math.min(potentialCalls,MAX_STEPS)*neuronsPerCallUpperBound,withinCallLimit:potentialCalls<=MAX_STEPS,estimate:'conservative ceiling; conditional review and support inspection depend on model output; every actual request is separately reserved'};
+  const requestBytesLimit=AI_MODEL_CONFIG.requestMaxBytes, outputTokensLimit=AI_MODEL_CONFIG.stageCaps.judgment;
+  return {sourceBytes:bundle.coverage.bytes,sourceSections:bundle.sources.length,productBatches,inspectionBatches,potentialCalls,maxCalls:MAX_STEPS,requestBytesLimit,outputTokensLimit,neuronsPerCallUpperBound:0,neuronsUpperBound:0,withinCallLimit:potentialCalls<=MAX_STEPS,estimate:'BYOK model calls are not charged to Workers AI neurons; conditional review and support inspection depend on model output'};
 }
 
 // A checkpoint is persisted before invoking the canonical admission and model
@@ -34,7 +34,7 @@ export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,all
   let index=0, invoked=false;
   const modelCall=async (args, execute) => {
     if (++index > MAX_STEPS) throw new Stop('model_step_limit');
-    const key=String(index).padStart(4,'0'), inputDigest=await digest(args.input);
+    const key=String(index).padStart(4,'0'), inputDigest=await digest({model:AI_MODEL_CONFIG.model,config:AI_MODEL_CONFIG,input:args.input});
     const existing=await jobs.checkpointRead(grant,key);
     if (existing) {
       if (existing.inputDigest!==inputDigest) throw new Stop('checkpoint_input_mismatch');

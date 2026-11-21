@@ -17,16 +17,21 @@ test('completed step replays without another reservation; one new call per invoc
  const AI={run(){calls++;return {response:{evidence:[],primaryEvidence:[]}};}};
  const args={grant,jobs,preparedInput:input,AI,allowance,calibrationApproved:true};
  assert.equal((await runPreparedAssessmentStep(args)).status,'yield');
- assert.equal(calls,1); assert.equal(reserves,1);
+ assert.equal(calls,1); assert.equal(reserves,0);
  // The second invocation replays the first, then executes the next call.
- await runPreparedAssessmentStep(args); assert.equal(calls,2);assert.equal(reserves,2);
+ await runPreparedAssessmentStep(args); assert.equal(calls,2);assert.equal(reserves,0);
 });
-test('unknown provider usage is never retried and denied budget remains distinct',async()=>{
+test('unknown provider usage is never retried',async()=>{
  const input=await preparedFixture();const jobs=store();let calls=0;const args={grant,jobs,preparedInput:input,AI:{run(){calls++;throw Error('network');}},allowance:accepted,calibrationApproved:true};
  assert.equal((await runPreparedAssessmentStep(args)).code,'model_provider_failure');
  assert.equal((await runPreparedAssessmentStep(args)).code,'model_provider_failure');assert.equal(calls,1);
- const denied=await runPreparedAssessmentStep({...args,jobs:store(),allowance:{reserve(){return {accepted:false};}}});
- assert.equal(denied.code,'admission_failed');assert.equal(calls,1);
+
+});
+test('legacy input-only checkpoint cannot replay under the configured model',async()=>{
+ const input=await preparedFixture(),jobs=store();let calls=0;
+ jobs.rows.set('0001',{status:'completed',inputDigest:'legacy-input-only-digest',output:{evidence:[]}});
+ const result=await runPreparedAssessmentStep({grant,jobs,preparedInput:input,AI:{run(){calls++;}},allowance:accepted,calibrationApproved:true});
+ assert.equal(result.code,'checkpoint_input_mismatch');assert.equal(calls,0);
 });
 test('prepared batches resume through a sparse validated assessment using only cleaned bytes',async()=>{
  const html='<h1>Solar kettle</h1><p>Six cups</p>', bytes=new TextEncoder().encode(html);

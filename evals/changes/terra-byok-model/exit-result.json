@@ -1,0 +1,2111 @@
+{
+  "version": 1,
+  "changeId": "terra-byok-model",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "terra_byok_fresh_exit",
+  "interruptionPoint": "Prepared artifact ready, original inputs absent, first mocked Terra HTTP call completed and persisted, job safely yielded",
+  "status": "passed",
+  "observedContinuation": "Completed after 4 invocations and 4 new mock Terra HTTP calls; first checkpoint unchanged.",
+  "limitations": "Offline mock HTTP and synthetic sparse evidence; no live provider or billing validation.",
+  "observations": {
+    "invocations": [
+      {
+        "step": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "httpCalls": 1
+      },
+      {
+        "step": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "httpCalls": 1
+      },
+      {
+        "step": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "httpCalls": 1
+      },
+      {
+        "step": {
+          "status": "completed",
+          "code": "assessment_completed",
+          "reportStatus": "incomplete"
+        },
+        "httpCalls": 1
+      }
+    ],
+    "totalNewHttpCalls": 4,
+    "requests": [
+      {
+        "model": "openai/gpt-6.1-terra",
+        "maxCompletionTokens": 512
+      },
+      {
+        "model": "openai/gpt-6.1-terra",
+        "maxCompletionTokens": 1800
+      },
+      {
+        "model": "openai/gpt-6.1-terra",
+        "maxCompletionTokens": 2500
+      },
+      {
+        "model": "openai/gpt-6.1-terra",
+        "maxCompletionTokens": 4000
+      }
+    ],
+    "reads": [
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/profile",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/profile",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/profile",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/profile",
+      "retained/22222222-2222-4222-8222-222222222222/16da7d10-06f1-45e8-a299-291aa7c63869/facts"
+    ],
+    "reservationCount": 18,
+    "settlementCount": 15,
+    "neuronReservations": 0,
+    "firstCheckpointUnchanged": true,
+    "findings": {
+      "identity": {
+        "id": "C1.identity",
+        "maxPoints": 3,
+        "availablePoints": 3,
+        "status": "measured",
+        "fraction": 1,
+        "points": 3,
+        "evidenceIds": [
+          "e4"
+        ],
+        "reason": null
+      },
+      "title": {
+        "id": "S4.title",
+        "maxPoints": 1,
+        "availablePoints": 1,
+        "status": "measured",
+        "fraction": 1,
+        "points": 1,
+        "evidenceIds": [
+          "e1"
+        ],
+        "reason": null
+      },
+      "explanation": {
+        "id": "C1.explanation",
+        "maxPoints": 4,
+        "availablePoints": 4,
+        "status": "not_measured",
+        "fraction": null,
+        "points": null,
+        "evidenceIds": [],
+        "reason": "The model judgment could not be validated."
+      },
+      "diagnostics": [
+        {
+          "referenceIndex": 0,
+          "sourceId": "s1",
+          "reason": "quote_not_found_or_ambiguous",
+          "context": "judgment:C1.explanation"
+        }
+      ]
+    },
+    "neuronSettlements": 0,
+    "auditStatus": "incomplete",
+    "reportScore": null,
+    "profile": {
+      "version": "1",
+      "category": "Solar kettle",
+      "evidence": [
+        {
+          "sourceId": "s1",
+          "quote": "Solar kettle"
+        }
+      ],
+      "slots": [
+        {
+          "id": "slot-0",
+          "group": "C2.essential",
+          "label": "Need 0",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        },
+        {
+          "id": "slot-1",
+          "group": "C2.supporting",
+          "label": "Need 1",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        },
+        {
+          "id": "slot-2",
+          "group": "C4.intended-use",
+          "label": "Need 2",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        },
+        {
+          "id": "slot-3",
+          "group": "C4.compatibility",
+          "label": "Need 3",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        },
+        {
+          "id": "slot-4",
+          "group": "C4.limitations",
+          "label": "Need 4",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        },
+        {
+          "id": "slot-5",
+          "group": "C4.selection",
+          "label": "Need 5",
+          "relevance": "Relevant for selection",
+          "full": "A complete value",
+          "partial": "A partial value",
+          "zero": "No useful value",
+          "missingExpectation": "State the value",
+          "applicability": "always",
+          "condition": null,
+          "conditionWhy": null
+        }
+      ],
+      "conditionReview": []
+    },
+    "facts": {
+      "version": "1",
+      "sourceDigest": "7fc7ef94ffb0609c5275a12cf43daf7d7c6eb25e04cd64566ed6abffed03cfb8",
+      "profileDigest": "6c3337d3fb63635395ee50efee9b26dd9789233ec4057deaac39e4e240b7ed12",
+      "profile": {
+        "version": "1",
+        "category": "Solar kettle",
+        "evidence": [
+          {
+            "sourceId": "s1",
+            "quote": "Solar kettle"
+          }
+        ],
+        "slots": [
+          {
+            "id": "slot-0",
+            "group": "C2.essential",
+            "label": "Need 0",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          },
+          {
+            "id": "slot-1",
+            "group": "C2.supporting",
+            "label": "Need 1",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          },
+          {
+            "id": "slot-2",
+            "group": "C4.intended-use",
+            "label": "Need 2",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          },
+          {
+            "id": "slot-3",
+            "group": "C4.compatibility",
+            "label": "Need 3",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          },
+          {
+            "id": "slot-4",
+            "group": "C4.limitations",
+            "label": "Need 4",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          },
+          {
+            "id": "slot-5",
+            "group": "C4.selection",
+            "label": "Need 5",
+            "relevance": "Relevant for selection",
+            "full": "A complete value",
+            "partial": "A partial value",
+            "zero": "No useful value",
+            "missingExpectation": "State the value",
+            "applicability": "always",
+            "condition": null,
+            "conditionWhy": null
+          }
+        ],
+        "conditionReview": []
+      },
+      "inspections": [
+        {
+          "sourceId": "s1",
+          "claimsComplete": true,
+          "comparisonsComplete": true,
+          "claims": [],
+          "comparisons": [],
+          "checks": [
+            {
+              "id": "S1.delivery",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.readability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.supporting-access",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.scope",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.entity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.offer",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.identifiers",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.variants",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.optional-claims",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.title",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.organization",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.image-alternatives",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.links",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.context",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.guidance",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.explanation",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.shipping",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.returns",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.consistency",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.claim-support",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-0",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-1",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-2",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-3",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-4",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-5",
+              "status": "unknown",
+              "evidence": []
+            }
+          ]
+        },
+        {
+          "sourceId": "s2",
+          "claimsComplete": true,
+          "comparisonsComplete": true,
+          "claims": [],
+          "comparisons": [],
+          "checks": [
+            {
+              "id": "S1.delivery",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.readability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.supporting-access",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.scope",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.entity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.offer",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.identifiers",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.variants",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.optional-claims",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.title",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.organization",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.image-alternatives",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.links",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.context",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.guidance",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.explanation",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.shipping",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.returns",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.consistency",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.claim-support",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-0",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-1",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-2",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-3",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-4",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-5",
+              "status": "unknown",
+              "evidence": []
+            }
+          ]
+        },
+        {
+          "sourceId": "s3",
+          "claimsComplete": true,
+          "comparisonsComplete": true,
+          "claims": [],
+          "comparisons": [],
+          "checks": [
+            {
+              "id": "S1.delivery",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.readability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.supporting-access",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.scope",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.entity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.offer",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.identifiers",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.variants",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.optional-claims",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.title",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.organization",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.image-alternatives",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.links",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.context",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.guidance",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.explanation",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.shipping",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.returns",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.consistency",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.claim-support",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-0",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-1",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-2",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-3",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-4",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-5",
+              "status": "unknown",
+              "evidence": []
+            }
+          ]
+        },
+        {
+          "sourceId": "s4",
+          "claimsComplete": true,
+          "comparisonsComplete": true,
+          "claims": [],
+          "comparisons": [],
+          "checks": [
+            {
+              "id": "S1.delivery",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.readability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.supporting-access",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.scope",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.entity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.offer",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.identifiers",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S2.variants",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S3.optional-claims",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.title",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.organization",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S4.image-alternatives",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S7.links",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.context",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "S8.guidance",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.identity",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.explanation",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C1.configuration",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.price",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.availability",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.shipping",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C3.returns",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.consistency",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "C5.claim-support",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-0",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-1",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-2",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-3",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-4",
+              "status": "unknown",
+              "evidence": []
+            },
+            {
+              "id": "slot-5",
+              "status": "unknown",
+              "evidence": []
+            }
+          ]
+        }
+      ],
+      "supportInspections": [],
+      "judgments": {
+        "judgments": [
+          {
+            "id": "S1.delivery",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S1.readability",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S1.supporting-access",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S1.scope",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S1.configuration",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S2.entity",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S2.offer",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S2.identifiers",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S2.variants",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S3.identity",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S3.price",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S3.availability",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S3.optional-claims",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S4.title",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S4.organization",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S4.image-alternatives",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S7.identity",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S7.links",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S8.context",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "S8.guidance",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C1.identity",
+            "status": "measured",
+            "fraction": 1,
+            "reason": "Primary product identity is stated.",
+            "evidence": [
+              {
+                "sourceId": "s1",
+                "quote": "Solar kettle"
+              }
+            ]
+          },
+          {
+            "id": "C1.explanation",
+            "status": "unknown",
+            "fraction": 1,
+            "reason": "Unsupported explanation.",
+            "evidence": []
+          },
+          {
+            "id": "C1.configuration",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C3.price",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C3.availability",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C3.shipping",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C3.returns",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C5.consistency",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "C5.claim-support",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-0",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-1",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-2",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-3",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-4",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          },
+          {
+            "id": "slot-5",
+            "status": "not_measured",
+            "fraction": null,
+            "reason": "Insufficient evidence",
+            "evidence": []
+          }
+        ],
+        "c5": {
+          "claims": [],
+          "comparisons": []
+        }
+      },
+      "diagnostics": [
+        {
+          "referenceIndex": 0,
+          "sourceId": "s1",
+          "reason": "quote_not_found_or_ambiguous",
+          "context": "judgment:C1.explanation"
+        }
+      ]
+    },
+    "report": {
+      "status": "incomplete",
+      "score": null,
+      "earnedPoints": 4,
+      "rubricVersion": "2.0.0",
+      "engineVersion": "2.2.1",
+      "categoryVersion": "1.2.0",
+      "category": "open-rubric",
+      "productName": "Solar kettle",
+      "variant": null,
+      "market": null,
+      "currency": null,
+      "criteria": [
+        {
+          "id": "S1",
+          "pillar": "structure",
+          "maxPoints": 13,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S1.delivery",
+              "maxPoints": 4,
+              "availablePoints": 4,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S1.readability",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S1.scope",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S1.configuration",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S1.supporting-access",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "S2",
+          "pillar": "structure",
+          "maxPoints": 9,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S2.syntax",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Available evidence does not establish this check."
+            },
+            {
+              "id": "S2.entity",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S2.offer",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S2.identifiers",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S2.variants",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "S3",
+          "pillar": "structure",
+          "maxPoints": 9,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S3.identity",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S3.price",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S3.availability",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S3.optional-claims",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "S4",
+          "pillar": "structure",
+          "maxPoints": 3,
+          "points": 1,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S4.title",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "measured",
+              "fraction": 1,
+              "points": 1,
+              "evidenceIds": [
+                "e1"
+              ],
+              "reason": null
+            },
+            {
+              "id": "S4.organization",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S4.image-alternatives",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "S5",
+          "pillar": "structure",
+          "maxPoints": 2,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S5.search",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Available inspection does not establish this check."
+            },
+            {
+              "id": "S5.ai-retrieval",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Available inspection does not establish this check."
+            }
+          ]
+        },
+        {
+          "id": "S6",
+          "pillar": "structure",
+          "maxPoints": 2,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S6.usable",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Available inspection does not establish this check."
+            },
+            {
+              "id": "S6.inclusion",
+              "maxPoints": 1,
+              "availablePoints": 1,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Available inspection does not establish this check."
+            }
+          ]
+        },
+        {
+          "id": "S7",
+          "pillar": "structure",
+          "maxPoints": 1,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S7.identity",
+              "maxPoints": 0.5,
+              "availablePoints": 0.5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S7.links",
+              "maxPoints": 0.5,
+              "availablePoints": 0.5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "S8",
+          "pillar": "structure",
+          "maxPoints": 1,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "S8.context",
+              "maxPoints": 0.5,
+              "availablePoints": 0.5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "S8.guidance",
+              "maxPoints": 0.5,
+              "availablePoints": 0.5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "C1",
+          "pillar": "content",
+          "maxPoints": 10,
+          "points": 3,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "C1.identity",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "measured",
+              "fraction": 1,
+              "points": 3,
+              "evidenceIds": [
+                "e4"
+              ],
+              "reason": null
+            },
+            {
+              "id": "C1.explanation",
+              "maxPoints": 4,
+              "availablePoints": 4,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "The model judgment could not be validated."
+            },
+            {
+              "id": "C1.configuration",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "C2",
+          "pillar": "content",
+          "maxPoints": 20,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "C2.essential",
+              "maxPoints": 14,
+              "availablePoints": 14,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            },
+            {
+              "id": "C2.supporting",
+              "maxPoints": 6,
+              "availablePoints": 6,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            }
+          ]
+        },
+        {
+          "id": "C3",
+          "pillar": "content",
+          "maxPoints": 10,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "C3.price",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "C3.availability",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "C3.shipping",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            },
+            {
+              "id": "C3.returns",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Insufficient evidence"
+            }
+          ]
+        },
+        {
+          "id": "C4",
+          "pillar": "content",
+          "maxPoints": 10,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "C4.intended-use",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            },
+            {
+              "id": "C4.compatibility",
+              "maxPoints": 3,
+              "availablePoints": 3,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            },
+            {
+              "id": "C4.limitations",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            },
+            {
+              "id": "C4.selection",
+              "maxPoints": 2,
+              "availablePoints": 2,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "One or more category-specific judgments are unmeasured."
+            }
+          ]
+        },
+        {
+          "id": "C5",
+          "pillar": "content",
+          "maxPoints": 10,
+          "points": 0,
+          "complete": false,
+          "subchecks": [
+            {
+              "id": "C5.consistency",
+              "maxPoints": 5,
+              "availablePoints": 5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Comparison inventory is incomplete or unvalidated."
+            },
+            {
+              "id": "C5.claim-support",
+              "maxPoints": 5,
+              "availablePoints": 5,
+              "status": "not_measured",
+              "fraction": null,
+              "points": null,
+              "evidenceIds": [],
+              "reason": "Claim inventory is incomplete or unvalidated."
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "id": "e1",
+          "url": "https://example.com/kettle",
+          "method": "rendered",
+          "kind": "derived_observation",
+          "location": "head title; product h1",
+          "excerpt": "Page title: Solar kettle; product heading: Solar kettle."
+        },
+        {
+          "id": "e4",
+          "url": "https://example.com/kettle",
+          "method": "rendered",
+          "kind": "derived_observation",
+          "location": "cleaned rendered HTML; visibility unknown; UTF-8 bytes 0-156",
+          "excerpt": "Solar kettle"
+        }
+      ],
+      "fixes": [
+        {
+          "id": "improve-s1",
+          "title": "Complete the S1 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S1.delivery",
+            "S1.readability",
+            "S1.scope",
+            "S1.configuration",
+            "S1.supporting-access"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s2",
+          "title": "Complete the S2 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S2.syntax",
+            "S2.entity",
+            "S2.offer",
+            "S2.identifiers",
+            "S2.variants"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s3",
+          "title": "Complete the S3 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S3.identity",
+            "S3.price",
+            "S3.availability",
+            "S3.optional-claims"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s4",
+          "title": "Complete the S4 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S4.organization",
+            "S4.image-alternatives"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s5",
+          "title": "Complete the S5 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S5.search",
+            "S5.ai-retrieval"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s6",
+          "title": "Complete the S6 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S6.usable",
+            "S6.inclusion"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s7",
+          "title": "Complete the S7 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S7.identity",
+            "S7.links"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-s8",
+          "title": "Complete the S8 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "S8.context",
+            "S8.guidance"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-c1",
+          "title": "Complete the C1 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "C1.explanation",
+            "C1.configuration"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-c2",
+          "title": "Complete the C2 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "C2.essential",
+            "C2.supporting"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-c3",
+          "title": "Complete the C3 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "C3.price",
+            "C3.availability",
+            "C3.shipping",
+            "C3.returns"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-c4",
+          "title": "Complete the C4 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "C4.intended-use",
+            "C4.compatibility",
+            "C4.limitations",
+            "C4.selection"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        },
+        {
+          "id": "improve-c5",
+          "title": "Complete the C5 assessment",
+          "owner": "Audit reviewer",
+          "checkIds": [
+            "C5.consistency",
+            "C5.claim-support"
+          ],
+          "evidenceIds": [],
+          "recoverablePoints": null,
+          "condition": "Complete the affected evidence inspections before recovery can be calculated."
+        }
+      ],
+      "coverage": {
+        "notApplicable": 0,
+        "assessment": {
+          "mode": "ai_rubric",
+          "version": "1",
+          "category": "Solar kettle"
+        },
+        "measured": 2,
+        "notMeasured": 38,
+        "total": 40,
+        "category": "open-rubric",
+        "extraction": {
+          "html": true,
+          "bodyText": true,
+          "usable": true,
+          "visibility": "unknown",
+          "jsonLdTruncated": false
+        },
+        "limitations": [
+          "Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.",
+          "Rules assess English source HTML and supported categories. Browser rendering is outside this inspection."
+        ],
+        "pipeline": {
+          "version": "retained-ai-1",
+          "stages": [
+            {
+              "stage": "category",
+              "status": "running",
+              "code": "classification_started",
+              "at": 1795132800000
+            },
+            {
+              "stage": "category",
+              "status": "completed",
+              "code": "profile_retained",
+              "at": 1795132800000
+            },
+            {
+              "stage": "content",
+              "status": "running",
+              "code": "facts_preparing",
+              "at": 1795132800000
+            },
+            {
+              "stage": "snapshot",
+              "status": "completed",
+              "code": "assessment_retained",
+              "at": 1795132800000
+            },
+            {
+              "stage": "content",
+              "status": "completed",
+              "code": "judgments_validated",
+              "at": 1795132800000
+            },
+            {
+              "stage": "scoring",
+              "status": "completed",
+              "code": "report_incomplete",
+              "at": 1795132800000
+            }
+          ]
+        }
+      }
+    }
+  },
+  "sourceDigest": "2bede8c8daef6173dcdd6ad71994457c6bb277934f121edbf1047141c6e96143",
+  "exportSha256": "342785f95d1338d39c61598300241130c71d4e2469839d7e6570448f6fe93061"
+}
