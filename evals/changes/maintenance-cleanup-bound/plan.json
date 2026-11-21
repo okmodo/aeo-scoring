@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "id": "maintenance-cleanup-bound",
+  "task": "Update the existing retained-pipeline cleanup regression to verify the increased conservative reservation and bounded expired job/checkpoint pruning introduced by recovery removal.",
+  "scope": [
+    "backend/retained-pipeline.test.mjs",
+    "evals/changes/maintenance-cleanup-bound/**"
+  ],
+  "nonGoals": [
+    "No production code, rubric, usage ceilings, workflow evaluator or branch-protection changes. Do not weaken denial/order/uncertain-settlement assertions.",
+    "Keep the user-started-audits-only acceptance plan immutable."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Retained cleanup regression requires500D1writes and2000reservedCPU, recognizes100checkpoint/25jobdeletebounds and asserts allfourprunesteps occurafteradmission; deniedadmission andunknownfailure retain protections.",
+      "verification": "automated",
+      "evidence": "Existing retained-pipeline test expanded; test:feasibility real execution."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate plan before out-of-original-scope fixture update, independent review of changed gold expectation, source-bound evidence and hostedCI.",
+      "verification": "human",
+      "evidence": "Gitplanhistory,review/handoff/run/trace andCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Change exact expected cleanup bounds and test-double capabilities to match intentional guarded deletion expansion; no fakepassing or weakening.",
+      "verification": "human",
+      "evidence": "Diff and independentreview."
+    }
+  ],
+  "commands": [
+    "npm run test:feasibility"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Testfixture/expectedreservationonly; genuinefreshmaintenancecontinuation isrequiredandrecordedbyuser-started-audits-only plan."
+  },
+  "context": "Full source-bound evaluation caught retained-pipeline expecting200writes while cleanup nowdeletesup335rows plusledger under500reservation. PreviousmockpermitsonlyLIMIT100anddoesnotreturnchangesmetadata; mustexplicitlyverifynewboundedjobs/checkpointpruning. No change to cleanup implementation or 60% ceilings."
+}
