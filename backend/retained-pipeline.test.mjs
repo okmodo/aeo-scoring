@@ -70,11 +70,17 @@ test('failed profile persistence never scores an unretained profile',async()=>{
 test('scheduled cleanup reserves its bounded invocation before any deletion and retains unknown failures',async()=>{
   const {cleanupRetainedSnapshots}=await import('./service.mjs');
   for(const accepted of [false,true]) {
-    const events=[];const allowance={reserve:async ({costs})=>{events.push('reserve');assert.equal(costs.cpuMs,2000);assert.equal(costs.d1Writes,200);return{accepted,duplicate:false};},settle:async()=>events.push('settle')};
+    const events=[];const allowance={reserve:async ({costs})=>{events.push('reserve');assert.equal(costs.cpuMs,2000);assert.equal(costs.d1Writes,500);return{accepted,duplicate:false};},settle:async()=>events.push('settle')};
     const snapshots={cleanup:async ({limit})=>{events.push('cleanup');assert.equal(limit,10);return{deleted:2};}};
-    const db={prepare(sql){assert.match(sql,/LIMIT 100/);return{bind(at){assert.equal(at,now);return{run:async()=>events.push(sql.includes('browser_audit_work') ? 'browser_prune' : 'diagnostics')};}};}};
+    const db={prepare(sql){
+      assert.match(sql,/^DELETE FROM /);
+      const jobs=sql.includes('DELETE FROM prepared_assessment_jobs');
+      assert.match(sql,jobs?/LIMIT 25/:/LIMIT 100/);
+      const step=jobs?'jobs_prune':sql.includes('prepared_assessment_checkpoints')?'checkpoints_prune':sql.includes('browser_audit_work')?'browser_prune':'diagnostics';
+      return{bind(at){assert.equal(at,now);return{run:async()=>{events.push(step);return{meta:{changes:1}};}};}};
+    }};
     const result=await cleanupRetainedSnapshots({db,snapshots,allowance,now});
-    assert.deepEqual(events,accepted?['reserve','cleanup','diagnostics','browser_prune','settle']:['reserve']);assert.equal(result.status,accepted?'completed':'skipped');
+    assert.deepEqual(events,accepted?['reserve','cleanup','diagnostics','browser_prune','checkpoints_prune','jobs_prune','settle']:['reserve']);assert.equal(result.status,accepted?'completed':'skipped');
   }
   let settled=false;
   await assert.rejects(cleanupRetainedSnapshots({db:{},snapshots:{cleanup:async()=>{throw Error('delete unknown');}},allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>{settled=true;}},now}));

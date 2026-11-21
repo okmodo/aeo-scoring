@@ -17,7 +17,8 @@
     "Plan7ad2eb0 committed separately before implementation on codex/user-started-audits-only.",
     "Fifteen targeted tests passed, including real SQLite/R2 expiration, unexpired waiting-job preservation, no execution-binding access and denied-admission behavior.",
     "Independent Terra review found no blocking technical or documentation issue.",
-    "Genuine fresh-agent maintenance continuation deleted expired objects and snapshot/work/pipeline/checkpoint/job rows, preserved ready data, made zero execution-binding/RPC/model/page-read calls, and verified both watchdog and cleanup denial paths."
+    "Genuine fresh-agent maintenance continuation deleted expired objects and snapshot/work/pipeline/checkpoint/job rows, preserved ready data, made zero execution-binding/RPC/model/page-read calls, and verified both watchdog and cleanup denial paths.",
+    "Full preflight passed8of9commands; feasibility exposed a stale cleanup-reservation expectation, corrected under separately planned maintenance-cleanup-bound scope. Final evaluation must run after this correction."
   ],
   "remaining": [
     "Commit implementation, run frozen source-bound checks/gate, open PR and verify hosted CI.",
