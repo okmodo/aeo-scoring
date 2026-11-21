@@ -55,12 +55,15 @@ test('planner verifies prepared input and reports finite conservative ceilings',
  assert.equal((await runPreparedAssessmentStep({grant,jobs:store(),preparedInput:{snapshot:{},extracted:{}}})).code,'invalid_prepared_input');
 });
 
-test('timeout and invalid model JSON are distinct and are not retried',async()=>{
- const preparedInput=await preparedFixture();
- for (const [code,AI,deadlineAt] of [['model_timeout',{run(){return new Promise(()=>{});}},Date.now()+50],['model_output_invalid',{run(){return {response:'{broken'};}},undefined]]) {
-  const jobs=store(),args={grant,jobs,preparedInput,AI,allowance:accepted,deadlineAt,calibrationApproved:true};
-  assert.equal((await runPreparedAssessmentStep(args)).code,code);
-  assert.equal((await runPreparedAssessmentStep({...args,deadlineAt:undefined})).code,code);
-  assert.equal(jobs.rows.get('0001').status,'uncertain');
- }
+test('timeout and invalid model JSON are distinct and are not retried',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const preparedInput=await preparedFixture();let started;const modelStarted=new Promise(resolve=>{started=resolve;});
+ const jobs=store(),args={grant,jobs,preparedInput,AI:{run(){started();return new Promise(()=>{});}},allowance:accepted,deadlineAt:0,calibrationApproved:true};
+ const pending=runPreparedAssessmentStep(args);await modelStarted;t.mock.timers.tick(29999);
+ let done=false;pending.then(()=>{done=true;});await Promise.resolve();assert.equal(done,false);
+ t.mock.timers.tick(1);assert.equal((await pending).code,'model_timeout');
+ assert.equal((await runPreparedAssessmentStep(args)).code,'model_timeout');assert.equal(jobs.rows.get('0001').status,'uncertain');
+ const invalidJobs=store(),invalid={...args,jobs:invalidJobs,AI:{run(){return {response:'{broken'};}}};
+ assert.equal((await runPreparedAssessmentStep(invalid)).code,'model_output_invalid');
+ assert.equal((await runPreparedAssessmentStep(invalid)).code,'model_output_invalid');assert.equal(invalidJobs.rows.get('0001').status,'uncertain');
 });

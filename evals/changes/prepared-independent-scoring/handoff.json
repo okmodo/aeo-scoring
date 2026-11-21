@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "task": "Single 30-second model timeout and independent prepared-data scoring",
+  "state": "Implementation, cross-agent reviews and genuine fresh-agent continuation complete. Full frozen-source evaluation and hosted CI pending. Not merged or deployed.",
+  "decisions": [
+    "The active rubric model call has one30000ms timer; application25/35sdeadline clipping removed. Legacy alternate inactive model runners are outside this change.",
+    "Prepared joblease45000ms controlsownership only; RPC awaitsits work andregisterswaitUntil, with8hopcap retained.",
+    "Deterministic observations deriveonceatpublicationfromthe sameverifiedR2preparedHTML; originalhtml/inputsnotread, canonicalAIinputunchanged.",
+    "Preserveeligibletechnicalfindings/robots/sitemap onAI failureandunmeasuredAI proposals. Unknowncomputedvisibility/initialsourceandmissinglabels remainunknown; nofinalscoreifapplicablechecksremainmissing.",
+    "Newcachepolicyv3; older auditsunchanged. Frontend/shareddeps/config/unrelatedservicesunchanged."
+  ],
+  "constraints": [
+    "Keep60% accountoperatingceilings, percalladmission/settlement/uncertainholds,CPU1000,request/outputcaps,128steps and24hretention.",
+    "No livecallsinCI; no retryofuncertainproviderrequests. No merge/deploywithoutauthorization.",
+    "Native localtestdoesnotprovehostedpostresponsecutoff. Maximumpreparedpage parsing took1991mslocalwall, notCPU; runtimeatCPU1000near4MB remainsunproven."
+  ],
+  "completed": [
+    "Plan90ec4b2 committedbeforeimplementation onisolatedcodex/prepared-independent-scoring. Superseded35sdeadline draft wasnotcarriedforward.",
+    "Terra implementation andindependentcrossreview; resolvedS5/S6reset, imageapplicabilityandderivedprovenancefindings.",
+    "RealSQLite/R2-compatible timeout/successregressions retain positiveindependentfindings; nooriginalHTML/inputsreads.",
+    "FreshTerraagent resumedcompletedcheckpoint:4newcalls/4AIreservations, C1identity3points/S4title1point, invalidexplanationunknown, retaineddiagnostics andincompletescorenull.",
+    "Nativeworkerd directawaittestfailsoldbehavior andpassesnew;longsynthetictestpassesbothandisnotplatformcutoffproof."
+  ],
+  "remaining": [
+    "Runallplannedcommands onfrozencommittedsource, source-boundgate, openPRandverifyhostedCI.",
+    "Separateauthorizedproductionrolloutandreal-pageCPUverification beforeclaiminglivecoverage."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change prepared-independent-scoring --base f44068101f6aaf84919cbeb27353b29d7c98ade9",
+    "EVALUATION_BASE=f44068101f6aaf84919cbeb27353b29d7c98ade9 npm run ci:gate",
+    "node evals/changes/prepared-independent-scoring/export-state.mjs"
+  ]
+}

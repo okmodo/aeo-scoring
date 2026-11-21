@@ -1,3 +1,4 @@
+import {isPreparedObservations} from './prepared-derived.mjs';
 // Deterministic observations only. An unobserved field is not proof of absence.
 import rubricV1 from '../config/rubric.v1.json' with { type: 'json' };
 import rubricV2 from '../config/rubric.v2.json' with { type: 'json' };
@@ -45,13 +46,18 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 // Explicit v1 replay preserves historical tests; service requests always use v2.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false, deterministicExtracted = null } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
   // Browser retrieval supplies two observations from one navigation. Source
   // checks retain their original input; content checks use the rendered input.
   const sourceExtracted = legacy ? extracted : (initialExtracted ?? extracted);
   const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
-  const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, extracted);
+  const canonicalExtracted = extracted;
+  const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, canonicalExtracted);
+  // AI validation is bound to the untouched canonical input; local observations may
+  // use a separately derived view of the same verified prepared page.
+  const preparedDerived = isPreparedObservations(deterministicExtracted, snapshot);
+  extracted = preparedDerived ? deterministicExtracted : extracted;
   let categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
   const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
   const maxPoints = Object.fromEntries(SUBCHECKS.map(check => [check.id, check.maxPoints]));
@@ -251,12 +257,20 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
       ...(!legacy ? assessSourceAccessibility(snapshot, sourceExtracted) : {}),
       ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
+    if (preparedDerived) {
+      // Serialized rendered HTML cannot establish computed image visibility or
+      // prove that a missing title/heading was absent from the original page.
+      delete observations['S4.image-alternatives'];
+      const html = extracted.productHtml;
+      const heading = typeof html?.identity === 'string' ? html.identity : html?.identity?.mainH1 || html?.headings?.find(h => h.level === 1)?.text;
+      if (!extracted.title || !heading) delete observations['S4.title'];
+    }
     // Replace legacy observations so unresolved new extraction cannot inherit old credit.
-    for (const id of Object.keys(checks)) if (hasHtml || id.startsWith('S2.')) checks[id] = { status: 'not_measured' };
+    for (const id of Object.keys(checks)) if ((hasHtml && !id.startsWith('S5.') && !id.startsWith('S6.')) || id.startsWith('S2.')) checks[id] = { status: 'not_measured' };
     for (const [id, finding] of Object.entries(observations)) {
       if (!Object.hasOwn(checks, id)) continue;
       const evidenceIds = [];
-      const methodFor = ref => snapshot?.retrievalMethod === 'browser' &&
+      const methodFor = ref => ['browser','browser_api_content'].includes(snapshot?.retrievalMethod) &&
         !id.startsWith('S1.') && !id.startsWith('S2.') &&
         (!ref.url || ref.url === sourceUrl) &&
         !/json.?ld|application\/ld\+json|initial:/i.test(ref.location || '') ? 'rendered' : 'raw';
@@ -274,20 +288,20 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
     }
     if (!legacy && requireAiAssessment && !aiValidated) {
-      const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S7.links','S8.guidance']);
+      const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S4.title','S7.links','S8.guidance']);
       for (const id of Object.keys(checks)) {
         const needsJudgment = /^C[1-5]\./.test(id) || id.startsWith('S4.') ||
           ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
         const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
-          technicalFailures.has(id) && checks[id].status === 'measured' && checks[id].fraction === 0);
+          technicalFailures.has(id) && checks[id].status === 'measured');
         if (needsJudgment && !establishedTechnical) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
       }
       category = null;
     }
     if (aiValidated) {
       category = 'open-rubric';
-      categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile.category, decisionSupport: aiAssessment.profile.slots.filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
-      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted, addEvidence });
+      categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile?.category ?? 'Unclassified', decisionSupport: (aiAssessment.profile?.slots ?? []).filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
+      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence });
     }
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
@@ -349,7 +363,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,
-    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(aiValidated ? {assessment:{mode:'ai_rubric',version:aiAssessment.version,category:aiAssessment.profile.category}} : validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
+    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(aiValidated ? {assessment:{mode:'ai_rubric',version:aiAssessment.version,category:aiAssessment.profile?.category ?? null}} : validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
       total: allChecks.length, category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
       ...(profile ? {categoryAssessment:{version:'1',label:profile.label,profileId:profile.id,evidence:profile.evidence}} : {}),

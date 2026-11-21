@@ -7,6 +7,7 @@ import {runPreparedAssessmentStep} from './prepared-assessment-engine.mjs';
 import {createStore} from './store.mjs';
 import {createPipelineState,PIPELINE_VERSION} from './pipeline-state.mjs';
 import {scoreAudit} from './scoring.mjs';
+import {derivePreparedObservations} from './prepared-derived.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
 import {CONTENT_FACTS_RELEASE_ID} from './content-facts-runner.mjs';
 
@@ -22,7 +23,7 @@ const safeCode=error=>/^[a-z][a-z0-9_]{0,63}$/.test(error?.code||'')?error.code:
 // Only this consumer performs AI work. Preparation readiness is never changed.
 // Dependencies are injectable for offline tests; production uses canonical guards.
 export async function runPreparedAudit({env,auditId,now=Date.now,allowance:givenAllowance,snapshots:givenSnapshots,jobs:givenJobs,
-  engine=runPreparedAssessmentStep,scorePage=scoreAudit}={}) {
+  engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const reservation='prepared-worker-'+crypto.randomUUID();
@@ -34,7 +35,10 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
   const persist=async(kind,artifact)=>{try{await snapshots.saveAssessment({auditId,kind,artifact});}catch(error){if(error.code!=='snapshot_exists')throw error;const stored=await snapshots.readAssessment(auditId,kind);if(JSON.stringify(stored)!==JSON.stringify(artifact))throw Object.assign(Error('Conflicting retained assessment'),{code:'assessment_artifact_conflict'});}};
   const publish=async(code,complete=false)=>{
     await jobs.assertLease(grant);
-    if(!report){report=scorePage({url:audit.url,status:200,contentType:'text/html'},empty(),{requireAiAssessment:true});}
+    if(!report){
+      const derived=input ? await derive(input).catch(()=>null) : null;
+      report=input ? scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true}) : scorePage({url:audit.url,status:200,contentType:'text/html'},empty(),{requireAiAssessment:true});
+    }
     if(!complete){report.status='incomplete';report.score=null;report.coverage.limitations.push('Prepared assessment did not finish ('+code+'); unresolved checks remain unmeasured.');await record('content','failed',code);}
     await record('scoring','completed',report.status==='complete'?'report_complete':'report_incomplete');
     report.coverage.pipeline=pipeline.summary();
@@ -53,7 +57,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     // never reuse an older audit's profile or facts for a different policy.
     const prior=await db.prepare('SELECT 1 FROM prepared_assessment_jobs WHERE audit_id=?1 AND policy_version<>?2 LIMIT 1').bind(auditId,PREPARED_ASSESSMENT_POLICY).first();
     if(prior)return{status:'skipped',code:'prior_assessment_policy'};
-    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion:PREPARED_ASSESSMENT_POLICY,leaseMs:30000});
+    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion:PREPARED_ASSESSMENT_POLICY,leaseMs:45000});
     if(!grant)return{status:'skipped',code:'assessment_not_claimed'};
     if(audit.status==='incomplete') {
       const reset=await db.prepare(`UPDATE audits SET status='pending',report_json=NULL,error_json=NULL,completed_at=NULL,cache_until=NULL WHERE id=?1 AND status='incomplete' AND expires_at>?2
@@ -62,13 +66,12 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
       if(reset.meta.changes!==1)throw Object.assign(Error('Reassessment lease lost'),{code:'job_lease_lost'});
     }
     await pipeline.load();
-    if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
     input=await snapshots.readPrepared(auditId);
     if(input.source?.preparedHash!==grant.preparedHash)throw Object.assign(Error('Prepared input changed'),{code:'prepared_hash_changed'});
     await jobs.assertLease(grant);
-    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,requireAiAssessment:true});
+    if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
     await record('category','running','classification_started');
-    const result=await engine({grant,jobs,preparedInput:input,AI:env.AUDIT_AI,allowance,now,deadlineAt:now()+25000,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
+    const result=await engine({grant,jobs,preparedInput:input,AI:env.AUDIT_AI,allowance,now,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
     if(result.status==='yield') {await jobs.release(grant,{state:'waiting',code:'checkpoint_yield',retryAt:now()});return{status:'yield',code:'checkpoint_yield'};}
     if(result.status!=='completed') {
       const code=safeCode(result);await publish(code);
@@ -76,7 +79,8 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     }
     if(result.profile)await persist('profile',result.profile);
     await persist('facts',result.replayArtifact);
-    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,aiAssessment:result.assessment});
+    const derived=await derive(input).catch(()=>null);
+    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:result.assessment});
     await record('snapshot','completed','assessment_retained');await record('content','completed','judgments_validated');
     await publish('assessment_completed',true);
     await jobs.release(grant,{state:'complete',code:'assessment_completed'});

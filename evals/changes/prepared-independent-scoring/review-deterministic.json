@@ -1,0 +1,36 @@
+{
+  "reviewer": "independent agent, deterministic scoring review",
+  "status": "approved_with_limitations",
+  "scope": "Prepared derivation and scoring merge, timeout publication, provenance and lease alignment; no live calls.",
+  "findings": [
+    {
+      "priority": "P1",
+      "location": "backend/scoring.mjs:254",
+      "finding": "With derived productHtml, the reset loop clears all checks, including previously established S5 robots and S6 sitemap observations, which are not restored by subsequent product observations. Prepared reports can lose supported non-AI results.",
+      "recommendation": "Preserve independently established robots and sitemap findings and add a regression using derived HTML and measured S5/S6 observations.",
+      "resolution": "Resolved: S5/S6 survive the reset and the prepared-derived regression asserts measured robots and sitemap checks.",
+      "status": "resolved"
+    },
+    {
+      "priority": "P1",
+      "location": "backend/scoring.mjs:281",
+      "finding": "S4.image-alternatives can receive deterministic credit from parsed rendered HTML despite unknown computed visibility: CSS-hidden or unselected variant images can affect the numerator and denominator without proof of product-image applicability.",
+      "recommendation": "Withhold this finding absent adequate evidence of scoped applicability; test CSS-hidden and unselected variant images.",
+      "resolution": "Resolved: prepared-derived S4.image-alternatives is withheld; a CSS-hidden and unselected-image regression checks this behavior.",
+      "status": "resolved"
+    },
+    {
+      "priority": "P2",
+      "location": "backend/prepared-derived.mjs:9",
+      "finding": "The exported derivation helper accepts arbitrary renderedHtml and binds only object identity, without validating prepared metadata or freezing the result. The production consumer currently calls it on data verified by readPrepared, so this is a trust-boundary weakness rather than a demonstrated external bypass.",
+      "recommendation": "Make the verified-input invariant explicit and enforce it at the derivation boundary or bind the helper to a verified immutable input and result.",
+      "resolution": "Resolved within production trust model: helper verifies prepared bytes and metadata and rejects changes to its bound snapshot or observations. Authenticity still relies on readPrepared validating stored hashes and the consumer matching the claimed hash.",
+      "status": "resolved"
+    }
+  ],
+  "verification": {
+    "command": "node --test backend/prepared-derived.test.mjs backend/browser-prepared-roundtrip.test.mjs backend/ai-rubric-scoring.test.mjs backend/prepared-assessment-consumer.test.mjs backend/prepared-model-timeout.test.mjs backend/prepared-assessment-engine.test.mjs",
+    "result": "30 passed; offline. Roundtrip checks positive C1.identity and S4.title together, and timeout report uses stored prepared data. New regressions cover all three findings.",
+    "limitations": "No hosted runtime, live model, billing, or worst-case CPU validation. Consumer uses a 45-second lease and no application deadline; the model timer is 30 seconds. Model, token/request limits, 128-step bound and invocation reservation remain unchanged. Separate native runtime review covers RPC and CPU behavior."
+  }
+}

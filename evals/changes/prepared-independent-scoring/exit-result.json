@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "changeId": "prepared-independent-scoring",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "/root/prepared_independent_exit",
+  "interruptionPoint": "Prepared artifact ready, inputs absent, first model call completed and persisted, job safely yielded",
+  "status": "passed",
+  "observedContinuation": "Four invocations resumed the persisted first checkpoint and completed, with one new model call and AI reservation per invocation.",
+  "limitations": "Offline synthetic provider and retained fixture only; no live provider, network, production mutation, or model quality claim.",
+  "detailedObservations": {
+    "preparedState": {
+      "state": "ready",
+      "prepared_state": "ready"
+    },
+    "firstCheckpointKey": "0001",
+    "firstCheckpointUnchanged": true,
+    "completedCheckpoints": [
+      {
+        "checkpoint_key": "0001",
+        "status": "completed"
+      },
+      {
+        "checkpoint_key": "0002",
+        "status": "completed"
+      },
+      {
+        "checkpoint_key": "0003",
+        "status": "completed"
+      },
+      {
+        "checkpoint_key": "0004",
+        "status": "completed"
+      },
+      {
+        "checkpoint_key": "0005",
+        "status": "completed"
+      }
+    ],
+    "steps": [
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "newCalls": 1,
+        "newReservations": 1
+      },
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "newCalls": 1,
+        "newReservations": 1
+      },
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "newCalls": 1,
+        "newReservations": 1
+      },
+      {
+        "result": {
+          "status": "completed",
+          "code": "assessment_completed",
+          "reportStatus": "incomplete"
+        },
+        "newCalls": 1,
+        "newReservations": 1
+      }
+    ],
+    "modelCalls": 4,
+    "aiReservations": 4,
+    "readObjectTypes": [
+      "snapshot",
+      "prepared",
+      "profile",
+      "facts"
+    ],
+    "forbiddenReads": 0,
+    "engineArgumentKeys": [
+      "grant",
+      "jobs",
+      "preparedInput",
+      "AI",
+      "allowance",
+      "now",
+      "calibrationApproved",
+      "onProfile"
+    ],
+    "identity": {
+      "id": "C1.identity",
+      "maxPoints": 3,
+      "availablePoints": 3,
+      "status": "measured",
+      "fraction": 1,
+      "points": 3,
+      "evidenceIds": [
+        "e4"
+      ],
+      "reason": null
+    },
+    "title": {
+      "id": "S4.title",
+      "maxPoints": 1,
+      "availablePoints": 1,
+      "status": "measured",
+      "fraction": 1,
+      "points": 1,
+      "evidenceIds": [
+        "e1"
+      ],
+      "reason": null
+    },
+    "explanation": {
+      "id": "C1.explanation",
+      "maxPoints": 4,
+      "availablePoints": 4,
+      "status": "not_measured",
+      "fraction": null,
+      "points": null,
+      "evidenceIds": [],
+      "reason": "The model judgment could not be validated."
+    },
+    "diagnostics": [
+      {
+        "referenceIndex": 0,
+        "sourceId": "s1",
+        "reason": "quote_not_found_or_ambiguous",
+        "context": "judgment:C1.explanation"
+      }
+    ],
+    "reportStatus": "incomplete",
+    "score": null,
+    "retained": {
+      "profile": true,
+      "facts": true,
+      "report": true
+    }
+  },
+  "sourceDigest": "9945c2d7ecffd65481b8f5c9aecf7662dbdc9c2a8843d95a497b3dbbf64e3b15",
+  "exportSha256": "4f9cc1db861e1679daca5ff0d9dbb081874dee84d7fadd5fec74780131d615d7"
+}
