@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "task": "Fix existing Terra BYOK gateway selection and Responses adapter; investigate upstream429, deploy reviewed backend and rerunFaherty.",
+  "state": "codex/terra-gateway-payload based on backend843ad5630725f5b3bbe4257f287666c67ba0be78; separateplan b7f4337. Implementation and offline evidence being finalized; sourceboundchecks/hostedCI/authorizedrollout follow.",
+  "decisions": [
+    "Preserve original account /ai/run endpoint and Terra model; explicitly select gatewayopenai and map existing messages/caps to Responses parameters with strictcompletedassistant output parsing.",
+    "Keep all existing prompts/rubric/scoring/evidence/stages/30stimeout/60%infrastructure/CPU1000; allow knownreasoningmetadata asnon-evidence; internal diagnosticlogs containphase/status/numericcodes only.",
+    "No inference retries, billingfallback, spendingtopup, modelsubstitution, credentialmutations, oldauditmigration or automaticrecovery."
+  ],
+  "constraints": [
+    "Frontend/dependencies/unrelatedservices and retainedstorage cleanup remain untouched.",
+    "Freshagent/checkpointfixtures use syntheticdata/mockHTTP; sourceboundevaluation andhostedCI remain separatefromauthorizedlivevalidation.",
+    "StoredOpenAIkey returnedinsufficient_quota/credit_balance_exhausted throughprovidernativegatewaydiagnostic. Billingowner mustrestoreavailableAPIcredits; nocredits werepurchased."
+  ],
+  "completed": [
+    "Terraagents implementedadapter/config andrealSQLite/R2 Responsesroundtrip; independentreview/freshexit recordedwithactual limitations.",
+    "Guardeddiagnostics distinguishedmissinggatewaycredentials, JSONpayloadvalidation andprovidercreditexhaustion. Actual sanitizeddetails areinupstream-investigation.json; nosecret/prompt/rawmerchantcontent committed."
+  ],
+  "remaining": [
+    "Complete source-bound evaluation and hosted CI, open the backend PR, and obtain an independent agent merge after checking the gates. Deploy only the project Worker with its settings, secrets, and 1,000 ms CPU cap preserved for the user-authorized Faherty retest.",
+    "RunonefreshFahertyaudit andreportactualterminalstate/modelHTTPcode/CPUtelemetry, includingfailureifOpenAIcreditsexhausted.",
+    "OpenAIbillingowner needs verify/restorecredits before acompleteAIreportcanbevalidated. PriorCPUtelemetry2051despiteCPU1000meansconfiguredcapcannotbeclaimedasanexacthardcutoff."
+  ],
+  "resumeCommands": [
+    "Node24: npm run evaluate -- --change terra-gateway-payload --base 843ad5630725f5b3bbe4257f287666c67ba0be78",
+    "EVALUATION_BASE=843ad5630725f5b3bbe4257f287666c67ba0be78 npm run ci:gate",
+    "node evals/changes/terra-gateway-payload/export-state.mjs exportslocalprivateSQLite/R2state; giveonlyexport+cleansources to afreshagent fornewexitcheck."
+  ]
+}

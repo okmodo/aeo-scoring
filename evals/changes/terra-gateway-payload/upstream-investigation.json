@@ -1,0 +1,53 @@
+{
+  "investigatedAt": "2026-11-21T19:45:13Z",
+  "originalEndpoint": "Cloudflare Workers AI /ai/run",
+  "model": "openai/gpt-6.1-terra",
+  "gateway": "openai",
+  "priorEvidence": {
+    "withoutGateway": {
+      "status": 402,
+      "code": 7007
+    },
+    "gatewayChatPayload": {
+      "status": 400,
+      "code": 7003,
+      "reason": "JSON input validation"
+    },
+    "gatewayResponsesPayload": {
+      "status": 429,
+      "code": 7004,
+      "message": "Model execution failed (Upstream provider is unavailable)",
+      "gatewayLogId": "01a1ff9f-5c03-72dc-9b96-91a0076087e3"
+    }
+  },
+  "providerNativeDiagnostic": {
+    "purpose": "Diagnostic only; application endpoint unchanged",
+    "route": "AI Gateway provider-native OpenAI Responses route with stored default BYOK",
+    "credentialSource": "Existing Cloudflare CLI OAuth session, not production Worker secret",
+    "firstAttempt": {
+      "status": 400,
+      "type": "invalid_request_error",
+      "reason": "Input must include JSON for json_object format",
+      "gatewayLogId": "01a1ffa3-e7d1-73fb-800d-80cf3299a8da"
+    },
+    "correctedAttempt": {
+      "status": 429,
+      "type": "insufficient_quota",
+      "code": "credit_balance_exhausted",
+      "message": "You have no credits remaining. Add credits to continue using the API.",
+      "gatewayLogId": "01a1ffa4-3443-7526-aeee-3f39ff5bb293"
+    },
+    "guard": "Fresh canonical 60% allowance admission accepted and settled for each inference; max one attempt per request, no wholesale, 30-second timeout, max output 1000 tokens",
+    "privateArtifacts": [
+      "/private/tmp/aeo-terra-native-diagnostic.json",
+      "/private/tmp/aeo-terra-native-response.json",
+      "/private/tmp/aeo-terra-native-diagnostic-corrected.json",
+      "/private/tmp/aeo-terra-native-response-corrected.json"
+    ]
+  },
+  "conclusion": "The provider-native route exposes an OpenAI insufficient_quota / credit_balance_exhausted error. This supports exhausted provider credits as the cause of the generic /ai/run 429 for this gateway and stored key, but the two endpoints are distinct and the production Worker secret was not inspected. Provider account billing access is needed to verify or resolve; no billing, credentials, gateway configuration, or deployment was changed.",
+  "sources": [
+    "https://developers.cloudflare.com/ai-gateway/reference/troubleshooting/",
+    "https://developers.cloudflare.com/ai-gateway/features/unified-billing/"
+  ]
+}

@@ -17,24 +17,48 @@ async function readBounded(response) {
   for (const chunk of chunks) { bytes.set(chunk,offset); offset += chunk.byteLength; }
   try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); } catch { throw failure(); }
 }
-export function createTerraByokProvider(env, { fetch: fetchImpl = globalThis.fetch } = {}) {
+const defaultDiagnostic = detail => console.error('terra_provider_failure', detail);
+export function createTerraByokProvider(env, { fetch: fetchImpl = globalThis.fetch, onDiagnostic = defaultDiagnostic } = {}) {
+  const diagnostic = detail => { try { if (typeof onDiagnostic === 'function') onDiagnostic(detail); } catch {} };
   return { async run(model, input, { signal } = {}) {
-    if (model !== config.model || !input || typeof input !== 'object' || Array.isArray(input) || typeof env?.AUDIT_AI_GATEWAY_TOKEN !== 'string' || !env.AUDIT_AI_GATEWAY_TOKEN.trim() || typeof fetchImpl !== 'function') throw failure();
-    if (input.model != null && input.model !== config.model) throw failure();
+    if (model !== config.model || !input || typeof input !== 'object' || Array.isArray(input) || typeof env?.AUDIT_AI_GATEWAY_TOKEN !== 'string' || !env.AUDIT_AI_GATEWAY_TOKEN.trim() || typeof fetchImpl !== 'function') { diagnostic({phase:'validation'}); throw failure(); }
+    if (input.model != null && input.model !== config.model) { diagnostic({phase:'validation'}); throw failure(); }
     const { messages, max_tokens } = input;
-    if (!Array.isArray(messages) || !Number.isSafeInteger(max_tokens) || max_tokens < 1 || max_tokens > Math.max(...Object.values(config.stageCaps))) throw failure();
-    const params = { messages, max_completion_tokens: max_tokens, reasoning_effort: config.reasoningEffort, response_format: { type: config.responseFormat }, stream: config.stream };
+    if (!Array.isArray(messages) || !Number.isSafeInteger(max_tokens) || max_tokens < 1 || max_tokens > Math.max(...Object.values(config.stageCaps))) { diagnostic({phase:'validation'}); throw failure(); }
+    const params = { input: messages, max_output_tokens: max_tokens, reasoning: { effort: config.reasoningEffort }, text: { format: { type: config.responseFormat } }, stream: config.stream };
     const body = JSON.stringify({ model: config.model, input: params });
     if (encoder.encode(body).length > config.requestMaxBytes) throw new Error('request_limit');
     let response;
-    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN}`, 'Content-Type': 'application/json', 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'error' }); } catch { throw failure(); }
-    if (!response?.ok) throw failure();
-    const envelope = await readBounded(response);
-    if (envelope?.success !== true || (Array.isArray(envelope.errors) && envelope.errors.length) || !envelope.result || typeof envelope.result !== 'object') throw failure();
-    const choice = envelope.result.choices?.[0];
-    if (!choice || choice.finish_reason !== 'stop' || choice.message?.refusal || typeof choice.message?.content !== 'string') throw failure();
-    let parsed; try { parsed = JSON.parse(choice.message.content); } catch { throw failure(); }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw failure();
-    return { response: choice.message.content };
+    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'error' }); } catch { diagnostic({phase:signal?.aborted ? 'abort' : 'fetch'}); throw failure(); }
+    if (!response?.ok) {
+      const detail = {phase:'http'};
+      if (Number.isInteger(response?.status) && response.status >= 100 && response.status <= 599) detail.status = response.status;
+      const retry = response?.headers?.get?.('retry-after');
+      if (typeof retry === 'string' && /^\d{1,5}$/.test(retry) && Number(retry) <= 86400) detail.retryAfter = Number(retry);
+      try {
+        const envelope = await readBounded(response);
+        const codes = Array.isArray(envelope?.errors) ? envelope.errors.map(error => error?.code).filter(code => Number.isSafeInteger(code) && code >= 0 && code <= 999999).slice(0,5) : [];
+        if (codes.length) detail.codes = codes;
+      } catch {}
+      diagnostic(detail); throw failure();
+    }
+    let envelope;
+    try { envelope = await readBounded(response); } catch { diagnostic({phase:'read'}); throw failure(); }
+    const result = envelope?.result;
+    if (envelope?.success !== true || (Array.isArray(envelope.errors) && envelope.errors.length) || !result || result.object !== 'response' || result.status !== 'completed' || result.error !== null || result.incomplete_details !== null || !Array.isArray(result.output) || !result.output.length) { diagnostic({phase:'envelope'}); throw failure(); }
+    const texts = [];
+    for (const item of result.output) {
+      if (item?.type === 'reasoning' && Array.isArray(item.summary) && (item.status == null || item.status === 'completed')) continue;
+      if (item?.type !== 'message' || item.role !== 'assistant' || item.status !== 'completed' || !Array.isArray(item.content) || !item.content.length) { diagnostic({phase:'output'}); throw failure(); }
+      for (const part of item.content) {
+        if (part?.type !== 'output_text' || typeof part.text !== 'string') { diagnostic({phase:'output'}); throw failure(); }
+        texts.push(part.text);
+      }
+    }
+    if (!texts.length) { diagnostic({phase:'output'}); throw failure(); }
+    const content = texts.join('');
+    let parsed; try { parsed = JSON.parse(content); } catch { diagnostic({phase:'parse'}); throw failure(); }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { diagnostic({phase:'parse'}); throw failure(); }
+    return { response: content };
   } };
 }
