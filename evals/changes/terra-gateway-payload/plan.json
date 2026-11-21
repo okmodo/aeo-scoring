@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "id": "terra-gateway-payload",
+  "task": "Correct explicit existing gateway selection and Terra Responses payload/normalization on the original endpoint; investigate upstream429, review/test backend change, deploy and rerun Faherty under existing limits.",
+  "scope": [
+    "config/ai-model.json",
+    "backend/**",
+    "docs/terra-byok-model.md",
+    "evals/changes/terra-gateway-payload/**"
+  ],
+  "nonGoals": [
+    "No frontend/dependencies/rubric/prompts/scoring or pipeline-stage redesign. Preserve60%infrastructure limits,CPU1000,one30smodeltimeout,stagecaps,bytebounds,24hretention and noautomaticrecovery.",
+    "No changes to gateway/provider credentials, billing, paid add-ons, unrelatedservices; no credits fallback/retries, no oldaudit migration or uncertainhold reset. No live modelcalls inCI."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Central config explicitly selects existing gateway openai and Responses wire format; original endpoint/model and numerical limits unchanged. Adapter maps existing messages to Responses input,max_output_tokens,reasoning.effort,text.format json_object; normalizes completed assistant output_text only.",
+      "verification": "automated",
+      "evidence": "Frozen request/response fixtures, realSQLite/R2 roundtrip, malformed/refused/incomplete/unexpected-output tests and unchanged scoring assertions."
+    },
+    {
+      "id": "O2",
+      "description": "Failures expose only safe structured internal diagnostic codes/status/phase, without credentials/rawprovider bodies/pagecontent or changes to public report contract. Preserve bounded reads, abort, no-wholesale and singleattempt.",
+      "verification": "automated",
+      "evidence": "Auth/missingcredentials/400/429 fixtures and redaction/unknown-error behavior; one30stimeout, no charged WorkersAIneurons, no retry regressions."
+    },
+    {
+      "id": "O3",
+      "description": "Model/config-bound checkpoint replay remains deterministic with corrected adapter; freshagent resumes without duplicate completed request and zero neuron reservations.",
+      "verification": "automated",
+      "evidence": "Genuine exportedSQLite/R2 fresh-agent continuation plus sourcebound checks, independentreview and hostedCI."
+    },
+    {
+      "id": "O4",
+      "description": "Investigate upstream429 through bounded guarded diagnostics; preserve live Worker settings and deploy reviewed backend only, then submitonefreshFahertyaudit and inspectterminalstate/CPU. Do not claim completedreport if provider/limits block it.",
+      "verification": "human",
+      "evidence": "Private operator records, gateway errors and deployment/hash/settings readback; report actual failure or success and any accessneeded."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutableplancommit precedes implementation in codexworktree; Terraimplementation/investigation/fresh exit/independentreview, sourcebound evaluation and hostedCI; authorized deploymentseparatefromchecks.",
+      "verification": "human",
+      "evidence": "Gitplanhistory, handoff/review/export/exit/run/trace, PR and private livevalidationrecord."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep fixes confined to model adapter/config/testfixtures with safe diagnostics; no speculative refactor or repeated paidmodelcalls.",
+      "verification": "human",
+      "evidence": "Scoped diff and independentreview; no rawmerchantHTML orcredentialscommitted."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Corrected provider wire format and config checkpoint identity require genuine fresh continuation without duplicate inference."
+  },
+  "context": "Latest user authorizes fixinggateway/payload, investigating429, rerunningFaherty withTerraagents under60%/CPU1000 withoutfrontend/unrelatedchanges. ControlledCLIrepro: no gatewayheader402/7007; explicitopenai currentChatpayload400/7003 JSONinput; Responsespayload429/7004 genericupstreamunavailable. ProductionWorker secret unreadable; checkactualoutcomeafterdeployment."
+}
