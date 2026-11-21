@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "prepared-independent-scoring",
+  "task": "Use one 30-second AI model timeout and let deterministic checks use the verified prepared R2 page independently of model success.",
+  "scope": [
+    "backend/**",
+    "docs/prepared-independent-scoring.md",
+    "evals/changes/prepared-independent-scoring/**"
+  ],
+  "nonGoals": [
+    "Keep 60% account allowances, conservative usage holds, 1000ms CPU cap, model and token/request caps, rubric weights, evidence integrity and 24-hour retention unchanged.",
+    "No frontend, shared dependencies, unrelated Cloudflare services or new paid products. Do not infer initial-document or computed-visibility evidence from rendered HTML.",
+    "Do not automatically retry uncertain model calls or migrate older audits. No merge/deployment without authorization."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "One application model-response timeout of30000ms; no25/35second application execution deadline that clips the request. Job ownership lease permits wait and bounded persistence. Private RPC survives post-response30s boundary without new publicroutes orservices.",
+      "verification": "automated",
+      "evidence": "Fake-timer29.5s and30s tests proving stale deadline/remaining arguments cannot clip; native workerd >30s boundary test; existing bounded-hop, uncertain replay and consumer lease coverage."
+    },
+    {
+      "id": "O2",
+      "description": "Deterministic checks derive their eligible observations from the same hash-verified prepared R2 page as AI, not an empty extraction record or original HTML. Model timeout/categoryfailure cannot clear already supported deterministic results. Retain scoped evidence and unknowns for unsupported source/visibility claims.",
+      "verification": "automated",
+      "evidence": "Frozen productfixture and realSQLite/R2-compatible roundtrip with AI timeout: positive eligible nonAI results, retained evidence and null total whenapplicable checksremainunknown; nooriginalHTML/inputs read orfrontcontractchange."
+    },
+    {
+      "id": "O3",
+      "description": "Prepared-state readiness remains the prerequisite, bounded checkpoint continuation/replay remains input-stable and no duplicate model reservations; deterministic observations/reportpersist on failures and successfulAI merges without erasing supported technical findings.",
+      "verification": "automated",
+      "evidence": "MixedAI/deterministic results, malformedprofile, partialreportpublication, sourcehash/inputstability, CPU/runtime smoke and fresh-agent exportedcontinuation."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separate immutable plan beforeimplementation; isolatedcodexbranch, Terraimplementation/independentreview, genuinefresh-agentexit, sourceboundevaluation andhostedCI before authorizedrollout.",
+      "verification": "human",
+      "evidence": "Gitplanhistory, handoff/reviews/export/exit/run/trace andPRCI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuseexisting extraction/scoring wherevalid, keepdeterministic derivationbounded and avoid repeating heavywork acrossmodelsteps. No extraLLMjudge,modelbudgetincreaseor permissionbypass.",
+      "verification": "human",
+      "evidence": "Diff, parser/callcounts, runtimetests andindependentreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Preparedderived-data and RPC lifetime integration affect checkpoint/reportcontinuation; freshagent mustresumecompletedcheckpointwithoutduplicatecallororiginalHTMLread."
+  },
+  "context": "Supersedes uncommitted draft oncodex/model-timeout-30s: userclarified exactlyoneAI timeout30s, noadditionalapplicationexecutiondeadline, and nonAIchecksmustusesamepreparedR2data. Existingconsumerpassesmiminalemptyextraction andrequireAiAssessment suppressesmostpositivefindings. Keepfrontend/rubric/costboundaries."
+}
