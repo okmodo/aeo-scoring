@@ -86,6 +86,6 @@
     "score": null
   },
   "limitations": "Synthetic sparse fixture and mocked Responses HTTP only; no live model, network, production billing, or model quality validation.",
-  "sourceDigest": "6aa2cd5c47dfe9aaf70960b8a90e4367388492f239857a2a7f8f76ed1abcbc5d",
+  "sourceDigest": "13102c7442e7f922873a64e30b935d5706308a3eaf9a2f9dded44726b0b0f6c8",
   "exportSha256": "c661a360e418650fe35425839f28ea5742486e4a7381514a9e24e094d3cf31c6"
 }
