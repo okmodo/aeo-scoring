@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "per-finding-evidence",
+  "task": "Have AI assess prepared data against rubric with independently validated findings, retaining supported results when unrelated references or observations are invalid.",
+  "scope": [
+    "backend/**",
+    "docs/per-finding-evidence.md",
+    "evals/changes/per-finding-evidence/**"
+  ],
+  "nonGoals": [
+    "Nofrontend/sharedcontracts/rootdependency/unrelatedCloudflarechanges, no60%orCPU1000increase.",
+    "Keep15smodelresponsewait,prepared_state readiness,prepared-onlyinput,existingmodel/rubricweights and24hretention.",
+    "Neveracceptunsupportedfacts orzero/NAfromuninspectedabsence; neverrepaircitationsbyambiguoussemanticguess,wrongproduct/variant/origin orhiddencontext."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Prepared evidence resolution supports exact/safelynormalized quotation and typedstructuredfield references with verifiedvalue/provenance. Reject invalid items individually, preservevalidneighbors,allowonlyunambiguouseligiblecontext-preservinganchors. Normalizationcannotchangeproductfacts,numbers,negation,unitsorvariant.",
+      "verification": "automated",
+      "evidence": "FrozenFaherty-like mixed10observations fixture,HTMLentities/whitespace,wrongsource/ambiguous/unseen/recommendation/variant andtypedfieldtruth/mismatch regressions."
+    },
+    {
+      "id": "O2",
+      "description": "Removeall-or-nothingquote/inventoryprerequisitesfrompreparedassessment. Treatmodelobservationsasproposals; per-check evidence/inspection failures yieldnot_measuredonlyfortheaffectedfinding. Gradeagainstexistinganchors,appcalculatesweightedpoints. Category-specificchecksremainunknownifcategory/profilecannotvalidate,withoutinventingcategoryexpectationsorblockingindependentdirectchecks.",
+      "verification": "automated",
+      "evidence": "Mixedvalid/invalidobservations,inspections,claims/comparisons,judgmentsandcategoryfallbackscenarios; unchangedlegacy/scoringoraclesandpositiveweightedresultproof."
+    },
+    {
+      "id": "O3",
+      "description": "Retainvalidatedpartialfindings/profile/replay/reportwithspecificrejectionreasons. Versionpreparedassessmentpolicy/cachetoavoidoldfailedbatchresults; knowncompletedcheckpointsreplaywithnoduplicatecharge,unknowncallsstillheld. Preparedhand-offdoesnotfetchoriginalHTMLorreparsepage.",
+      "verification": "automated",
+      "evidence": "RealSQLite/R2mockroundtripandfresh-agentcheckpointreplay;oldpolicy/cacheisolation,exactinputassertions,15stimeout/allowance/runtime regressions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separateplanbeforeimplementation,isolatedcodexbranch,Terraimplementationandindependentreview,genuinefreshagentexit,sourceboundeval/CI; no livecallsinCI. Authorizedbackendrollout/nativevalidationseparateandbudgeted.",
+      "verification": "human",
+      "evidence": "Gitplanhistory,review/handoff/exit/run/trace,PR/CI/privateoperatorrecords."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Useonepreparedrepresentationandlocalizedevidence/resolutionchanges; avoidextraLLMjudgecallsorpaidintegrations,retainboundedrequests/calls andconservativeusageguards.",
+      "verification": "human",
+      "evidence": "Diff,call/reservationcounts,regressionandindependentreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Replayartifact/evidence-resolutionpolicychanges;freshagentmustresume mixed-evidencepreparedjobwithoutoriginalreads,duplicatecallsoracceptingunsupportedfindings."
+  },
+  "context": "LatestFaherty scancompletedfirstmodelcall butfailedwholeassessmentbecause5of10observationswerenotexactmatchestocitedsection. UserexplicitlyrequestsAIrubricassessmentwithper-findingevidencevalidation;keep60%/CPU1000/frontendboundary. Preserveunsupportedfindingsasunknownwithoutdiscardingsupportedindependentresults."
+}
