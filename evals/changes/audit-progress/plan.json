@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "id": "audit-progress",
+  "task": "Show a five-stage loading workflow throughout audit submission and polling, then automatically display the returned report.",
+  "scope": [
+    "src/**",
+    "test/**",
+    "package.json",
+    "evals/changes/audit-progress/**"
+  ],
+  "nonGoals": [
+    "Backend progress instrumentation, scoring or extraction changes, new AI calls, deployment or merge, password or usage policy changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Page download, Data extraction, AI Review, Score Card Building and Audit complete appear in a visible accessible loading block from submission until terminal response. No invented per-stage timing.",
+      "verification": "automated",
+      "evidence": "Progress component fixtures and render tests; browser interaction evidence for deferred submission/polling."
+    },
+    {
+      "id": "O2",
+      "description": "Complete and partial reports open automatically only after processing ends; cancellation, errors, timeout, auth expiry and cached responses remain honest and retryable.",
+      "verification": "automated",
+      "evidence": "Frozen progress state cases, component tests and browser mocked API transitions."
+    },
+    {
+      "id": "O3",
+      "description": "Password gating and usage safeguards remain intact with no backend changes or new audit calls during testing.",
+      "verification": "automated",
+      "evidence": "Existing preview and backend regression checks; isolated browser mock responses."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit valid plan before edits, evaluate real named commands, independently review and open PR for hosted CI.",
+      "verification": "human",
+      "evidence": "Git history, evaluator record and CI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing visual styling, keep mobile layout and reduced-motion accessibility, and avoid extra requests or fabricated stage completion.",
+      "verification": "human",
+      "evidence": "Diff and browser verification."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:progress",
+    "npm run test:backend"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Application loading UI only; no change to agent workflow, memory, portability or resumability. Existing exit smoke tests still run."
+  }
+}
