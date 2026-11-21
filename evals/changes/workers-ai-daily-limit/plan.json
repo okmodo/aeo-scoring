@@ -1,0 +1,16 @@
+{
+  "version":1,
+  "id":"workers-ai-daily-limit",
+  "task":"Configure the daily Workers AI admission ceiling at 10,000 neurons.",
+  "scope":["AGENTS.md","backend/allowance-policy.mjs","backend/allowance-store.mjs","backend/allowance-store.test.mjs","backend/analytics-allowance.test.mjs","backend/prepared-granite-audit-e2e.test.mjs","config/workers-ai-allowance.json","docs/included-allowance-policy.md","evals/changes/workers-ai-daily-limit/**"],
+  "nonGoals":["No deployment, live inference, reservation reset, usage evidence change, CPU or non-AI allowance change, or frontend changes."],
+  "outcomes":[
+    {"id":"O1","description":"Read the configured daily Workers AI ceiling of 10,000 and deny admissions above it.","verification":"automated","evidence":"Ledger and Granite runtime boundary regressions."},
+    {"id":"O2","description":"Apply the new ceiling to existing default cycle records without resetting settled usage or outstanding holds.","verification":"automated","evidence":"Same-cycle upgrade, rollover, atomic admission and legacy cycle tests."}
+  ],
+  "process":[{"id":"P1","description":"Commit this follow-up plan separately and keep the change on the Granite PR.","verification":"human","evidence":"Plan and implementation commits, source-bound evidence and independent review."}],
+  "styleEfficiency":[{"id":"E1","description":"Use one runtime config source and keep other meter and CPU settings stable.","verification":"human","evidence":"Scoped diff and tests."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run test:browser-build","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"Changes the account ceiling without altering job checkpoints, resumption or agent portability. Tests exercise already persisted usage and holds."},
+  "context":"The user raised the Workers AI limit to the included daily allocation and requested a config file. The Granite provider remains opt-in and production is out of scope."
+}
