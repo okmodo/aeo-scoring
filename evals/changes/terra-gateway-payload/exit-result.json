@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "changeId": "terra-gateway-payload",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "/root/terra_gateway_fresh_exit",
+  "status": "passed",
+  "interruptionPoint": "Prepared artifact ready, original inputs absent, first mocked Terra HTTP call completed and persisted, job safely yielded",
+  "observedContinuation": "Four invocations made four mocked HTTP calls; the first checkpoint remained unchanged and no aiNeurons reservation or settlement occurred.",
+  "detailedObservations": {
+    "steps": [
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "httpCalls": 1
+      },
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "httpCalls": 1
+      },
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "httpCalls": 1
+      },
+      {
+        "status": "completed",
+        "code": "assessment_completed",
+        "reportStatus": "incomplete",
+        "httpCalls": 1
+      }
+    ],
+    "newHttpCalls": 4,
+    "checkpointUnchanged": true,
+    "completedCallReissued": false,
+    "deniedOriginalReadCount": 0,
+    "reservationAndSettlementCalls": 33,
+    "aiNeuronsOwnFieldCount": 0,
+    "identity": {
+      "id": "C1.identity",
+      "maxPoints": 3,
+      "availablePoints": 3,
+      "status": "measured",
+      "fraction": 1,
+      "points": 3,
+      "evidenceIds": [
+        "e4"
+      ],
+      "reason": null
+    },
+    "title": {
+      "id": "S4.title",
+      "maxPoints": 1,
+      "availablePoints": 1,
+      "status": "measured",
+      "fraction": 1,
+      "points": 1,
+      "evidenceIds": [
+        "e1"
+      ],
+      "reason": null
+    },
+    "explanation": {
+      "id": "C1.explanation",
+      "maxPoints": 4,
+      "availablePoints": 4,
+      "status": "not_measured",
+      "fraction": null,
+      "points": null,
+      "evidenceIds": [],
+      "reason": "The model judgment could not be validated."
+    },
+    "diagnostics": [
+      {
+        "referenceIndex": 0,
+        "sourceId": "s1",
+        "reason": "quote_not_found_or_ambiguous",
+        "context": "judgment:C1.explanation"
+      }
+    ],
+    "profileRetained": true,
+    "factsRetained": true,
+    "reportRetained": true,
+    "reportStatus": "incomplete",
+    "score": null
+  },
+  "limitations": "Synthetic sparse fixture and mocked Responses HTTP only; no live model, network, production billing, or model quality validation.",
+  "sourceDigest": "13102c7442e7f922873a64e30b935d5706308a3eaf9a2f9dded44726b0b0f6c8",
+  "exportSha256": "c661a360e418650fe35425839f28ea5742486e4a7381514a9e24e094d3cf31c6"
+}

@@ -1,11 +1,12 @@
 {
   "endpoint": "https://api.cloudflare.com/client/v4/accounts/495d788b994070692b54c46945a5e577/ai/run",
   "model": "openai/gpt-6.1-terra",
+  "gatewayId": "openai",
+  "apiFormat": "responses",
   "reasoningEffort": "low",
   "responseFormat": "json_object",
   "stream": false,
   "timeoutMs": 30000,
-  "stageCaps": { "extraction": 1000, "identity": 512, "proposal": 1800, "review": 1000, "inspection": 2500, "supportInspection": 2500, "judgment": 4000 },
   "requestMaxBytes": 61440,
   "outputMaxBytes": 65536
 }

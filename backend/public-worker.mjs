@@ -8,18 +8,24 @@ const { WorkerEntrypoint } = await import('cloudflare:workers').catch(() => ({Wo
 
 export class AuditContinuation extends WorkerEntrypoint {
   async prepare(auditId) {
-    this.ctx.waitUntil((async () => {
-      await runPreparation({env:this.env, auditId, onPrepared:id => this.env.AUDIT_SELF.assess(id)});
-    })().catch(() => {}));
+    this.ctx.waitUntil(runPreparation({
+      env: this.env,
+      auditId,
+      onPrepared: async id => {
+        // Start sibling RPCs so each step has its own CPU budget and does not
+        // increase the depth of the service binding call chain.
+        let result;
+        do {
+          result = await this.env.AUDIT_SELF.assess(id);
+        } while (result.status === 'yield');
+      },
+    }).catch(() => {}));
   }
-  async assess(auditId, hops = 0) {
-    if (!Number.isSafeInteger(hops) || hops < 0 || hops >= 8) return;
-    const work = (async () => {
-      const result = await runPreparedAudit({env:this.env, auditId});
-      if (result.status === 'yield' && hops < 7) await this.env.AUDIT_SELF.assess(auditId, hops + 1);
-    })().catch(() => {});
+
+  async assess(auditId) {
+    const work = runPreparedAudit({env: this.env, auditId});
     this.ctx.waitUntil(work);
-    await work;
+    return work;
   }
 }
 

@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "changeId": "uncap-ai-continuation",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "simplified_ai_fresh_exit",
+  "status": "passed",
+  "interruptionPoint": "Prepared artifact ready, original inputs absent, first mocked Terra HTTP call completed and persisted, job safely yielded",
+  "observedContinuation": "The assessment resumed from its unchanged first checkpoint, completed using only the prepared capture, retained the profile and facts, and published the expected incomplete report with a null score and supported findings.",
+  "limitations": "This replay uses a SQLite D1 adapter, an in-memory R2 adapter, mock allowance guards, and mock Terra Responses. It does not measure live provider behavior, production billing, or real model quality.",
+  "observations": {
+    "initialCheckpointUnchanged": true,
+    "originalInputReadAttempts": 0,
+    "completedCheckpoints": 5,
+    "providerRequests": [
+      "Identify only the primary",
+      "Independently of any individual",
+      "Inspect this entire source",
+      "Judge every listed check"
+    ],
+    "progress": [
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "newHttpCalls": 1
+      },
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "newHttpCalls": 1
+      },
+      {
+        "status": "yield",
+        "code": "checkpoint_yield",
+        "newHttpCalls": 1
+      },
+      {
+        "status": "completed",
+        "code": "assessment_completed",
+        "reportStatus": "incomplete",
+        "newHttpCalls": 1
+      }
+    ],
+    "aiNeuronReservationsOrSettlements": 0,
+    "retainedProfileCategory": "Solar kettle",
+    "retainedDiagnostic": {
+      "referenceIndex": 0,
+      "sourceId": "s1",
+      "reason": "quote_not_found_or_ambiguous",
+      "context": "judgment:C1.explanation"
+    },
+    "auditStatus": "incomplete",
+    "reportScore": null,
+    "reportEarnedPoints": 4,
+    "checks": {
+      "C1.identity": {
+        "status": "measured",
+        "fraction": 1,
+        "points": 3,
+        "evidence": [
+          {
+            "id": "e4",
+            "url": "https://example.com/kettle",
+            "method": "rendered",
+            "kind": "derived_observation",
+            "location": "cleaned rendered HTML; visibility unknown; UTF-8 bytes 0-156",
+            "excerpt": "Solar kettle"
+          }
+        ]
+      },
+      "S4.title": {
+        "status": "measured",
+        "fraction": 1,
+        "points": 1,
+        "evidence": [
+          {
+            "id": "e1",
+            "url": "https://example.com/kettle",
+            "method": "rendered",
+            "kind": "derived_observation",
+            "location": "head title; product h1",
+            "excerpt": "Page title: Solar kettle; product heading: Solar kettle."
+          }
+        ]
+      },
+      "C1.explanation": {
+        "status": "not_measured",
+        "fraction": null,
+        "points": null,
+        "evidence": []
+      }
+    }
+  },
+  "sourceDigest": "ecf2b183d1df851a3a704ae3453dae5b9a7fccd877460d8a86e78f7e50181457",
+  "exportSha256": "254f1b9794af6000645f94a249e10f421d2994eef1835cc814a12c07ad399569"
+}

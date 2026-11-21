@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "simplify-ai-safeguards",
+  "task": "Simplify model request safeguards for the active assessment pipeline.",
+  "scope": [
+    "backend/**",
+    "config/ai-model.json",
+    "docs/terra-byok-model.md",
+    "evals/changes/simplify-ai-safeguards/**"
+  ],
+  "nonGoals": [
+    "No provider switch, frontend change, deployment, or change to platform limits, billing admission for other resources, evidence validation, persistence bounds or job ownership semantics."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Omit stage-specific output budgets, remove model-step and intermediate observation ceilings, and batch to the existing serialized wire request byte bound.",
+      "verification": "automated",
+      "evidence": "Provider and integration regressions verify payload, byte bounds and replay behavior."
+    },
+    {
+      "id": "O2",
+      "description": "Keep one timeout, 1000 ms CPU cap, existing byte bounds, and 6000 Workers AI neurons per day.",
+      "verification": "automated",
+      "evidence": "Timeout, native build, allowance policy and request-bound regressions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit the plan first, test the scoped change and preserve evidence.",
+      "verification": "human",
+      "evidence": "Git history, source-bound checks and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use one wire request serializer for sizing and sending.",
+      "verification": "human",
+      "evidence": "Scoped diff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Changes to model request sizing and assessment ceilings leave the checkpoint protocol and continuation mechanism intact. Existing deterministic replay tests cover compatibility and replay."
+  },
+  "context": "The user requested one timeout, the existing CPU cap, request and response byte bounds, and the existing Workers AI daily limit."
+}

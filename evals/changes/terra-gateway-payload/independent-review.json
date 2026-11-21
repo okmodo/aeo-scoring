@@ -1,0 +1,38 @@
+{
+  "reviewer": "independent agent",
+  "reviewerAgentId": "terra_gateway_independent_review",
+  "base": "843ad5630725f5b3bbe4257f287666c67ba0be78",
+  "planningCommit": "b7f4337",
+  "reviewedState": "Uncommitted native redirect correction atop 5b7683c; renewed fresh continuation, source-bound evaluation and hosted CI pending.",
+  "result": "accepted_with_limitations",
+  "findings": [],
+  "observations": [
+    "The plan was committed separately before implementation. The reviewed change preserves the endpoint and model, explicitly selects gateway openai, maps the Responses payload, preserves bounded reads and single-attempt headers, and emits bounded diagnostic metadata rather than provider bodies.",
+    "The initially reported rejection of valid reasoning items was corrected; the revised tests cover reasoning with assistant text, reasoning alone, incomplete reasoning and unsupported actions. Legacy choices-shaped failure fixtures were replaced with Responses-shaped cases, and missing-token and HTTP 401 cases were added.",
+    "The focused SQLite/R2 test retains score and finding assertions; checkpoint and timeout tests cover replay, unknown usage, and the existing timeout. The fresh-agent artifact reports continuation without reissuing the completed call and without neuron reservations or settlements; I inspected the artifact but did not observe the agent's entire session.",
+    "The sanitized investigation attributes the provider-native 429 to exhausted credits while noting the different endpoint and uninspected production Worker secret; the reviewer did not independently observe the diagnostic. The handoff initially said to merge the PR and was flagged because repository policy prohibits merging own agent work.",
+    "The transport follow-up binds the default global fetch receiver, trims outer credential whitespace, and reports a closed heuristic exception class without exposing exception messages. The actual native fetch failure cause is not established; no retry or fallback was added.",
+    "Native redirect correction uses manual redirect mode and rejects 3xx before reading the body, cancelling it and making no second application request. The adapter agent reports that a Miniflare/workerd test reproduced a TypeError for redirect:error before any request and observed one manual request with a 302 response. This reviewer did not independently observe that passing runtime test."
+  ],
+  "verification": [
+    {
+      "command": "/Users/keithkarkick/.npm/_npx/387698761821791d/node_modules/node/bin/node --test backend/prepared-terra-byok-provider.test.mjs backend/browser-prepared-roundtrip.test.mjs backend/prepared-model-timeout.test.mjs backend/prepared-assessment-engine.test.mjs",
+      "result": "18 passed, 0 failed on the revised state."
+    },
+    {
+      "command": "/Users/keithkarkick/.npm/_npx/387698761821791d/node_modules/node/bin/node --test backend/prepared-terra-byok-provider.test.mjs backend/browser-prepared-roundtrip.test.mjs backend/prepared-model-timeout.test.mjs backend/prepared-assessment-engine.test.mjs",
+      "result": "20 passed, 0 failed on the transport follow-up."
+    },
+    {
+      "command": "/Users/keithkarkick/.npm/_npx/387698761821791d/node_modules/node/bin/node --test backend/prepared-terra-native-fetch.test.mjs backend/prepared-terra-byok-provider.test.mjs",
+      "result": "11 provider tests passed; native runtime test could not run because the sandbox denied listening on 127.0.0.1 (EPERM)."
+    }
+  ],
+  "limitations": [
+    "Final committed source, source-bound evaluation, hosted CI and the live investigation were not available for independent review; verify those before merging or deploying.",
+    "Offline mock tests do not establish live provider compatibility, credential readiness, actual CPU use, or billing. This reviewer did not independently verify upstream documentation or perform live calls, deployment, configuration mutation or merge.",
+    "Fresh continuation uses synthetic mocked responses and temporary exported state; its result does not establish live inference or model quality.",
+    "The transport follow-up has not been verified in Cloudflare native execution; an exception class is a heuristic and does not establish the original failure cause. Fresh continuation, complete source-bound checks and hosted CI must be rerun on the final follow-up head.",
+    "The native runtime test exercises a standalone fetch snippet; adapter redirect and cancellation behavior are separately covered with a mock. The original production exception message was not retained, so its exact cause remains unconfirmed. Full evaluation, renewed exit and hosted CI are pending for this correction."
+  ]
+}
