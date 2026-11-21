@@ -1,0 +1,46 @@
+{
+  "stages": [
+    "Page download",
+    "Data extraction",
+    "AI Review",
+    "Score Card Building",
+    "Audit complete"
+  ],
+  "cases": [
+    {
+      "name": "submission waiting",
+      "accepted": false,
+      "heading": "Starting your audit."
+    },
+    {
+      "name": "service processing",
+      "accepted": true,
+      "heading": "Your audit is running."
+    }
+  ],
+  "terminal": [
+    {
+      "status": "complete",
+      "report": true,
+      "heading": "Audit complete",
+      "message": "Your report is ready below."
+    },
+    {
+      "status": "incomplete",
+      "report": true,
+      "heading": "Audit complete",
+      "message": "partial findings"
+    },
+    {
+      "status": "unable_to_assess",
+      "report": false,
+      "heading": "Audit could not be completed",
+      "message": "No final score"
+    },
+    {
+      "status": "pending",
+      "report": false,
+      "heading": null
+    }
+  ]
+}

@@ -20,7 +20,8 @@
     "build": "vite build",
     "test:preview": "node --test test/preview.test.mjs",
     "test:report-contract": "node --test test/live-report.test.mjs test/report-contract.test.mjs",
-    "test:backend": "node --test backend/*.test.mjs"
+    "test:backend": "node --test backend/*.test.mjs",
+    "test:progress": "node --test test/audit-progress.test.mjs"
   },
   "dependencies": {
     "parse5": "^7.3.0",

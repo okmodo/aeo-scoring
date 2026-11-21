@@ -257,3 +257,5 @@ test('live transport restricts report locations and preserves server errors and 
     await assert.rejects(getAudit(pending.statusUrl, password, controller.signal), { name: 'AbortError' });
   } finally { globalThis.fetch = original; }
 });
+
+await import('./audit-progress.test.mjs');

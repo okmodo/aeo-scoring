@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "task": "Add a visible five-stage audit loading block and automatically open terminal results.",
+  "state": "Implemented in codex/audit-progress based on main0eb77e4. Targeted SSR tests, lint/typecheck/build and ten browser mock scenarios passed; independent final review and source-bound evaluation/hosted CI pending at this checkpoint.",
+  "decisions": [
+    "Show all five requested stage labels while submission or polling is outstanding. Current API exposes pending/terminal only, so workflow uses an indeterminate indicator without invented per-stage completion.",
+    "Only switch to report screen after a terminal response. Cached reports open immediately; partial reports have honest completion copy; failures and unsupported reports avoid success copy.",
+    "Timeout covers both initial submission and polling; cancel waiting aborts client requests without promising backend cancellation.",
+    "Password transport, backend, scoring, usage policies and deployment configuration remain unchanged."
+  ],
+  "constraints": [
+    "No live audit/model calls or cloud changes. No merge or deployment authorized by this task.",
+    "No new runtime/test dependencies. CI tests use Vite SSR; richer browser interaction proof is separate and manual."
+  ],
+  "completed": [
+    "Plan811e572 committed before application edits.",
+    "Browser verified slow initial request, pending polling, complete/partial/failed/cached responses,429/network errors, auth expiry, initial/poll timeout and cancel/retry stale response.",
+    "Desktop and390px mobile layout checked; no horizontal overflow, reduced-motion animation disabled."
+  ],
+  "remaining": [
+    "Run source-bound evaluator and ci:gate, commit evidence, publish PR and verify hosted CI.",
+    "Finish independent review against final source/evidence.",
+    "Merge and deploy only when separately authorized."
+  ],
+  "resumeCommands": [
+    "npm ci --ignore-scripts",
+    "npm run evaluate -- --change audit-progress --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "npm run test:progress"
+  ],
+  "traceLimitations": [
+    "Browser observations and earlier development commands are not included in evaluator command-only trace. Actual browser proof recorded separately; screenshot artifacts remain local."
+  ]
+}

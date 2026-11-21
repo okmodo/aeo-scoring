@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "loading covers slow initial submission and pending polling",
+    "partial findings open with honest completion",
+    "terminal failure avoids success message",
+    "cached terminal report opens immediately",
+    "rate limit returns to retryable form",
+    "network failure returns to retryable form",
+    "polling password expiry restores gate",
+    "stalled initial request times out",
+    "stalled polling request times out",
+    "cancel and retry ignore an old late response"
+  ],
+  "actualCloudRequests": 0,
+  "backendResponses": "All API routes intercepted with frozen fictional fixtures; no model calls.",
+  "mobileWidth": 390,
+  "reducedMotionVerified": true,
+  "limitations": [
+    "Browser used localhost Vite and mocked frozen API fixtures, never a real merchant or live inference.",
+    "Browser proof is separate from evaluator command trace; no reliable token/cost telemetry available.",
+    "The backend does not expose individual stage status. Workflow is numbered without inferred step completion or percentages."
+  ],
+  "sourceState": "Final application source including customer copy and static-list accessibility adjustment."
+}

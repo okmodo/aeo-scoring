@@ -4,9 +4,10 @@ import "./style.css";
 import { getAudit, pollDelay, PreviewPasswordRequired, requestAudit } from "./audit";
 import { PreviewPassword } from "./PreviewPassword";
 import { LiveReport } from "./live-report/LiveReport";
+import { AuditProgress, AuditCompletion } from "./AuditProgress";
 import type { Assessment } from "../contracts/v1/types";
 export function App() {
-  const [screen, setScreen] = useState<"entry" | "live">(
+  const [screen, setScreen] = useState<"entry" | "progress" | "live">(
       "entry",
     ),
     [url, setUrl] = useState("");
@@ -25,17 +26,20 @@ export function App() {
   }, [screen]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!password) return;
+    if (!password || submitting) return;
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setError("");
+    setAssessment(null);
     setSubmitting(true);
+    setScreen("progress");
+    let timedOut = false;
+    const timeout = window.setTimeout(() => { timedOut = true; request.abort(); }, 120_000);
     try {
       let next = await requestAudit(url, password, request.signal);
       if (request.signal.aborted) return;
       setAssessment(next);
-      setScreen("live");
       let attempt = 0;
       const deadline = Date.now() + 120_000;
       while (next.status === "pending") {
@@ -49,15 +53,19 @@ export function App() {
         if (request.signal.aborted) return;
         setAssessment(next);
       }
+      setScreen("live");
     } catch (err) {
-      if (!request.signal.aborted) {
+      if (controller.current === request && (!request.signal.aborted || timedOut)) {
         if (err instanceof PreviewPasswordRequired) setPassword(null);
-        setError(err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
+        setError(timedOut ? "The audit is taking longer than expected. Please try again later." : err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
         setScreen("entry");
       }
-    } finally { if (!request.signal.aborted) setSubmitting(false); }
+    } finally {
+      window.clearTimeout(timeout);
+      if (controller.current === request) setSubmitting(false);
+    }
   }
-  function back() { controller.current?.abort(); setSubmitting(false); setScreen("entry"); }
+  function back() { controller.current?.abort(); controller.current = null; setAssessment(null); setSubmitting(false); setScreen("entry"); }
   return (
     <>
       {password === null && <PreviewPassword onUnlock={setPassword} />}
@@ -237,7 +245,8 @@ export function App() {
           </footer>
         </main>
       )}
-      {screen === "live" && assessment && <LiveReport assessment={assessment} onBack={back} />}
+      {screen === "progress" && <AuditProgress accepted={assessment?.status === "pending"} onCancel={back} />}
+      {screen === "live" && assessment && <><AuditCompletion assessment={assessment} /><LiveReport assessment={assessment} onBack={back} /></>}
     </>
   );
 }
