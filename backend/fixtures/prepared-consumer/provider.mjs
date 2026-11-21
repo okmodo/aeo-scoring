@@ -1,5 +1,5 @@
 // Frozen synthetic provider, not a live-model quality or billing claim.
-export const preparedHtml='<main><h1>Solar kettle</h1><p>Six cups</p></main>';
+export const preparedHtml='<html><head><title>Solar kettle</title></head><body><main><h1>Solar kettle</h1><p>Six cups</p><img src="kettle.jpg" alt="Solar kettle"></main></body></html>';
 export const originalHtml='<script>ORIGINAL_ONLY_SENTINEL</script>'+preparedHtml;
 export const direct=['S1.delivery','S1.readability','S1.supporting-access','S1.scope','S1.configuration','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S4.title','S4.organization','S4.image-alternatives','S7.identity','S7.links','S8.context','S8.guidance','C1.identity','C1.explanation','C1.configuration','C3.price','C3.availability','C3.shipping','C3.returns','C5.consistency','C5.claim-support'];
 const groups=['C2.essential','C2.supporting','C4.intended-use','C4.compatibility','C4.limitations','C4.selection'];

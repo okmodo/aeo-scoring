@@ -28,7 +28,7 @@ export async function planPreparedAssessment({preparedInput}) {
 
 // A checkpoint is persisted before invoking the canonical admission and model
 // call. A started/uncertain step is never automatically charged again.
-export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,allowance,now=Date.now,onProfile,deadlineAt,calibrationApproved}) {
+export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,allowance,now=Date.now,onProfile,calibrationApproved}) {
   if (!grant || !jobs) return {status:'unavailable',code:'invalid_prepared_input'};
   try { await planPreparedAssessment({preparedInput}); } catch { return {status:'unavailable',code:'invalid_prepared_input'}; }
   let index=0, invoked=false;
@@ -52,14 +52,14 @@ export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,all
       await jobs.checkpointComplete(grant,key,output);
       return output;
     } catch (error) {
-      const code=['request_limit','admission_failed','deadline','model_timeout','model_provider_failure','model_output_invalid','output_limit'].includes(error?.message) ? error.message : 'checkpoint_failure';
-      const uncertain=!['request_limit','admission_failed','deadline'].includes(code);
+      const code=['request_limit','admission_failed','model_timeout','model_provider_failure','model_output_invalid','output_limit'].includes(error?.message) ? error.message : 'checkpoint_failure';
+      const uncertain=!['request_limit','admission_failed'].includes(code);
       try { await jobs.checkpointFail(grant,key,code,{uncertain}); } catch { /* the started checkpoint remains non-retriable */ }
       throw new Stop(code);
     }
   };
   try {
-    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,deadlineAt,modelCall,calibrationApproved});
+    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,modelCall,calibrationApproved});
     return result.status==='assessed' ? {...result,status:'completed'} : {...result,code:result.code || 'assessment_unavailable'};
   } catch (error) {
     if (error?.resumableAssessment) return {status:error.code==='yield' ? 'yield' : 'unavailable',code:error.code};

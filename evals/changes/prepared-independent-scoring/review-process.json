@@ -1,0 +1,10 @@
+{
+  "reviewer": "independent agent, process and scope review",
+  "status": "approved_with_limitations",
+  "plan": "Commit 90ec4b2 on codex/prepared-independent-scoring adds only the immutable change plan and precedes the current uncommitted implementation; parent is f440681.",
+  "scope": "Reviewed tracked diff and untracked paths: backend implementation/tests/fixtures, docs and change evidence only; no frontend, shared dependency, configuration, allowance-policy or CPU-cap file changes. The prepared policy version advances to v3; older policy jobs remain excluded.",
+  "handoff": "Documentation and handoff distinguish the 30-second model timer from lease fencing, describe independent prepared evidence and unknowns, and record pending frozen-source evaluation and hosted CI. They identify near-limit runtime as a material risk, not a CPU measurement or proof of production behavior.",
+  "freshAgent": "The recorded fresh-agent continuation reports no prior conversation, an unchanged first completed checkpoint, four new calls with four reservations, C1.identity 3 points, S4.title 1 point, incomplete null total, and no original HTML or input reads. This review inspects that record and does not independently rerun the continuation.",
+  "runtime": "Documentation reports 448 ms at 435704 bytes and 1991 ms at 4128768 bytes as native local wall times, not hosted CPU measurements. No cap increase or live model calls are reported. Native runtime execution was performed by another agent; this review did not rerun it.",
+  "remaining": "Freeze implementation, run the planned source-bound evaluation and gate, and verify hosted CI. Production deployment and actual CPU calibration require separate authorization."
+}

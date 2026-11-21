@@ -1,0 +1,5 @@
+# RPC and model timeout review
+
+Reviewed the prepared timeout path after implementation: the consumer claims a 45-second ownership lease and passes no execution deadline; the prepared engine passes no deadline to assessment; the model call uses one 30,000 ms response timer. A model timeout remains uncertain and is not retried. Lease expiry can still prevent checkpoint publication when other work consumes the remaining headroom; existing lease checks reject stale writes.
+
+Native workerd tests required local loopback access. The fast private RPC test passed with the change and failed against an isolated copy of the original entrypoint (awaited RPC returned with 12 calls rather than 13). The synthetic 31.5-second test passed both the changed and original entrypoints: local workerd did not demonstrate enforcement of the hosted post-response cutoff. It demonstrates local continuation after a 202 and beyond 30 seconds, not hosted cutoff enforcement or live provider, D1, billing, or CPU behavior.

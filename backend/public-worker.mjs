@@ -14,10 +14,12 @@ export class AuditContinuation extends WorkerEntrypoint {
   }
   async assess(auditId, hops = 0) {
     if (!Number.isSafeInteger(hops) || hops < 0 || hops >= 8) return;
-    this.ctx.waitUntil((async () => {
+    const work = (async () => {
       const result = await runPreparedAudit({env:this.env, auditId});
       if (result.status === 'yield' && hops < 7) await this.env.AUDIT_SELF.assess(auditId, hops + 1);
-    })().catch(() => {}));
+    })().catch(() => {});
+    this.ctx.waitUntil(work);
+    await work;
   }
 }
 

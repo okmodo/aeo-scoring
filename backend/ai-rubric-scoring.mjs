@@ -3,7 +3,7 @@
 const technicalCaps = new Set([
   'S1.delivery', 'S1.readability', 'S1.configuration', 'S1.supporting-access',
   'S2.offer', 'S2.identifiers', 'S2.variants',
-  'S3.price', 'S3.availability', 'S7.links', 'S8.guidance',
+  'S3.price', 'S3.availability', 'S4.title', 'S7.links', 'S8.guidance',
 ]);
 const requireTechnicalMeasurement = new Set(['S1.delivery', 'S1.readability', 'S1.supporting-access', 'S2.entity', 'S2.offer', 'S2.identifiers', 'S2.variants', 'S3.price', 'S3.availability', 'S7.links', 'S8.guidance']);
 const semanticChecks = new Set([
@@ -26,6 +26,7 @@ export function applyRubricAssessment(checks, assessment, { snapshot, extracted,
     if (!semanticChecks.has(id) || !Object.hasOwn(checks, id)) continue;
     if (finding.status === 'not_measured') {
       if ((checks[id].status !== 'not_applicable' || id.startsWith('C4.')) &&
+          !(technicalCaps.has(id) && checks[id].status === 'measured') &&
           !((technicalCaps.has(id) || id === 'S2.entity') && checks[id].status === 'measured' && checks[id].fraction === 0))
         checks[id] = { status: 'not_measured', reason: finding.reason };
       continue;
