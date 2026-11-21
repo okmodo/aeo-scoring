@@ -1,5 +1,6 @@
 import { assessRetainedRubric } from './ai-rubric-assessment.mjs';
 import { AI_MODEL_CONFIG } from './ai-model-config.mjs';
+import { GRANITE_MODEL_CONFIG } from './granite-provider.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
 
 const encoder = new TextEncoder();
@@ -17,13 +18,15 @@ async function validatePreparedInput(preparedInput) {
 
 // A checkpoint is persisted before invoking the canonical admission and model
 // call. A started/uncertain step is never automatically charged again.
-export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,allowance,now=Date.now,onProfile,calibrationApproved}) {
+export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,allowance,provider,now=Date.now,onProfile,calibrationApproved}) {
   if (!grant || !jobs) return {status:'unavailable',code:'invalid_prepared_input'};
   try { await validatePreparedInput(preparedInput); } catch { return {status:'unavailable',code:'invalid_prepared_input'}; }
+  const granite = provider === 'granite';
+  const config = granite ? GRANITE_MODEL_CONFIG : AI_MODEL_CONFIG;
   let index=0, invoked=false;
   const modelCall=async (args, execute) => {
     index++;
-    const key=String(index).padStart(4,'0'), inputDigest=await digest({model:AI_MODEL_CONFIG.model,config:AI_MODEL_CONFIG,input:args.input});
+    const key=String(index).padStart(4,'0'), inputDigest=await digest({model:config.model,config,input:args.input,...(granite ? {stage:args.stage} : {})});
     const existing=await jobs.checkpointRead(grant,key);
     if (existing) {
       if (existing.inputDigest!==inputDigest) throw new Stop('checkpoint_input_mismatch');
@@ -48,7 +51,7 @@ export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,all
     }
   };
   try {
-    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,modelCall,calibrationApproved});
+    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,modelCall,provider,calibrationApproved});
     return result.status==='assessed' ? {...result,status:'completed'} : {...result,code:result.code || 'assessment_unavailable'};
   } catch (error) {
     if (error?.resumableAssessment) return {status:error.code==='yield' ? 'yield' : 'unavailable',code:error.code};

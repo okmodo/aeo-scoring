@@ -1,0 +1,25 @@
+{
+  "version":1,
+  "task":"Add the Granite adapter and validate per-stage AI JSON before checkpointing.",
+  "state":"Opt-in backend change based on the merge of PR #57. Local deterministic verification only.",
+  "decisions":[
+    "Granite explicitly uses the default gateway with 8,192 max output tokens. The adapter requires confirmed Standard Workers AI billing and reserves neurons through the existing account-wide allowance guard before inference.",
+    "The default Terra path keeps its existing configuration. Granite uses a distinct prepared assessment and cache policy, and rejects malformed stage shapes before writing a completed checkpoint.",
+    "A preview opting in via AUDIT_AI_PROVIDER=granite needs a Worker AI inference credential in AUDIT_AI_GATEWAY_TOKEN and AI Gateway Read on that credential or on AUDIT_AI_GATEWAY_READ_TOKEN."
+  ],
+  "constraints":[
+    "Keep the daily 6,000 neuron ceiling, Worker CPU configuration and non-AI CPU controls. Leave production, the frontend, and unrelated services untouched.",
+    "Do not run live inference in CI. The live account ledger was above the operating ceiling; the end-to-end test uses frozen model and synthetic capture data."
+  ],
+  "completed":[
+    "Integrated a provider-specific Granite payload, bounded response parsing, neuron holds and verified settlement, and seven stage shape checks.",
+    "Exercised one local audit from submission and retained preparation to polling a report with one validated scored finding and one rejected citation. Five model fixtures settled 25 simulated neurons. The guard denied admission beyond the ceiling, and the poll returned a null total with a 3-point identity finding."
+  ],
+  "remaining":[
+    "Run a live Faherty smoke test on an isolated deployment when guarded headroom and gateway read access are available. Keep the gateway in Standard billing during the test: the metadata read and inference are separate Cloudflare requests."
+  ],
+  "resumeCommands":[
+    "npm run evaluate -- --change granite-stage-validation --base 5e22107f080a6d082483c513f038d45ea4586fa9",
+    "EVALUATION_BASE=5e22107f080a6d082483c513f038d45ea4586fa9 npm run ci:gate"
+  ]
+}

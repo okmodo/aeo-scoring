@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Set the daily Workers AI cap to 50,000 neurons.",
+  "state":"Follow-up on PR 58. Production deployment and usage are unchanged.",
+  "decisions":["Keep the numeric cap in config/workers-ai-allowance.json. Runtime reads the existing account estimate, settled usage and outstanding holds as before.","Treat the historic 6,000 default and versioned 10,000 default cycles as compatible. Keep deliberately smaller custom allocations fixed."],
+  "constraints":["Other resource ceilings, CPU caps, provider rollout and the frontend are outside scope. Cloudflare meters Workers Paid usage beyond its included 10,000 neurons per UTC day."],
+  "completed":["Verified admission at the new cap, denial above it, carry-forward from existing cycle records, custom limits and the offline Granite audit."],
+  "remaining":["Production rollout and any live inference were outside scope."],
+  "resumeCommands":["npm run evaluate -- --change workers-ai-50k --base 5e22107f080a6d082483c513f038d45ea4586fa9","EVALUATION_BASE=5e22107f080a6d082483c513f038d45ea4586fa9 npm run ci:gate"]
+}

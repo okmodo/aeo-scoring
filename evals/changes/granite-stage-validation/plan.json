@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": "granite-stage-validation",
+  "task": "Add an opt-in Granite gateway adapter and validate the shape of each Granite rubric stage before checkpointing.",
+  "scope": [
+    "backend/**",
+    "config/ai-model.json",
+    "config/granite-model.json",
+    "evals/changes/granite-stage-validation/**"
+  ],
+  "nonGoals": [
+    "No frontend or public contract edits, production rollout or provider change, allowance ceiling or CPU changes, live inference in CI, or unrelated service changes."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "The opt-in Granite adapter uses the default gateway, explicit generation settings, bounded response parsing, and guarded neuron reservation and settlement.",
+      "verification": "automated",
+      "evidence": "Adapter regressions cover request shape, malformed responses, evidence shape, usage settlement, and denial before fetch."
+    },
+    {
+      "id": "O2",
+      "description": "Validate each Granite stage envelope before it can contribute to scoring or be recorded as a completed checkpoint.",
+      "verification": "automated",
+      "evidence": "Frozen stage examples cover all rubric stages and known malformed inspection and category regressions."
+    },
+    {
+      "id": "O3",
+      "description": "Exercise one bounded end-to-end audit from submission through stored report with isolated storage and deterministic provider fixtures when live allowance cannot be verified.",
+      "verification": "automated",
+      "evidence": "Record submission, prepared artifact, provider wire capture, report score, evidence and metered usage."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit the plan before implementation, preserve source-bound evidence and obtain independent review.",
+      "verification": "human",
+      "evidence": "Git history, eval output, handoff and independent review."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Keep provider differences at a clear backend boundary, reuse existing admission and evidence validation, and leave UI and production untouched.",
+      "verification": "human",
+      "evidence": "Independent scope and code review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Provider and stage validation changes preserve the checkpoint storage, ownership and continuation protocol. Deterministic replay and end-to-end coverage verify resumption with matching inputs."
+  },
+  "context": "Begin from deployed PR #57. Granite is selected explicitly outside production and does not replace the default configured Terra provider. The existing browser-build suite discovers the prepared Granite tests. This replaces an unpublished draft plan with unsupported direct Node commands; the draft branch remains local."
+}

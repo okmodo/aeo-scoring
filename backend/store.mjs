@@ -20,7 +20,7 @@ function audit(row, now, preparedPending = false) {
   };
 }
 
-export function createStore(db) {
+export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY}={}) {
   return {
     async reserve({ id, url, cacheKey, rateKey, now, expiresAt, windowStart, windowEnd, limit, globalLimit, leaseMs = LEASE_MS }) {
       if (![now, expiresAt, windowStart, windowEnd, limit, globalLimit].every(Number.isSafeInteger) ||
@@ -55,7 +55,7 @@ export function createStore(db) {
         try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
           WHERE r.audit_id=?1 AND r.state='ready' AND r.created_at<=?2 AND r.expires_at>?2
           AND (r.prepared_state='ready' OR EXISTS(SELECT 1 FROM browser_audit_work w WHERE w.audit_id=r.audit_id AND w.state='assessing' AND w.expires_at>?2))
-          AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND j.state IN ('complete','failed','uncertain'))`).bind(id,now,PREPARED_ASSESSMENT_POLICY).first());}
+          AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND j.state IN ('complete','failed','uncertain'))`).bind(id,now,policyVersion).first());}
         catch { /* Missing migrations or unreadable readiness cannot extend a lease. */ }
       }
       return audit(row, now, preparedPending);

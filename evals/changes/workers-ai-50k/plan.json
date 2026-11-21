@@ -1,0 +1,13 @@
+{
+  "version":1,
+  "id":"workers-ai-50k",
+  "task":"Set the Workers AI admission ceiling to 50,000 neurons per UTC day on PR 58.",
+  "scope":["AGENTS.md","config/workers-ai-allowance.json","backend/allowance-policy.mjs","backend/allowance-store.mjs","backend/allowance-store.test.mjs","docs/included-allowance-policy.md","evals/changes/workers-ai-50k/**"],
+  "nonGoals":["No deployment, live inference, Cloudflare billing changes, usage reset, CPU or other allowance changes, or frontend changes."],
+  "outcomes":[{"id":"O1","description":"Apply the configured 50,000 daily threshold to new and existing default cycles, preserve usage and holds, and reject over-cap requests.","verification":"automated","evidence":"Ledger boundary, legacy-cycle, selective custom limit, and Granite end-to-end regressions."}],
+  "process":[{"id":"P1","description":"Keep the update on PR 58 with source-bound checks and independent review.","verification":"human","evidence":"Separate plan and scoped changes, evaluation records and review."}],
+  "styleEfficiency":[{"id":"E1","description":"Use the existing config and admission check for the new numeric ceiling.","verification":"human","evidence":"Scoped diff."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run test:browser-build","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"A numeric admission threshold does not change model checkpoint or continuation behavior."},
+  "context":"The 50,000 daily threshold supersedes cap removal. Standard Workers Paid billing can charge above the included 10,000."
+}

@@ -3,6 +3,16 @@ import { ALLOWANCE_VERSION, INCLUDED_CEILINGS, MAX_EVIDENCE_AGE_MS, METRICS, val
 const columns = ['requests', 'cpu_ms', 'd1_reads', 'd1_writes', 'd1_storage_bytes', 'ai_neurons'];
 const deny = reason => ({ accepted: false, reason });
 const canonical = values => JSON.stringify(Object.fromEntries(METRICS.map(key => [key, values[key] ?? 0])));
+const priorDefaultAllocation = canonical({ ...INCLUDED_CEILINGS, aiNeurons: 6_000 });
+const configuredCycleVersion = 2;
+const cycleMaximum = { ...INCLUDED_CEILINGS, aiNeurons: Number.MAX_SAFE_INTEGER };
+function matchesDefaultCycle(allocationJson) {
+  try {
+    const stored = JSON.parse(allocationJson);
+    return validAmounts(stored, { max: cycleMaximum }) &&
+      METRICS.every(key => key === 'aiNeurons' || stored[key] === INCLUDED_CEILINGS[key]);
+  } catch { return false; }
+}
 
 // Completed local usage is anchored against account estimates; unresolved holds remain additive.
 export function createAllowanceGuard(db, { accountId, subscriptionId, allocations = INCLUDED_CEILINGS } = {}) {
@@ -64,14 +74,23 @@ export function createAllowanceGuard(db, { accountId, subscriptionId, allocation
           e.cycleStart < 0 || e.cycleStart > now || e.cycleEnd <= now || e.cycleEnd <= e.cycleStart ||
           e.aiDay !== new Date(now).toISOString().slice(0, 10) || !validAmounts(e.usage, { max: Object.fromEntries(METRICS.map(k => [k, Number.MAX_SAFE_INTEGER])) })) return deny('invalid_evidence');
       const allocationJson = canonical(allocations);
+      const configuredDefault = allocations === INCLUDED_CEILINGS;
+      const cycleVersion = configuredDefault ? configuredCycleVersion : ALLOWANCE_VERSION;
       const costJson = canonical(costs);
       // A cycle's allocation cannot be changed by a later request or concurrent instance.
       await db.prepare(`INSERT OR IGNORE INTO allowance_cycles (account_id, cycle_start, cycle_end, policy_version, allocations_json)
         SELECT ?1, ?2, ?3, ?4, ?5 WHERE NOT EXISTS (
           SELECT 1 FROM allowance_cycles WHERE account_id = ?1 AND cycle_start <> ?2
-          AND cycle_start < ?3 AND cycle_end > ?2)`).bind(accountId, e.cycleStart, e.cycleEnd, ALLOWANCE_VERSION, allocationJson).run();
+          AND cycle_start < ?3 AND cycle_end > ?2)`).bind(accountId, e.cycleStart, e.cycleEnd, cycleVersion, allocationJson).run();
       const cycle = await db.prepare(`SELECT cycle_end, policy_version, allocations_json FROM allowance_cycles WHERE account_id = ?1 AND cycle_start = ?2`).bind(accountId, e.cycleStart).first();
-      if (!cycle || cycle.cycle_end !== e.cycleEnd || cycle.policy_version !== ALLOWANCE_VERSION || cycle.allocations_json !== allocationJson) return deny('cycle_mismatch');
+      if (!cycle || cycle.cycle_end !== e.cycleEnd) return deny('cycle_mismatch');
+      // New default cycles are marked as configurable. The only version-1
+      // exception is the exact historical default allocation.
+      const matches = configuredDefault
+        ? cycle.policy_version === configuredCycleVersion && matchesDefaultCycle(cycle.allocations_json) ||
+          cycle.policy_version === ALLOWANCE_VERSION && cycle.allocations_json === priorDefaultAllocation
+        : cycle.policy_version === ALLOWANCE_VERSION && cycle.allocations_json === allocationJson;
+      if (!matches) return deny('cycle_mismatch');
       const existing = await db.prepare('SELECT cycle_start, ai_day, costs_json FROM allowance_reservations WHERE account_id = ?1 AND id = ?2 AND EXISTS (SELECT 1 FROM allowance_receipts WHERE account_id = ?1 AND subscription_id = ?4 AND active = 1 AND generation = ?3)').bind(accountId, id, generation, subscriptionId).first();
       if (existing) return existing.cycle_start === e.cycleStart && existing.ai_day === e.aiDay && existing.costs_json === costJson
         ? { accepted: true, duplicate: true } : deny('id_conflict');
