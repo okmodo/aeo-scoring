@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { AI_MODEL_CONFIG as config, validateAiModelConfig } from './ai-model-config.mjs';
 import { createTerraByokProvider } from './terra-byok-provider.mjs';
 
-const input={messages:[{role:'user',content:'fixture'}],max_tokens:1000,temperature:0,stream:false};
+const input={messages:[{role:'user',content:'fixture'}],temperature:0,stream:false};
 const success={success:true,result:{object:'response',status:'completed',error:null,incomplete_details:null,output:[{type:'message',role:'assistant',status:'completed',content:[{type:'output_text',text:'{"ok":true}'}]}]}};
 const reply = value => new Response(JSON.stringify(value),{status:200});
 test('BYOK request uses bounded, configured envelope and normalizes content',async()=>{
@@ -12,13 +12,13 @@ test('BYOK request uses bounded, configured envelope and normalizes content',asy
  assert.deepEqual(await provider.run(config.model,input,{signal}),{response:'{"ok":true}'});
  assert.equal(seen.url,config.endpoint); assert.equal(seen.options.signal,signal); assert.equal(seen.options.redirect,'manual');
  assert.deepEqual(seen.options.headers,{Authorization:'Bearer test-token','Content-Type':'application/json','cf-aig-gateway-id':'openai','cf-aig-no-wholesale':'true','cf-aig-max-attempts':'1'});
- assert.deepEqual(JSON.parse(seen.options.body),{model:config.model,input:{input:input.messages,max_output_tokens:1000,reasoning:{effort:'low'},text:{format:{type:'json_object'}},stream:false}});
+ assert.deepEqual(JSON.parse(seen.options.body),{model:config.model,input:{input:input.messages,reasoning:{effort:'low'},text:{format:{type:'json_object'}},stream:false}});
 });
 test('invalid configuration and input fail closed',async()=>{
  assert.throws(()=>validateAiModelConfig({...config,endpoint:'https://example.com'}),/invalid_model_config/);
  assert.doesNotMatch(JSON.stringify(config),/token|secret|key/i);
  let calls=0;const provider=createTerraByokProvider({AUDIT_AI_GATEWAY_TOKEN:'test'},{fetch:async()=>{calls++;return reply(success);}});
- await assert.rejects(provider.run('wrong',input)); await assert.rejects(provider.run(config.model,{...input,max_tokens:4001}));
+ await assert.rejects(provider.run('wrong',input)); await assert.rejects(provider.run(config.model,{messages:null}));
  await assert.rejects(provider.run(config.model,{...input,messages:[{role:'user',content:'x'.repeat(61440)}]}),/request_limit/); assert.equal(calls,0);
 });
 test('provider rejects HTTP, malformed, refused, truncated, oversized and broken streams without exposing details',async()=>{
@@ -30,9 +30,9 @@ test('network failures are sanitized and never retried',async()=>{
  await assert.rejects(provider.run(config.model,input),{message:'model_provider_failure'});assert.equal(calls,1);
 });
 test('approved settings are fixed by the configuration fixture and safe alternatives validate',()=>{
- assert.deepEqual(config,{endpoint:'https://api.cloudflare.com/client/v4/accounts/495d788b994070692b54c46945a5e577/ai/run',model:'openai/gpt-6.1-terra',gatewayId:'openai',apiFormat:'responses',reasoningEffort:'low',responseFormat:'json_object',stream:false,timeoutMs:30000,stageCaps:{extraction:1000,identity:512,proposal:1800,review:1000,inspection:2500,supportInspection:2500,judgment:4000},requestMaxBytes:61440,outputMaxBytes:65536});
- assert.doesNotThrow(()=>validateAiModelConfig({...config,model:'openai/another-model',timeoutMs:20000,stageCaps:{...config.stageCaps,judgment:3000},outputMaxBytes:32000}));
- for(const invalid of [{...config,model:'https://evil.test'}, {...config,reasoningEffort:'high'}, {...config,stream:true}, {...config,timeoutMs:30001}, {...config,stageCaps:{...config.stageCaps,judgment:4001}}, {...config,requestMaxBytes:61441}, {...config,outputMaxBytes:0}, {...config,secret:'x'}]) assert.throws(()=>validateAiModelConfig(invalid),/invalid_model_config/);
+ assert.deepEqual(config,{endpoint:'https://api.cloudflare.com/client/v4/accounts/495d788b994070692b54c46945a5e577/ai/run',model:'openai/gpt-6.1-terra',gatewayId:'openai',apiFormat:'responses',reasoningEffort:'low',responseFormat:'json_object',stream:false,timeoutMs:30000,requestMaxBytes:61440,outputMaxBytes:65536});
+ assert.doesNotThrow(()=>validateAiModelConfig({...config,model:'openai/another-model',timeoutMs:20000,outputMaxBytes:32000}));
+ for(const invalid of [{...config,model:'https://evil.test'}, {...config,reasoningEffort:'high'}, {...config,stream:true}, {...config,timeoutMs:30001}, {...config,requestMaxBytes:61441}, {...config,outputMaxBytes:0}, {...config,secret:'x'}]) assert.throws(()=>validateAiModelConfig(invalid),/invalid_model_config/);
 });
 test('partial response streams fail and abort reaches the fetch operation',async()=>{
  const partial=new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{"success":true'));c.close();}}));

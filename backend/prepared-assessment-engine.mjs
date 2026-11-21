@@ -3,37 +3,26 @@ import { AI_MODEL_CONFIG } from './ai-model-config.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
 
 const encoder = new TextEncoder();
-const MAX_STEPS = 128;
 const digest = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(JSON.stringify(value))))].map(x => x.toString(16).padStart(2, '0')).join('');
 class Stop extends Error {
   constructor(code) { super(code); this.code = code; this.resumableAssessment = true; }
 }
 
-// This is a conservative ceiling, not a prediction of dynamic model output.
-// The same prepared sources are inspected in several separately charged stages.
-export async function planPreparedAssessment({preparedInput}) {
-  const snapshot=preparedInput?.snapshot, extracted=preparedInput?.extracted;
+async function validatePreparedInput(preparedInput) {
+  const {snapshot, extracted} = preparedInput ?? {};
   if (snapshot?.preprocessing?.representation !== 'cleaned_rendered_html' || snapshot?.preprocessing?.version !== 'simplified-html-v1') throw new TypeError('invalid_prepared_input');
-  const bundle=await prepareAssessmentSources(snapshot,extracted);
+  const bundle = await prepareAssessmentSources(snapshot, extracted);
   if (!bundle.coverage.preparedHtml || !bundle.coverage.complete) throw new TypeError('invalid_prepared_input');
-  const batches=sources=>{const result=[];for (const source of sources) {const last=result.at(-1);if (!last || encoder.encode(JSON.stringify([...last,source])).length>18000) result.push([source]);else last.push(source);}return result.length;};
-  const productBatches=batches(bundle.sources.filter(s=>s.scope==='product' && s.origin==='rendered' && s.kind==='html' && s.preparedHtml));
-  const inspectionBatches=batches(bundle.sources);
-  // Product extraction, identity, proposal, optional review, inspection,
-  // optional support inspection, and final judgment. Support/review depend on output.
-  const potentialCalls=productBatches+inspectionBatches*2+4;
-  const requestBytesLimit=AI_MODEL_CONFIG.requestMaxBytes, outputTokensLimit=AI_MODEL_CONFIG.stageCaps.judgment;
-  return {sourceBytes:bundle.coverage.bytes,sourceSections:bundle.sources.length,productBatches,inspectionBatches,potentialCalls,maxCalls:MAX_STEPS,requestBytesLimit,outputTokensLimit,neuronsPerCallUpperBound:0,neuronsUpperBound:0,withinCallLimit:potentialCalls<=MAX_STEPS,estimate:'BYOK model calls are not charged to Workers AI neurons; conditional review and support inspection depend on model output'};
 }
 
 // A checkpoint is persisted before invoking the canonical admission and model
 // call. A started/uncertain step is never automatically charged again.
 export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,allowance,now=Date.now,onProfile,calibrationApproved}) {
   if (!grant || !jobs) return {status:'unavailable',code:'invalid_prepared_input'};
-  try { await planPreparedAssessment({preparedInput}); } catch { return {status:'unavailable',code:'invalid_prepared_input'}; }
+  try { await validatePreparedInput(preparedInput); } catch { return {status:'unavailable',code:'invalid_prepared_input'}; }
   let index=0, invoked=false;
   const modelCall=async (args, execute) => {
-    if (++index > MAX_STEPS) throw new Stop('model_step_limit');
+    index++;
     const key=String(index).padStart(4,'0'), inputDigest=await digest({model:AI_MODEL_CONFIG.model,config:AI_MODEL_CONFIG,input:args.input});
     const existing=await jobs.checkpointRead(grant,key);
     if (existing) {

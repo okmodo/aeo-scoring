@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "task": "Simplify model request safeguards for AEO audits.",
+  "state": "Local change based on PR #56 head dab678d. Production rollout is separate.",
+  "decisions": [
+    "Keep the 30-second model timeout and the 60 KiB wire request and 64 KiB response bounds. Active Terra requests omit stage generation caps.",
+    "Apply the real wire-size bound to source batches. Continue only after a checkpoint yield, with a separate invocation for each continuation."
+  ],
+  "constraints": [
+    "Keep the configured 1,000 ms Worker CPU cap, non-AI CPU controls and resource budgets, and the Workers AI daily ceiling of 6,000 neurons.",
+    "Storage byte bounds, leases, no automatic inference retry and rubric evidence validation remain in force."
+  ],
+  "completed": [
+    "Updated the adapter and batching, removed the fixed model-step ceiling and replaced recursive capped continuation with sequential sibling RPC calls."
+  ],
+  "remaining": [
+    "Review the scoped PR and validate a complete live audit in a separately authorized rollout. Platform time and subrequest ceilings may still limit a run."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change uncap-ai-continuation --base dab678dee876c47cbb9eb75f2a1e177e76872ff5",
+    "EVALUATION_BASE=dab678dee876c47cbb9eb75f2a1e177e76872ff5 npm run ci:gate"
+  ]
+}

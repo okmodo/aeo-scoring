@@ -1,6 +1,15 @@
 import { AI_MODEL_CONFIG as config } from './ai-model-config.mjs';
 
 const encoder = new TextEncoder();
+export function serializeTerraRequest(messages) {
+  return JSON.stringify({ model: config.model, input: {
+    input: messages,
+    reasoning: { effort: config.reasoningEffort },
+    text: { format: { type: config.responseFormat } },
+    stream: config.stream,
+  } });
+}
+
 const failure = () => new Error('model_provider_failure');
 async function readBounded(response) {
   if (!response.body?.getReader) throw failure();
@@ -32,10 +41,8 @@ export function createTerraByokProvider(env, { fetch: fetchImpl = typeof globalT
   return { async run(model, input, { signal } = {}) {
     if (model !== config.model || !input || typeof input !== 'object' || Array.isArray(input) || typeof env?.AUDIT_AI_GATEWAY_TOKEN !== 'string' || !env.AUDIT_AI_GATEWAY_TOKEN.trim() || typeof fetchImpl !== 'function') { diagnostic({phase:'validation'}); throw failure(); }
     if (input.model != null && input.model !== config.model) { diagnostic({phase:'validation'}); throw failure(); }
-    const { messages, max_tokens } = input;
-    if (!Array.isArray(messages) || !Number.isSafeInteger(max_tokens) || max_tokens < 1 || max_tokens > Math.max(...Object.values(config.stageCaps))) { diagnostic({phase:'validation'}); throw failure(); }
-    const params = { input: messages, max_output_tokens: max_tokens, reasoning: { effort: config.reasoningEffort }, text: { format: { type: config.responseFormat } }, stream: config.stream };
-    const body = JSON.stringify({ model: config.model, input: params });
+    if (!Array.isArray(input.messages)) { diagnostic({phase:'validation'}); throw failure(); }
+    const body = serializeTerraRequest(input.messages);
     if (encoder.encode(body).length > config.requestMaxBytes) throw new Error('request_limit');
     let response;
     try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN.trim()}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'manual' }); } catch (error) { diagnostic(signal?.aborted ? {phase:'abort'} : {phase:'fetch',class:classifyFetchError(error)}); throw failure(); }

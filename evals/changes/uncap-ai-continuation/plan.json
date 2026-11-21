@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "uncap-ai-continuation",
+  "task": "Remove the live audit continuation hop ceiling while retaining separate CPU-metered assessment invocations.",
+  "scope": [
+    "backend/public-worker.mjs",
+    "backend/browser-prepared-rpc.test.mjs",
+    "evals/changes/uncap-ai-continuation/**"
+  ],
+  "nonGoals": [
+    "No change to CPU settings for AI or non-AI work, resource admission, provider retries, job ownership, automatic recovery, or platform invocation limits."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Allow more than eight scoring steps in a user-started audit, with each step in its own invocation and no retry of failed or skipped work.",
+      "verification": "automated",
+      "evidence": "Native RPC test completes a 12-step workflow after the submit response."
+    },
+    {
+      "id": "O2",
+      "description": "Keep resumable checkpoint behavior and unchanged CPU settings.",
+      "verification": "automated",
+      "evidence": "Fresh-agent replay and existing Worker configuration checks."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit the plan first, test the scoped change and preserve evidence.",
+      "verification": "human",
+      "evidence": "Git history, source-bound checks and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use one wire request serializer for sizing and sending.",
+      "verification": "human",
+      "evidence": "Scoped diff."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "The continuation orchestration changes how a yielded audit starts the next step."
+  },
+  "context": "The user requested one timeout, the existing CPU cap, request and response byte bounds, and the existing Workers AI daily limit."
+}
