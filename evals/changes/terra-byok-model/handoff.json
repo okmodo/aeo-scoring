@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Use the original Cloudflare unified endpoint and existing BYOK with a centrally configured Terra model; open a tested, independently reviewed backend PR.",
+  "state": "Implementation is on codex/terra-byok-model, based on backend branch codex/complete-report-assessment at 2293698fc42cc33baf0ab856bc87c65116d08e52. Plan was committed separately as b3fc764. No merge, deployment, live inference, secrets or Cloudflare settings changes are authorized in this task.",
+  "decisions": [
+    "Keep the original account /ai/run endpoint and its default stored OpenAI BYOK; select openai/gpt-6.1-terra from config/ai-model.json.",
+    "Preserve prompts, JSON-object response mode, existing stage caps, one 30-second caller-owned abort timeout, scoring and evidence. Translate max_tokens to max_completion_tokens and omit temperature for low reasoning.",
+    "Disable Unified Billing fallback and retries; fail closed on provider errors or unsupported/truncated output. Include model/config in checkpoint identity.",
+    "Do not charge BYOK inference to Workers AI neurons; retain infrastructure admission and existing uncertain reservations unchanged."
+  ],
+  "constraints": [
+    "Keep 60% account allowance limits, Worker CPU cap 1,000 ms, 24-hour retention, user-started-only audits, frontend and unrelated services unchanged.",
+    "No dependencies, gateway configuration, external-provider budget system or pipeline redesign in this change.",
+    "Offline mocks cannot verify live provider compatibility, latency, credential readiness, quality or provider charges."
+  ],
+  "completed": [
+    "Terra agents implemented bounded HTTP transport, central validated configuration and active rubric/consumer wiring with mock HTTP tests and model-bound replay tests.",
+    "Independent initial review resolved duplicated config validation. Fresh-agent export preserves a completed checkpoint and synthetic SQLite/R2 state; final observations are recorded in exit-result.json.",
+    "Independent review and fresh-agent observations are retained with their actual limitations. Source-bound evaluation and hosted CI remain the final verification steps; run.json and trace.jsonl will record actual command results."
+  ],
+  "remaining": [
+    "Open the backend PR and verify hosted CI after committing implementation and evaluation evidence. Do not merge or deploy.",
+    "Before a separately authorized deployment, configure a project-only AUDIT_AI_GATEWAY_TOKEN secret with Cloudflare Workers AI Read for the existing account; retain the existing Gateway-stored OpenAI key. No credential is needed for offline CI.",
+    "Live provider compatibility and scoring validation remain separate from this PR's mocked checks."
+  ],
+  "resumeCommands": [
+    "Use Node 24: npm run evaluate -- --change terra-byok-model --base 2293698fc42cc33baf0ab856bc87c65116d08e52",
+    "EVALUATION_BASE=2293698fc42cc33baf0ab856bc87c65116d08e52 npm run ci:gate",
+    "For a new genuine exit test, node evals/changes/terra-byok-model/export-state.mjs exports private synthetic state; give only exit-export.json and clean sources to a new agent. Temporary state paths in a previous export are local and ephemeral."
+  ]
+}

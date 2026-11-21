@@ -40,10 +40,10 @@ test('calibration gate makes no provider or budget calls',async()=>{
  const result=await assessRetainedRubric({AI:{run(){calls++;}},allowance:{reserve(){calls++;}},...f});
  assert.equal(result.status,'unavailable'); assert.equal(calls,0);
 });
-test('failed section call reserves capacity and cannot claim complete assessment',async()=>{
+test('failed section call cannot claim complete assessment',async()=>{
  const f=await fixture(); let reservations=0,settlements=0;
  const result=await assessRetainedRubric({AI:{run(){throw Error('offline');}},allowance:{reserve(){reservations++;return {accepted:true,duplicate:false};},settle(){settlements++;}},calibrationApproved:true,...f});
- assert.equal(result.status,'unavailable'); assert.equal(reservations,1); assert.equal(settlements,0);
+ assert.equal(result.status,'unavailable'); assert.equal(reservations,0); assert.equal(settlements,0);
 });
 test('absence requires an explicit complete per-section inspection',async()=>{
  const f=await fixture(), id='C1.explanation';
@@ -65,7 +65,7 @@ test('mock assessment inspects every section, freezes category expectations and 
   return {response,usage:{prompt_tokens:100,completion_tokens:100},choices:[{finish_reason:'stop'}]};
  }};
  const result=await assessRetainedRubric({AI,allowance:{reserve(v){reserves.push(v);return {accepted:true,duplicate:false};},settle(v){settles.push(v);}},calibrationApproved:true,...f});
- assert.equal(result.status,'assessed'); assert.equal(reserves.length,requests.length); assert.equal(settles.length,requests.length);
+ assert.equal(result.status,'assessed'); assert.equal(reserves.length,0); assert.equal(settles.length,0);
  assert.equal(requests.filter(x=>x.messages[0].content.includes('Inspect this entire source')).length,f.bundle.sources.length);
  const expectation=requests.find(x=>x.messages[0].content.includes('Independently of any individual')); assert.deepEqual(JSON.parse(expectation.messages[1].content),{category:'Solar kettle'});
  assert.equal(isValidatedRubricAssessment(await restoreRubricAssessment(f.snapshot,f.extracted,result.replayArtifact),f.snapshot,f.extracted),true);
