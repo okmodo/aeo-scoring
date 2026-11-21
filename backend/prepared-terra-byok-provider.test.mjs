@@ -10,7 +10,7 @@ test('BYOK request uses bounded, configured envelope and normalizes content',asy
  let seen; const signal=new AbortController().signal;
  const provider=createTerraByokProvider({AUDIT_AI_GATEWAY_TOKEN:'test-token'},{fetch:async(url,options)=>{seen={url,options};return reply(success);}});
  assert.deepEqual(await provider.run(config.model,input,{signal}),{response:'{"ok":true}'});
- assert.equal(seen.url,config.endpoint); assert.equal(seen.options.signal,signal); assert.equal(seen.options.redirect,'error');
+ assert.equal(seen.url,config.endpoint); assert.equal(seen.options.signal,signal); assert.equal(seen.options.redirect,'manual');
  assert.deepEqual(seen.options.headers,{Authorization:'Bearer test-token','Content-Type':'application/json','cf-aig-gateway-id':'openai','cf-aig-no-wholesale':'true','cf-aig-max-attempts':'1'});
  assert.deepEqual(JSON.parse(seen.options.body),{model:config.model,input:{input:input.messages,max_output_tokens:1000,reasoning:{effort:'low'},text:{format:{type:'json_object'}},stream:false}});
 });
@@ -77,4 +77,12 @@ test('fetch exception classifications are closed and never disclose error conten
   await assert.rejects(provider.run(config.model,input),{message:'model_provider_failure'});
   assert.equal(calls,1);assert.deepEqual(diagnostics,[{phase:'fetch',class:expected}]);assert.doesNotMatch(JSON.stringify(diagnostics),/secret|merchant/);
  }
+});
+
+test('redirect is rejected without reading the body or making a second request',async()=>{
+ let calls=0,cancelled=false;const diagnostics=[];
+ const response=new Response(new ReadableStream({cancel(){cancelled=true;}}),{status:302,headers:{location:'https://external.example/'}});
+ const provider=createTerraByokProvider({AUDIT_AI_GATEWAY_TOKEN:'secret'},{fetch:async(_url,options)=>{calls++;assert.equal(options.redirect,'manual');return response;},onDiagnostic:d=>diagnostics.push(d)});
+ await assert.rejects(provider.run(config.model,input),{message:'model_provider_failure'});
+ assert.equal(calls,1);assert.equal(cancelled,true);assert.deepEqual(diagnostics,[{phase:'http',status:302}]);
 });

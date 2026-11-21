@@ -6,7 +6,7 @@ The adapter sends `{model, input}` to that same endpoint with `cf-aig-gateway-id
 
 Inside the envelope, the Responses payload maps the existing messages to `input`, each stage's existing token cap to `max_output_tokens`, reasoning to `reasoning: {effort: "low"}`, and JSON-object mode to `text: {format: {type: "json_object"}}`. Streaming remains disabled and sampling parameters are omitted. The response normalizer accepts completed assistant `output_text` content from the Responses result and rejects incomplete, refused, malformed or unsupported output. Limits include reasoning tokens, so live output completeness must still be validated. Prompts, grading, evidence validation, report formats and pipeline stages remain unchanged.
 
-The production transport binds the default global fetch receiver and trims surrounding whitespace from the Cloudflare credential before constructing the bearer header. Injected test fetch functions remain untouched. Fetch exceptions expose only closed classifications such as illegal invocation, invalid header, I/O context or network; raw exception messages are excluded. These protections do not establish the cause of the first production fetch exception, whose details were discarded.
+The production transport binds the default global fetch receiver and trims surrounding whitespace from the Cloudflare credential before constructing the bearer header. Injected test fetch functions remain untouched. Fetch exceptions expose only closed classifications such as illegal invocation, invalid header, I/O context or network; raw exception messages are excluded. The earlier adapter used `redirect: "error"`, which Workers rejects while constructing the request. The corrected adapter uses `manual` and rejects redirects without following them or forwarding the credential to another host. A native Worker regression verifies this boundary; binding/token normalization are additional hardening, not a substitute for that runtime test.
 
 The existing Gateway BYOK default provider key supplies the OpenAI credential. The Worker does not need that OpenAI key. Before deployment, the project Worker needs a Cloudflare authentication secret named `AUDIT_AI_GATEWAY_TOKEN`, scoped to this account with Workers AI Read permission. Billing/Analytics/R2-only credentials cannot authenticate inference. This PR does not write or alter any secrets or Gateway settings.
 
@@ -20,6 +20,7 @@ A guarded provider-native diagnostic against the same gateway/default key expose
 
 Primary references checked for this change:
 
+- [Workers Request options](https://developers.cloudflare.com/workers/runtime-apis/request/): supported redirect modes and credential-forwarding implications.
 - [Cloudflare REST endpoint](https://developers.cloudflare.com/ai-gateway/usage/rest-api/): unified `/ai/run` model/input request and Cloudflare authentication.
 - [Cloudflare unified billing](https://developers.cloudflare.com/ai-gateway/features/unified-billing/): stored default BYOK selection and no-wholesale header.
 - [Cloudflare request handling](https://developers.cloudflare.com/ai-gateway/configuration/request-handling/): maximum attempts.

@@ -38,7 +38,11 @@ export function createTerraByokProvider(env, { fetch: fetchImpl = typeof globalT
     const body = JSON.stringify({ model: config.model, input: params });
     if (encoder.encode(body).length > config.requestMaxBytes) throw new Error('request_limit');
     let response;
-    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN.trim()}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'error' }); } catch (error) { diagnostic(signal?.aborted ? {phase:'abort'} : {phase:'fetch',class:classifyFetchError(error)}); throw failure(); }
+    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN.trim()}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'manual' }); } catch (error) { diagnostic(signal?.aborted ? {phase:'abort'} : {phase:'fetch',class:classifyFetchError(error)}); throw failure(); }
+    if (response?.status >= 300 && response.status < 400) {
+      try { await response.body?.cancel(); } catch {}
+      diagnostic({phase:'http',status:response.status}); throw failure();
+    }
     if (!response?.ok) {
       const detail = {phase:'http'};
       if (Number.isInteger(response?.status) && response.status >= 100 && response.status <= 599) detail.status = response.status;

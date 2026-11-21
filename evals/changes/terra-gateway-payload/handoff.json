@@ -1,11 +1,12 @@
 {
   "version": 1,
   "task": "Fix existing Terra BYOK gateway selection and Responses adapter; investigate upstream429, deploy reviewed backend and rerunFaherty.",
-  "state": "PR #56 is open on codex/terra-gateway-payload. Initial reviewed feature3754d6e passed hosted CI127 and was deployed under user authorization without merging. Its Faherty retest80f7bdde-1524-4b90-9580-7244be0fde72 reached prepared ready but failed at native fetch before HTTP; original exception details were not retained. A scoped fetch-binding, token-whitespace and safe-classification follow-up is now being tested and reviewed.",
+  "state": "PR #56 remains open on codex/terra-gateway-payload. Initial feature3754d6e was deployed after CI127 and review; Faherty80f7bdde-1524-4b90-9580-7244be0fde72 reached prepared ready but failed before HTTP. A transport-hardening follow-up5b7683c passed CI128 but was not deployed: subsequent documentation review found unsupported redirect:error. A native Worker regression and manual-redirect correction are now being finalized.",
   "decisions": [
     "Preserve original account /ai/run endpoint and Terra model; explicitly select gatewayopenai and map existing messages/caps to Responses parameters with strictcompletedassistant output parsing.",
     "Keep all existing prompts/rubric/scoring/evidence/stages/30stimeout/60%infrastructure/CPU1000; allow knownreasoningmetadata asnon-evidence; internal diagnosticlogs containphase/status/numericcodes only.",
-    "No inference retries, billingfallback, spendingtopup, modelsubstitution, credentialmutations, oldauditmigration or automaticrecovery."
+    "No inference retries, billingfallback, spendingtopup, modelsubstitution, credentialmutations, oldauditmigration or automaticrecovery.",
+    "Use Workers-supported manual redirect mode and reject redirects without following them, protecting the bearer credential. Add a native Worker regression to exercise the real fetch boundary that injected mocks missed."
   ],
   "constraints": [
     "Frontend/dependencies/unrelatedservices and retainedstorage cleanup remain untouched.",
@@ -15,7 +16,8 @@
   "completed": [
     "Terraagents implementedadapter/config andrealSQLite/R2 Responsesroundtrip; independentreview/freshexit recordedwithactual limitations.",
     "Guardeddiagnostics distinguishedmissinggatewaycredentials, JSONpayloadvalidation andprovidercreditexhaustion. Actual sanitizeddetails areinupstream-investigation.json; nosecret/prompt/rawmerchantcontent committed.",
-    "A live rollout of the initial feature preserved all settings and the CPU cap; actual assessment CPU was 1779 ms despite the configured 1000 ms cap. No strict cutoff or complete report is claimed. The follow-up binds native fetch, trims outer credential whitespace and classifies safe exceptions; it does not claim the original cause is proven."
+    "A live rollout of the initial feature preserved all settings and the CPU cap; actual assessment CPU was 1779 ms despite the configured 1000 ms cap. No strict cutoff or complete report is claimed. The follow-up binds native fetch, trims outer credential whitespace and classifies safe exceptions; it does not claim the original cause is proven.",
+    "Primary Cloudflare Request documentation states redirect:error throws TypeError during construction before any HTTP request. This matches the production pre-HTTP failure; retain native regression evidence and the fact the original exception text was discarded."
   ],
   "remaining": [
     "Finish the follow-up source-bound evaluation and hosted CI on PR #56, then deploy the reviewed feature commit for the user-authorized Faherty retest. Keep PR #56 open for separate merge authorization; do not merge agent work.",
