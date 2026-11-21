@@ -29,12 +29,12 @@ test('completed checkpoints resume, changed hashes and unready artifacts are den
  f.sqlite.prepare("UPDATE retained_snapshots SET prepared_state='pending' WHERE audit_id=?").run(auditId);
  assert.equal(await f.jobs.claim({...request,preparedHash:'d'.repeat(64)}),null);
 });
-test('safe yields do not exhaust crash retries and discovery is policy specific',async()=>{
+test('safe yields do not exhaust crash retries and discovery preserves prior-policy audits',async()=>{
  const f=fixture(),request={auditId,preparedHash,policyVersion,leaseMs:10};
  for(let i=0;i<8;i++){const g=await f.jobs.claim(request);assert.ok(g);await f.jobs.release(g,{state:'waiting',code:'checkpoint_yield'});}
  const g=await f.jobs.claim(request);await f.jobs.release(g,{state:'complete'});
  assert.deepEqual(await f.jobs.discover({policyVersion}),[]);
- assert.deepEqual((await f.jobs.discover({policyVersion:'v2'})).map(row=>({...row})),[{auditId,preparedHash}]);
+ assert.deepEqual(await f.jobs.discover({policyVersion:'v2'}),[]);
 });
 test('known pre-call admission failures retain a failed diagnostic without replay',async()=>{
  const f=fixture(),g=await f.jobs.claim({auditId,preparedHash,policyVersion,leaseMs:10});

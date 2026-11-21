@@ -49,3 +49,21 @@ test('publication rejects a replaced owner and recovery selects ready jobs witho
  await jobs.release(grant,{state:'waiting',code:'checkpoint_yield',retryAt:time});
  const ready=await recoverPreparedAudits({...f});assert.deepEqual(ready.auditIds,[auditId]);assert.equal(f.events.includes('read_prepared'),false);
 });
+test('previous policy jobs and their retained artifacts are left untouched',async()=>{
+ const f=fixture();const jobs=createPreparedAssessmentJobs(f.db,{now:f.now});
+ const old=await jobs.claim({auditId,preparedHash:hash,policyVersion:'prepared-assessment-v1'});
+ await jobs.release(old,{state:'failed',code:'model_output_invalid'});
+ f.artifacts.set('profile',{old:true});
+ const result=await runPreparedAudit({...f,auditId,engine:()=>assert.fail('old audit must not be reassessed')});
+ assert.equal(result.code,'prior_assessment_policy');assert.deepEqual(f.artifacts.get('profile'),{old:true});
+ assert.equal(f.sql.prepare('SELECT COUNT(*) AS count FROM prepared_assessment_jobs').get().count,1);
+ assert.deepEqual((await recoverPreparedAudits({...f})).auditIds,[]);
+ assert.equal(f.events.includes('read_prepared'),false);
+});
+
+test('an unvalidated category still retains the replay and partial assessment',async()=>{
+ const f=fixture();const assessment={findings:{'C1.identity':{status:'measured',fraction:1}}};
+ const result=await runPreparedAudit({...f,auditId,engine:async()=>({status:'completed',profile:null,replayArtifact:{profile:null,diagnostics:[{reason:'invalid_identity'}]},assessment}),scorePage:(_s,_e,options)=>({status:'incomplete',score:null,coverage:{limitations:[]},finding:options?.aiAssessment?.findings['C1.identity']})});
+ assert.equal(result.status,'completed');assert.equal(f.artifacts.has('profile'),false);assert.equal(f.artifacts.get('facts').profile,null);
+ assert.equal(JSON.parse(f.sql.prepare('SELECT report_json FROM audits').get().report_json).finding.fraction,1);
+});

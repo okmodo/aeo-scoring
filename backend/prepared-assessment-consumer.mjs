@@ -48,6 +48,11 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     if(!audit||!['pending','incomplete'].includes(audit.status))return{status:'skipped',code:'audit_not_pending'};
     const ready=await db.prepare("SELECT prepared_hash FROM retained_snapshots WHERE audit_id=?1 AND prepared_state='ready' AND state='ready' AND created_at<=?2 AND expires_at>?2").bind(auditId,t).first();
     if(!ready)return{status:'waiting',code:'prepared_not_ready'};
+    // Retained assessment artifacts are immutable and scoped to the audit, not
+    // to the job policy. A fresh cache key creates a new audit for this policy;
+    // never reuse an older audit's profile or facts for a different policy.
+    const prior=await db.prepare('SELECT 1 FROM prepared_assessment_jobs WHERE audit_id=?1 AND policy_version<>?2 LIMIT 1').bind(auditId,PREPARED_ASSESSMENT_POLICY).first();
+    if(prior)return{status:'skipped',code:'prior_assessment_policy'};
     grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion:PREPARED_ASSESSMENT_POLICY,leaseMs:30000});
     if(!grant)return{status:'skipped',code:'assessment_not_claimed'};
     if(audit.status==='incomplete') {
@@ -69,7 +74,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
       const code=safeCode(result);await publish(code);
       await jobs.release(grant,{state:result.uncertain===true||['model_usage_uncertain','model_timeout','model_provider_failure','model_output_invalid','output_limit'].includes(code)?'uncertain':'failed',code});return{status:'failed',code};
     }
-    await persist('profile',result.profile);
+    if(result.profile)await persist('profile',result.profile);
     await persist('facts',result.replayArtifact);
     report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,aiAssessment:result.assessment});
     await record('snapshot','completed','assessment_retained');await record('content','completed','judgments_validated');

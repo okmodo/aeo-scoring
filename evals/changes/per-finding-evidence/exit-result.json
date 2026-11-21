@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "changeId": "per-finding-evidence",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "/root/finding_fresh_exit",
+  "interruptionPoint": "Prepared artifact ready, inputs absent, first model call completed and persisted, job safely yielded",
+  "status": "passed",
+  "observedContinuation": "Resumed the exported completed first-model checkpoint using mixedProvider, canonical consumer, engine and snapshot store against a copied SQLite database and saved R2 objects.",
+  "limitations": "Synthetic provider and injected in-memory allowance and R2 adapters; no live network or billing behavior exercised.",
+  "observations": {
+    "invocations": [
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "modelCalls": 1,
+        "modelReservations": 1
+      },
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "modelCalls": 1,
+        "modelReservations": 1
+      },
+      {
+        "result": {
+          "status": "yield",
+          "code": "checkpoint_yield"
+        },
+        "modelCalls": 1,
+        "modelReservations": 1
+      },
+      {
+        "result": {
+          "status": "completed",
+          "code": "assessment_completed",
+          "reportStatus": "incomplete"
+        },
+        "modelCalls": 1,
+        "modelReservations": 1
+      }
+    ],
+    "reads": [
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/profile",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/snapshot",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/prepared",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/profile",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/profile",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/facts",
+      "retained/22222222-2222-4222-8222-222222222222/97639170-9c44-43f7-b7a9-6fec47d63ef4/profile"
+    ],
+    "deniedReads": [],
+    "retainedStates": {
+      "prepared": "ready",
+      "inputs": null,
+      "profile": "ready",
+      "facts": "ready"
+    },
+    "firstCheckpointUnchanged": true,
+    "firstCheckpointInitiallyCompleted": true,
+    "noDuplicateModelReservation": true,
+    "atMostOneModelCallPerInvocation": true,
+    "preparedReadyWithoutHtmlOrInputsReads": true,
+    "identity": {
+      "id": "C1.identity",
+      "maxPoints": 3,
+      "status": "measured",
+      "fraction": 1,
+      "points": 3,
+      "evidenceIds": [
+        "e1"
+      ],
+      "reason": null
+    },
+    "explanation": {
+      "id": "C1.explanation",
+      "maxPoints": 4,
+      "status": "not_measured",
+      "fraction": null,
+      "points": null,
+      "evidenceIds": [],
+      "reason": "The model judgment could not be validated."
+    },
+    "diagnostics": [
+      {
+        "referenceIndex": 0,
+        "sourceId": "s1",
+        "reason": "quote_not_found_or_ambiguous",
+        "context": "judgment:C1.explanation"
+      }
+    ],
+    "profileRetained": true,
+    "factsRetained": true,
+    "reportStatus": "incomplete",
+    "reportScore": null
+  },
+  "passed": true,
+  "sourceDigest": "8d33646c778e07a5d523ff077477fe5dc7aedef9fe702915b9f814037718b808",
+  "exportSha256": "861ea30b39cf5c1bff2aef23d88a07a9e8d00456f1b90ea421e398f0765910ab"
+}

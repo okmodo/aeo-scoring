@@ -1,0 +1,7 @@
+{
+  "reviewer": "finding_pipeline",
+  "scope": ["backend/prepared-assessment-consumer.mjs", "backend/prepared-assessment-jobs.mjs", "backend/prepared-assessment-policy.mjs", "associated consumer and roundtrip tests"],
+  "conclusion": "No blocking issue found in the reviewed integration changes. Null profiles skip immutable profile storage while the facts artifact retains the replay, and the roundtrip checks that a valid independent finding survives while the total score is null. The v2 policy participates in the browser cache key; old-policy audit jobs are excluded from recovery and reuse. The diff does not change the 60% allowance, CPU limit, or model timeout.",
+  "validation": "Ran node --test backend/ai-rubric-assessment.test.mjs backend/prepared-assessment-consumer.test.mjs backend/browser-prepared-roundtrip.test.mjs; all 38 tests passed at review time. This is an offline synthetic test, not live model or budget calibration.",
+  "limitation": "A provider failure or deadline before the final judgment still prevents producing partial findings; the large prepared-page call count and real runtime capacity remain unproven. The null-profile consumer test uses a stubbed scorer; separate assessor and actual mixed-report roundtrip tests cover the other boundaries."
+}

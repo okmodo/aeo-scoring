@@ -1,6 +1,7 @@
 import rubric from '../config/rubric.v2.json' with { type: 'json' };
 import { providerNeurons } from './allowance-reconciliation.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
+import { resolvePreparedReferences } from './prepared-finding-evidence.mjs';
 
 export const MODEL_RESPONSE_TIMEOUT_MS = 15000;
 export const OPEN_RUBRIC_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -25,7 +26,7 @@ function checkBundle(bundle) {
 }
 function refs(bundle, value) {
   if (!Array.isArray(value) || value.length > 16) fail();
-  return value.map(ref=>{ const s=bundle.sources.find(x=>x.id===ref?.sourceId); if (!s || !text(ref.quote,1000) || !s.text.includes(ref.quote)) fail(); return {sourceId:s.id,quote:ref.quote,url:s.url,location:s.location,excerpt:ref.quote,scope:s.scope,...(s.method ? {method:s.method} : {})}; });
+  return value.map(ref=>{ if (bundle.coverage.preparedHtml && ref?.fieldPath) { const result=resolvePreparedReferences([ref],bundle.sources,{allowedSourceIds:bundle.sources.map(s=>s.id)}); if (result.rejections.length || result.evidence.length!==1) fail(); const {referenceIndex,match,...evidence}=result.evidence[0]; return evidence; } const s=bundle.sources.find(x=>x.id===ref?.sourceId); if (!s || !text(ref.quote,1000) || !s.text.includes(ref.quote)) fail(); return {sourceId:s.id,quote:ref.quote,url:s.url,location:s.location,excerpt:ref.quote,scope:s.scope,...(s.method ? {method:s.method} : {})}; });
 }
 export function validateRubricProfile(bundle, value) {
   checkBundle(bundle); const p=parse(value);
@@ -41,7 +42,7 @@ export function validateRubricProfile(bundle, value) {
   if (!Array.isArray(review) || review.length!==conditional.length) fail();
   const seenReviews=new Set();
   for (const item of review) { if (!conditional.some(s=>s.id===item?.id) || seenReviews.has(item.id) || item.valid!==true || !text(item.reason,400)) fail(); seenReviews.add(item.id); }
-  return freeze({version:'1',category:p.category,evidence:refs(bundle,p.evidence).map(({sourceId,quote})=>({sourceId,quote})),slots,conditionReview:review.map(x=>({id:x.id,valid:true,reason:x.reason}))});
+  return freeze({version:'1',category:p.category,evidence:refs(bundle,p.evidence).map(({sourceId,quote,fieldPath,value})=>({sourceId,quote,...(fieldPath ? {fieldPath,value} : {})})),slots,conditionReview:review.map(x=>({id:x.id,valid:true,reason:x.reason}))});
 }
 const isBrowser = bundle => bundle.sources.some(source=>source.origin != null);
 const isSourceCheck = (bundle,id) => isBrowser(bundle) && /^(?:S1|S2)\./.test(id);
@@ -108,7 +109,7 @@ function allAbsent(bundle, inspections, id) {
     if (sections.length!==1) return false;
     const section=sections[0];
     const matches=section?.checks?.filter(x=>x?.id===id);
-    return matches?.length===1 && matches[0].status==='absent';
+    return matches?.length===1 && matches[0].status==='absent' && Array.isArray(matches[0].evidence) && matches[0].evidence.length===0;
   });
 }
 function inspectionComplete(bundle, inspections, id) {
@@ -126,7 +127,7 @@ function conditionAbsent(bundle, inspections, id) {
   return relevant.length>0 && Array.isArray(inspections) && (isContentCheck(bundle,id) || inspections.length===bundle.sources.length) && relevant.every(source=>{
     const sections=inspections.filter(x=>x?.sourceId===source.id);
     const found=sections[0]?.conditions?.filter(x=>x?.id===id);
-    if (sections.length!==1 || found?.length!==1 || found[0].status!=='absent' || !Array.isArray(found[0].evidence)) return false;
+    if (sections.length!==1 || found?.length!==1 || found[0].status!=='absent' || !Array.isArray(found[0].evidence) || found[0].evidence.length!==0) return false;
     try { return refs(bundle,found[0].evidence).every(e=>e.sourceId===source.id); } catch { return false; }
   });
 }
@@ -149,13 +150,14 @@ function validateInspections(bundle, profile, inspections) {
 }
 // Candidate IDs are assigned by code; every item emitted by each complete section
 // inspection must be addressed exactly once by the final model response.
-function c5Inventory(bundle, inspections) {
+function c5Inventory(bundle, inspections, kind = 'both') {
   if (!Array.isArray(inspections) || inspections.length!==bundle.sources.length) fail();
   const claims=[], comparisons=[];
   for (const section of inspections) {
-    if (section.claimsComplete!==true || section.comparisonsComplete!==true || !Array.isArray(section.claims) || !Array.isArray(section.comparisons)) fail();
-    if (!isBrowser(bundle) || (bundle.sources.find(source=>source.id===section.sourceId)?.origin==='rendered' && bundle.sources.find(source=>source.id===section.sourceId)?.scope==='product' && bundle.sources.find(source=>source.id===section.sourceId)?.kind==='text')) section.claims.forEach((item,i)=>claims.push({id:`${section.sourceId}-claim-${i}`,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]}));
-    if (!isBrowser(bundle) || (()=>{ const source=bundle.sources.find(s=>s.id===section.sourceId); return (source?.origin==='initial' && source.kind==='structured_product') || (source?.origin==='rendered' && source.scope==='product' && source.kind==='text') || (source?.origin==='shared' && ['llms','agents'].includes(source.scope)); })()) section.comparisons.forEach((item,i)=>{if (!text(item.field,160) || !text(item.context,300)) fail(); comparisons.push({id:`${section.sourceId}-comparison-${i}`,field:item.field,context:item.context,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]});});
+    if (!bundle.sources.some(s=>s.id===section?.sourceId) || inspections.filter(s=>s?.sourceId===section.sourceId).length!==1) fail();
+    if ((kind!=='comparisons' && (section.claimsComplete!==true || !Array.isArray(section.claims) || section.claims.length>30)) || (kind!=='claims' && (section.comparisonsComplete!==true || !Array.isArray(section.comparisons) || section.comparisons.length>30))) fail();
+    if (kind!=='comparisons' && (!isBrowser(bundle) || (bundle.sources.find(source=>source.id===section.sourceId)?.origin==='rendered' && bundle.sources.find(source=>source.id===section.sourceId)?.scope==='product' && bundle.sources.find(source=>source.id===section.sourceId)?.kind==='text'))) section.claims.forEach((item,i)=>claims.push({id:`${section.sourceId}-claim-${i}`,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]}));
+    if (kind!=='claims' && (!isBrowser(bundle) || (()=>{ const source=bundle.sources.find(s=>s.id===section.sourceId); return (source?.origin==='initial' && source.kind==='structured_product') || (source?.origin==='rendered' && source.scope==='product' && source.kind==='text') || (source?.origin==='shared' && ['llms','agents'].includes(source.scope)); })())) section.comparisons.forEach((item,i)=>{if (!text(item.field,160) || !text(item.context,300)) fail(); comparisons.push({id:`${section.sourceId}-comparison-${i}`,field:item.field,context:item.context,evidence:refs(bundle,[{sourceId:section.sourceId,quote:item.quote}])[0]});});
   }
   if (claims.length>100 || comparisons.length>200) fail();
   return {claims,comparisons};
@@ -196,9 +198,12 @@ function supportReferenceCaptured(bundle, section, reference) {
 function assessC5(bundle, inspections, raw, supportInspections) {
   const unknown=reason=>({status:'not_measured',reason});
   const result={claim:unknown('Claim inventory is incomplete or unvalidated.'),consistency:unknown('Comparison inventory is incomplete or unvalidated.')};
-  let inventory; try {inventory=c5Inventory(bundle,inspections);} catch {return result;}
+  let claimInventory, comparisonInventory;
+  try { claimInventory=c5Inventory(bundle,inspections,'claims'); } catch {}
+  try { comparisonInventory=c5Inventory(bundle,inspections,'comparisons'); } catch {}
+  const inventory={claims:claimInventory?.claims ?? [],comparisons:comparisonInventory?.comparisons ?? []};
   if (!bundle.coverage.complete || bundle.coverage.absenceComplete === false || !Array.isArray(raw?.claims) || !Array.isArray(raw?.comparisons)) return result;
-  let supportsValid=true; try {validateClaimInspections(bundle,inventory,supportInspections);} catch {supportsValid=false;}
+  let supportsValid=!!claimInventory; try {validateClaimInspections(bundle,inventory,supportInspections);} catch {supportsValid=false;}
   if (supportsValid && !inventory.claims.length) {
     if (allAbsent(bundle,inspections,'C5.claim-support')) {
       const product=bundle.sources.find(s=>s.scope==='product' && s.text.trim() && (!isBrowser(bundle) || contentAllowed(s)));
@@ -219,7 +224,7 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       result.claim={status:'measured',fraction:entries.reduce((n,x)=>n+x.fraction,0)/entries.length,evidence:entries.flatMap(x=>x.evidence),claims:entries};
     } catch { /* Any missing or uncertain claim withholds this subcheck. */ }
   }
-  if (inventory.comparisons.length && (!isBrowser(bundle) || bundle.sources.some(source=>source.origin==='initial' && source.kind==='structured_product'))) try {
+  if (comparisonInventory && inventory.comparisons.length && (!isBrowser(bundle) || bundle.sources.some(source=>source.origin==='initial' && source.kind==='structured_product'))) try {
     const used=new Set(), entries=[];
     if (!raw.comparisons.length || raw.comparisons.length>100) fail();
     for (const group of raw.comparisons) {
@@ -238,15 +243,22 @@ function assessC5(bundle, inspections, raw, supportInspections) {
   return result;
 }
 export function validateRubricAssessment(bundle, profileValue, rawValue, {snapshot, extracted, inspections, supportInspections} = {}) {
-  const profile=validateRubricProfile(bundle,profileValue), raw=parse(rawValue);
-  if (!raw || !Array.isArray(raw.judgments) || raw.judgments.length!==DIRECT.length+profile.slots.length) fail();
-  const byId=new Map(); for (const item of raw.judgments) { if (!item || byId.has(item.id)) fail(); byId.set(item.id,item); }
-  const expected=[...DIRECT,...profile.slots.map(s=>s.id)]; if (expected.some(id=>!byId.has(id)) || byId.size!==expected.length) fail();
-  let inspected=false; try {validateInspections(bundle,profile,inspections); inspected=true;} catch {}
+  const prepared=!!bundle.coverage.preparedHtml;
+  let profile; try { profile=validateRubricProfile(bundle,profileValue); } catch (error) { if (!prepared) throw error; profile=null; }
+  let raw=parse(rawValue);
+  if (prepared && (!raw || !Array.isArray(raw.judgments))) raw={...(raw && typeof raw==='object' ? raw : {}),judgments:[]};
+  if (!raw || !Array.isArray(raw.judgments)) fail();
+  const slots=profile?.slots ?? [];
+  if (!prepared && raw.judgments.length!==DIRECT.length+slots.length) fail();
+  const byId=new Map(); for (const item of raw.judgments) { if (!item || byId.has(item.id)) { if (!prepared) fail(); if (item) byId.set(item.id,null); continue; } byId.set(item.id,item); }
+  const expected=[...DIRECT,...slots.map(s=>s.id)]; if (!prepared && (expected.some(id=>!byId.has(id)) || byId.size!==expected.length)) fail();
+  let inspected=false; try {validateInspections(bundle,profile ?? {slots:[]},inspections); inspected=true;} catch {}
+  if (prepared) inspected=true;
   const findings={}; for (const id of DIRECT) { try {findings[id]=validateItem(bundle,byId.get(id),id,inspections,null,null,inspected,snapshot);} catch {findings[id]={status:'not_measured',reason:'The model judgment could not be validated.'};} }
-  let c5; try { validateInspections(bundle,profile,inspections); c5=assessC5(bundle,inspections,raw.c5,supportInspections); } catch { c5={claim:{status:'not_measured',reason:'Claim inventory is incomplete or unvalidated.'},consistency:{status:'not_measured',reason:'Comparison inventory is incomplete or unvalidated.'}}; }
+  let c5; try { if (!prepared) validateInspections(bundle,profile,inspections); c5=assessC5(bundle,inspections,raw.c5,supportInspections); } catch { c5={claim:{status:'not_measured',reason:'Claim inventory is incomplete or unvalidated.'},consistency:{status:'not_measured',reason:'Comparison inventory is incomplete or unvalidated.'}}; }
   findings['C5.claim-support']=c5.claim; findings['C5.consistency']=c5.consistency;
   for (const group of GROUPS) {
+    if (!profile) { findings[group]={status:'not_measured',reason:'Category profile could not be validated.'}; continue; }
     const entries=profile.slots.filter(s=>s.group===group).map(s=>{ let result; try {result=validateItem(bundle,byId.get(s.id),s.id,inspections,s.group,s,inspected,snapshot);} catch {result={status:'not_measured',reason:'The model judgment could not be validated.'};} return {id:s.id,label:s.label,...result}; });
     const key=group.startsWith('C2.')?'attributes':'questions';
     const applicable=entries.filter(x=>x.status!=='not_applicable');
@@ -262,7 +274,7 @@ export async function restoreRubricAssessment(snapshot, extracted, artifact) {
   const bundle=await prepareAssessmentSources(snapshot,extracted);
   if (JSON.stringify([snapshot,extracted])!==original) fail();
   if (!artifact || artifact.version!==OPEN_RUBRIC_VERSION || artifact.sourceDigest!==bundle?.sourceDigest || artifact.profileDigest!==await rubricProfileDigest(artifact.profile)) fail();
-  validateInspections(bundle,artifact.profile,artifact.inspections);
+  if (!bundle.coverage.preparedHtml) validateInspections(bundle,artifact.profile,artifact.inspections);
   return validateRubricAssessment(bundle,artifact.profile,artifact.judgments,{snapshot,extracted,inspections:artifact.inspections,supportInspections:artifact.supportInspections});
 }
 function request(system,payload,max_tokens) { return {messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(payload)}],response_format:{type:'json_object'},temperature:0,max_tokens,stream:false}; }
@@ -292,46 +304,59 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     const original=JSON.stringify([snapshot,extracted]);
     const bundle=await prepareAssessmentSources(snapshot,extracted); checkBundle(bundle);
     if (!bundle.coverage.complete) return unavailable('Retained source coverage is incomplete.');
-    const observations=[], primaryObservations=[];
+    const observations=[], primaryObservations=[], diagnostics=[];
+    const resolve=(references,allowed,context)=>{ if (!Array.isArray(references)) { diagnostics.push({context,reason:'invalid_reference_list'}); return []; } const result=resolvePreparedReferences(references,bundle.sources,{allowedSourceIds:allowed}); diagnostics.push(...result.rejections.map(rejection=>({...rejection,context}))); return result.evidence.map(({sourceId,quote,fieldPath,value})=>({sourceId,quote,...(fieldPath ? {fieldPath,value} : {})})); };
+    const cleanItem=(item,allowed,context)=>{ if (!item || !Array.isArray(item.evidence)) return item; const before=diagnostics.length, evidence=resolve(item.evidence,allowed,context); return {...item,evidence,...(diagnostics.length>before || item.status==='present' && !evidence.length ? {status:'unknown'} : {})}; };
     const preparedBatched = bundle.coverage.preparedHtml && !!modelCall;
     const batches = sources => { if (!preparedBatched) return sources.map(source=>[source]); const result=[]; for (const source of sources) { const last=result.at(-1); if (!last || encoder.encode(JSON.stringify([...last,source])).length > 18000) result.push([source]); else last.push(source); } return result; };
     for (const batch of batches(bundle.sources.filter(source=>source.scope==='product' && (!isBrowser(bundle) || contentAllowed(source))))) {
       const source=batch[0];
       const out=await call({AI,allowance,now,remaining,input:request(`${BASE} Extract relevant exact quotations for product identity, attributes, selection, purchase, policies, claims, structured data and site guides. Return {evidence:[{sourceId,quote}],primaryEvidence:[{sourceId,quote}]}, at most 12 quotes in each. Identify candidate primary product heading or title separately from recommendations and accessories; preserve exact quotations. Omit irrelevant material.`,{...(preparedBatched ? {sources:batch} : {source})},1000)});
-      const found=refs(bundle,out?.evidence), primary=refs(bundle,out?.primaryEvidence ?? []); if ([...found,...primary].some(e=>!batch.some(s=>s.id===e.sourceId))) fail(); observations.push(...found.map(({sourceId,quote})=>({sourceId,quote}))); primaryObservations.push(...primary.map(({sourceId,quote})=>({sourceId,quote})));
+      const allowed=batch.map(s=>s.id);
+      const found=preparedBatched ? resolve(out?.evidence,allowed,'observation') : refs(bundle,out?.evidence), primary=preparedBatched ? resolve(out?.primaryEvidence ?? [],allowed,'primary_observation') : refs(bundle,out?.primaryEvidence ?? []); if ([...found,...primary].some(e=>!batch.some(s=>s.id===e.sourceId))) fail(); observations.push(...found.map(({sourceId,quote,fieldPath,value})=>({sourceId,quote,...(fieldPath ? {fieldPath,value} : {})}))); primaryObservations.push(...primary.map(({sourceId,quote,fieldPath,value})=>({sourceId,quote,...(fieldPath ? {fieldPath,value} : {})})));
       if (encoder.encode(JSON.stringify([observations,primaryObservations])).length>40000) throw new Error('observation_limit');
     }
-    
+
     const identity=await call({AI,allowance,now,remaining,input:request(`${BASE} Identify only the primary product category from the supplied quotations and heading, excluding recommendations, accessories and related items. If primary identity is ambiguous, do not guess. Return {status,category,evidence}; status is classified or ambiguous. For ambiguous use null category and empty evidence. Classified evidence must quote the primary product.${bundle.coverage.preparedHtml ? ' Cite exact quotations from the verified cleaned HTML for the primary product. Inspect HTML context: recommendations, reviews, store-specific inventory, hidden content and unselected variants are not primary-product facts. Computed visibility is unknown.' : isBrowser(bundle) ? ' For browser captures cite only visible scoped product text sources, not raw HTML or metadata.' : ''}`,{primaryObservations,observations,heading:preparedBatched ? null : extracted?.productHtml?.identity ?? null,...(isBrowser(bundle) ? {sourceCatalog:bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.preparedHtml ? {preparedHtml:true} : {}),...(s.method ? {method:s.method} : {})}))} : {})},512)});
-    if (identity?.status!=='classified' || !text(identity.category,160) || !refs(bundle,identity.evidence).some(e=>e.scope==='product')) fail();
+    if (preparedBatched && identity && typeof identity==='object') identity.evidence=resolve(identity.evidence,bundle.sources.map(s=>s.id),'category');
+    let identityValid=false; try { identityValid=identity?.status==='classified' && text(identity.category,160) && refs(bundle,identity.evidence).some(e=>e.scope==='product' && (!isBrowser(bundle) || contentAllowed(bundle.sources.find(s=>s.id===e.sourceId)))); } catch {}
+    if (!identityValid && !preparedBatched) fail();
+    let profile=null;
+    if (identityValid) {
     const proposal=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently of any individual product page, define category-specific shopper expectations for the supplied category. Produce slots for every group: ${GROUPS.join(', ')}. Each slot has unique id, group, label, relevance, full, partial, zero, missingExpectation, applicability, condition, conditionWhy. Default applicability to always with null condition and conditionWhy. Only C4 slots may be conditional; use conditional solely for a specific observable condition, supplying the condition and why it determines applicability. Choose an appropriate number; no fixed attribute list. Use distinct concrete anchors. Return {slots}.`,{category:identity.category},1800)});
-    const conditional=(proposal?.slots || []).filter(slot=>slot.applicability==='conditional');
+    const conditional=(Array.isArray(proposal?.slots) ? proposal.slots : []).filter(slot=>slot?.applicability==='conditional');
     let conditionReview=[];
     if (conditional.length) {
       const reviewed=await call({AI,allowance,now,remaining,input:request(`${BASE} Independently review each proposed conditional question for the supplied category. A valid condition describes an observable product feature, use circumstance, or product claim which determines whether the question applies. A condition referring to whether an answer, page statement, guidance or information is present or complete is invalid and circular. Evaluate without any individual product evidence. Return {conditions:[{id,valid,reason}]} for every conditional slot.`,{category:identity.category,slots:conditional},1000)});
       conditionReview=reviewed?.conditions;
     }
     const proposed={category:identity.category,evidence:identity.evidence,slots:proposal?.slots,conditionReview};
-    const profile=validateRubricProfile(bundle,proposed); if (onProfile) await onProfile(profile); stages.push({stage:'category',status:'completed',code:'profile_validated'});
+    try { profile=validateRubricProfile(bundle,proposed); } catch (error) { if (!preparedBatched) throw error; diagnostics.push({context:'category',reason:'invalid_profile'}); }
+    } else diagnostics.push({context:'category',reason:'invalid_identity'});
+    if (profile && onProfile) await onProfile(profile); stages.push({stage:'category',status:profile ? 'completed' : 'failed',code:profile ? 'profile_validated' : 'profile_unvalidated'});
     const checks=rubric.criteria.flatMap(c=>c.subchecks).filter(s=>DIRECT.includes(s.id));
     const inspections=[];
     for (const batch of batches(bundle.sources)) {
       const source=batch[0];
-      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} ${preparedBatched ? 'Inspect each source in sources independently and return {sections:[...]}, one section per source. ' : ''}Inspect this entire source section independently for each listed check and category slot. For each return present when it contains relevant information, absent only when it contains none, unknown when you cannot inspect it. Return {sourceId,checks:[{id,status,evidence:[{sourceId,quote}]}]}, exactly one for every ID. For present include exact relevant quotes from this section; for absent or unknown use empty evidence. For each conditional slot separately inspect whether its stated condition occurs, returning conditions:[{id,status,evidence:[{sourceId,quote}]}] with present, absent or unknown. An unanswered question is not an absent condition. Also inventory EVERY material product claim and EVERY potentially comparable product field observation in this section, even if unsupported or repeated: add claimsComplete and comparisonsComplete booleans, claims:[{quote}], comparisons:[{field,context,quote}]. Quotes must be exact from this section. Set complete false if any could be omitted or unclear, including unread product-specific documents that could contain relevant claims or comparisons; unrelated generic guides do not block. Use the captured source catalog to identify inspected documents. Ordinary specifications are comparison candidates; material claims include quantified performance, health, safety, environmental and certifications. Do not cap or omit items: indicate incomplete instead.`,{...(preparedBatched ? {sources:batch} : {source}),checks,slots:profile.slots,captured:bundle.sources.map(s=>({url:s.url,scope:s.scope})),coverage:bundle.coverage},2500)});
-      inspections.push(...(preparedBatched ? out.sections : [out]));
+      const out=await call({AI,allowance,now,remaining,input:request(`${BASE} ${preparedBatched ? 'Inspect each source in sources independently and return {sections:[...]}, one section per source. ' : ''}Inspect this entire source section independently for each listed check and category slot. For each return present when it contains relevant information, absent only when it contains none, unknown when you cannot inspect it. Return {sourceId,checks:[{id,status,evidence:[{sourceId,quote}]}]}, exactly one for every ID. For present include exact relevant quotes from this section; for absent or unknown use empty evidence. For each conditional slot separately inspect whether its stated condition occurs, returning conditions:[{id,status,evidence:[{sourceId,quote}]}] with present, absent or unknown. An unanswered question is not an absent condition. Also inventory EVERY material product claim and EVERY potentially comparable product field observation in this section, even if unsupported or repeated: add claimsComplete and comparisonsComplete booleans, claims:[{quote}], comparisons:[{field,context,quote}]. Quotes must be exact from this section. Set complete false if any could be omitted or unclear, including unread product-specific documents that could contain relevant claims or comparisons; unrelated generic guides do not block. Use the captured source catalog to identify inspected documents. Ordinary specifications are comparison candidates; material claims include quantified performance, health, safety, environmental and certifications. Do not cap or omit items: indicate incomplete instead.`,{...(preparedBatched ? {sources:batch} : {source}),checks,slots:profile?.slots ?? [],captured:bundle.sources.map(s=>({url:s.url,scope:s.scope})),coverage:bundle.coverage},2500)});
+      const sections=preparedBatched ? (Array.isArray(out?.sections) ? out.sections.filter(section=>{ if (batch.some(s=>s.id===section?.sourceId)) return true; diagnostics.push({context:'inspection',sourceId:section?.sourceId ?? null,reason:'source_not_in_batch'}); return false; }) : []) : [out];
+      if (preparedBatched) for (const section of sections) { const allowed=[section.sourceId]; if (Array.isArray(section?.checks)) section.checks=section.checks.map(item=>cleanItem(item,allowed,`inspection:${section.sourceId}:${item?.id}`)); if (Array.isArray(section?.conditions)) section.conditions=section.conditions.map(item=>cleanItem(item,allowed,`condition:${section.sourceId}:${item?.id}`)); }
+      inspections.push(...sections);
     }
-    validateInspections(bundle,profile,inspections);
-    const inventory=c5Inventory(bundle,inspections);
+    if (!preparedBatched) validateInspections(bundle,profile,inspections);
+    let inventory; try { inventory=c5Inventory(bundle,inspections); } catch (error) { if (!preparedBatched) throw error; inventory={claims:[],comparisons:[]}; for (const kind of ['claims','comparisons']) try { inventory[kind]=c5Inventory(bundle,inspections,kind)[kind]; } catch { diagnostics.push({context:`inventory:${kind}`,reason:'invalid_inventory'}); } }
     const supportInspections=[];
     if (inventory.claims.length) for (const batch of batches(bundle.sources)) {
       const source=batch[0];
       const out=await call({AI,allowance,now,remaining,input:request(`${BASE} ${preparedBatched ? 'Inspect each source in sources independently and return {sections:[...]}, one section per source. ' : ''}Inspect this entire section for relevant support or qualification for each individual claim. Return {sourceId,claims:[{id,status,evidence:[{sourceId,quote}],references:[{quote,target}]}]}. For every claim list all references in this section to a potentially relevant substantiation source, even when its target was not captured; quote the exact reference and give its URL or null when unknown. Include every claim once. status present requires exact support quotation from this section, absent means no relevant support here, unknown means uncertain.`,{...(preparedBatched ? {sources:batch} : {source}),claims:inventory.claims},2500)});
-      supportInspections.push(...(preparedBatched ? out.sections : [out]));
+      supportInspections.push(...(preparedBatched ? (Array.isArray(out?.sections) ? out.sections.filter(section=>{ if (batch.some(s=>s.id===section?.sourceId)) return true; diagnostics.push({context:'support_inspection',sourceId:section?.sourceId ?? null,reason:'source_not_in_batch'}); return false; }) : []) : [out]));
     }
-    validateClaimInspections(bundle,inventory,supportInspections);
+    if (!preparedBatched) validateClaimInspections(bundle,inventory,supportInspections);
     const response=await call({AI,allowance,now,remaining,input:request(`${BASE} Judge every listed check and slot against its rubric anchors. ${bundle.sources.some(s=>s.origin != null) ? 'For browser captures, if coverage.initial is false, initial-document checks in S1 and S2 must be not_measured; continue assessing content from eligible rendered observations. Serialized HTML does not establish computed visibility. S1 and S2 concern the initial document only: cite sources with origin initial, never rendered or ordinary shared metadata. S1.supporting-access may also cite shared supporting resources. Prove absence using initial-source inspections only (and supporting-resource inspections for supporting access). For C1-C4 use eligible rendered product text and shared supporting resources. Verified cleaned HTML sources marked preparedHtml are also eligible; interpret their document context and never assume computed visibility. Other raw HTML and initial-only product content are ineligible. Claim-support candidates cover rendered product claims; C5 consistency may compare the associated initial structured product with visible scoped product text and relevant guides; do not use full HTML or metadata. ' : ''}Return {judgments:[{id,status,fraction,reason,rule,basis,comparisonContext,comparisonValue,evidence,inspectedSourceIds}]}. status measured, not_measured or not_applicable; measured fraction 0, 0.5 or 1; others null. Cite exact source quotations. For zero set basis to absence, generic (explicit unusable or generic information), or contradiction; generic requires a quote of the unusable information and a completed inspection; contradiction is permitted only for C5.consistency with two distinct quotations. For absence supply all inspected source IDs. C4 conditional slots may be not_applicable only with rule category_conditions_absent when every relevant section confirms the stated condition is absent. An absent answer is not proof the condition is absent. C5.claim-support may use rule no_material_claims when complete inspection finds no material claims. For C5 consistency provide two distinct comparable quotes and comparisonContext; recognize semantically equivalent values, including equivalent units; explain the equivalence and cite the exact distinct observations. Shipping and returns require policy evidence. Ambiguity is not_measured. Also return c5:{claims:[{id,status,fraction,reason,evidence}],comparisons:[{candidateIds,status,fraction,reason,context,value}]}. Judge EVERY claim individually including unsupported claims, citing claim and support or qualification for nonzero credit. Group EVERY comparable observation exactly once by same field and product context; never drop candidates. Use not_measured if unclear. Do not compute scores.`,{checks,profile,observations,inspections,inventory,supportInspections,sourceIds:bundle.sources.map(s=>s.id),...(bundle.sources.some(s=>s.origin != null) ? {sourceCatalog:bundle.sources.map(s=>({id:s.id,origin:s.origin,scope:s.scope,kind:s.kind,...(s.preparedHtml ? {preparedHtml:true} : {}),...(s.method ? {method:s.method} : {})}))} : {}),coverage:bundle.coverage},4000)});
+    if (preparedBatched && Array.isArray(response?.judgments)) response.judgments=response.judgments.map(item=>cleanItem(item,bundle.sources.map(s=>s.id),`judgment:${item?.id}`));
+    if (preparedBatched && Array.isArray(response?.c5?.claims)) response.c5.claims=response.c5.claims.map(item=>cleanItem(item,bundle.sources.map(s=>s.id),`claim:${item?.id}`));
     if (JSON.stringify([snapshot,extracted])!==original) throw new Error('inputs_changed');
-    const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections}), replayArtifact={version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response)};
+    const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections}), replayArtifact={version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response),...(preparedBatched ? {diagnostics:clone(diagnostics)} : {})};
     if (encoder.encode(JSON.stringify(replayArtifact)).length > 256*1024) throw new Error('artifact_limit');
     stages.push({stage:'content',status:'completed',code:'judgments_validated'});
     return {status:'assessed',assessment,profile,replayArtifact,reason:null,stages};

@@ -458,3 +458,51 @@ test('cleaned HTML citations reach AI and validate late facts without parser com
  const result=await assessRetainedRubric({...f,calibrationApproved:true,allowance:{reserve:async()=>({accepted:true,duplicate:false})},AI:{async run(model,input){calls++;const payload=JSON.parse(input.messages[1].content);if(payload.source){inputSources.push(payload.source);return{response:{evidence:[],primaryEvidence:[]}};}return{response:{status:'ambiguous',category:null,evidence:[]}};}}});
  assert.equal(result.status,'unavailable');assert.ok(calls>0);assert.equal(inputSources.map(s=>s.text).join(''),html);assert.ok(inputSources.every(s=>s.kind==='html'&&s.preparedHtml));
 });
+
+test('prepared assessment retains independent judgments and diagnostics when proposals are invalid',async()=>{
+ const f=await fixture(),html='<main><h1>Solar kettle</h1><p>Six cups</p></main>';
+ const bytes=new TextEncoder().encode(html),outputSha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+ Object.assign(f.snapshot,{rawHtml:html,retrievalMethod:'browser_api_content',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:'retained/00000000-0000-4000-8000-000000000000/11111111-1111-4111-8111-111111111111/html',sourceSha256:'a'.repeat(64),sourceBytes:bytes.length+1,outputBytes:bytes.length,outputSha256},browser:{renderedHtml:html,initialExtracted:{},coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false}}});
+ f.extracted.productHtml.complete=false;
+ let identityInput;
+ const modelCall=async({input})=>{
+  const system=input.messages[0].content,p=JSON.parse(input.messages[1].content);
+  if(system.includes('Extract relevant exact quotations')) return {evidence:[{sourceId:p.sources[0].id,quote:'Solar kettle'},{sourceId:p.sources[0].id,quote:'Invented'}],primaryEvidence:[]};
+  if(system.includes('Identify only the primary')) { identityInput=p; return {status:'ambiguous',category:null,evidence:[]}; }
+  if(system.includes('Inspect this entire source')) return {sections:p.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:direct.map(id=>({id,status:'unknown',evidence:[]}))}))};
+  return {judgments:[{id:'C1.identity',status:'measured',fraction:1,reason:'Identity is present.',evidence:[{sourceId:'s1',quote:'Solar kettle'}]},{id:'C1.explanation',status:'measured',fraction:1,reason:'Unsupported.',evidence:[{sourceId:'s1',quote:'Six cups'},{sourceId:'s1',quote:'Invented'}]}],c5:{claims:[],comparisons:[]}};
+ };
+ const result=await assessRetainedRubric({...f,modelCall,calibrationApproved:true,AI:{run(){}},allowance:{reserve(){}}});
+ assert.equal(result.status,'assessed'); assert.equal(identityInput.observations.length,1);
+ assert.equal(result.assessment.findings['C1.identity'].fraction,1);
+ assert.equal(result.assessment.findings['C1.explanation'].status,'not_measured');
+ assert.equal(result.assessment.findings['C1.configuration'].status,'not_measured');
+ assert.equal(result.assessment.findings['C2.essential'].status,'not_measured');
+ assert.ok(result.replayArtifact.diagnostics.some(x=>x.context==='observation'));
+ assert.ok(result.replayArtifact.diagnostics.some(x=>x.context==='judgment:C1.explanation'));
+ const replay=await restoreRubricAssessment(f.snapshot,f.extracted,result.replayArtifact);
+ assert.deepEqual(replay.findings,result.assessment.findings);
+});
+
+test('prepared inspections cannot claim to inspect a source from another model batch',async()=>{
+ const f=await fixture(),html='<main><h1>Solar kettle</h1>'+(' '.repeat(18000))+'<p>Six cups</p></main>';
+ const bytes=new TextEncoder().encode(html),outputSha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+ Object.assign(f.snapshot,{rawHtml:html,retrievalMethod:'browser_api_content',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:'retained/00000000-0000-4000-8000-000000000000/11111111-1111-4111-8111-111111111111/html',sourceSha256:'a'.repeat(64),sourceBytes:bytes.length+1,outputBytes:bytes.length,outputSha256},browser:{renderedHtml:html,initialExtracted:{},coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false}}});
+ f.extracted.productHtml.complete=false; const bundle=await prepareAssessmentSources(f.snapshot,f.extracted),first=bundle.sources[0],second=bundle.sources[2];
+ assert.ok(second);
+ const modelCall=async({input})=>{
+  const system=input.messages[0].content,p=JSON.parse(input.messages[1].content);
+  if(system.includes('Extract relevant exact quotations')) return {evidence:[],primaryEvidence:[]};
+  if(system.includes('Identify only the primary')) return {status:'ambiguous',category:null,evidence:[]};
+  if(system.includes('Inspect this entire source')) {
+   if(!p.sources.some(s=>s.id===first.id)) return {sections:[]};
+   const checks=direct.map(id=>({id,status:id==='C1.explanation'?'present':'unknown',evidence:id==='C1.explanation'?[{sourceId:first.id,quote:'Solar kettle'}]:[]}));
+   return {sections:[{sourceId:first.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks},...p.sources.filter(s=>s.id!==first.id).map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:direct.map(id=>({id,status:'absent',evidence:[]}))})),{sourceId:second.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:direct.map(id=>({id,status:'absent',evidence:[]}))}]};
+  }
+  return {judgments:[{id:'C1.explanation',status:'measured',fraction:0,basis:'generic',reason:'Generic explanation',evidence:[{sourceId:first.id,quote:'Solar kettle'}]}],c5:{claims:[],comparisons:[]}};
+ };
+ const result=await assessRetainedRubric({...f,modelCall,calibrationApproved:true,AI:{run(){}},allowance:{reserve(){}}});
+ assert.equal(result.status,'assessed'); assert.equal(result.assessment.findings['C1.explanation'].status,'not_measured');
+ assert.ok(result.replayArtifact.diagnostics.some(x=>x.context==='inspection'&&x.sourceId===second.id&&x.reason==='source_not_in_batch'));
+ assert.equal(result.replayArtifact.inspections.some(x=>x.sourceId===second.id),false);
+});
