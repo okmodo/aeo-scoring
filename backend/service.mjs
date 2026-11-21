@@ -12,7 +12,7 @@ import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow } from './browser-workflow.mjs';
 import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
-import { PREPARED_ASSESSMENT_POLICY } from './prepared-assessment-consumer.mjs';
+import { PREPARED_ASSESSMENT_POLICY, preparedAssessmentPolicy, configuredAssessmentProvider } from './prepared-assessment-policy.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 
 const ROUTE = '/api/v1/audits';
@@ -116,8 +116,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + PREPARED_ASSESSMENT_POLICY : '') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false, policyVersion = PREPARED_ASSESSMENT_POLICY) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion : '') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -138,7 +138,7 @@ export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
   snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
-  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric, dispatchPreparation, continuationRequired = false,
+  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric, dispatchPreparation, continuationRequired = false, policyVersion = PREPARED_ASSESSMENT_POLICY,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -301,7 +301,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow)),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow), policyVersion),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
           ...(browserFlow ? {leaseMs:120000} : {}),
@@ -358,6 +358,8 @@ export function createAuditService({
 }
 
 export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID, requireBrowser = false } = {}) {
+  const provider = configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
+  if (!provider) return errorResponse(503,'service_unavailable');
   const db = env.AUDIT_DB;
   const accountId = env.AUDIT_BILLING_ACCOUNT_ID;
   const subscriptionId = env.AUDIT_BILLING_SUBSCRIPTION_ID;
@@ -374,8 +376,9 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     try { browserFlow = createBrowserContentWorkflow({db, binding:env.AUDIT_BROWSER, snapshots:snapshotStore, accountId, subscriptionId, token:analyticsToken}); }
     catch { /* Invalid browser capabilities fail closed below. */ }
   }
+  const policyVersion = preparedAssessmentPolicy(provider);
   const service = createAuditService({
-    store: db ? createStore(db) : null,
+    store: db ? createStore(db, {policyVersion}) : null, policyVersion,
     allowance: db && billingScopeConfigured ? (
       typeof analyticsToken === 'string' && analyticsToken
         ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })

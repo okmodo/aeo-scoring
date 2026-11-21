@@ -1,4 +1,5 @@
 import {createTerraByokProvider} from './terra-byok-provider.mjs';
+import {createGraniteProvider} from './granite-provider.mjs';
 import {createAnalyticsAllowanceGuard} from './analytics-allowance.mjs';
 import {createR2AllowanceGuard} from './allowance-r2.mjs';
 import {RESERVED_INVOCATION_CPU_MS} from './allowance-policy.mjs';
@@ -12,7 +13,7 @@ import {derivePreparedObservations} from './prepared-derived.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
 import {CONTENT_FACTS_RELEASE_ID} from './content-facts-runner.mjs';
 
-import {PREPARED_ASSESSMENT_POLICY} from './prepared-assessment-policy.mjs';
+import {PREPARED_ASSESSMENT_POLICY,preparedAssessmentPolicy,configuredAssessmentProvider} from './prepared-assessment-policy.mjs';
 export {PREPARED_ASSESSMENT_POLICY};
 const COSTS={requests:1,cpuMs:RESERVED_INVOCATION_CPU_MS,d1Reads:10000,d1Writes:200,d1StorageBytes:512*1024};
 const empty=()=>({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
@@ -27,10 +28,13 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
   modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
+  const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
+  if (!provider) return {status:'skipped',code:'invalid_assessment_provider'};
+  const policyVersion=preparedAssessmentPolicy(provider);
   const reservation='prepared-worker-'+crypto.randomUUID();
   const admitted=await allowance.reserve({id:reservation,costs:COSTS,now:now()}).catch(()=>null);
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',code:'usage_admission_denied'};
-  let grant,input,report,audit;const jobs=givenJobs??createPreparedAssessmentJobs(db,{now}),store=createStore(db),pipeline=createPipelineState({db,auditId,now});
+  let grant,input,report,audit;const jobs=givenJobs??createPreparedAssessmentJobs(db,{now}),store=createStore(db,{policyVersion}),pipeline=createPipelineState({db,auditId,now});
   const snapshots=givenSnapshots??createSnapshotStore({db,bucket:env.AUDIT_SNAPSHOTS,allowance:createR2AllowanceGuard(db,config),now});
   const record=async(stage,status,code)=>{const items=pipeline.summary().stages;if(!items.some(x=>x.stage===stage&&x.code===code)&&items.length<11)await pipeline.record(stage,status,code);};
   const persist=async(kind,artifact)=>{try{await snapshots.saveAssessment({auditId,kind,artifact});}catch(error){if(error.code!=='snapshot_exists')throw error;const stored=await snapshots.readAssessment(auditId,kind);if(JSON.stringify(stored)!==JSON.stringify(artifact))throw Object.assign(Error('Conflicting retained assessment'),{code:'assessment_artifact_conflict'});}};
@@ -56,9 +60,9 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     // Retained assessment artifacts are immutable and scoped to the audit, not
     // to the job policy. A fresh cache key creates a new audit for this policy;
     // never reuse an older audit's profile or facts for a different policy.
-    const prior=await db.prepare('SELECT 1 FROM prepared_assessment_jobs WHERE audit_id=?1 AND policy_version<>?2 LIMIT 1').bind(auditId,PREPARED_ASSESSMENT_POLICY).first();
+    const prior=await db.prepare('SELECT 1 FROM prepared_assessment_jobs WHERE audit_id=?1 AND policy_version<>?2 LIMIT 1').bind(auditId,policyVersion).first();
     if(prior)return{status:'skipped',code:'prior_assessment_policy'};
-    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion:PREPARED_ASSESSMENT_POLICY,leaseMs:45000});
+    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion,leaseMs:45000});
     if(!grant)return{status:'skipped',code:'assessment_not_claimed'};
     if(audit.status==='incomplete') {
       const reset=await db.prepare(`UPDATE audits SET status='pending',report_json=NULL,error_json=NULL,completed_at=NULL,cache_until=NULL WHERE id=?1 AND status='incomplete' AND expires_at>?2
@@ -72,7 +76,10 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     await jobs.assertLease(grant);
     if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
     await record('category','running','classification_started');
-    const result=await engine({grant,jobs,preparedInput:input,AI:modelProvider??createTerraByokProvider(env,{fetch:fetchImpl}),allowance,now,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
+    const AI = modelProvider ?? (provider === 'granite'
+      ? createGraniteProvider(env,{fetch:fetchImpl,allowance,now})
+      : createTerraByokProvider(env,{fetch:fetchImpl}));
+    const result=await engine({grant,jobs,preparedInput:input,AI,provider,allowance,now,calibrationApproved:activated(env),onProfile:async profile=>{await persist('profile',profile);await record('category','completed','profile_retained');await record('content','running','facts_preparing');}});
     if(result.status==='yield') {await jobs.release(grant,{state:'waiting',code:'checkpoint_yield',retryAt:now()});return{status:'yield',code:'checkpoint_yield'};}
     if(result.status!=='completed') {
       const code=safeCode(result);await publish(code);
@@ -98,9 +105,11 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
 // Existing hourly maintenance provides recovery without adding a new product.
 export async function recoverPreparedAudits({env,now=Date.now,allowance:givenAllowance,jobs:givenJobs}={}) {
   if(!env?.AUDIT_DB)return{status:'skipped',auditIds:[]};
+  const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
+  if (!provider) return {status:'skipped',auditIds:[]};
   const allowance=givenAllowance??createAnalyticsAllowanceGuard(env.AUDIT_DB,scope(env)),id='prepared-recovery-'+crypto.randomUUID();
   const admitted=await allowance.reserve({id,costs:{...COSTS,d1StorageBytes:4096},now:now()}).catch(()=>null);
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',auditIds:[]};
-  try{const jobs=givenJobs??createPreparedAssessmentJobs(env.AUDIT_DB,{now});const ready=await jobs.discover({policyVersion:PREPARED_ASSESSMENT_POLICY,limit:3,now:now()});await jobs.cleanup();return{status:'ready',auditIds:ready.map(x=>x.auditId)};}
+  try{const jobs=givenJobs??createPreparedAssessmentJobs(env.AUDIT_DB,{now});const ready=await jobs.discover({policyVersion:preparedAssessmentPolicy(provider),limit:3,now:now()});await jobs.cleanup();return{status:'ready',auditIds:ready.map(x=>x.auditId)};}
   finally{await allowance.settle?.({id,now:now()}).catch(()=>{});}
 }
