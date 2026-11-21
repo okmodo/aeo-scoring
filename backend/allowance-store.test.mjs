@@ -54,15 +54,15 @@ test('other usage counts, limits cannot change within a cycle, and bad amounts f
   assert.equal((await reserve(changed, 'd', { requests: 1 })).reason, 'cycle_mismatch');
 });
 
-test('existing default cycles use the configured 10,000 ceiling without resetting usage', async () => {
-  assert.equal(INCLUDED_CEILINGS.aiNeurons, 10_000);
-  for (const previousLimit of [6_000, 8_000]) {
+test('existing default cycles use the configured 50,000 ceiling without resetting usage', async () => {
+  assert.equal(INCLUDED_CEILINGS.aiNeurons, 50_000);
+  for (const previousLimit of [6_000, 10_000]) {
     const e = evidence();
     const { db, guard: legacy, sqlite } = setup(e, { ...INCLUDED_CEILINGS, aiNeurons: previousLimit });
     assert.equal((await reserve(legacy, 'held', { aiNeurons: 4_000 })).accepted, true);
     assert.equal((await reserve(legacy, 'completed', { aiNeurons: 2_000 })).accepted, true);
     assert.equal((await legacy.settle({ id: 'completed', costs: { aiNeurons: 2_000 }, now })).accepted, true);
-    if (previousLimit === 8_000) {
+    if (previousLimit === 10_000) {
       const defaultCycle = setup();
       assert.equal((await reserve(defaultCycle.guard, 'initial', { requests: 1 })).accepted, true);
       const { policy_version: configuredVersion } = defaultCycle.sqlite.prepare('SELECT policy_version FROM allowance_cycles').get();
@@ -71,10 +71,10 @@ test('existing default cycles use the configured 10,000 ceiling without resettin
     }
     e.usage.aiNeurons = 2_000;
     const updated = createTestAllowanceGuard(db, { accountId: 'account', evidence: e });
-    assert.equal((await reserve(updated, 'reaches-cap', { aiNeurons: 4_000 })).accepted, true);
+    assert.equal((await reserve(updated, 'reaches-cap', { aiNeurons: INCLUDED_CEILINGS.aiNeurons - 6_000 })).accepted, true);
     assert.equal((await reserve(updated, 'over-cap', { aiNeurons: 1 })).reason, 'allowance_exhausted');
     assert.equal(JSON.parse(sqlite.prepare('SELECT allocations_json FROM allowance_cycles').get().allocations_json).aiNeurons, previousLimit);
-    assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 8_000);
+    assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, INCLUDED_CEILINGS.aiNeurons - 2_000);
     assert.equal(sqlite.prepare("SELECT amount FROM allowance_settled_v2 WHERE metric='aiNeurons'").get().amount, 2_000);
   }
 });

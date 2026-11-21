@@ -1,11 +1,11 @@
-import { ALLOWANCE_VERSION, INCLUDED_CEILINGS, MAX_EVIDENCE_AGE_MS, METRICS, WORKERS_AI_INCLUDED_NEURONS, validAmounts } from './allowance-policy.mjs';
+import { ALLOWANCE_VERSION, INCLUDED_CEILINGS, MAX_EVIDENCE_AGE_MS, METRICS, validAmounts } from './allowance-policy.mjs';
 
 const columns = ['requests', 'cpu_ms', 'd1_reads', 'd1_writes', 'd1_storage_bytes', 'ai_neurons'];
 const deny = reason => ({ accepted: false, reason });
 const canonical = values => JSON.stringify(Object.fromEntries(METRICS.map(key => [key, values[key] ?? 0])));
 const priorDefaultAllocation = canonical({ ...INCLUDED_CEILINGS, aiNeurons: 6_000 });
 const configuredCycleVersion = 2;
-const cycleMaximum = { ...INCLUDED_CEILINGS, aiNeurons: WORKERS_AI_INCLUDED_NEURONS };
+const cycleMaximum = { ...INCLUDED_CEILINGS, aiNeurons: Number.MAX_SAFE_INTEGER };
 function matchesDefaultCycle(allocationJson) {
   try {
     const stored = JSON.parse(allocationJson);

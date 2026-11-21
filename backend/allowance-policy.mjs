@@ -1,15 +1,14 @@
 import workersAi from '../config/workers-ai-allowance.json' with { type: 'json' };
 
-// Workers AI uses its included daily allowance. Other Workers Paid limits are 60%.
+// Workers AI uses its configured daily ceiling. Other Workers Paid limits are 60%.
 // Bytes use decimal GB. These are admission ceilings, not account-wide guarantees.
 export const ALLOWANCE_VERSION = 1;
 export const MAX_INVOCATION_CPU_MS = 1000;
 // Keep the prior admission reservation because Cloudflare may allow occasional
 // overruns of the configured invocation limit.
 export const RESERVED_INVOCATION_CPU_MS = 2000;
-export const WORKERS_AI_INCLUDED_NEURONS = 10_000;
 const dailyNeuronLimit = workersAi.dailyNeuronLimit;
-if (!Number.isSafeInteger(dailyNeuronLimit) || dailyNeuronLimit < 1 || dailyNeuronLimit > WORKERS_AI_INCLUDED_NEURONS) {
+if (!Number.isSafeInteger(dailyNeuronLimit) || dailyNeuronLimit < 1) {
   throw new Error('invalid_workers_ai_daily_neuron_limit');
 }
 export const INCLUDED_CEILINGS = Object.freeze({

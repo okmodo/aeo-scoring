@@ -1,6 +1,6 @@
 # Included-allowance operating policy
 
-The user authorized Workers Paid on November 10, 2026, with the $5/month subscription as the only approved Cloudflare charge. Usage overages, paid add-ons, prepaid credits and external paid APIs are not authorized. Workers AI uses the included daily allowance of 10,000 neurons. Other resources retain the 60% operating limits. This supersedes the earlier Free-only deployment requirement; all other scope and release controls remain. Do not change unrelated Cloudflare services or the frontend.
+The user authorized Workers Paid on November 10, 2026, with the $5/month subscription as the only approved Cloudflare charge. Usage overages, paid add-ons, prepaid credits and external paid APIs are not authorized. The Granite pull request proposes a 50,000-neuron daily ceiling. Cloudflare includes 10,000 per UTC day and meters usage above that level. The proposed value has not been deployed. Other resources retain the 60% operating limits. This supersedes the earlier Free-only deployment requirement; all other scope and release controls remain. Do not change unrelated Cloudflare services or the frontend.
 
 | Metric | Included allowance | Maximum operating allocation |
 | --- | ---: | ---: |
@@ -9,7 +9,7 @@ The user authorized Workers Paid on November 10, 2026, with the $5/month subscri
 | D1 rows read | 25,000,000,000 per billing cycle | 15,000,000,000 |
 | D1 rows written | 50,000,000 per billing cycle | 30,000,000 |
 | D1 storage | 5 GB | 3 GB |
-| Workers AI | 10,000 neurons per UTC day | 10,000 neurons |
+| Workers AI | 10,000 neurons per UTC day | 50,000 neurons proposed |
 
 These are shared account ceilings, not independent allocations for every project. Subtract other account usage and conservative local reservations; an application may receive a smaller allocation. Storage is a stock and must not reset when the billing cycle changes. AI resets at UTC midnight. Monthly counters use the actual subscription period, not calendar-month assumptions. Storage uses decimal bytes conservatively. Workers/Pages builds, logs, traces and every other product need their own reviewed allowance before activation; they are not implicitly authorized by this table. Runtime logs/traces are disabled in the proposed audit configs. OpenAI, Browser Run, R2, Queues, Workflows, Durable Objects, paid model variants and other integrations remain inactive for this change.
 
