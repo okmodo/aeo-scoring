@@ -15,3 +15,12 @@ export function syntheticProvider(request){
  else response={judgments:[...direct,...slots.map(x=>x.id)].map(id=>id==='C1.identity'?{id,status:'measured',fraction:1,reason:'Primary product identity is stated.',evidence:[{sourceId:'s1',quote:'Solar kettle'}]}:{id,status:'not_measured',fraction:null,reason:'Insufficient evidence',evidence:[]}),c5:{claims:[],comparisons:[]}};
  return{response,usage:{prompt_tokens:100,completion_tokens:100}};
 }
+// One bad finding must not discard the independent, valid identity finding.
+export function mixedProvider(request){
+ const result=syntheticProvider(request);
+ if(Array.isArray(result.response.judgments)) {
+  const bad=result.response.judgments.find(x=>x.id==='C1.explanation');
+  Object.assign(bad,{status:'measured',fraction:1,reason:'Unsupported explanation.',evidence:[{sourceId:'s1',quote:'A quote absent from the source'}]});
+ }
+ return result;
+}

@@ -1,0 +1,21 @@
+{
+  "reviewer": "independent integration and process reviewer",
+  "scope": "Final process, plan history, handoff, documentation and retained constraints; independent technical findings are recorded in review-integration.json.",
+  "observations": [
+    "Branch codex/per-finding-evidence has separate plan commit 5d9b817 before implementation; the committed plan has not been modified in the working tree.",
+    "Tracked changes inspected are within the plan's backend, documentation and evaluation scope. Untracked deliverables were also checked against that scope; the fresh continuation temporary SQLite file must be removed from deliverables.",
+    "No changes were observed to allowance policy, snapshot retention, rubric configuration, dependencies or Worker configuration. The existing CPU cap is 1000 ms, response timeout 15000 ms and retention 24 hours. Prepared policy v2 isolates new submissions, while the documentation correctly states older audits are unchanged.",
+    "The recorded fresh-agent continuation reports a previously completed checkpoint unchanged, one new reservation per new call, no original HTML or inputs reads, supported identity earning three points, unsupported explanation unmeasured, and a null incomplete-report score. The fixture and adapters are synthetic.",
+    "The handoff and documentation disclose remaining model-call and budget limitations and reserve production activation for separate authorization. PR and hosted CI remain outstanding."
+  ],
+  "commandsRun": [
+    "git branch --show-current",
+    "git log -5 --oneline",
+    "git show --stat --oneline 5d9b817",
+    "git diff --name-only 269bb77883b308d3d6339a2cefc2aba267b50894",
+    "git diff --check",
+    "git diff -- config package.json package-lock.json wrangler.jsonc backend/allowance-policy.mjs backend/snapshot-store.mjs",
+    "node --test backend/prepared-finding-evidence.test.mjs backend/ai-rubric-assessment.test.mjs backend/browser-prepared-roundtrip.test.mjs backend/prepared-assessment-consumer.test.mjs (43 passed, prior technical recheck)"
+  ],
+  "limits": "Full evaluator preflight was reported by the task owner as passing all nine commands but rejected source binding because files changed concurrently; this reviewer did not independently inspect a successful source-bound record. Final evaluation must run on frozen committed sources, followed by hosted CI and any required independent review gate. No live calls or deployment were performed or authorized for this review."
+}

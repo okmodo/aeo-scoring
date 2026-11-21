@@ -1,0 +1,43 @@
+{
+  "reviewer": "independent integration reviewer",
+  "scope": "Core prepared assessor and prepared evidence resolver; excludes integration changes authored by this reviewer.",
+  "findings": [
+    {
+      "severity": "high",
+      "location": "backend/ai-rubric-assessment.mjs support inspection collection",
+      "finding": "A malformed prepared support inspection response with missing or non-array sections is spread without validation. When a claim inventory is present, this throws and discards independent valid findings.",
+      "status": "fixed by pipeline implementer; rechecked"
+    },
+    {
+      "severity": "high",
+      "location": "backend/ai-rubric-assessment.mjs category proposal",
+      "finding": "A truthy non-array slots value or null slot throws while filtering conditional slots before profile validation, aborting the assessment instead of retaining independent findings.",
+      "status": "fixed by pipeline implementer; rechecked"
+    },
+    {
+      "severity": "high",
+      "location": "backend/ai-rubric-assessment.mjs resolve helper",
+      "finding": "The resolver requires an array, but malformed or missing observation or category evidence is passed directly and throws, aborting the assessment rather than retaining independent findings.",
+      "status": "fixed by pipeline implementer; rechecked"
+    },
+    {
+      "severity": "high",
+      "location": "backend/ai-rubric-assessment.mjs resolve helper",
+      "finding": "Structured field references are reduced to sourceId and quote, losing their typed field path, value and match provenance from replay and final evidence. Replay then cannot independently revalidate the field association.",
+      "status": "fixed by pipeline implementer; rechecked"
+    },
+    {
+      "severity": "high",
+      "location": "backend/prepared-assessment-consumer.mjs profile persistence",
+      "finding": "Null profiles from invalid categories were passed to immutable artifact storage and failed, discarding independent valid findings. The integration owner corrected this and added a targeted consumer regression.",
+      "status": "fixed in integration"
+    }
+  ],
+  "commands": [
+    "node --test backend/prepared-assessment-consumer.test.mjs",
+    "node --test backend/browser-prepared-roundtrip.test.mjs backend/prepared-assessment-engine.test.mjs backend/prepared-assessment-jobs.test.mjs",
+    "node --test backend/prepared-finding-evidence.test.mjs backend/ai-rubric-assessment.test.mjs backend/browser-prepared-roundtrip.test.mjs backend/prepared-assessment-consumer.test.mjs"
+  ],
+  "limits": "Static review and targeted offline tests; no independent review of integration changes, live calls, hosted CI, or model quality.",
+  "finalRecheck": "Rechecked guards for malformed reference lists, profile slots and support sections; typed field paths and values are retained and revalidated. The mixed evidence roundtrip retains the supported identity and withholds the invalid finding. All 43 tests in the final targeted command passed."
+}

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Prepared-data rubric assessment with per-finding evidence validation",
+  "state": "Implementation, independent Terra reviews and genuine fresh-agent continuation complete. Full source-bound evaluation and hosted CI are next. Not merged or deployed.",
+  "decisions": [
+    "Use verified ready prepared data only; reject observation references independently and invalidate only the affected final finding when its evidence cannot validate.",
+    "Keep category-specific groups unmeasured if category/profile is invalid; preserve supported independent direct findings and replay diagnostics.",
+    "Keep rubric weights, eligibility, absence and visibility safeguards; safe normalization preserves source text and typed paths are revalidated.",
+    "New submissions use prepared-assessment-v2; leave older audits unchanged, as user requested."
+  ],
+  "constraints": [
+    "Keep 60% account allowance guards, conservative per-call reservations, uncertain holds, 1000ms CPU configuration, 15-second response wait and 24-hour retention.",
+    "No frontend, shared dependency or unrelated Cloudflare service changes; no live calls in CI.",
+    "Large pages still need many model stages; a timeout or exhausted budget before final judgment still prevents assessment. Offline fixtures are not live calibration."
+  ],
+  "completed": [
+    "Separate plan commit 5d9b817 before implementation in codex/per-finding-evidence isolated worktree.",
+    "Terra implementation of resolver, per-finding assessor, replay diagnostics and policy isolation with real SQLite/R2-compatible regression.",
+    "Independent cross-review covered resolver/core and consumer integration; reported malformed-response and typed-provenance issues were corrected.",
+    "Fresh Terra agent resumed exported SQLite/R2 state after one completed checkpoint: no duplicate call/reservation, four new calls, supported identity preserved, unsupported explanation unmeasured, diagnostics retained and incomplete report score null."
+  ],
+  "remaining": [
+    "Run final source-bound checks, open PR and verify hosted CI.",
+    "Production rollout and fresh real-page verification require merge/deployment authorization."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change per-finding-evidence --base 269bb77883b308d3d6339a2cefc2aba267b50894",
+    "EVALUATION_BASE=269bb77883b308d3d6339a2cefc2aba267b50894 npm run ci:gate",
+    "node evals/changes/per-finding-evidence/export-state.mjs"
+  ]
+}

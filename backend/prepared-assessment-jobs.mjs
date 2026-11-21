@@ -71,7 +71,7 @@ export function createPreparedAssessmentJobs(db, {now = Date.now} = {}) {
     },
     async discover({policyVersion,limit=25,now:at=clock()}={}) {
       if(!name(policyVersion)||!Number.isSafeInteger(limit)||limit<1||limit>100||!Number.isSafeInteger(at)||at<0) throw fail('job_invalid');
-      const r=await db.prepare(`SELECT r.audit_id AS auditId,r.prepared_hash AS preparedHash FROM retained_snapshots r JOIN audits a ON a.id=r.audit_id AND a.status IN ('pending','incomplete') WHERE r.state='ready' AND r.prepared_state='ready' AND r.created_at<=?1 AND r.expires_at>?1 AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND (j.state IN ('complete','failed','uncertain') OR (j.state='running' AND j.lease_until>?1) OR (j.state IN ('waiting','budget_wait') AND j.retry_at>?1))) ORDER BY r.created_at LIMIT ?2`).bind(at,limit,policyVersion).all();
+      const r=await db.prepare(`SELECT r.audit_id AS auditId,r.prepared_hash AS preparedHash FROM retained_snapshots r JOIN audits a ON a.id=r.audit_id AND a.status IN ('pending','incomplete') WHERE r.state='ready' AND r.prepared_state='ready' AND r.created_at<=?1 AND r.expires_at>?1 AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs old WHERE old.audit_id=r.audit_id AND old.policy_version<>?3) AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND (j.state IN ('complete','failed','uncertain') OR (j.state='running' AND j.lease_until>?1) OR (j.state IN ('waiting','budget_wait') AND j.retry_at>?1))) ORDER BY r.created_at LIMIT ?2`).bind(at,limit,policyVersion).all();
       return r.results;
     },
     async cleanup() {

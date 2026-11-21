@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import{DatabaseSync}from'node:sqlite';import{readFileSync}from'node:fs';
 import{createSnapshotStore}from'./snapshot-store.mjs';import{runPreparedAudit}from'./prepared-assessment-consumer.mjs';
 import{OPEN_RUBRIC_RELEASE_ID}from'./ai-rubric-assessment.mjs';import{CONTENT_FACTS_RELEASE_ID}from'./content-facts-runner.mjs';import{PIPELINE_VERSION}from'./pipeline-state.mjs';
-import{preparedHtml,originalHtml,syntheticProvider}from'./fixtures/prepared-consumer/provider.mjs';
+import{preparedHtml,originalHtml,mixedProvider}from'./fixtures/prepared-consumer/provider.mjs';
 const id='22222222-2222-4222-8222-222222222222',url='https://example.com/kettle',time=Date.UTC(2026,10,20),encoder=new TextEncoder();
 const hash=async b=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',b))].map(x=>x.toString(16).padStart(2,'0')).join('');
 test('prepared-ready alone reaches actual assessor checkpoints, retained findings and deterministic report',async()=>{
@@ -14,11 +14,12 @@ test('prepared-ready alone reaches actual assessor checkpoints, retained finding
  await snapshots.preserve({auditId:id,snapshot:{url,status:200,contentType:'text/html',retrievalMethod:'browser_api_content',captureVersion:'browser-content-v2'},extracted:{pending:true},rawHtml:encoder.encode(originalHtml)});
  const row=sql.prepare('SELECT * FROM retained_snapshots').get(),clean=encoder.encode(preparedHtml),original=encoder.encode(originalHtml);
  await snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html:preparedHtml,preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:row.object_prefix+'/html',sourceSha256:await hash(original),sourceBytes:original.length,expiresAt:row.expires_at,preparedAt:time,outputBytes:clean.length,outputSha256:await hash(clean)}}});
- let modelCalls=0;const env={AUDIT_DB:db,AUDIT_AI:{run:async(_model,input)=>{modelCalls++;return syntheticProvider(input)}},AUDIT_RUBRIC_RELEASE:OPEN_RUBRIC_RELEASE_ID,AUDIT_CONTENT_RELEASE:CONTENT_FACTS_RELEASE_ID,AUDIT_PIPELINE_RELEASE:PIPELINE_VERSION};
+ let modelCalls=0;const env={AUDIT_DB:db,AUDIT_AI:{run:async(_model,input)=>{modelCalls++;return mixedProvider(input)}},AUDIT_RUBRIC_RELEASE:OPEN_RUBRIC_RELEASE_ID,AUDIT_CONTENT_RELEASE:CONTENT_FACTS_RELEASE_ID,AUDIT_PIPELINE_RELEASE:PIPELINE_VERSION};
  let result;for(let step=0;step<20;step++){const before=modelCalls;result=await runPreparedAudit({env,auditId:id,now:()=>time,allowance,snapshots});assert.ok(modelCalls-before<=1);if(result.status!=='yield')break;}
  assert.equal(result.status,'completed',JSON.stringify({result,jobs:sql.prepare('SELECT state,code FROM prepared_assessment_jobs').all(),calls:modelCalls}));assert.ok(modelCalls>=5);assert.ok(settlements.some(x=>x.costs?.aiNeurons>0));
  const final=sql.prepare('SELECT * FROM audits').get(),report=JSON.parse(final.report_json);assert.equal(final.status,'incomplete');assert.equal(report.score,null);
- const facts=await snapshots.readAssessment(id,'facts');assert.equal(facts.judgments.judgments.find(x=>x.id==='C1.identity').fraction,1);
+ const facts=await snapshots.readAssessment(id,'facts');assert.equal(facts.judgments.judgments.find(x=>x.id==='C1.identity').fraction,1);assert.ok(facts.diagnostics.some(x=>x.context==='judgment:C1.explanation'));
+ assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.find(x=>x.id==='C1.identity').fraction,1);assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.find(x=>x.id==='C1.explanation').status,'not_measured');
  assert.equal(sql.prepare('SELECT inputs_state FROM retained_snapshots').get().inputs_state,null);assert.equal(sql.prepare('SELECT state FROM prepared_assessment_jobs').get().state,'complete');
  assert.ok(reads.length>0&&reads.every(k=>!k.endsWith('/html')&&!k.endsWith('/inputs')));assert.ok(reservations.filter(x=>x.costs.aiNeurons>0).length===modelCalls);
 });

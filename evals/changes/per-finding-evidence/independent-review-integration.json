@@ -1,0 +1,21 @@
+{
+  "reviewer": "independent agent (resolver author; not integration author)",
+  "base": "5d9b817ca79fa1173ea15415fc9d7458600ce532",
+  "reviewedState": "Uncommitted integration changes in prepared-assessment-policy.mjs, prepared-assessment-jobs.mjs, prepared-assessment-jobs.test.mjs, prepared-assessment-consumer.mjs, prepared-assessment-consumer.test.mjs and fixtures/prepared-consumer/provider.mjs. Other implementation, final evaluation and hosted CI were outside this review.",
+  "result": "accepted_with_limitations",
+  "findings": [],
+  "observations": [
+    "The policy version participates in the existing browser audit cache key, and recovery and the consumer exclude audits with a prior-policy job to protect audit-scoped immutable assessment artifacts.",
+    "The consumer retains replay facts and a partial assessment when the engine returns no validated category profile; a targeted test verifies the persisted report.",
+    "Existing lease and checkpoint controls continue to constrain publication and replay. The scoped diff does not modify allowances, CPU, model timeout, frontend, or dependencies."
+  ],
+  "verification": [
+    {"command":"node --test backend/prepared-assessment-consumer.test.mjs backend/prepared-assessment-jobs.test.mjs","result":"12 passed, 0 failed"},
+    {"command":"Reviewed scoped integration diff, cache-key references, prior-policy recovery, plan and AGENTS.md","result":"No actionable findings in the reviewed scope"}
+  ],
+  "limitations": [
+    "Pending or incomplete audits with a prior-policy job are deliberately excluded from new-policy recovery and remain in their existing state until expiry; a fresh audit is required for the new policy.",
+    "Offline mocked and SQLite tests only. No live model calls, deployment, production data, or hosted CI were checked.",
+    "This review does not independently review the resolver, assessor/pipeline implementation, fresh-agent exit, final source-bound evaluation, or subsequent edits. The reviewer authored the resolver."
+  ]
+}
