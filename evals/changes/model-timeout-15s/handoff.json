@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "task": "15-second model response timeout",
+  "state": "Timeoutconstant andfaketimerregressionsimplemented;independentreview/fullsourceboundeval/CI/rollout follow.",
+  "decisions": [
+    "Waitup to15000mspermodelcall, clippedbyshorterremaininginvocationdeadline.",
+    "Keepmodel/input/outputcaps/admission/providerusage settlement anduncertaincheckpointnoretrybehavior unchanged.",
+    "One12.688secondlocalRESTresponsemotivateschange;15secondsisnotaguaranteeforallcallsorvalidatedmodelquotations."
+  ],
+  "constraints": [
+    "Keep60%includedallowanceceilings/CPU1000,frontend/unrelatedservices unchanged.",
+    "No newliveinference requiredforthisconstantchange; noreset/retryofolduncertainjobs."
+  ],
+  "completed": [
+    "Immutableplan7f39beb beforeimplementationinisolatedcodexbranch.",
+    "Threefaketimertestspassed:12.688sresponse,exact15sdeadline,shorter4sdeadline;successfulusagesettlesandtimeoutsretainholds."
+  ],
+  "remaining": [
+    "IndependentTerrareview,allplannedchecks/sourceboundgate andhostedCI.",
+    "Authorizedbackendrolloutmustpreserveactivebindings/secrets/releases/monitoring/hourlycron/CPU1000; verifyartifacthashanddeployment."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change model-timeout-15s --base 892f49c041367214482ca58485f368ffef0167e6",
+    "EVALUATION_BASE=892f49c041367214482ca58485f368ffef0167e6 npm run ci:gate"
+  ]
+}

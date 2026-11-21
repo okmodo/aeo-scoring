@@ -2,6 +2,7 @@ import rubric from '../config/rubric.v2.json' with { type: 'json' };
 import { providerNeurons } from './allowance-reconciliation.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
 
+export const MODEL_RESPONSE_TIMEOUT_MS = 15000;
 export const OPEN_RUBRIC_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 export const OPEN_RUBRIC_CALIBRATION_APPROVED = false;
 export const OPEN_RUBRIC_VERSION = '1';
@@ -271,7 +272,7 @@ export async function callRubricModel({AI,allowance,now,input,remaining}) {
   const cost=Math.ceil((size+2048)*26668/1e6+input.max_tokens*204805/1e6)+64, id=crypto.randomUUID();
   const admission=await allowance.reserve({id,costs:{aiNeurons:cost},now:now()}); if (!admission?.accepted || admission.duplicate!==false) throw new Error('admission_failed');
   if (remaining()<=0) throw new Error('deadline');
-  let timer; let result; try { result=await Promise.race([Promise.resolve().then(()=>AI.run(OPEN_RUBRIC_MODEL,input)).catch(error=>{throw new Error('model_provider_failure',{cause:error});}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('model_timeout')),Math.min(12000,remaining()));})]); } finally {clearTimeout(timer);}
+  let timer; let result; try { result=await Promise.race([Promise.resolve().then(()=>AI.run(OPEN_RUBRIC_MODEL,input)).catch(error=>{throw new Error('model_provider_failure',{cause:error});}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('model_timeout')),Math.min(MODEL_RESPONSE_TIMEOUT_MS,remaining()));})]); } finally {clearTimeout(timer);}
   const usage=providerNeurons(result,26668,204805); if (Number.isSafeInteger(usage)) try {await allowance.settle?.({id,costs:{aiNeurons:usage}});} catch {}
   const content=result?.response ?? result?.choices?.[0]?.message?.content ?? result;
   let serialized; try { serialized=typeof content==='string' ? content : JSON.stringify(content); } catch (error) { throw new Error('model_output_invalid',{cause:error}); }

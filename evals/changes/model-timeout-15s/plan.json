@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "id": "model-timeout-15s",
+  "task": "Increase the existing model response wait from12to15seconds without changing CPU,usage,model,input,output,or retry behavior.",
+  "scope": [
+    "backend/ai-rubric-assessment.mjs",
+    "backend/prepared-model-timeout.test.mjs",
+    "docs/prepared-ai-consumer.md",
+    "evals/changes/model-timeout-15s/**"
+  ],
+  "nonGoals": [
+    "No60%allowance/CPU1000change,frontend/shareddependencies/unrelatedservicechanges.",
+    "No newmodel,extraautomaticretry,changedrubricor fabricatedvalidatedmodelresult.",
+    "Do notoverride shorterremaininginvocationdeadline orreleaseuncertainmodelusageholds."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Use15000msmodelwaitorremaininginvocationtime,whichevershorter. Preserveper-calladmission,knownproviderusage settlement,model_timeout diagnostics,anduncertaincheckpoint noretry behavior.",
+      "verification": "automated",
+      "evidence": "Frozenclocktestsfor12.688s response,15s deadlineandshorterremainingdeadline;existingassessor/engine regressions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separateplanbeforeimplementation,isolatedcodexbranch,sourceboundevaluation,independentTerrareview,hostedCIbeforeauthorizedrollout. No liveinference inCI.",
+      "verification": "human",
+      "evidence": "Gitplanhistory,review/handoff/run/trace,PR/CI anddeploymentreadback."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Smallnamedconstantandone timerreferencechange;reusetheexistingguard/assessorandtestfaketimerswithoutsloworpaidcalls.",
+      "verification": "human",
+      "evidence": "Diffandindependentreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Timeoutconstantonly;preparedartifact/jobs/checkpoints/resumabilityprotocolunchanged, coveredbyexistingfresh-agentexit."
+  },
+  "context": "Userexplicitlyrequests15seconds afterlocalexactfirstpreparedFahertyrequest respondedHTTP200in12.688seconds. Timingisonesampleanddoesnotprove15seccoversallrequestsorvalidatemodelquotes. Existinglimitsandfrontendboundarypersist."
+}
