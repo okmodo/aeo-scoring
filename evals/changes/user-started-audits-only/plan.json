@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "id": "user-started-audits-only",
+  "task": "Disable automatic audit recovery in production while retaining hourly 24-hour retention cleanup and usage safeguards; AI work must originate in an explicit user audit submission.",
+  "scope": [
+    "backend/service.mjs",
+    "backend/browser-prepared-service.test.mjs",
+    "backend/browser-workflow-service.test.mjs",
+    "backend/prepared-maintenance.test.mjs",
+    "docs/prepared-ai-consumer.md",
+    "docs/user-started-audits-only.md",
+    "evals/changes/user-started-audits-only/**"
+  ],
+  "nonGoals": [
+    "Keep user-triggered audit capture/preparation/private bounded continuation, scoring, model timeout30s,60%ceilings,CPU1000 and24hretention.",
+    "No frontend/shareddeps/unrelatedCloudflarechanges; keep hourlycronratherthandisablingcleanup. No liveinferenceinCI.",
+    "Do not release uncertain provider usage holds, retry old model calls, delete unexpired retained data or invent live process cancellation."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Hourly maintenance never discovers or dispatches page preparation or AI assessment, evenwithready/waiting/expiredleaseauditrowsandAUDIT_SELFbound. PublicreportGET doesnotstartAI; explicitPOSTstillstartsnormaluserauditcontinuation.",
+      "verification": "automated",
+      "evidence": "Frozen realSQLitefixtures withpendingready/preparedjobsand RPC/AI traps; userPOSTdispatchandGETnondispatchregressions."
+    },
+    {
+      "id": "O2",
+      "description": "Retain guarded watchdog and hourly retention cleanup including boundedexpiredpreparedcheckpoints/jobs, snapshots/pipeline/workrecords. Cleanupreservation conservatively coversaddeddeletes; no60%ceilingchange. Deniedadmissionperformsno cleanup ordispatch.",
+      "verification": "automated",
+      "evidence": "RealSQL/R2-compatibleexpiryfixtures, boundeddeleteandunexpiredpreservation, reserve-before-work/noAI/denial assertions."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Separateplanbeforeimplementation,isolatedcodexbranch,independentTerrareview,genuinefreshagentmaintenancecontinuation,sourceboundevaluation/hostedCI. Useroperationaldisableinstructionauthorizes reviewedproductionrolloutafterchecks; preserveconfigandverifyactiveartifactandcleanupcron.",
+      "verification": "human",
+      "evidence": "Gitplanhistory, review/handoff/exit/run/trace, PR/CI andscopeddeploymentreadback."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Remove scheduledauditdispatch atsource, reuseboundedjobcleanup, avoidnewproducts/schedules/retries andadditionalAIcalls. Recordcustomerimpact of noautomaticresume.",
+      "verification": "human",
+      "evidence": "Diff, cleanupreservationboundandindependentreview."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run test:feasibility",
+    "npm run test:browser-build",
+    "npm run test:preview",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "exitTest": {
+    "required": true,
+    "reason": "Changingrecoveryworkflowrequiresfreshagenttoresumemaintenancefromexportedpending/expiredstate andprovecleanupcontinueswithoutAIorRPCdispatch."
+  },
+  "context": "User explicitly asks disableautomaticauditrecovery, retain24hcleanup/usageguards, noAIwithoutuserstartinganaudit. Lastlivecheckfoundnoactive/waitingjobsortrackedbrowsersessions; hourlycron0 * * * * remainsconfigured. DeployprojectbackendonlyafterCI/review."
+}

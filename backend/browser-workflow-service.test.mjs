@@ -42,12 +42,13 @@ test('scheduled watchdog reserves usage and limits hourly pruning to 100 expired
   const {runScheduledMaintenance}=await import('./service.mjs');
   const sqlite=new DatabaseSync(':memory:');
   sqlite.exec('CREATE TABLE browser_audit_work (audit_id TEXT PRIMARY KEY,state TEXT,created_at INTEGER,expires_at INTEGER); CREATE TABLE audit_pipeline_state (audit_id TEXT PRIMARY KEY,expires_at INTEGER); CREATE TABLE retained_snapshots (audit_id TEXT PRIMARY KEY,state TEXT,expires_at INTEGER)');
+  sqlite.exec("CREATE TABLE prepared_assessment_jobs(expires_at INTEGER); CREATE TABLE prepared_assessment_checkpoints(expires_at INTEGER)");
   const insert=sqlite.prepare('INSERT INTO browser_audit_work VALUES (?, ?, ?, ?)');
   for(let i=0;i<101;i++) insert.run(String(i),'finished',now-1000,now-1);
   insert.run('active','capturing',now,now+1000);
   const db={prepare(sql){return{bind(...args){const stmt=sqlite.prepare(sql);return{run:async()=>({meta:{changes:Number(stmt.run(...args).changes)}})};}};}};
   const events=[];let allow=true;
-  const allowance={reserve:async({costs})=>{events.push('reserve');assert.ok(costs.d1Writes>=100);return{accepted:allow,duplicate:false};},settle:async()=>events.push('settle')};
+  const allowance={reserve:async({costs})=>{events.push('reserve');assert.ok(costs.d1Writes>=100);if(events.filter(e=>e==='reserve').length===2)assert.equal(costs.d1Writes,500);return{accepted:allow,duplicate:false};},settle:async()=>events.push('settle')};
   const options={now,allowance,makeWorkflow:()=>({watchdog:async()=>events.push('watchdog')}),makeSnapshots:()=>({cleanup:async()=>{events.push('cleanup');return{deleted:0};}})};
   const env={AUDIT_DB:db,AUDIT_USAGE_READ_TOKEN:'fixture',AUDIT_BROWSER:{},AUDIT_SNAPSHOTS:{}};
   const hour=Date.UTC(2026,10,17,10,0);

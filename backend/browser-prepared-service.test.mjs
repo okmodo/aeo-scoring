@@ -27,6 +27,7 @@ test('capture notifies only after stored work is ready and polling never starts 
   await task;
   assert.deepEqual(events,['ready','dispatch']);
   assert.equal((await handle(new Request('https://worker/api/v1/audits/'+id),options)).status,200);
+  assert.deepEqual(events,['ready','dispatch']);
 });
 
 test('preparation releases its claim after failure', async () => {
@@ -45,7 +46,7 @@ test('private continuation has no HTTP route', async () => {
   }
 });
 
-test('hourly maintenance rediscovers missed preparation without a poll', async () => {
+test('maintenance does not resume ready preparation or prepared audits', async () => {
   const {DatabaseSync}=await import('node:sqlite');
   const {runScheduledMaintenance}=await import('./service.mjs');
   const sqlite=new DatabaseSync(':memory:');
@@ -59,9 +60,9 @@ test('hourly maintenance rediscovers missed preparation without a poll', async (
   const events=[];
   const db={prepare(sql){return{bind(...args){const s=sqlite.prepare(sql);return{all:async()=>({results:s.all(...args)})};}};}};
   const allowance={reserve:async()=>{events.push('reserve');return{accepted:true,duplicate:false};},settle:async()=>events.push('settle')};
-  const env={AUDIT_DB:db,AUDIT_USAGE_READ_TOKEN:'fixture',AUDIT_SELF:{prepare:async value=>events.push(value),assess:async()=>{} }};
+  const env={AUDIT_DB:db,AUDIT_USAGE_READ_TOKEN:'fixture',AUDIT_SELF:{prepare:async()=>events.push('prepare'),assess:async()=>events.push('assess')},AUDIT_AI:{run:()=>events.push('model')}};
   await runScheduledMaintenance({scheduledTime:now+60000},env,{now,allowance});
-  assert.deepEqual(events,['reserve','settle',id,'reclaim']);
+  assert.deepEqual(events,['reserve','settle']);
   sqlite.close();
 });
 

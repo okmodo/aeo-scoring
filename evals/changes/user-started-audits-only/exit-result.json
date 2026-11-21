@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "user-started-audits-only",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "agentId": "user_only_fresh_exit",
+  "status": "passed",
+  "observedContinuation": "Allowed: reserve-watchdog-100, watchdog, settle-watchdog, reserve-cleanup-500, object-delete, sql-write, sql-write, sql-write, sql-write, sql-write, settle-cleanup; expired rows in all five tables and expired objects deleted, ready audit rows and objects unchanged. Denied watchdog: reserve-watchdog-100; denied cleanup: reserve-watchdog-100, watchdog, settle-watchdog, reserve-cleanup-500; both left database and objects unchanged. AUDIT_SELF accesses, RPC, model calls, and page reads: 0.",
+  "limitations": "Offline fixture with private SQLite copy, in-memory R2 and injected allowance/watchdog adapters; no live services or browser calls.",
+  "sourceDigest": "af2510f8c0684f1b1eb0370c880ea33bd155234423caae2cf6b252e9a1746b07",
+  "exportSha256": "357f83907ad45302801e27590729321f5ab31bd2cc2eeb033eae67a51d5d8a28",
+  "interruptionPoint": "Before hourly maintenance, with an expired retained page and an unexpired ready audit waiting for recovery"
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "task": "Cleanup reservation and bounded-pruning regression alignment",
+  "state": "Expanded regression passes six focused tests; independent review and final source-bound evaluation/CI pending.",
+  "decisions": [
+    "Require500D1writes for the expanded cleanup deletion set and retain2000CPUreservation; no ceiling or productioncode change.",
+    "Verify explicit delete bounds and complete prune order; keep denied-admission and unknown-failure safeguards unchanged."
+  ],
+  "constraints": [
+    "Scope is the existing retained-pipeline test and this evaluation directory only.",
+    "Keep original acceptance plan immutable; main change requires genuine fresh-agent maintenance replay."
+  ],
+  "completed": [
+    "Separate plan c08d080 before editing the additional fixture.",
+    "All6 retained-pipeline tests pass with expanded mock and expected cleanup sequence."
+  ],
+  "remaining": [
+    "Independent review of changed expectations, source-bound test:feasibility and hostedCI."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change maintenance-cleanup-bound --base 7feb5c9b6639ec6dc8c83fba548d60472840737d"
+  ]
+}
