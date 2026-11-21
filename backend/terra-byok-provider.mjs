@@ -18,7 +18,16 @@ async function readBounded(response) {
   try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); } catch { throw failure(); }
 }
 const defaultDiagnostic = detail => console.error('terra_provider_failure', detail);
-export function createTerraByokProvider(env, { fetch: fetchImpl = globalThis.fetch, onDiagnostic = defaultDiagnostic } = {}) {
+function classifyFetchError(error) {
+  if (!(error instanceof TypeError)) return 'unknown';
+  const message = typeof error.message === 'string' ? error.message : '';
+  if (/illegal invocation|incompatible receiver/i.test(message)) return 'illegal_invocation';
+  if (/invalid (?:header|character)|headers? (?:name|value)/i.test(message)) return 'invalid_header';
+  if (/i\/o context|different (?:request|context)|outside.*request/i.test(message)) return 'io_context';
+  if (/fetch failed|network|connection|socket/i.test(message)) return 'network';
+  return 'unknown';
+}
+export function createTerraByokProvider(env, { fetch: fetchImpl = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : globalThis.fetch, onDiagnostic = defaultDiagnostic } = {}) {
   const diagnostic = detail => { try { if (typeof onDiagnostic === 'function') onDiagnostic(detail); } catch {} };
   return { async run(model, input, { signal } = {}) {
     if (model !== config.model || !input || typeof input !== 'object' || Array.isArray(input) || typeof env?.AUDIT_AI_GATEWAY_TOKEN !== 'string' || !env.AUDIT_AI_GATEWAY_TOKEN.trim() || typeof fetchImpl !== 'function') { diagnostic({phase:'validation'}); throw failure(); }
@@ -29,7 +38,7 @@ export function createTerraByokProvider(env, { fetch: fetchImpl = globalThis.fet
     const body = JSON.stringify({ model: config.model, input: params });
     if (encoder.encode(body).length > config.requestMaxBytes) throw new Error('request_limit');
     let response;
-    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'error' }); } catch { diagnostic({phase:signal?.aborted ? 'abort' : 'fetch'}); throw failure(); }
+    try { response = await fetchImpl(config.endpoint, { method: 'POST', headers: { Authorization: `Bearer ${env.AUDIT_AI_GATEWAY_TOKEN.trim()}`, 'Content-Type': 'application/json', 'cf-aig-gateway-id': config.gatewayId, 'cf-aig-no-wholesale': 'true', 'cf-aig-max-attempts': '1' }, body, signal, redirect: 'error' }); } catch (error) { diagnostic(signal?.aborted ? {phase:'abort'} : {phase:'fetch',class:classifyFetchError(error)}); throw failure(); }
     if (!response?.ok) {
       const detail = {phase:'http'};
       if (Number.isInteger(response?.status) && response.status >= 100 && response.status <= 599) detail.status = response.status;

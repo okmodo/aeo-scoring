@@ -60,3 +60,21 @@ test('reasoning metadata is ignored while completed assistant text remains requi
  await assert.rejects(createTerraByokProvider({}, {fetch:async()=>{calls++;return reply(success)},onDiagnostic:d=>diagnostics.push(d)}).run(config.model,input),{message:'model_provider_failure'});
  assert.equal(calls,0);assert.deepEqual(diagnostics,[{phase:'validation'}]);
 });
+test('default fetch keeps its receiver and token whitespace is normalized',async()=>{
+ const original=globalThis.fetch; let seen;
+ try {
+  globalThis.fetch=async function(url,options){assert.equal(this,globalThis);seen={url,options};return reply(success);};
+  const provider=createTerraByokProvider({AUDIT_AI_GATEWAY_TOKEN:'  token\r\n'});
+  assert.deepEqual(await provider.run(config.model,input),{response:'{"ok":true}'});
+  assert.equal(seen.options.headers.Authorization,'Bearer token');
+ } finally { globalThis.fetch=original; }
+});
+test('fetch exception classifications are closed and never disclose error content',async()=>{
+ const cases=[[new TypeError('Illegal invocation: secret merchant'),'illegal_invocation'],[new TypeError('Invalid header value secret'),'invalid_header'],[new TypeError('different request I/O context secret'),'io_context'],[new TypeError('fetch failed secret'),'network'],[new TypeError('secret merchant'),'unknown'],[new Error('Illegal invocation secret'),'unknown']];
+ for(const [error,expected] of cases){
+  const diagnostics=[];let calls=0;
+  const provider=createTerraByokProvider({AUDIT_AI_GATEWAY_TOKEN:'secret'},{fetch:async()=>{calls++;throw error;},onDiagnostic:value=>diagnostics.push(value)});
+  await assert.rejects(provider.run(config.model,input),{message:'model_provider_failure'});
+  assert.equal(calls,1);assert.deepEqual(diagnostics,[{phase:'fetch',class:expected}]);assert.doesNotMatch(JSON.stringify(diagnostics),/secret|merchant/);
+ }
+});
