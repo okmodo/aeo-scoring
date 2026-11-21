@@ -62,6 +62,13 @@ test('existing default cycles use the configured 10,000 ceiling without resettin
     assert.equal((await reserve(legacy, 'held', { aiNeurons: 4_000 })).accepted, true);
     assert.equal((await reserve(legacy, 'completed', { aiNeurons: 2_000 })).accepted, true);
     assert.equal((await legacy.settle({ id: 'completed', costs: { aiNeurons: 2_000 }, now })).accepted, true);
+    if (previousLimit === 8_000) {
+      const defaultCycle = setup();
+      assert.equal((await reserve(defaultCycle.guard, 'initial', { requests: 1 })).accepted, true);
+      const { policy_version: configuredVersion } = defaultCycle.sqlite.prepare('SELECT policy_version FROM allowance_cycles').get();
+      defaultCycle.sqlite.close();
+      sqlite.prepare('UPDATE allowance_cycles SET policy_version=?').run(configuredVersion);
+    }
     e.usage.aiNeurons = 2_000;
     const updated = createTestAllowanceGuard(db, { accountId: 'account', evidence: e });
     assert.equal((await reserve(updated, 'reaches-cap', { aiNeurons: 4_000 })).accepted, true);
@@ -70,6 +77,14 @@ test('existing default cycles use the configured 10,000 ceiling without resettin
     assert.equal(sqlite.prepare("SELECT amount FROM allowance_pending_v2 WHERE metric='aiNeurons'").get().amount, 8_000);
     assert.equal(sqlite.prepare("SELECT amount FROM allowance_settled_v2 WHERE metric='aiNeurons'").get().amount, 2_000);
   }
+});
+
+test('a custom AI-only allocation stays fixed within the billing cycle', async () => {
+  const e = evidence();
+  const { db, guard } = setup(e, { ...INCLUDED_CEILINGS, aiNeurons: 1_000 });
+  assert.equal((await reserve(guard, 'initial', { aiNeurons: 100 })).accepted, true);
+  const standard = createTestAllowanceGuard(db, { accountId: 'account', evidence: e });
+  assert.equal((await reserve(standard, 'override', { aiNeurons: 1 })).reason, 'cycle_mismatch');
 });
 
 test('daily AI resets while storage reservations persist and overlapping cycles fail', async () => {
