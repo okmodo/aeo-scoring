@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runPreparedAssessmentStep,planPreparedAssessment} from './prepared-assessment-engine.mjs';
+import {runPreparedAssessmentStep} from './prepared-assessment-engine.mjs';
 
 function store() {
  const rows=new Map();
@@ -53,11 +53,11 @@ test('prepared batches resume through a sparse validated assessment using only c
  assert.equal(result.status,'completed');assert.equal(result.assessment.findings['C1.identity'].status,'not_measured');assert.ok(result.replayArtifact);
 });
 
-test('planner verifies prepared input and reports finite conservative ceilings',async()=>{
- const preparedInput=await preparedFixture(), plan=await planPreparedAssessment({preparedInput});
- assert.ok(plan.sourceBytes>=preparedInput.snapshot.rawHtml.length);assert.ok(plan.potentialCalls>0);assert.equal(plan.requestBytesLimit,61440);assert.equal(plan.maxCalls,128);assert.ok(plan.neuronsUpperBound>=plan.neuronsPerCallUpperBound);
- await assert.rejects(()=>planPreparedAssessment({preparedInput:{...preparedInput,snapshot:{...preparedInput.snapshot,preprocessing:undefined}}}));
- assert.equal((await runPreparedAssessmentStep({grant,jobs:store(),preparedInput:{snapshot:{},extracted:{}}})).code,'invalid_prepared_input');
+test('unverified prepared input fails before model execution',async()=>{
+ const preparedInput=await preparedFixture();
+ preparedInput.snapshot.preprocessing=undefined;
+ const result=await runPreparedAssessmentStep({grant,jobs:store(),preparedInput,AI:{run(){assert.fail('Unexpected inference');}}});
+ assert.equal(result.code,'invalid_prepared_input');
 });
 
 test('timeout and invalid model JSON are distinct and are not retried',async t=>{

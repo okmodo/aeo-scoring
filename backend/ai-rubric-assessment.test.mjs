@@ -1,3 +1,4 @@
+import { serializeTerraRequest } from './terra-byok-provider.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prepareAssessmentSources} from './assessment-sources.mjs';
@@ -485,17 +486,21 @@ test('prepared assessment retains independent judgments and diagnostics when pro
 });
 
 test('prepared inspections cannot claim to inspect a source from another model batch',async()=>{
- const f=await fixture(),html='<main><h1>Solar kettle</h1>'+(' '.repeat(18000))+'<p>Six cups</p></main>';
+ const f=await fixture(),html='<main><h1>Solar kettle</h1>'+(' '.repeat(80000))+'<p>Six cups</p></main>';
  const bytes=new TextEncoder().encode(html),outputSha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
  Object.assign(f.snapshot,{rawHtml:html,retrievalMethod:'browser_api_content',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:'retained/00000000-0000-4000-8000-000000000000/11111111-1111-4111-8111-111111111111/html',sourceSha256:'a'.repeat(64),sourceBytes:bytes.length+1,outputBytes:bytes.length,outputSha256},browser:{renderedHtml:html,initialExtracted:{},coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false}}});
- f.extracted.productHtml.complete=false; const bundle=await prepareAssessmentSources(f.snapshot,f.extracted),first=bundle.sources[0],second=bundle.sources[2];
+ f.extracted.productHtml.complete=false; const bundle=await prepareAssessmentSources(f.snapshot,f.extracted),first=bundle.sources[0],second=bundle.sources.at(-1);
  assert.ok(second);
  const modelCall=async({input})=>{
   const system=input.messages[0].content,p=JSON.parse(input.messages[1].content);
   if(system.includes('Extract relevant exact quotations')) return {evidence:[],primaryEvidence:[]};
   if(system.includes('Identify only the primary')) return {status:'ambiguous',category:null,evidence:[]};
   if(system.includes('Inspect this entire source')) {
+   const wireBytes=Buffer.byteLength(serializeTerraRequest(input.messages));
+   assert.ok(wireBytes<=61440);
    if(!p.sources.some(s=>s.id===first.id)) return {sections:[]};
+   assert.ok(wireBytes>18000,'batch uses the request envelope budget');
+   assert.ok(!p.sources.some(s=>s.id===second.id));
    const checks=direct.map(id=>({id,status:id==='C1.explanation'?'present':'unknown',evidence:id==='C1.explanation'?[{sourceId:first.id,quote:'Solar kettle'}]:[]}));
    return {sections:[{sourceId:first.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks},...p.sources.filter(s=>s.id!==first.id).map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:direct.map(id=>({id,status:'absent',evidence:[]}))})),{sourceId:second.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:[],checks:direct.map(id=>({id,status:'absent',evidence:[]}))}]};
   }
