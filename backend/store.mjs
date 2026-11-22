@@ -20,7 +20,7 @@ function audit(row, now, preparedPending = false) {
   };
 }
 
-export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY}={}) {
+export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY,queueEnabled=false}={}) {
   return {
     async reserve({ id, url, cacheKey, rateKey, now, expiresAt, windowStart, windowEnd, limit, globalLimit, leaseMs = LEASE_MS }) {
       if (![now, expiresAt, windowStart, windowEnd, limit, globalLimit].every(Number.isSafeInteger) ||
@@ -52,6 +52,10 @@ export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY}={}) {
       const row = await db.prepare('SELECT * FROM audits WHERE id = ?1 AND expires_at >= ?2').bind(id, now).first();
       let preparedPending=false;
       if(row?.status==='pending' && now>=row.created_at+(row.lease_ms??LEASE_MS)) {
+        if(queueEnabled) {
+          const job=await db.prepare('SELECT state, expires_at FROM audit_queue_jobs WHERE audit_id=?1').bind(id).first();
+          if(job) return audit(row,now,job.state!=='complete' && now<job.expires_at);
+        }
         try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
           WHERE r.audit_id=?1 AND r.state='ready' AND r.created_at<=?2 AND r.expires_at>?2
           AND (r.prepared_state='ready' OR EXISTS(SELECT 1 FROM browser_audit_work w WHERE w.audit_id=r.audit_id AND w.state='assessing' AND w.expires_at>?2))

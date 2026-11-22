@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "audit": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "url": "https://example.com/test",
+    "cache_key": "fixture",
+    "status": "pending",
+    "created_at": 1000,
+    "expires_at": 86401000
+  },
+  "job": {
+    "audit_id": "22222222-2222-4222-8222-222222222222",
+    "phase": "assess",
+    "sequence": 3,
+    "state": "dispatching",
+    "owner": null,
+    "lease_until": null,
+    "code": null,
+    "updated_at": 1010,
+    "expires_at": 1201000
+  },
+  "unacknowledged": {
+    "auditId": "22222222-2222-4222-8222-222222222222",
+    "sequence": 2
+  },
+  "calls": 1,
+  "time": 1010
+}

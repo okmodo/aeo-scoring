@@ -116,8 +116,8 @@ function hex(bytes) {
   return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false, policyVersion = PREPARED_ASSESSMENT_POLICY) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion : '') + ':' + url)));
+async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false, policyVersion = PREPARED_ASSESSMENT_POLICY, queued = false) {
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion + (queued ? ':queue-v1' : '') : '') + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {
@@ -138,7 +138,7 @@ export function createAuditService({
   store, allowance, egress, secret, HTMLRewriter, AI, allowsProduct, normalizeUrl = normalizeTarget, now = Date.now, retrievePage = retrieve,
   extractPage = extract, scorePage = scoreAudit, contentCalibrationApproved = CONTENT_FACTS_CALIBRATION_APPROVED,
   snapshotStore, pipelineDb, requireSnapshots = false, assessContent = assessWithContentFacts,
-  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric, dispatchPreparation, continuationRequired = false, policyVersion = PREPARED_ASSESSMENT_POLICY,
+  browserFlow, requireBrowser = false, openRubricEnabled = false, assessRubric = assessRetainedRubric, dispatchPreparation, continuationRequired = false, policyVersion = PREPARED_ASSESSMENT_POLICY, enqueueAudit, queueRequired = false,
 }) {
   async function admit(costs) {
     if (typeof allowance?.reserve !== 'function') return 'unavailable';
@@ -292,7 +292,7 @@ export function createAuditService({
           error.message = 'This preview accepts only its approved demo product URL.';
           return json({ version: '1', error }, 400);
         }
-        if (!store || !egress?.fetch || (!browserFlow && typeof HTMLRewriter !== 'function') || typeof defer !== 'function' || (requireBrowser && !browserFlow) || (continuationRequired && !dispatchPreparation) ||
+        if (!store || !egress?.fetch || (!browserFlow && typeof HTMLRewriter !== 'function') || typeof defer !== 'function' || (requireBrowser && !browserFlow) || (continuationRequired && !dispatchPreparation && !enqueueAudit) || (queueRequired && !enqueueAudit) ||
             typeof secret !== 'string' || secret.length < 32 || typeof address !== 'string' ||
             !address || address.length > 64) return errorResponse(503, 'service_unavailable');
         const admission = await admit(INVOCATION_COSTS);
@@ -301,7 +301,7 @@ export function createAuditService({
         const createdAt = now();
         const windowStart = Math.floor(createdAt / HOUR) * HOUR;
         const result = await store.reserve({
-          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow), policyVersion),
+          id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow), policyVersion, Boolean(enqueueAudit)),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
           expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
           ...(browserFlow ? {leaseMs:120000} : {}),
@@ -310,6 +310,15 @@ export function createAuditService({
         if (result.kind === 'cached') {
           if (encoding.encode(JSON.stringify(result.audit)).byteLength > REPORT_LIMIT) return errorResponse(503, 'service_unavailable');
           return json(assessment(result.audit, true), 200);
+        }
+        if (enqueueAudit) {
+          let dispatched;
+          try { dispatched = await enqueueAudit(result.audit.id); } catch { /* The audit is closed below. */ }
+          if (!dispatched?.accepted) {
+            await store.finish(result.audit.id, {status:'unable_to_assess',error:'service_unavailable',completedAt:now()});
+            return dispatched?.reason === 'allowance_exhausted' ? errorResponse(429,'rate_limited') : errorResponse(503,'service_unavailable');
+          }
+          return json(assessment(result.audit), 202, {location: ROUTE+'/'+result.audit.id});
         }
         let grant;
         try { grant = browserFlow ? await browserFlow.prepare(result.audit) : undefined; }
@@ -339,7 +348,7 @@ export function createAuditService({
         if (!admission?.id) return admissionError(admission);
         reservationId = admission.id;
         const audit = await store.get(id, now());
-        if (browserFlow && !continuationRequired && !dispatchPreparation && audit?.status==='pending' && typeof defer==='function' && await browserFlow.claim(id)) {
+        if (browserFlow && !enqueueAudit && !continuationRequired && !dispatchPreparation && audit?.status==='pending' && typeof defer==='function' && await browserFlow.claim(id)) {
           backgroundDone = false;
           defer(run(audit,{resumeBrowser:true}).catch(()=>{}).finally(async()=>{backgroundDone=true;await settleCompleted();}));
         }
@@ -357,7 +366,7 @@ export function createAuditService({
   };
 }
 
-export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID, requireBrowser = false } = {}) {
+export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRESS, allowsProduct, normalizeUrl, retrievePage, contentCalibrationApproved = env.AUDIT_CONTENT_RELEASE === CONTENT_FACTS_RELEASE_ID, requireBrowser = false, enqueueAudit, queueRequired = false } = {}) {
   const provider = configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
   if (!provider) return errorResponse(503,'service_unavailable');
   const db = env.AUDIT_DB;
@@ -378,7 +387,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
   }
   const policyVersion = preparedAssessmentPolicy(provider);
   const service = createAuditService({
-    store: db ? createStore(db, {policyVersion}) : null, policyVersion,
+    store: db ? createStore(db, {policyVersion,queueEnabled:queueRequired}) : null, policyVersion,
     allowance: db && billingScopeConfigured ? (
       typeof analyticsToken === 'string' && analyticsToken
         ? createAnalyticsAllowanceGuard(db, { accountId, subscriptionId, token: analyticsToken })
@@ -390,7 +399,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     snapshotStore, pipelineDb: db, requireSnapshots: Boolean(env.AUDIT_AI_GATEWAY_TOKEN) || requireBrowser, browserFlow, requireBrowser,
     secret: env.AUDIT_RATE_SECRET, AI: createTerraByokProvider(env), HTMLRewriter: globalThis.HTMLRewriter,
     dispatchPreparation: env.AUDIT_SELF ? id => env.AUDIT_SELF.prepare(id) : undefined,
-    continuationRequired: requireBrowser,
+    continuationRequired: requireBrowser, enqueueAudit, queueRequired,
   });
   return service(request, {
     defer: ctx.waitUntil.bind(ctx),
@@ -456,7 +465,7 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
   } finally { await allowance.settle?.({id}); }
 }
 
-export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now() }) {
+export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now(), queueEnabled = false }) {
   const id = `snapshot-cleanup-${crypto.randomUUID()}`;
   const admission = await allowance.reserve({ id, now,
     // Up to 10 snapshot rows, 100 pipeline rows, 100 work rows,
@@ -468,6 +477,11 @@ export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now =
   // Work records contain no browser allowance holds; those are managed only by the watchdog.
   await db.prepare("DELETE FROM browser_audit_work WHERE audit_id IN (SELECT w.audit_id FROM browser_audit_work w WHERE w.expires_at <= ?1 AND NOT (w.state IN ('ready','assessing') AND EXISTS (SELECT 1 FROM retained_snapshots s WHERE s.audit_id=w.audit_id AND s.state='ready' AND s.expires_at>?1)) LIMIT 100)").bind(now).run();
   await createPreparedAssessmentJobs(db, {now:() => now}).cleanup();
+  if(queueEnabled) {
+    // Keep queue state until the audit's retention ends, including its deadline.
+    await db.prepare('DELETE FROM audit_queue_jobs WHERE audit_id IN (SELECT audit_id FROM audit_queue_jobs WHERE expires_at <= ?1 ORDER BY expires_at LIMIT 25)').bind(now-DAY).run();
+    await db.prepare('DELETE FROM audit_queue_reservations WHERE rowid IN (SELECT rowid FROM audit_queue_reservations WHERE day_start <= ?1 LIMIT 50)').bind(now-35*DAY).run();
+  }
   await allowance.settle?.({ id });
   return { status: 'completed', ...result };
 }
@@ -495,7 +509,7 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
     if (new Date(scheduledTime).getUTCMinutes() !== 0 || !env.AUDIT_SNAPSHOTS) return;
     const snapshots = makeSnapshots({ db, bucket: env.AUDIT_SNAPSHOTS,
       allowance: createR2AllowanceGuard(db, scope) });
-    await cleanupRetainedSnapshots({ db, snapshots, allowance, now });
+    await cleanupRetainedSnapshots({db,snapshots,allowance,now,queueEnabled:env.AUDIT_QUEUE_MODE==='enabled'});
 }
 
 export default {
