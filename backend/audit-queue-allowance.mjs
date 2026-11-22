@@ -11,10 +11,14 @@ async function json(fetcher, url, token, body) {
   const controller = new AbortController();
   let timer;
   const work = async () => {
-    const response = await fetcher(url, {method: body ? 'POST' : 'GET', redirect:'error', signal:controller.signal,
+    const response = await fetcher(url, {method: body ? 'POST' : 'GET', redirect:'manual', signal:controller.signal,
       headers:{Authorization:`Bearer ${token}`, Accept:'application/json', ...(body ? {'Content-Type':'application/json'} : {})},
       ...(body ? {body:JSON.stringify(body)} : {})});
-    if (!response.ok || !response.body?.getReader) throw Error('unavailable');
+    if (!response.ok) {
+      void response.body?.cancel().catch(() => {});
+      throw Error('unavailable');
+    }
+    if (!response.body?.getReader) throw Error('unavailable');
     const reader = response.body.getReader(), chunks = [];
     let length = 0;
     while (true) {
