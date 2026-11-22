@@ -1,0 +1,11 @@
+{
+  "version":1,"id":"queue-collector-runtime","task":"Use a Workers-compatible fail-closed redirect mode for Queue billing analytics.",
+  "scope":["backend/audit-queue-allowance.mjs","backend/prepared-queue-collector-native.test.mjs","evals/changes/queue-collector-runtime/**"],
+  "nonGoals":["No weakening of cost admission, frontend changes, provider changes, CPU or usage limit changes, or unrelated services."],
+  "outcomes":[{"id":"O1","description":"Queue analytics can query billing and Queue operations on native workerd while denying redirects without following them.","verification":"automated","evidence":"Native workerd collects account metrics from frozen loopback responses and observes one request when redirected."}],
+  "process":[{"id":"P1","description":"Track the scoped runtime correction in a separately planned and independently reviewed PR.","verification":"human","evidence":"Git plan, test record and review."}],
+  "styleEfficiency":[{"id":"E1","description":"Use the established manual Worker redirect pattern and retain existing fail-closed checks.","verification":"human","evidence":"Scoped diff."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run test:browser-build","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"The analytics transport correction leaves checkpoint and queue continuation protocols unchanged."},
+  "context":"Live PR 60 submission was denied before capture because workerd does not implement Fetch redirect:error."
+}
