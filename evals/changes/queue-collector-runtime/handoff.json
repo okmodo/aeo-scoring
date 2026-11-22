@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Repair the Queue usage collector's native Workers redirect option.",
+  "state":"Follow-up to the deployed PR 60 queue rollout. After failed Faherty admission, the active audit Worker was restored to the PR 60 build with queue mode disabled.",
+  "decisions":["Use manual redirects and fail closed on every non-2xx response. The collector does not send its authorization header to a redirect target.","Retain the existing cost guard, queue consumer settings, both additive migrations, and existing Worker settings."],
+  "constraints":["Keep the 1,000 ms CPU cap and all current usage limits. Leave the frontend and unrelated services alone."],
+  "completed":["Focused native regression and full repository verification on the follow-up."],
+  "remaining":["A separately authorized merge and activation is needed, followed by a fresh Faherty audit."],
+  "resumeCommands":["npm run evaluate -- --change queue-collector-runtime --base 07312065fa2e8fb5794a8b314855636fddd2edfc","EVALUATION_BASE=07312065fa2e8fb5794a8b314855636fddd2edfc npm run ci:gate"]
+}
