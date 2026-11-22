@@ -3,6 +3,7 @@
   "gatewayEndpoint": "https://api.cloudflare.com/client/v4/accounts/495d788b994070692b54c46945a5e577/ai-gateway/gateways/default",
   "model": "@cf/ibm-granite/granite-4.0-h-micro",
   "gatewayId": "default",
+  "timeoutMs": 60000,
   "maxTokens": 8192,
   "temperature": 0,
   "requestMaxBytes": 61440,

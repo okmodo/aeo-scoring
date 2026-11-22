@@ -15,3 +15,20 @@ test('no response times out at 30 seconds and leaves uncertain usage unsettled',
  const pending=callRubricModel(f.args);const rejected=assert.rejects(pending,{message:'model_timeout'}).then(()=>{finished=true});await nextTurn();
  t.mock.timers.tick(29999);await nextTurn();assert.equal(finished,false);t.mock.timers.tick(1);await rejected;assert.equal(f.settlements.length,0);assert.equal(f.signal().aborted,true);
 });
+
+test('Granite accepts a response at 59.5 seconds',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const f=fixture(),pending=callRubricModel({...f.args,provider:'granite',stage:'extraction'});
+ await nextTurn();t.mock.timers.tick(59500);f.respond();
+ assert.deepEqual(await pending,{evidence:[]});
+ assert.equal(f.signal().aborted,false);
+});
+test('Granite aborts exactly at 60 seconds and leaves usage unsettled',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const f=fixture();
+ const pending=callRubricModel({...f.args,provider:'granite',stage:'extraction'});
+ const rejected=assert.rejects(pending,{message:'model_timeout'});
+ await nextTurn();t.mock.timers.tick(59999);assert.equal(f.signal().aborted,false);
+ t.mock.timers.tick(1);await rejected;
+ assert.equal(f.signal().aborted,true);assert.equal(f.settlements.length,0);
+});

@@ -1,5 +1,5 @@
 import {createTerraByokProvider} from './terra-byok-provider.mjs';
-import {createGraniteProvider} from './granite-provider.mjs';
+import {createGraniteProvider,GRANITE_MODEL_CONFIG} from './granite-provider.mjs';
 import {createAnalyticsAllowanceGuard} from './analytics-allowance.mjs';
 import {createR2AllowanceGuard} from './allowance-r2.mjs';
 import {RESERVED_INVOCATION_CPU_MS} from './allowance-policy.mjs';
@@ -62,7 +62,9 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     // never reuse an older audit's profile or facts for a different policy.
     const prior=await db.prepare('SELECT 1 FROM prepared_assessment_jobs WHERE audit_id=?1 AND policy_version<>?2 LIMIT 1').bind(auditId,policyVersion).first();
     if(prior)return{status:'skipped',code:'prior_assessment_policy'};
-    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion,leaseMs:45000});
+    // Keep ownership through the model deadline and bounded storage overhead.
+    const leaseMs = provider==='granite' ? GRANITE_MODEL_CONFIG.timeoutMs+30000 : 45000;
+    grant=await jobs.claim({auditId,preparedHash:ready.prepared_hash,policyVersion,leaseMs});
     if(!grant)return{status:'skipped',code:'assessment_not_claimed'};
     if(audit.status==='incomplete') {
       const reset=await db.prepare(`UPDATE audits SET status='pending',report_json=NULL,error_json=NULL,completed_at=NULL,cache_until=NULL WHERE id=?1 AND status='incomplete' AND expires_at>?2

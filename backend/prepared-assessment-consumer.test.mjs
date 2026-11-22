@@ -7,6 +7,7 @@ import {createPreparedAssessmentJobs} from './prepared-assessment-jobs.mjs';
 import {createStore} from './store.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
 import {CONTENT_FACTS_RELEASE_ID} from './content-facts-runner.mjs';
+import {AUDIT_QUEUE_LEASE_MS} from './audit-queue.mjs';
 import {PIPELINE_VERSION} from './pipeline-state.mjs';
 const auditId='11111111-1111-4111-8111-111111111111',hash='a'.repeat(64),url='https://example.com/product',time=Date.UTC(2026,10,20);
 function fixture(state='ready'){
@@ -66,4 +67,20 @@ test('an unvalidated category still retains the replay and partial assessment',a
  const result=await runPreparedAudit({...f,auditId,engine:async()=>({status:'completed',profile:null,replayArtifact:{profile:null,diagnostics:[{reason:'invalid_identity'}]},assessment}),scorePage:(_s,_e,options)=>({status:'incomplete',score:null,coverage:{limitations:[]},finding:options?.aiAssessment?.findings['C1.identity']})});
  assert.equal(result.status,'completed');assert.equal(f.artifacts.has('profile'),false);assert.equal(f.artifacts.get('facts').profile,null);
  assert.equal(JSON.parse(f.sql.prepare('SELECT report_json FROM audits').get().report_json).finding.fraction,1);
+});
+
+test('Granite holds its checkpoint lease beyond the extended model wait',async()=>{
+ const f=fixture();let at=time;
+ try {
+   const result=await runPreparedAudit({...f,env:{...f.env,AUDIT_AI_PROVIDER:'granite'},auditId,now:()=>at,
+     engine:async({grant,jobs})=>{
+       assert.equal(grant.policyVersion,'prepared-assessment-granite-v2');
+       assert.equal(grant.leaseUntil,time+90000);
+       assert.ok(grant.leaseUntil-time<AUDIT_QUEUE_LEASE_MS);
+       at+=59500;
+       assert.equal(await jobs.assertLease(grant),true);
+       return {status:'yield'};
+     }});
+   assert.equal(result.status,'yield');
+ } finally {f.sql.close();}
 });

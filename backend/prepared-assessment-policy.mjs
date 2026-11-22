@@ -2,7 +2,7 @@
 export const PREPARED_ASSESSMENT_POLICY = 'prepared-assessment-v3';
 
 export function preparedAssessmentPolicy(provider) {
-  return provider === 'granite' ? 'prepared-assessment-granite-v1' : PREPARED_ASSESSMENT_POLICY;
+  return provider === 'granite' ? 'prepared-assessment-granite-v2' : PREPARED_ASSESSMENT_POLICY;
 }
 
 export function configuredAssessmentProvider(value) {
