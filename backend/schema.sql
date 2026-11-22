@@ -244,3 +244,25 @@ CREATE TABLE IF NOT EXISTS audit_pipeline_state (
   expires_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS audit_pipeline_expiry ON audit_pipeline_state(expires_at);
+
+CREATE TABLE IF NOT EXISTS audit_queue_jobs (
+  audit_id TEXT PRIMARY KEY,
+  phase TEXT NOT NULL CHECK (phase IN ('capture','prepare','assess')),
+  sequence INTEGER NOT NULL DEFAULT 0,
+  state TEXT NOT NULL CHECK (state IN ('staged','dispatching','waiting','running','terminalizing','complete')),
+  owner TEXT, lease_until INTEGER, code TEXT,
+  updated_at INTEGER NOT NULL, expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS audit_queue_expiry ON audit_queue_jobs(expires_at);
+
+-- Analytics are estimated; reservations deliberately overlap the account total.
+CREATE TABLE IF NOT EXISTS audit_queue_receipts (
+  account_id TEXT PRIMARY KEY, subscription_id TEXT NOT NULL,
+  cycle_start INTEGER NOT NULL, cycle_end INTEGER NOT NULL,
+  observed_at INTEGER NOT NULL, operations INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS audit_queue_reservations (
+  account_id TEXT NOT NULL, day_start INTEGER NOT NULL,
+  operations INTEGER NOT NULL CHECK (operations > 0),
+  PRIMARY KEY (account_id, day_start)
+);

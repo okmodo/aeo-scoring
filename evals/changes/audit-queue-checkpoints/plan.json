@@ -1,0 +1,17 @@
+{
+  "version":1,
+  "id":"audit-queue-checkpoints",
+  "task":"Continue user-started audit checkpoints in separate project Queue invocations with guarded delivery and terminal reports.",
+  "scope":["backend/**","docs/audit-queue.md","evals/changes/audit-queue-checkpoints/**"],
+  "nonGoals":["No front end or public contract changes, production deployments, account changes, live inference in CI, existing allowance or CPU increases, cron-driven inference, or automatic replay of uncertain provider requests."],
+  "outcomes":[
+    {"id":"O1","description":"Queue admission is durable before the submission returns 202. User-started queue deliveries advance capture, preparation and checkpoints after the client disconnects.","verification":"automated","evidence":"Offline service and Queue tests including a journey longer than the original background window."},
+    {"id":"O2","description":"Redelivery and contested claims cannot repeat inference; a failed handoff can resume from saved output and exhausted processing publishes a safe terminal result.","verification":"automated","evidence":"Interruption, duplicate delivery, timeout, terminal publication and partial evidence tests."},
+    {"id":"O3","description":"Verify Queue budget evidence and reserve operations before sending. Preserve the 1,000 ms CPU cap and all existing resource ceilings.","verification":"automated","evidence":"Queue usage and ledger tests, Worker build, no live changes."}
+  ],
+  "process":[{"id":"P1","description":"Commit plan first, preserve direct verification and fresh-agent replay evidence, and open a PR with independent review.","verification":"human","evidence":"Commit history, evaluation records, handoff and review."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse existing prepared data, capture, rubric and lease logic. Queue payloads carry only audit identifiers and progression metadata.","verification":"human","evidence":"Scoped diff and tests."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run test:browser-build","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":true,"reason":"This changes interruption and continuation. Hand a frozen post-checkpoint, pre-ack export and clean task files to a fresh agent to replay."},
+  "context":"Stacked on the released PR 58. Queue activation and any production validation require a separately authorized rollout."
+}

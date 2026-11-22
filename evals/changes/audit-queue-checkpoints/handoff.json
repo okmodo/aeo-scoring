@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Replace the request-lifetime audit loop with durable queued checkpoints.",
+  "state":"Local opt-in Worker changes stacked on the deployed PR 58 tree.",
+  "decisions":["One queue message per capture, preparation or assessment checkpoint. Confirm successors before ACK. Terminal DLQ work does not infer.","Use a conservative account Queue reservation with daily D1 buckets and strict 600,000 operations per cycle.","Keep status polling read-only and bound the audit's queued pending state to 20 minutes."],
+  "constraints":["Keep the existing CPU, inference, retrieval, storage and usage ceilings. Preserve frontend, production and unrelated services.","Only a submitted audit enters the queue. Hourly maintenance remains cleanup only."],
+  "completed":["Queue runtime, migrations and opt-in binding contract; duplicate and handoff safety; offline end-to-end and Queue allowance tests."],
+  "remaining":["Separately authorized staging setup and live verification of Queue metrics, limits, CPU and a real audit. Production was not modified."],
+  "resumeCommands":["npm run evaluate -- --change audit-queue-checkpoints --base 60c72e13475c27fda8a1b610133c98f927c3b472","EVALUATION_BASE=60c72e13475c27fda8a1b610133c98f927c3b472 npm run ci:gate","node --test backend/prepared-audit-queue.test.mjs backend/prepared-audit-queue-allowance.test.mjs backend/prepared-audit-queue-runtime.test.mjs"]
+}

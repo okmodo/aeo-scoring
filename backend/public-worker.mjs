@@ -1,5 +1,6 @@
 import service, { handleAuditRequest, runPreparation } from './service.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
+import { createAuditQueueRuntime } from './audit-queue-runtime.mjs';
 import { createPublicEgress, normalizePublicTarget } from './public-egress.mjs';
 
 // The fallback only permits offline Node tests to import this module; Workers
@@ -8,6 +9,7 @@ const { WorkerEntrypoint } = await import('cloudflare:workers').catch(() => ({Wo
 
 export class AuditContinuation extends WorkerEntrypoint {
   async prepare(auditId) {
+    if (this.env.AUDIT_QUEUE_MODE === 'enabled') return;
     this.ctx.waitUntil(runPreparation({
       env: this.env,
       auditId,
@@ -23,6 +25,7 @@ export class AuditContinuation extends WorkerEntrypoint {
   }
 
   async assess(auditId) {
+    if (this.env.AUDIT_QUEUE_MODE === 'enabled') return {status:'skipped'};
     const work = runPreparedAudit({env: this.env, auditId});
     this.ctx.waitUntil(work);
     return work;
@@ -59,7 +62,7 @@ async function handleProtectedRequest(request, env, ctx, path, method) {
   if (request.method === method) {
     if (env.AUDIT_PUBLIC_ACCESS === 'enabled') {
       if (path === UNLOCK) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
-      return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, requireBrowser: true });
+      return handleBoundAuditRequest(request, env, ctx);
     }
     const expected = env.AUDIT_PREVIEW_PASSWORD;
     if (typeof expected !== 'string' || !passwordFormat.test(expected)) {
@@ -73,7 +76,15 @@ async function handleProtectedRequest(request, env, ctx, path, method) {
     if (path === UNLOCK) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
   }
   if (path === UNLOCK) return new Response(null, { status: 405, headers: { allow: 'POST', 'cache-control': 'no-store' } });
-  return handleAuditRequest(request, env, ctx, { egress, normalizeUrl: normalizePublicTarget, requireBrowser: true });
+  return handleBoundAuditRequest(request, env, ctx);
+}
+
+function handleBoundAuditRequest(request, env, ctx) {
+  const queueRequired = env.AUDIT_QUEUE_MODE === 'enabled';
+  const enqueueAudit = queueRequired && env.AUDIT_QUEUE?.send
+    ? id => createAuditQueueRuntime(env).start(id)
+    : undefined;
+  return handleAuditRequest(request, env, ctx, {egress,normalizeUrl:normalizePublicTarget,requireBrowser:true,queueRequired,enqueueAudit});
 }
 
 function routeMethod(path) {
@@ -121,6 +132,9 @@ export default {
       headers.set('access-control-expose-headers', 'Retry-After');
     }
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  },
+  async queue(batch, env) {
+    await createAuditQueueRuntime(env).consume(batch);
   },
   scheduled: service.scheduled,
 };

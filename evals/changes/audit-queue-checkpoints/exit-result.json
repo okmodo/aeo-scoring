@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "audit-queue-checkpoints",
+  "sourceDigest": "643cf394933a09da315583d634224a1ad5d66f8c570c614bc4bddb84202df3ec",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/queue_exit_replay",
+  "exportSha256": "063b07938cae868d36c0bd99d7c830e69502cf25420d755457301683c847606f",
+  "interruptionPoint": "The first simulated assessment completed and persisted sequence 3 as dispatching, but the next queue send failed before sequence 2 was acknowledged. A fresh Terra agent received only the frozen export and three clean source files.",
+  "observedContinuation": "The agent ran node evals/changes/audit-queue-checkpoints/exit-replay.mjs resume exit-boundary.json on Node 24 and exited 0. It observed zero model calls while repairing the send, exactly one for the successor, zero for replayed delivery, and terminal state complete.",
+  "limitations": "Uses SQLite, a synthetic assessment call counter and a fake queue transport. Independent integration coverage exercises the real audit service, prepared scorer, and fixture provider. This is not a hosted queue or inference test."
+}
