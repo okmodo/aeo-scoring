@@ -1,0 +1,11 @@
+{
+  "version":1,"id":"granite-60s-timeout","task":"Increase only Granite's model request timeout to 60 seconds for queued audits.",
+  "scope":["backend/ai-rubric-assessment.mjs","backend/prepared-assessment-consumer.mjs","backend/prepared-assessment-policy.mjs","backend/prepared-model-timeout.test.mjs","backend/prepared-assessment-consumer.test.mjs","config/granite-model.json","evals/changes/granite-60s-timeout/**"],
+  "nonGoals":["No frontend, CPU, usage limit, queue configuration, Terra timeout, scoring rubric, or unrelated service changes. No live inference in CI."],
+  "outcomes":[{"id":"O1","description":"Granite accepts an elapsed 59.5-second response and aborts at 60 seconds, while Terra keeps 30 seconds.","verification":"automated","evidence":"Deterministic timeout regressions."},{"id":"O2","description":"Granite job ownership covers the longer model request and existing cache entries do not mask a rerun.","verification":"automated","evidence":"Prepared consumer lease and provider policy checks."}],
+  "process":[{"id":"P1","description":"Complete a separately planned PR, obtain independent review and preserve source-bound checks before authorized deployment.","verification":"human","evidence":"Git history, evaluation, review and explicit rollout verification."}],
+  "styleEfficiency":[{"id":"E1","description":"Use the existing model timer, provider selector and prepared policy without adding a concurrent deadline.","verification":"human","evidence":"Scoped diff."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:feasibility","npm run test:browser-build","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"The model duration, lease duration and cache namespace change. The checkpoint ownership and continuation protocols stay intact."},
+  "context":"The queue passed the prior 30-second Worker background window. Its 11th Granite call timed out under the model's separate 30-second timer."
+}
