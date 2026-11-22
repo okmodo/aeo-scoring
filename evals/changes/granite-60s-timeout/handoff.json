@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Increase the Granite timeout to 60 seconds for the queue-enabled audit Worker.",
+  "state":"Scoped feature change based on the deployed Queue collector fix.",
+  "decisions":["Set Granite timeoutMs in its model config and use the existing abort timer. Leave the Terra timer at 30 seconds.","Use a 90-second Granite job lease inside the current 120-second queue lease. Change the Granite policy namespace so prior timeout reports cannot cache-hit."],
+  "constraints":["Keep the 1,000 ms CPU cap, queue settings, existing limits and evidence validation. Do not edit the front end or unrelated services."],
+  "completed":["Local model and lease boundary verification with offline fixtures."],
+  "remaining":["Authorized deployment and one new live Faherty report with Gateway usage and validated evidence."],
+  "resumeCommands":["npm run evaluate -- --change granite-60s-timeout --base 7f504409300035060ef8d9b7956d605282bcab9a","EVALUATION_BASE=7f504409300035060ef8d9b7956d605282bcab9a npm run ci:gate"]
+}
