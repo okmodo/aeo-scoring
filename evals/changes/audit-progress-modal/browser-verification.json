@@ -1,0 +1,38 @@
+{
+  "nativeModal": true,
+  "backgroundRetained": true,
+  "focusContained": true,
+  "escapeCancels": true,
+  "internalMobileScroll": true,
+  "checks": [
+    "loading covers slow initial submission and pending polling",
+    "partial findings open with honest completion",
+    "terminal failure avoids success message",
+    "cached terminal report opens immediately",
+    "rate limit returns to retryable form",
+    "network failure returns to retryable form",
+    "polling password expiry restores gate",
+    "stalled initial request times out",
+    "stalled polling request times out",
+    "cancel and retry ignore an old late response",
+    "Escape closes modal, restores scrolling and preserves the page"
+  ],
+  "actualCloudRequests": 0,
+  "backendResponses": "All API routes intercepted with frozen fictional fixtures; no model calls.",
+  "mobileWidth": 390,
+  "reducedMotionVerified": true,
+  "limitations": [
+    "Local browser uses mocked frozen API fixtures, not real merchant audits.",
+    "Implementation agent executed browser checks; independent reviewer assessed code, screenshots and evidence without separately replaying interactions.",
+    "Browser observations are separate from evaluator command-only traces."
+  ],
+  "localContainer": {
+    "url": "http://127.0.0.1:4382",
+    "name": "aeo-scoring-report-local",
+    "verifiedModalOverPage": true,
+    "automaticReport": true,
+    "rubricTests": 40,
+    "cloudRequests": 0,
+    "data": "Fictional report fixture; local-only fetch shim simulates processing."
+  }
+}

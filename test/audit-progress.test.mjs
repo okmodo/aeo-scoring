@@ -16,6 +16,8 @@ test('audit loading displays the requested workflow without inventing stage comp
       let previous = -1;
       for (const stage of fixture.stages) { const at = html.indexOf(`<h2>${stage}</h2>`); assert.ok(at > previous, stage); previous = at; }
       assert.match(html, /role="status"/);
+      assert.match(html, /<dialog[^>]*aria-labelledby="audit-progress-heading"[^>]*aria-describedby="audit-progress-description"/);
+      assert.doesNotMatch(html, /<main/);
       assert.match(html, /role="progressbar" aria-label="Audit processing"/);
       assert.doesNotMatch(html, /aria-valuenow|stage-completed|Your test results|Points earned|Total score/);
       assert.match(html, /Your report may include partial findings/);

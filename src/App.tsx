@@ -84,7 +84,7 @@ export function App() {
         </span>
       </header>
       </>}
-      {screen === "entry" && (
+      {screen !== "live" && (
         <main id="home">
           <nav className="section-nav" aria-label="Page sections">
             <strong>AEO report</strong>

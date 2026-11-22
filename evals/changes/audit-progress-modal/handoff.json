@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "task": "Change audit loading workflow to a modal over the existing page and update local Docker review.",
+  "state": "Modal implemented and deployed to existing local container at4382. Native dialog behavior, mobile layout and report transition verified. Independent source/UI/evidence review approved, subject to refreshed source-bound evaluations and hosted CI at this checkpoint.",
+  "decisions": [
+    "Keep existing landing page mounted beneath native dialog.showModal, which supplies focus containment and background inertness.",
+    "Lock background scroll while open and restore prior overflow on cleanup. Escape and Cancel waiting reuse safe client cancellation.",
+    "Preserve five-stage workflow, indeterminate pending status and terminal report behavior.",
+    "Use existing local nginx container and fictional fixture simulation; no public Cloudflare writes or real model/audit calls."
+  ],
+  "constraints": [
+    "Original audit-progress plan remains immutable. New requirement uses audit-progress-modal plan9f1dc64 before edits. Both source-bound evaluation records must be refreshed.",
+    "No backend, scoring, password transport or usage changes. No merge/public deployment authorized.",
+    "Local review helper/assets live under /private/tmp and may be cleaned by the operating system; they are not a production deployment."
+  ],
+  "completed": [
+    "Targeted SSR regression confirms semantic dialog and shared stage labels.",
+    "Eleven browser scenarios passed including prior async cases plus native modal, retained background, focus containment, Escape, scroll restoration, mobile overflow/scrolling and reduced motion.",
+    "Existing local Docker container serves updated modal; browser verified local unlock, five stages, automatic40-test sample report and zero Cloudflare requests.",
+    "Independent reviewer inspected source, screenshots and proof with no actionable findings."
+  ],
+  "remaining": [
+    "Run both planned evaluator commands and ci:gate, commit fresh evidence, push PR59 update and verify hosted CI.",
+    "Merge and public deployment remain separate user-authorized release steps."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change audit-progress --base origin/main",
+    "npm run evaluate -- --change audit-progress-modal --base origin/main",
+    "npm run ci:gate -- origin/main",
+    "npm run test:progress"
+  ],
+  "evidenceLimitations": [
+    "Browser interactions were executed by implementation agent and independently reviewed, not independently rerun.",
+    "No reliable token/cost telemetry is available; no model API used for checks."
+  ]
+}

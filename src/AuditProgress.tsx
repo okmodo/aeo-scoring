@@ -12,14 +12,22 @@ export const auditSteps = [
 ] as const;
 
 export function AuditProgress({ accepted, onCancel }: { accepted: boolean; onCancel: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { heading.current?.focus(); }, []);
-  return <main className="audit-progress" aria-labelledby="audit-progress-heading">
+  useEffect(() => {
+    const element = dialog.current;
+    const overflow = document.body.style.overflow;
+    element?.showModal();
+    document.body.style.overflow = 'hidden';
+    heading.current?.focus();
+    return () => { element?.close(); document.body.style.overflow = overflow; };
+  }, []);
+  return <dialog ref={dialog} className="audit-progress" aria-labelledby="audit-progress-heading" aria-describedby="audit-progress-description" onCancel={event => { event.preventDefault(); onCancel(); }}>
     <div className="audit-progress-card">
       <div className="audit-progress-eyebrow"><span className="audit-progress-spinner" aria-hidden="true" />AUDIT IN PROGRESS</div>
       <div role="status" aria-live="polite" aria-atomic="true">
         <h1 id="audit-progress-heading" tabIndex={-1} ref={heading}>{accepted ? 'Your audit is running.' : 'Starting your audit.'}</h1>
-        <p>{accepted ? 'Your page is being processed. Your report will open automatically when it’s ready.' : 'Connecting securely to the audit service. Your report will open here when it’s ready.'}</p>
+        <p id="audit-progress-description">{accepted ? 'Your page is being processed. Your report will open automatically when it’s ready.' : 'Connecting securely to the audit service. Your report will open here when it’s ready.'}</p>
       </div>
       <div className="audit-progress-track" role="progressbar" aria-label="Audit processing"><span /></div>
       <ol className="audit-progress-steps" aria-label="Audit workflow">
@@ -32,7 +40,7 @@ export function AuditProgress({ accepted, onCancel }: { accepted: boolean; onCan
       <button type="button" className="audit-progress-cancel" onClick={onCancel}>Cancel waiting</button>
       <p className="audit-progress-note">An audit already started may continue after you leave this screen.</p>
     </div>
-  </main>;
+  </dialog>;
 }
 
 export function AuditCompletion({ assessment }: { assessment: Assessment }) {

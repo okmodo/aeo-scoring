@@ -1,13 +1,14 @@
-.audit-progress { padding: 64px 24px 80px; background: #f7f5ee; min-height: 75vh; color: #081334; }
-.audit-progress-card { max-width: 720px; margin: auto; padding: clamp(24px, 5vw, 52px); border: 1px solid #d6d7e3; border-radius: 8px; background: #fff; box-shadow: 0 16px 48px #08133408; }
+.audit-progress { width: min(680px, calc(100vw - 40px)); max-width: none; max-height: calc(100dvh - 40px); margin: auto; padding: 0; overflow-y: auto; border: 1px solid #d6d7e3; border-radius: 10px; background: #fff; color: #081334; box-shadow: 0 24px 80px #08133440; }
+.audit-progress::backdrop { background: #08133480; backdrop-filter: blur(2px); }
+.audit-progress-card { padding: clamp(24px, 4vw, 36px); }
 .audit-progress-eyebrow { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: .12em; }
-.audit-progress h1 { margin: 24px 0 16px; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; letter-spacing: -.04em; }
+.audit-progress h1 { margin: 20px 0 12px; font-size: clamp(30px, 4vw, 40px); line-height: 1.1; letter-spacing: -.04em; }
 .audit-progress p { color: #5b6173; line-height: 1.6; }
 .audit-progress-spinner { width: 18px; height: 18px; border: 2px solid #dedfeb; border-top-color: #081334; border-radius: 50%; animation: audit-spin 1s linear infinite; }
-.audit-progress-track { overflow: hidden; height: 6px; margin: 28px 0 32px; background: #eeedff; border-radius: 8px; }
+.audit-progress-track { overflow: hidden; height: 6px; margin: 20px 0; background: #eeedff; border-radius: 8px; }
 .audit-progress-track span { display: block; width: 35%; height: 100%; background: #081334; border-radius: inherit; animation: audit-travel 2s ease-in-out infinite alternate; }
 .audit-progress-steps { list-style: none; padding: 0; margin: 0; }
-.audit-progress-steps li { display: flex; align-items: flex-start; gap: 18px; padding: 16px 0; border-bottom: 1px solid #eeedf3; }
+.audit-progress-steps li { display: flex; align-items: flex-start; gap: 16px; padding: 12px 0; border-bottom: 1px solid #eeedf3; }
 .audit-progress-steps li:last-child { border-bottom: 0; }
 .audit-progress-number { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border: 1px solid #d6d7e3; border-radius: 50%; background: #f0efff; font-size: 14px; font-weight: 700; }
 .audit-progress-steps h2 { margin: 2px 0 4px; font-size: 18px; line-height: 1.4; }
@@ -21,5 +22,5 @@
 .audit-completion-failed { background: #f5e3db; }
 @keyframes audit-spin { to { transform: rotate(360deg); } }
 @keyframes audit-travel { from { transform: translateX(-100%); } to { transform: translateX(285%); } }
-@media (max-width: 480px) { .audit-progress { padding: 28px 16px 48px; } .audit-progress-card { padding: 24px 20px; } }
+@media (max-width: 480px) { .audit-progress { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } .audit-progress-card { padding: 24px 20px; } }
 @media (prefers-reduced-motion: reduce) { .audit-progress-spinner, .audit-progress-track span { animation: none; } .audit-progress-track span { width: 100%; opacity: .35; } }
