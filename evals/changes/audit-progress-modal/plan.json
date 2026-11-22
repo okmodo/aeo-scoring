@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "audit-progress-modal",
+  "task": "Present audit processing as an accessible modal over the existing page and update the local Docker review container.",
+  "scope": [
+    "src/App.tsx",
+    "src/AuditProgress.tsx",
+    "src/audit-progress.css",
+    "test/audit-progress.test.mjs",
+    "evals/changes/audit-progress-modal/**"
+  ],
+  "nonGoals": [
+    "Backend progress, scoring, password or usage changes; merging or public Cloudflare deployment."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Existing page remains visible behind a modal loading dialog throughout submission and polling; native modal focus containment, Escape cancellation, scroll lock and mobile scrolling work.",
+      "verification": "automated",
+      "evidence": "Updated SSR expectations and browser modal interactions."
+    },
+    {
+      "id": "O2",
+      "description": "Terminal results close the dialog and display the report; cancel/error/timeout/auth expiry remain correct. Local container serves reviewed simulated flow without real audits.",
+      "verification": "human",
+      "evidence": "Browser fixture proof and local Docker verification."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit this changed requirement as a new plan before implementation; independent review and updated source-bound records for both plans, then rerun PR CI.",
+      "verification": "human",
+      "evidence": "Git history, evaluator record and CI."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse existing loading content and native dialog behavior; no new dependencies, public deployments or model calls.",
+      "verification": "human",
+      "evidence": "Diff and browser verification."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:progress",
+    "npm run test:backend"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Application modal presentation only; no agent workflow, portability, memory or resumability change. Existing exit smoke tests remain required."
+  }
+}
