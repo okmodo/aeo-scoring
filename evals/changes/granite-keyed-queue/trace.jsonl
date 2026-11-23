@@ -1,0 +1,12 @@
+{"timestamp":"2026-11-23T02:23:08.727Z","tool":"npm","action":"npm run check","durationMs":6297,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:15.025Z","tool":"npm","action":"npm test","durationMs":7137,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:22.162Z","tool":"npm","action":"npm run test:exit","durationMs":208,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:22.371Z","tool":"npm","action":"npm run test:granite-binary","durationMs":151,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:22.522Z","tool":"npm","action":"npm run test:granite-keyed-queue","durationMs":188,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:22.710Z","tool":"npm","action":"npm run test:foundations","durationMs":128,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:22.838Z","tool":"npm","action":"npm run test:feasibility","durationMs":2843,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:25.682Z","tool":"npm","action":"npm run test:preview","durationMs":534,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:23:26.216Z","tool":"npm","action":"npm run test:browser-build","durationMs":34422,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:24:00.639Z","tool":"npm","action":"npm run lint","durationMs":569,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:24:01.208Z","tool":"npm","action":"npm run typecheck","durationMs":525,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T02:24:01.733Z","tool":"npm","action":"npm run build","durationMs":205,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
