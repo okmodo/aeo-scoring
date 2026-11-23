@@ -1,0 +1,12 @@
+{
+  "version":1,
+  "id":"rollback-parser-preparation",
+  "task":"Restore the pre-PR-71 parser preparation and scoring inputs while retaining the deployed earned-score publication path.",
+  "scope":["backend/**","package.json","evals/changes/rollback-parser-preparation/**"],
+  "nonGoals":["No frontend, rubric weight, D1 schema, queue, model timeout, CPU cap, usage policy, or unrelated service changes.","No live deployment within CI."],
+  "outcomes":[{"id":"O1","description":"Restore pre-PR-71 parser and input behavior without removing earned-score publication or changing queued failure semantics.","verification":"automated","evidence":"Scoped diff and retained-input queue/report regression cases."}],
+  "process":[{"id":"P1","description":"Independently review and verify the exact rollback before the separately authorized production deployment.","verification":"human","evidence":"Plan commit, CI, independent review and handoff."}],
+  "styleEfficiency":[{"id":"E1","description":"Revert only the PR-71 preparation and scoring changes.","verification":"human","evidence":"Compare exact runtime files to pre-PR-71 and preserve later publication changes."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue","npm run test:component-publication"],
+  "exitTest":{"required":false,"reason":"Restores the prior preparation and source handling without adding or changing queue resumability."}
+}
