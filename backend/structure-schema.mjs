@@ -157,7 +157,7 @@ export function inspectProductJsonLdPresence(snapshot, extracted) {
 
 export function inspectRevisedProductSchema(snapshot, extracted) {
   const html = extracted?.productHtml, source = snapshot?.url;
-  const bounded = Boolean(html?.complete && !snapshot?.htmlLimited && extracted?.coverage?.jsonLdTruncated === false);
+  const bounded = Boolean(html?.complete && !snapshot?.htmlLimited && !snapshot?.browser?.coverage?.initialLimited && snapshot?.browser?.coverage?.initialAvailable !== false && extracted?.coverage?.jsonLdTruncated === false);
   const result = { complete: bounded, product: null, findings: {}, ambiguous: false, malformed: false };
   const finding = (fraction, excerpt) => ({ status: 'measured', fraction, url: source, location: 'inspected structured product markup', excerpt });
   const products = [], groups = [];

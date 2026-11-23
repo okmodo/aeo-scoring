@@ -370,6 +370,25 @@ test('unrelated multiword and slash user agents do not invalidate ordinary crawl
   assert.ok(snapshot.crawlerPolicy.observations.some(item => item.status === 'disallowed'));
 });
 
+test('policy inspection prefers linked policy paths and fragments over navigation copy', async () => {
+  const calls = [];
+  const policy = text => new Response('<main><p>' + text + '</p></main>', { headers: { 'content-type': 'text/html' } });
+  const routes = {'/a':page(), '/robots.txt':new Response(''), '/pages/faq':policy('Orders ship in two days.'),
+    '/pages/returns':policy('Return within 30 days.')};
+  const links = [
+    {url:'/collections/new-arrivals',text:'Free shipping and returns'},
+    {url:'/pages/about',text:'Shipping and returns'},
+    {url:'/pages/faq#shipping',text:'FAQs'},
+    {url:'/pages/returns',text:'Returns'},
+  ];
+  const snapshot = await retrieve('https://example.com/a', { egress:binding(routes,calls), observeGuides:true,
+    HTMLRewriter:HtmlTestRewriter, consumeHtml:async()=>({productHtml:{discoveryLinks:links}}) });
+  assert.equal(snapshot.policies.shipping.url,'https://example.com/pages/faq');
+  assert.equal(snapshot.policies.returns.url,'https://example.com/pages/returns');
+  assert.equal(snapshot.policies.shipping.state,'read');
+  assert.equal(snapshot.policies.returns.state,'read');
+});
+
 test('policy terms after a large template are read within the product source cap; oversized policies remain unknown', async () => {
   const policy = '<main><!--' + 'x'.repeat(172 * 1024) + '--><p>Return unworn items within 30 days.</p></main>';
   const run = html => retrieve('https://example.com/a', { egress: binding({ '/a': page(), '/robots.txt': new Response(''), '/returns': new Response(html, {headers:{'content-type':'text/html'}}) }), observeGuides: true, HTMLRewriter: HtmlTestRewriter, consumeHtml: async () => ({productHtml:{discoveryLinks:[{url:'/returns',text:'Returns'}]}}) });

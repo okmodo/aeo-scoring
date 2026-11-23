@@ -8,7 +8,7 @@ export function assessSourceAccessibility(snapshot, extracted) {
     const html = extracted?.productHtml;
     if (!html) return {};
     const source = html.sourceObservation;
-    const complete = Boolean(source?.complete && !snapshot?.htmlLimited);
+    const complete = Boolean(source?.complete && !snapshot?.htmlLimited && !snapshot?.browser?.coverage?.initialLimited && snapshot?.browser?.coverage?.initialAvailable !== false);
     const findings = {};
     if (!complete) return findings;
     const put = (id, fraction, excerpt, location = 'initial product HTML') => {

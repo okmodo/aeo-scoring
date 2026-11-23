@@ -1,3 +1,5 @@
+import {restorePreparedObservations} from './prepared-observations.mjs';
+import {gatherInitialSupport} from './initial-support.mjs';
 import {normalizePublicTarget} from './public-egress.mjs';
 import {extract} from './retrieval.mjs';
 import {createQuickActionAllowanceGuard,QUICK_ACTION_HOLD_MS} from './quick-action-allowance.mjs';
@@ -27,7 +29,7 @@ async function responseJson(response,signal) {
 // session, page routing, resource proxy, cookie handling or HTML extraction here.
 export function createBrowserContentWorkflow({db,binding,snapshots,accountId,subscriptionId,token,now=Date.now,
   guard=createQuickActionAllowanceGuard(db,{accountId,subscriptionId,token}),extractPage=extract,
-  HTMLRewriter=globalThis.HTMLRewriter,preprocess=preprocessHtml,captureTimeoutMs=28000}={}) {
+  HTMLRewriter=globalThis.HTMLRewriter,preprocess=preprocessHtml,egress,captureTimeoutMs=28000}={}) {
   if(typeof binding?.quickAction!=='function'||!snapshots||!db?.prepare||!Number.isSafeInteger(captureTimeoutMs)||captureTimeoutMs<1||captureTimeoutMs>28000)throw new TypeError('Browser content binding and private store required');
   return {
     version:BROWSER_CONTENT_VERSION,
@@ -80,7 +82,7 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
     async claimPreparation(id){return await db.prepare("UPDATE browser_audit_work SET state='assessing', expires_at=MIN(?2+30000,(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1)) WHERE audit_id=?1 AND (state='ready' OR (state='assessing' AND expires_at<=?2)) AND EXISTS (SELECT 1 FROM retained_snapshots WHERE audit_id=?1 AND state='ready' AND expires_at>?2) RETURNING expires_at").bind(id,now()).first();},
     async claim(id){return Boolean(await this.claimPreparation(id));},
     async release(id,grant){await db.prepare("UPDATE browser_audit_work SET state='ready', expires_at=(SELECT expires_at FROM retained_snapshots WHERE audit_id=?1) WHERE audit_id=?1 AND state='assessing' AND expires_at=?2 AND expires_at>?3").bind(id,grant.expires_at,now()).run();},
-    async read(id, {onPrepared, preparedOnly = false} = {}) {
+    async read(id, {onPrepared, preparedOnly = false, allowOptionalEgress = false} = {}) {
       const captured=await snapshots.read(id);
       if(captured.snapshot?.retrievalMethod!=='browser_api_content')throw failure('retrieval_failed','browser_api_invalid_snapshot');
       const state=await db.prepare('SELECT inputs_state, prepared_state FROM retained_snapshots WHERE audit_id=?1').bind(id).first();
@@ -88,7 +90,16 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
       if(state.prepared_state===null) {
         const result=await preprocess({rawHtml:captured.rawHtml,sourceObjectKey:captured.source.objectKey,expiresAt:captured.source.expiresAt},{HTMLRewriter,now});
         const html=new TextDecoder('utf-8',{fatal:true}).decode(result.html);
-        try {await snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html,preprocessing:result.preprocessing}});}
+        let observations = null;
+        if (allowOptionalEgress && egress?.fetch) {
+          try { const rendered = await extractPage({...captured.snapshot,body:result.html},{HTMLRewriter});
+            observations = await gatherInitialSupport(captured.snapshot,rendered,{egress,HTMLRewriter}); } catch { /* Optional evidence never blocks preparation. */ }
+        }
+        const artifact = {version:'1',html,preprocessing:result.preprocessing};
+        if (observations) {
+          try { if (encoder.encode(JSON.stringify({...artifact,observations})).byteLength <= 8 * 1024 * 1024) artifact.observations = observations; } catch { /* Oversized optional evidence is omitted. */ }
+        }
+        try {await snapshots.saveAssessment({auditId:id,kind:'prepared',artifact});}
         catch(error) {if(error.code!=='snapshot_exists')throw error;}
       }
       const prepared=await snapshots.readAssessment(id,'prepared');
@@ -105,16 +116,18 @@ export function createBrowserContentWorkflow({db,binding,snapshots,accountId,sub
       if(state.inputs_state===null) {
         const extracted=await extractPage({...captured.snapshot,body:bytes},{HTMLRewriter});
         // Parsed rendered HTML cannot establish initial-response or computed-visibility evidence.
-        const snapshot={...captured.snapshot,preprocessing:p,browser:{version:BROWSER_CONTENT_VERSION,captureType:'content-api',initialExtracted:emptyExtraction(),
-          coverage:{complete:extracted.productHtml?.complete===true&&extracted.coverage?.html===true,initialAvailable:false,initialLimited:false,renderedLimited:false}}};
+        const observations = restorePreparedObservations(prepared);
+        const snapshot={...captured.snapshot,...observations.support,preprocessing:p,browser:{version:BROWSER_CONTENT_VERSION,captureType:'content-api',initialExtracted:observations.initialExtracted,
+          coverage:{complete:extracted.productHtml?.complete===true&&extracted.coverage?.html===true,initialAvailable:observations.initialAvailable,initialLimited:false,renderedLimited:false}}};
         try {await snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'2',snapshot,extracted}});}
         catch(error) {if(error.code!=='snapshot_exists')throw error;}
       }
       const inputs=await snapshots.readAssessment(id,'inputs');
       if(inputs?.version!=='2'||inputs.snapshot?.captureVersion!==captured.snapshot.captureVersion||inputs.snapshot?.url!==captured.snapshot.url||
         JSON.stringify(inputs.snapshot?.preprocessing)!==JSON.stringify(p)||inputs.snapshot?.browser?.version!==BROWSER_CONTENT_VERSION||
-        !inputs.extracted||inputs.snapshot?.browser?.coverage?.initialAvailable!==false)throw failure('retrieval_failed','browser_api_invalid_inputs');
-      return{...captured,rawHtml:bytes,snapshot:{...inputs.snapshot,browser:{...inputs.snapshot.browser,renderedHtml:prepared.html}},extracted:inputs.extracted};
+        !inputs.extracted)throw failure('retrieval_failed','browser_api_invalid_inputs');
+      const restored=restorePreparedObservations(prepared);
+      return{...captured,rawHtml:bytes,snapshot:{...inputs.snapshot,...restored.support,browser:{...inputs.snapshot.browser,initialExtracted:restored.initialExtracted,coverage:{...inputs.snapshot.browser.coverage,initialAvailable:restored.initialAvailable},renderedHtml:prepared.html}},extracted:inputs.extracted};
     },
     async finish(id,grant){if(grant) await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1 AND state='assessing' AND expires_at=?2 AND expires_at>?3").bind(id,grant.expires_at,now()).run();
       else await db.prepare("UPDATE browser_audit_work SET state='finished' WHERE audit_id=?1").bind(id).run();},

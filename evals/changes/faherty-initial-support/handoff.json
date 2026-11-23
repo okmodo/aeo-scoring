@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "task": "Wire independently observed initial HTML and existing supporting-resource findings into the queued rubric.",
+  "state": "Implemented and verified locally on codex/faherty-initial-support, based on 04a6e7aa5fed112b66db8f63ab0d9def8c1faa3e. No frontend or production changes.",
+  "decisions": [
+    "After existing invocation admission, preparation may collect one bounded initial HTTP response and existing same-origin supporting resources through guarded public egress. The original Browser API capture remains the rendered product input.",
+    "Require matching audited canonicals and a matching unambiguous product heading across initial and rendered captures. Preserve parser completeness flags, and keep unavailable or mismatched observations optional.",
+    "Persist an optional observations object in the existing hashed prepared artifact, restore allowlisted observations in both readers, and keep rendered product evidence in the keyed model input. Deterministic structure findings retain ownership of their score.",
+    "Prefer explicit same-origin policy paths and fragments over generic navigation labels when selecting shipping and returns resources. Existing request, policy body, and time budgets for supporting files remain in effect."
+  ],
+  "constraints": [
+    "Preserve the 60-second model timeout, 1,000 ms Worker CPU cap, existing usage guards and configured allowances.",
+    "Do not deploy, call the live model, alter production services, or commit captured merchant data."
+  ],
+  "completed": [
+    "An offline native workerd replay combined the hash-verified local November 23 rendered capture with initial HTML and supporting files gathered from the public merchant later that day. A deterministic Granite response fixture replaced network inference. The four queue messages completed and D1 stored all 39 component outcomes for the 24 report checks.",
+    "Faherty earned 38 points versus 37 in the retained baseline. Only search crawler access changed, adding one point to the unresolved crawler row. Four report checks remained measured, 20 unresolved, and final score null.",
+    "A frozen end-to-end queue test proves initial delivery, JSON-LD syntax and search crawler access reach D1 when the evidence is sufficient. Tests include mismatched and missing canonical, duplicate responsive headings, blocked optional egress without preparation admission, non-blocking cancellation, and explicit policy link routing.",
+    "Independent Terra review found provenance, read-path parity, and cancellation concerns. The final review confirmed fixes and reported no blocking findings."
+  ],
+  "remaining": [
+    "Faherty's initial extraction remains incomplete for S1 and deep S2 checks despite a verified matching response. Sitemap inspection does not prove product URL inclusion within its existing bounds. The guide parser and linked policy extraction did not meet their existing evidence rules.",
+    "Additional real-page score coverage, live model runs, and production rollout require separate work."
+  ],
+  "resumeCommands": [
+    "npm run test:initial-support",
+    "npm run test:granite-keyed-queue",
+    "npm run test:component-publication",
+    "npm run evaluate -- --change faherty-initial-support --base 04a6e7aa5fed112b66db8f63ab0d9def8c1faa3e",
+    "npm run ci:gate -- 04a6e7aa5fed112b66db8f63ab0d9def8c1faa3e"
+  ]
+}

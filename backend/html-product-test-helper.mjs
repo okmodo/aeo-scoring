@@ -24,6 +24,8 @@ export class HtmlTestRewriter {
                     if (node.tagName) {
                         const element = { tagName: node.tagName, attributes: node.attrs.map(a => [a.name, a.value]), getAttribute(name) { return node.attrs.find(a => a.name === name)?.value ?? null; }, onEndTag(fn) { end = fn; } };
                         self.handlers.get('*')?.element?.(element);
+                        if (node.tagName === 'link' && element.getAttribute('rel') !== null)
+                            self.handlers.get('link[rel]')?.element?.(element);
                         if (node.tagName === 'script' && element.getAttribute('type') === 'application/ld+json') {
                             const handler = self.handlers.get('script[type="application/ld+json"]');
                             handler?.element?.(element);
