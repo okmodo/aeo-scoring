@@ -35,8 +35,8 @@ test('native workerd derives and scores large verified prepared pages', {timeout
         const derived = await derivePreparedObservations(input);
         if (!derived) return Response.json({error:'derivation failed'}, {status:500});
         const report = scoreAudit(snapshot,{}, {initialExtracted:snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true});
-        const checks = report.criteria.flatMap(c=>c.subchecks);
-        return Response.json({size,score:report.score,title:checks.find(c=>c.id==='S4.title'),initial:checks.filter(c=>c.id.startsWith('S1.')||c.id.startsWith('S2.'))});
+        const checks = report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components));
+        return Response.json({size,score:report.score,title:checks.find(c=>c.id==='S4.title'),initial:checks.filter(c=>(c.id.startsWith('S1.')||c.id.startsWith('S2.'))&&c.id!=='S2.json-ld')});
       }};`);
     await build({input:entry,platform:'node',external:id=>/^(?:cloudflare:|node:)/.test(id),output:{dir,format:'esm'},onwarn(warning){throw new Error(warning.message);}});
     const script = await readFile(path.join(dir,'entry.js'),'utf8');

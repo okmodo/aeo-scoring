@@ -78,7 +78,7 @@ test('full scoreAudit does not promote unverified structured fields or variant r
     const assessment = validateRubricAssessment(bundle,profile,judgments,{snapshot,extracted});
     for (const id of ['S2.entity','S2.offer','S2.identifiers','S2.variants']) assert.equal(assessment.findings[id].fraction,1,id);
     const baseline = scoreAudit(snapshot,extracted), assessed = scoreAudit(snapshot,extracted,{aiAssessment:assessment});
-    const check = (report,id) => report.criteria.flatMap(c=>c.subchecks).find(s=>s.id===id);
+    const check = (report,id) => report.criteria.flatMap(c=>c.subchecks.flatMap(row=>row.components)).find(s=>s.id===id);
     for (const id of ['S2.entity','S2.offer','S2.identifiers','S2.variants']) {
       const before=check(baseline,id), after=check(assessed,id);
       if (before.status === 'measured') assert.ok(after.status !== 'measured' || after.fraction <= before.fraction, id);
@@ -117,10 +117,10 @@ test('C4 exclusions redistribute only among applicable subchecks and all exclude
 });
 
 test('required AI assessment withholds heuristic content after an unavailable or forged assessment', async () => {
-  const { scoreAudit } = await import('./scoring.mjs');
+  const { scoreAudit, scoreAuditV2 } = await import('./scoring.mjs');
   const snapshot={url:'https://example.test/item',observedAt:'2026-11-17T00:00:00Z'};
   const extracted={coverage:{jsonLdTruncated:false},jsonLd:[],productHtml:{complete:true,identity:'Acme Trail Shoe',blocks:[{text:'This trail shoe protects feet on rocky paths.',location:'description'}],links:[]}};
-  const previous=scoreAudit(snapshot,extracted,{category:'running-shoes'});
+  const previous=scoreAuditV2(snapshot,extracted,{category:'running-shoes'});
   assert.ok(previous.criteria.find(c=>c.id==='C1').subchecks.some(c=>c.status==='measured'));
   for (const aiAssessment of [null,{version:'1',findings:{}}]) {
     const result=scoreAudit(snapshot,extracted,{category:'running-shoes',requireAiAssessment:true,aiAssessment});
@@ -149,7 +149,7 @@ test('validated absent C4 condition reaches scoreAudit category registry', async
   const assessment=validateRubricAssessment(bundle,profile,judgments,{snapshot,extracted,inspections,supportInspections:[]});
   assert.equal(assessment.findings['C4.compatibility'].status,'not_applicable');
   const report=scoreAudit(snapshot,extracted,{aiAssessment:assessment});
-  assert.equal(report.criteria.find(c=>c.id==='C4').subchecks.find(s=>s.id==='C4.compatibility').status,'not_applicable');
+  assert.equal(report.criteria.find(c=>c.id==='C1').subchecks.find(s=>s.id==='C1.use-compatibility').components.find(s=>s.id==='C4.compatibility').status,'not_applicable');
   assert.equal(report.score,null);
 });
 

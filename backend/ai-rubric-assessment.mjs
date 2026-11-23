@@ -198,7 +198,7 @@ function supportReferenceCaptured(bundle, section, reference) {
     });
   } catch { return false; }
 }
-function assessC5(bundle, inspections, raw, supportInspections) {
+function assessC5(bundle, inspections, raw, supportInspections, shopperVisibleComparisons = false) {
   const unknown=reason=>({status:'not_measured',reason});
   const result={claim:unknown('Claim inventory is incomplete or unvalidated.'),consistency:unknown('Comparison inventory is incomplete or unvalidated.')};
   let claimInventory, comparisonInventory;
@@ -227,12 +227,22 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       result.claim={status:'measured',fraction:entries.reduce((n,x)=>n+x.fraction,0)/entries.length,evidence:entries.flatMap(x=>x.evidence),claims:entries};
     } catch { /* Any missing or uncertain claim withholds this subcheck. */ }
   }
-  if (comparisonInventory && inventory.comparisons.length && (!isBrowser(bundle) || bundle.sources.some(source=>source.origin==='initial' && source.kind==='structured_product'))) try {
+  if (comparisonInventory && inventory.comparisons.length && (shopperVisibleComparisons || !isBrowser(bundle) || bundle.sources.some(source=>source.origin==='initial' && source.kind==='structured_product'))) try {
     const used=new Set(), entries=[];
+    const eligible = candidate => {
+      const source=bundle.sources.find(s=>s.id===candidate.evidence.sourceId);
+      return source?.scope==='product' && source.kind==='text' && (!isBrowser(bundle) || source.origin==='rendered');
+    };
     if (!raw.comparisons.length || raw.comparisons.length>100) fail();
     for (const group of raw.comparisons) {
-      if (!Array.isArray(group.candidateIds) || group.candidateIds.length<2 || group.candidateIds.length>16 || !text(group.context,300) || group.status!=='measured' || ![0,0.5,1].includes(group.fraction) || !text(group.reason)) fail();
+      if (!Array.isArray(group.candidateIds) || group.candidateIds.length>16 || !group.candidateIds.length) fail();
       const candidates=group.candidateIds.map(id=>{if (used.has(id)) fail(); used.add(id); const candidate=inventory.comparisons.find(c=>c.id===id); if (!candidate) fail(); return candidate;});
+      if (shopperVisibleComparisons) {
+        const count=candidates.filter(eligible).length;
+        if (!count) continue;
+        if (count!==candidates.length) fail();
+      }
+      if (candidates.length<2 || !text(group.context,300) || group.status!=='measured' || ![0,0.5,1].includes(group.fraction) || !text(group.reason)) fail();
       const evidence=candidates.map(c=>c.evidence);
       if (new Set(candidates.map(c=>c.field.trim().toLowerCase())).size!==1 || new Set(candidates.map(c=>c.context.trim().toLowerCase())).size!==1) fail();
       if (new Set(evidence.map(e=>`${e.sourceId}:${e.quote}`)).size<2 || !evidence.some(e=>e.scope==='product')) fail();
@@ -240,12 +250,12 @@ function assessC5(bundle, inspections, raw, supportInspections) {
       // A shared literal would reject equivalent units and paraphrases.
       entries.push({status:'measured',fraction:group.fraction,reason:group.reason,evidence,context:group.context});
     }
-    if (used.size!==inventory.comparisons.length) fail();
+    if (shopperVisibleComparisons ? inventory.comparisons.filter(eligible).some(candidate=>!used.has(candidate.id)) || !entries.length : used.size!==inventory.comparisons.length) fail();
     result.consistency={status:'measured',fraction:entries.reduce((n,x)=>n+x.fraction,0)/entries.length,evidence:entries.flatMap(x=>x.evidence),comparisons:entries};
   } catch { /* Never drop an ungrouped or unresolved comparison. */ }
   return result;
 }
-export function validateRubricAssessment(bundle, profileValue, rawValue, {snapshot, extracted, inspections, supportInspections} = {}) {
+export function validateRubricAssessment(bundle, profileValue, rawValue, {snapshot, extracted, inspections, supportInspections, shopperVisibleComparisons = false} = {}) {
   const prepared=!!bundle.coverage.preparedHtml;
   let profile; try { profile=validateRubricProfile(bundle,profileValue); } catch (error) { if (!prepared) throw error; profile=null; }
   let raw=parse(rawValue);
@@ -258,7 +268,7 @@ export function validateRubricAssessment(bundle, profileValue, rawValue, {snapsh
   let inspected=false; try {validateInspections(bundle,profile ?? {slots:[]},inspections); inspected=true;} catch {}
   if (prepared) inspected=true;
   const findings={}; for (const id of DIRECT) { try {findings[id]=validateItem(bundle,byId.get(id),id,inspections,null,null,inspected,snapshot);} catch {findings[id]={status:'not_measured',reason:'The model judgment could not be validated.'};} }
-  let c5; try { if (!prepared) validateInspections(bundle,profile,inspections); c5=assessC5(bundle,inspections,raw.c5,supportInspections); } catch { c5={claim:{status:'not_measured',reason:'Claim inventory is incomplete or unvalidated.'},consistency:{status:'not_measured',reason:'Comparison inventory is incomplete or unvalidated.'}}; }
+  let c5; try { if (!prepared) validateInspections(bundle,profile,inspections); c5=assessC5(bundle,inspections,raw.c5,supportInspections,shopperVisibleComparisons); } catch { c5={claim:{status:'not_measured',reason:'Claim inventory is incomplete or unvalidated.'},consistency:{status:'not_measured',reason:'Comparison inventory is incomplete or unvalidated.'}}; }
   findings['C5.claim-support']=c5.claim; findings['C5.consistency']=c5.consistency;
   for (const group of GROUPS) {
     if (!profile) { findings[group]={status:'not_measured',reason:'Category profile could not be validated.'}; continue; }
@@ -278,7 +288,7 @@ export async function restoreRubricAssessment(snapshot, extracted, artifact) {
   if (JSON.stringify([snapshot,extracted])!==original) fail();
   if (!artifact || artifact.version!==OPEN_RUBRIC_VERSION || artifact.sourceDigest!==bundle?.sourceDigest || artifact.profileDigest!==await rubricProfileDigest(artifact.profile)) fail();
   if (!bundle.coverage.preparedHtml) validateInspections(bundle,artifact.profile,artifact.inspections);
-  return validateRubricAssessment(bundle,artifact.profile,artifact.judgments,{snapshot,extracted,inspections:artifact.inspections,supportInspections:artifact.supportInspections});
+  return validateRubricAssessment(bundle,artifact.profile,artifact.judgments,{snapshot,extracted,inspections:artifact.inspections,supportInspections:artifact.supportInspections,shopperVisibleComparisons:artifact.shopperVisibleComparisons === true});
 }
 function wireRequestBytes(input, provider) {
   const wire = provider === 'granite' ? serializeGraniteRequest(input) : serializeTerraRequest(input.messages);
@@ -325,7 +335,7 @@ export async function callRubricModel({AI,allowance,now,input,stage,provider}) {
   if (!parsed || typeof parsed!=='object' || Array.isArray(parsed)) throw new Error('model_output_invalid');
   return granite ? validateGraniteStage(stage,parsed) : parsed;
 }
-export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,extracted,report,onProfile,modelCall,provider='terra',calibrationApproved=OPEN_RUBRIC_CALIBRATION_APPROVED}) {
+export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,extracted,report,onProfile,modelCall,provider='terra',calibrationApproved=OPEN_RUBRIC_CALIBRATION_APPROVED,shopperVisibleComparisons=false}) {
   const stages=[];
   const unavailable=reason=>({status:'unavailable',reason,stages});
   if (!calibrationApproved) return unavailable('Open rubric assessment awaits independent calibration.');
@@ -389,7 +399,7 @@ export async function assessRetainedRubric({AI,allowance,now=Date.now,snapshot,e
     if (preparedBatched && Array.isArray(response?.judgments)) response.judgments=response.judgments.map(item=>cleanItem(item,bundle.sources.map(s=>s.id),`judgment:${item?.id}`));
     if (preparedBatched && Array.isArray(response?.c5?.claims)) response.c5.claims=response.c5.claims.map(item=>cleanItem(item,bundle.sources.map(s=>s.id),`claim:${item?.id}`));
     if (JSON.stringify([snapshot,extracted])!==original) throw new Error('inputs_changed');
-    const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections}), replayArtifact={version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response),...(preparedBatched ? {diagnostics:clone(diagnostics)} : {})};
+    const assessment=validateRubricAssessment(bundle,profile,response,{snapshot,extracted,inspections,supportInspections,shopperVisibleComparisons}), replayArtifact={...(shopperVisibleComparisons ? {shopperVisibleComparisons:true} : {}),version:OPEN_RUBRIC_VERSION,sourceDigest:bundle.sourceDigest,profileDigest:await rubricProfileDigest(profile),profile:clone(profile),inspections:clone(inspections),supportInspections:clone(supportInspections),judgments:clone(response),...(preparedBatched ? {diagnostics:clone(diagnostics)} : {})};
     if (encoder.encode(JSON.stringify(replayArtifact)).length > 256*1024) throw new Error('artifact_limit');
     stages.push({stage:'content',status:'completed',code:'judgments_validated'});
     return {status:'assessed',assessment,profile,replayArtifact,reason:null,stages};

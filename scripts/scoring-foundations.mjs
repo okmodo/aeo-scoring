@@ -43,8 +43,10 @@ export function deliveryFraction(delivery) {
 export function scoreReference(rubric, categories, input) {
   const category = categories.categories.find(c => c.id === input.category);
   const allowedNA = {'S2.variants':'single_configuration','S3.optional-claims':'no_optional_claims','C5.claim-support':'no_material_claims'};
-  const revised = rubric.version === '2.0.0';
+  const current = rubric.version === '3.0.0';
+  const revised = rubric.version === '2.0.0' || current;
   if (revised) Object.assign(allowedNA, {'S1.configuration':'single_configuration','S1.supporting-access':'no_supporting_references','S2.identifiers':'no_identifiers_assigned'});
+  if (current) Object.assign(allowedNA, {'S4.image-alternatives':'no_informative_images','C3.shipping':'pickup_only'});
   const known = new Set(rubric.criteria.flatMap(c=>c.subchecks.map(s=>s.id)));
   for (const id of Object.keys(input.checks)) if (!known.has(id)) throw new Error(`Unknown check ${id}`);
   const results = {}; let earned = 0; let complete = Boolean(category);
@@ -54,7 +56,9 @@ export function scoreReference(rubric, categories, input) {
       const entry = input.checks[s.id];
       if (!entry) throw new Error(`Missing check ${s.id}`);
       if (entry.status === 'not_applicable') {
-        if (revised && /^(?:S1|S2)\./.test(s.id) && (!entry.evidence || !entry.justification || !entry.url || !entry.location)) throw new Error(`Missing exclusion evidence ${s.id}`);
+        const needsEvidence = revised && /^(?:S1|S2)\./.test(s.id) ||
+          current && (s.id === 'S4.image-alternatives' || s.id === 'C3.shipping');
+        if (needsEvidence && (!entry.evidence || !entry.justification || !entry.url || !entry.location)) throw new Error(`Missing exclusion evidence ${s.id}`);
         if (s.id.startsWith('C4.') && entry.rule === 'category_conditions_absent') {
           const questions = category?.decisionSupport.filter(q => q.subcheckId === s.id) ?? [];
           const evidence = entry.conditions;
@@ -66,6 +70,7 @@ export function scoreReference(rubric, categories, input) {
       if (entry.status === 'not_measured') { incomplete=true; continue; }
       if (entry.status !== 'measured' || typeof entry.fraction !== 'number' || !Number.isFinite(entry.fraction) || entry.fraction < 0 || entry.fraction > 1) throw new Error(`Invalid check ${s.id}`);
       if (entry.fraction < 1 && !entry.evidence) throw new Error(`Missing deduction evidence ${s.id}`);
+      if (current && ['C3.shipping','C3.returns'].includes(s.id) && ![0, 1].includes(entry.fraction)) throw new Error(`Invalid binary credit ${s.id}`);
       if (revised && /^(?:S1|S2)\./.test(s.id) && ![0, 0.5, 1].includes(entry.fraction)) throw new Error(`Invalid revised credit ${s.id}`);
       raw += s.maxPoints * entry.fraction;
     }

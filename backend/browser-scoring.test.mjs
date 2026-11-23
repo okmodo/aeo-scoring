@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {scoreAudit} from './scoring.mjs';
+import {scoreAuditV2 as scoreAudit} from './scoring.mjs';
 import {extract} from './retrieval.mjs';
 import {HtmlTestRewriter} from './html-product-test-helper.mjs';
 import {buildSemanticRequest,validateSemanticResponse} from './semantic-assessment.mjs';

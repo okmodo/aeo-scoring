@@ -2,8 +2,11 @@ import {isPreparedObservations} from './prepared-derived.mjs';
 // Deterministic observations only. An unobserved field is not proof of absence.
 import rubricV1 from '../config/rubric.v1.json' with { type: 'json' };
 import rubricV2 from '../config/rubric.v2.json' with { type: 'json' };
+import rubricV3 from '../config/rubric.v3.mjs';
+import { presentRubricV3 } from './rubric-presentation.mjs';
+import { assessBinaryPolicy, enforceBinaryContent } from './rubric-policy.mjs';
 import { assessSourceAccessibility } from './structure-accessibility.mjs';
-import { inspectRevisedProductSchema } from './structure-schema.mjs';
+import { inspectProductJsonLdPresence, inspectRevisedProductSchema } from './structure-schema.mjs';
 import categories from '../config/categories.v1.2.json' with { type: 'json' };
 import crawlerRegistry from '../config/crawlers.v1.json' with { type: 'json' };
 import { scoreProductFields } from './product-fields.mjs';
@@ -19,7 +22,7 @@ import { isValidatedCategoryProfile } from './category-profile.mjs';
 import { isValidatedRubricAssessment } from './ai-rubric-assessment.mjs';
 import { applyRubricAssessment } from './ai-rubric-scoring.mjs';
 
-export const RUBRIC_VERSION = rubricV2.version;
+export const RUBRIC_VERSION = rubricV3.version;
 export const ENGINE_VERSION = '2.2.1';
 const CRAWLER_GROUPS = [
   ['S5.search', crawlerRegistry.scoring.search.botIds],
@@ -43,14 +46,17 @@ const schemaType = (types, type) => types.includes(type) || types.includes('http
 const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'http://schema.org', 'http://schema.org/']);
 
 /** Score supported observations from a bounded retrieved document. */
-// Explicit v1 replay preserves historical tests; service requests always use v2.
+// Explicit historical replay keeps earlier rubric assertions stable.
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
-export function scoreAudit(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
+export function scoreAuditV2(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
+export function scoreAudit(snapshot, extracted, options = {}) { return presentRubricV3(scoreAuditVersion(snapshot, extracted, options, rubricV3)); }
 function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false, deterministicExtracted = null } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
+  const current = rubric === rubricV3;
   // Browser retrieval supplies two observations from one navigation. Source
   // checks retain their original input; content checks use the rendered input.
-  const sourceExtracted = legacy ? extracted : (initialExtracted ?? extracted);
+  const sourceExtracted = legacy ? extracted : (initialExtracted ??
+    (current && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod) ? null : extracted));
   const profile = !legacy && isValidatedCategoryProfile(categoryProfile) ? categoryProfile : null;
   const canonicalExtracted = extracted;
   const aiValidated = !legacy && isValidatedRubricAssessment(aiAssessment, snapshot, canonicalExtracted);
@@ -230,6 +236,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   }
   if (snapshot?.guides && typeof sourceUrl === 'string' && typeof observedAt === 'string') {
     for (const [id, finding] of Object.entries(assessWebsiteGuides(snapshot.guides, sourceUrl))) {
+      if (!Object.hasOwn(checks, id)) continue;
       checks[id] = { status: 'measured', fraction: finding.fraction,
         evidence: addEvidence(finding.url, finding.location, finding.excerpt) };
     }
@@ -257,10 +264,32 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
       ...(!legacy ? assessSourceAccessibility(snapshot, sourceExtracted) : {}),
       ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
+    if (current) {
+      observations['C5.consistency'] = { status: 'not_measured', reason: 'A complete shopper-visible comparison inventory was not verified.' };
+      observations['C5.claim-support'] = { status: 'not_measured', reason: 'A complete material claim inventory was not verified.' };
+    }
+    if (current) for (const kind of ['shipping', 'returns']) {
+      const id = `C3.${kind}`;
+      observations[id] = assessBinaryPolicy(kind, content.findings[id], { snapshot, extracted });
+    }
+    if (Object.hasOwn(checks, 'S2.json-ld')) {
+      const presence = inspectProductJsonLdPresence(snapshot, extracted);
+      if (presence) observations['S2.json-ld'] = presence;
+    }
+    const renderedProduct = extracted?.productHtml;
+    if (current && snapshot?.retrievalMethod === 'browser' && !snapshot.htmlLimited && !snapshot.browser?.coverage?.renderedLimited &&
+        renderedProduct?.complete === true && renderedProduct.visibility === 'computed' && renderedProduct.images?.length === 0) {
+      observations['S4.image-alternatives'] = {
+        status: 'not_applicable', rule: 'no_informative_images', url: sourceUrl, location: 'rendered main product region',
+        justification: 'A complete inspection found no visible product images.',
+        excerpt: 'No visible image elements were present in the inspected main product region.',
+      };
+    }
     if (preparedDerived) {
       // Serialized rendered HTML cannot establish computed image visibility or
       // prove that a missing title/heading was absent from the original page.
-      delete observations['S4.image-alternatives'];
+      if (current) observations['S4.image-alternatives'] = { status: 'not_measured', reason: 'Serialized rendered HTML does not establish which images are informative or visible.' };
+      else delete observations['S4.image-alternatives'];
       const html = extracted.productHtml;
       const heading = typeof html?.identity === 'string' ? html.identity : html?.identity?.mainH1 || html?.headings?.find(h => h.level === 1)?.text;
       if (!extracted.title || !heading) delete observations['S4.title'];
@@ -271,9 +300,9 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       if (!Object.hasOwn(checks, id)) continue;
       const evidenceIds = [];
       const methodFor = ref => ['browser','browser_api_content'].includes(snapshot?.retrievalMethod) &&
-        !id.startsWith('S1.') && !id.startsWith('S2.') &&
+        !id.startsWith('S1.') && (!id.startsWith('S2.') || id === 'S2.json-ld') &&
         (!ref.url || ref.url === sourceUrl) &&
-        !/json.?ld|application\/ld\+json|initial:/i.test(ref.location || '') ? 'rendered' : 'raw';
+        (id === 'S2.json-ld' || !/json.?ld|application\/ld\+json|initial:/i.test(ref.location || '')) ? 'rendered' : 'raw';
       if (finding.excerpt) evidenceIds.push(addEvidence(finding.url || sourceUrl, finding.location || 'product region', finding.excerpt,
         methodFor(finding)));
       const addRefs = (refs, prefix = '') => {
@@ -294,21 +323,34 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
           ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
         const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
           technicalFailures.has(id) && checks[id].status === 'measured');
-        if (needsJudgment && !establishedTechnical) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
+        const establishedLocal = current && ['C3.shipping', 'C3.returns'].includes(id);
+        if (needsJudgment && !establishedTechnical && !establishedLocal) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
       }
       category = null;
     }
     if (aiValidated) {
       category = 'open-rubric';
       categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile?.category ?? 'Unclassified', decisionSupport: (aiAssessment.profile?.slots ?? []).filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
+      const policyChecks = current ? { 'C3.shipping': checks['C3.shipping'], 'C3.returns': checks['C3.returns'] } : null;
       applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence });
+      for (const [id, local] of Object.entries(policyChecks ?? {})) {
+        const judged = checks[id];
+        const binary = judged.status === 'measured' && [0, 1].includes(judged.fraction) && judged.evidenceIds?.length;
+        if (!binary || local.status === 'not_applicable') checks[id] = local;
+        else if (local.status === 'measured' && local.fraction !== judged.fraction)
+          checks[id] = { status: 'not_measured', reason: 'Verified policy observations conflict.',
+            evidenceIds: [...new Set([...local.evidenceIds, ...judged.evidenceIds])] };
+      }
+      if (current && preparedDerived) checks['S4.image-alternatives'] = { status: 'not_measured', reason: 'Serialized rendered HTML does not establish which images are informative or visible.' };
     }
+    if (current) enforceBinaryContent(checks);
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
     fixes.length = 0;
     const actions = {
       S1: [legacy ? 'Publish readable product facts' : 'Make product information accessible in source HTML', 'Web developer'],
       S2: ['Repair product structured data', 'Web developer'],
+      'S2-json-ld': ['Publish product JSON-LD on this page', 'Web developer'],
       S3: ['Align structured data with product content', 'Web developer'],
       S4: ['Improve product labels and organization', 'Content editor'],
       S5: ['Review crawler access declarations', 'Web developer'],
@@ -328,10 +370,12 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       const denominator = criterion.subchecks.filter(s => checks[s.id].status !== 'not_applicable').reduce((sum,s) => sum+s.maxPoints,0);
       const recoverablePoints = unknown ? null : deducted.reduce((sum,s) => sum+s.maxPoints*(1-checks[s.id].fraction),0)*criterion.maxPoints/denominator;
       const affected = criterion.subchecks.filter(s => checks[s.id].status === 'not_measured' || deducted.includes(s));
-      fixes.push({ id: 'improve-' + criterion.id.toLowerCase(), title: unknown && !deducted.length ? `Complete the ${criterion.id} assessment` : actions[criterion.id][0], owner: unknown && !deducted.length ? 'Audit reviewer' : actions[criterion.id][1],
+      const jsonLdAction = current && affected.some(s => s.id === 'S2.json-ld')
+        ? 'Inspect the rendered product page for a parseable Schema.org Product or ProductGroup JSON-LD block; publish or repair it if missing or invalid, then audit again. ' : '';
+      fixes.push({ id: 'improve-' + criterion.id.toLowerCase(), title: unknown && !deducted.length ? (jsonLdAction ? 'Verify product JSON-LD on this page' : `Complete the ${criterion.id} assessment`) : actions[criterion.id][0], owner: unknown && !deducted.length ? 'Audit reviewer' : actions[criterion.id][1],
         checkIds: affected.map(s=>s.id), evidenceIds: [...new Set(affected.flatMap(s=>checks[s.id].evidenceIds || [checks[s.id].evidence]).filter(Boolean))], recoverablePoints,
-        condition: unknown ? 'Complete the affected evidence inspections before recovery can be calculated.' :
-          'If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions.' });
+        condition: jsonLdAction + (unknown ? 'Complete the affected evidence inspections before recovery can be calculated.' :
+          'If every affected subcheck meets its full-credit rule in the same product context and a new audit verifies the changes. Points are conditional and may overlap in implementation effort with other actions.') });
     }
   }
   fixes.sort((a, b) => (b.recoverablePoints ?? -1) - (a.recoverablePoints ?? -1));
@@ -370,6 +414,14 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
         ...((aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
-        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []), ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' ? 'Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit.' : profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.' : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.'] : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
+        ...(Object.hasOwn(checks, 'S2.json-ld') && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod) ? ['The JSON-LD presence check uses the captured rendered page. Other structured-data checks use the initial response.'] : []),
+        ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []),
+        ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' && !current
+          ? 'Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit.'
+          : current && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod)
+            ? 'Content checks use captured rendered product evidence. Uncaptured policy resources and interactions remain unmeasured.'
+            : profile ? 'Rules assess English source HTML using a model-generated product category and a validated assessment profile. Browser rendering is outside this inspection.'
+              : 'Rules assess English source HTML and supported categories. Browser rendering is outside this inspection.']
+          : ['Semantic assessment, rendering, and unobserved evidence are not scored.'])] }
   };
 }

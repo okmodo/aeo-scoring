@@ -68,7 +68,7 @@ test('queued audit progresses through durable model checkpoints without an open 
     assert.equal(sql.prepare('SELECT state FROM audit_queue_jobs WHERE audit_id=?').get(submitted.id).state,'complete');
     assert.equal(sql.prepare('SELECT state FROM prepared_assessment_jobs WHERE audit_id=?').get(submitted.id).state,'complete');
     const completedResponse=await handle(new Request('https://worker'+submitted.statusUrl),options);assert.equal(completedResponse.status,200);const completed=await completedResponse.json();
-    assert.equal(completed.status,'incomplete');const checks=completed.report.criteria.flatMap(c=>c.subchecks),identity=checks.find(c=>c.id==='C1.identity');
+    assert.equal(completed.status,'incomplete');const checks=completed.report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components)),identity=checks.find(c=>c.id==='C1.identity');
     assert.equal(identity.points,3);assert.ok(identity.evidenceIds.length>0&&identity.evidenceIds.every(id=>completed.report.evidence.some(e=>e.id===id)));
     assert.equal(checks.find(c=>c.id==='C1.explanation').status,'not_measured');assert.ok(completed.report.evidence.some(e=>e.excerpt.includes('Solar kettle')));
     assert.equal(sql.prepare("SELECT amount FROM allowance_settled_v2 WHERE account_id=? AND metric='aiNeurons'").get('fixture').amount,calls.length*5);assert.equal(billingChecks,calls.length);

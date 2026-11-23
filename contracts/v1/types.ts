@@ -23,7 +23,7 @@ export interface Evidence {
   excerpt: string
 }
 
-export interface Subcheck {
+export interface CheckComponent {
   id: string
   maxPoints: number
   availablePoints?: number
@@ -32,6 +32,12 @@ export interface Subcheck {
   points: number | null
   evidenceIds: string[]
   reason: string | null
+}
+
+export interface Subcheck extends CheckComponent {
+  // Supplied by rubric 3.0.0. An unresolved combined row can still have verified points.
+  earnedPoints?: number
+  components?: CheckComponent[]
 }
 
 export interface Criterion {

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "Publish the agreed 24-check rubric through the audit report API.",
+  "state": "Rubric 3.0.0 is implemented locally on a branch stacked on the parser work in PR 66. It is not deployed.",
+  "decisions": [
+    "Map the original scoring criteria into seven actions and 24 rows. Preserve their exclusion denominators and place the one-point JSON-LD check in its own internal criterion.",
+    "Keep the wire envelope stable and supply components and earnedPoints on v3 scored rows. Use outer check IDs for actions and coverage.",
+    "Use binary policy outcomes. Require a verified complete shopper-visible comparison or claim inventory for full assessment of C5."
+  ],
+  "constraints": [
+    "Frontend, production, page collection, queue protocol, model timeout and usage limits are outside this change.",
+    "Use the retained private capture locally and keep original merchant HTML and response data out of Git."
+  ],
+  "completed": [
+    "A native local Worker replay of a hash-verified retained Faherty capture used scripted model responses. It reported 4 of 24 scored rows measured, 20 unresolved, 37 earned points and a null final score. Product JSON-LD contributed one verified point inside the unresolved product-markup row.",
+    "The independent Terra review identified false completion risks around comparison inventories and policy judgments. The final re-review reported no additional merge blockers and passed all 44 targeted assessment and queue tests.",
+    "Current score publication tests cover both binary policy outcomes and partial evidence in unresolved rows. Earlier rubric and browser fixture equality are checked through explicit replay."
+  ],
+  "remaining": [
+    "The active browser capture does not supply initial response or all supporting file and policy observations. The active keyed assessment does not build a complete C5 inventory. These rows remain unmeasured when the required evidence is unavailable.",
+    "A live inference run, related capture expansion, frontend presentation, and production rollout are outside this local validation."
+  ],
+  "resumeCommands": [
+    "node --test backend/ai-rubric-assessment.test.mjs backend/granite-keyed-queue.test.mjs",
+    "npm run evaluate -- --change rubric-24-checks --base 07184af8f1a8cedb5f2d5cc17fccd779f6c74019",
+    "npm run ci:gate -- 07184af8f1a8cedb5f2d5cc17fccd779f6c74019"
+  ]
+}

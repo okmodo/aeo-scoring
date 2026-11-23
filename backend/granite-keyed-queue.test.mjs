@@ -11,6 +11,12 @@ import { createSnapshotStore } from './snapshot-store.mjs';
 import { createBrowserContentWorkflow } from './browser-content-workflow.mjs';
 import { prepareKeyedAudit } from './granite-keyed-prepared.mjs';
 import { scoreBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
+import { assessBinaryPolicy } from './rubric-policy.mjs';
+import { inspectProductJsonLdPresence } from './structure-schema.mjs';
+import { scoreReference } from '../scripts/scoring-foundations.mjs';
+import rubricV3 from '../config/rubric.v3.mjs';
+import { presentRubricV3 } from './rubric-presentation.mjs';
+import { scoreAudit } from './scoring.mjs';
 import { extract } from './retrieval.mjs';
 import { derivePreparedObservations } from './prepared-derived.mjs';
 import { HtmlTestRewriter } from './html-product-test-helper.mjs';
@@ -20,7 +26,8 @@ import { PIPELINE_VERSION } from './pipeline-state.mjs';
 import { keyedGraniteEnabled, preparedAssessmentPolicy } from './prepared-assessment-policy.mjs';
 
 const url = 'https://example.com/solar-kettle';
-const html = `<!doctype html><html><head><title>Solar kettle</title></head><body><main>
+const html = `<!doctype html><html><head><title>Solar kettle</title>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Solar kettle"}</script></head><body><main>
 <article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2>
 <p>This insulated solar kettle warms six cups of water during outdoor trips.<span class="bopis">Store text excluded from keyed evidence.</span></p>
 <h2>Details</h2><ul><li>Brand: Example Outfitters</li><li>Material: Steel</li><li>Care: Hand wash only.</li></ul>
@@ -146,6 +153,8 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
   const audit = await response.json();
   assert.equal(audit.status, 'incomplete');
   assert.equal(audit.report.score, null);
+  assert.equal(audit.report.rubricVersion, '3.0.0');
+  assert.equal(audit.report.coverage.total, 24);
   if (providerFailure) {
     assert.equal(sql.prepare('SELECT outcome FROM model_attempts').get().outcome, 'model_provider_failure');
     assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'uncertain');
@@ -156,9 +165,21 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
   assert.equal(audit.report.category, 'open-rubric');
   assert.equal(audit.report.coverage.assessment.category, 'Solar camp kettles');
   const checks = audit.report.criteria.flatMap(criterion => criterion.subchecks);
-  assert.equal(checks.find(check => check.id === 'C1.explanation').points, 4);
-  assert.equal(checks.find(check => check.id === 'C3.availability').status, 'not_measured');
-  assert.equal(checks.find(check => check.id === 'C2.essential').status, 'not_measured');
+  const evidence = new Map(audit.report.evidence.map(item => [item.id, item]));
+  const check = id => checks.find(item => item.id === id);
+  const component = id => checks.flatMap(item => item.components).find(item => item.id === id);
+  assert.equal(component('C1.explanation').points, 4);
+  assert.equal(component('C3.availability').status, 'not_measured');
+  assert.equal(check('C1.essential-specs').status, 'not_measured');
+  const markup = check('S2.product-markup');
+  assert.equal(markup.earnedPoints, 1);
+  assert.equal(markup.points, null);
+  assert.equal(markup.fraction, null);
+  assert.deepEqual(markup.components.map(({ id, status }) => [id, status]), [['S2.json-ld', 'measured'], ['S2.syntax', 'not_measured']]);
+  assert.equal(evidence.get(component('S2.json-ld').evidenceIds[0]).method, 'rendered');
+  assert.ok(audit.report.fixes.every(fix => fix.checkIds.every(id => check(id))));
+  assert.ok(checks.every(row => row.evidenceIds.every(id => evidence.has(id))));
+  assert.equal(checks.reduce((points, row) => points + row.earnedPoints, 0), audit.report.earnedPoints);
   assert.ok(audit.report.evidence.some(item => item.excerpt.includes('warms six cups')));
   assert.doesNotMatch(JSON.stringify(audit), /response_body_base64|model_attempts|chatcmpl/);
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_attempts').get().n, 1);
@@ -175,6 +196,94 @@ if (exitStage === 'export') {
     previous: JSON.parse(readFileSync(process.env.AEO_KEYED_QUEUE_EXPORT, 'utf8')),
   }));
 } else {
+  test('rubric v3 preserves pillar totals and distinguishes zero, unresolved, and evidenced exclusions', () => {
+    const scoringComponents = rubricV3.criteria.flatMap(criterion => criterion.subchecks);
+    const categories = { categories: [{ id: 'test-product' }] };
+    const checks = Object.fromEntries(scoringComponents.map(({ id }) => [id, { status: 'measured', fraction: 1 }]));
+    const input = { category: 'test-product', checks };
+    const grade = () => scoreReference(rubricV3, categories, input);
+    assert.equal(grade().finalScore, 100);
+    checks['C3.shipping'] = { status: 'measured', fraction: 0.5, evidence: 'e1' };
+    assert.throws(grade, /Invalid binary credit/);
+    checks['C3.shipping'] = { status: 'not_applicable', rule: 'pickup_only', justification: 'Pickup only.' };
+    assert.throws(grade, /Missing exclusion evidence/);
+    Object.assign(checks['C3.shipping'], { evidence: 'e1', url, location: 'fulfillment terms' });
+    assert.equal(grade().finalScore, 100);
+
+    const unmeasured = { status: 'not_measured', reason: 'The product URL was outside the inspected sitemap branch.' };
+    const report = presentRubricV3({
+      criteria: rubricV3.criteria.map(criterion => ({
+        ...criterion, complete: criterion.id !== 'S6',
+        subchecks: criterion.subchecks.map(item => ({
+          ...item, status: 'measured', fraction: 1, points: item.maxPoints, evidenceIds: [],
+          ...(item.id === 'S6.inclusion' && { ...unmeasured, fraction: null, points: null }),
+        })),
+      })), coverage: {}, fixes: [],
+    });
+    assert.deepEqual(report.criteria.map(group => group.id), ['S1', 'S2', 'S4', 'S5', 'C1', 'C3', 'C5']);
+    const total = pillar => report.criteria.filter(c => c.pillar === pillar).reduce((points, c) => points + c.maxPoints, 0);
+    assert.deepEqual([total('structure'), total('content')], [40, 60]);
+    const sitemap = report.criteria.find(c => c.id === 'S5').subchecks.find(c => c.id === 'S5.sitemap');
+    assert.deepEqual([sitemap.status, sitemap.points, sitemap.fraction, sitemap.earnedPoints], ['not_measured', null, null, 1]);
+    assert.deepEqual([report.coverage.total, report.coverage.measured, report.coverage.notMeasured], [24, 23, 1]);
+  });
+
+  test('JSON-LD presence distinguishes parsed markup, confirmed absence, and incomplete evidence', () => {
+    const extraction = jsonLd => ({ jsonLd, coverage: { html: true, jsonLdTruncated: false } });
+    const snapshot = { url };
+    const presence = (jsonLd, bounds = snapshot) => inspectProductJsonLdPresence(bounds, extraction(jsonLd));
+    const grouped = JSON.stringify({ '@context': 'https://schema.org', '@graph': [{ '@type': 'ProductGroup' }] });
+    assert.equal(presence([grouped]).fraction, 1);
+    assert.equal(presence([]).fraction, 0);
+    assert.equal(presence([], { url, htmlLimited: 'bytes' }).status, 'not_measured');
+    assert.deepEqual([presence(['{malformed']).status, presence(['{malformed']).fraction], ['measured', 0]);
+    assert.equal(presence(['{malformed'], { url, htmlLimited: 'bytes' }).status, 'not_measured');
+  });
+
+  test('a limited heuristic comparison cannot substitute for a verified shopper-visible inventory', () => {
+    const snapshot = { url, observedAt: '2026-11-22T20:00:00Z', retrievalMethod: 'browser_api_content' };
+    const productHtml = { complete: true, singleConfiguration: true, identity: 'Solar kettle',
+      blocks: [
+        { text: 'This product weighs 10 oz.', location: 'product description' },
+        { text: 'This product weighs 12 oz.', location: 'specifications' },
+      ] };
+    const extracted = { productHtml, jsonLd: [], coverage: { html: true, jsonLdTruncated: false } };
+    const options = { requireAiAssessment: true, initialExtracted: { jsonLd: [], coverage: { html: false } } };
+    const consistency = result => result.criteria.find(group => group.id === 'C5').subchecks.find(check => check.id === 'C5.consistency');
+    const result = consistency(scoreAudit(snapshot, extracted, options));
+    assert.deepEqual([result.status, result.points], ['not_measured', null]);
+    assert.equal(consistency(scoreAudit(snapshot, { ...extracted, productHtml: { ...productHtml, complete: false } }, options)).status, 'not_measured');
+  });
+
+  test('policy checks require all necessary terms and withhold ambiguous evidence', () => {
+    const observation = (...excerpts) => ({
+      status: 'measured', fraction: 0.5,
+      policyTerms: [{ evidence: excerpts.map(excerpt => ({ url, location: 'product policy', excerpt })) }],
+    });
+    const context = { snapshot: { url } };
+    const supported = observation('We ship to the United States for all products.', 'Free shipping.', 'Delivery takes 3 business days.');
+    assert.equal(assessBinaryPolicy('shipping', supported, context).fraction, 1);
+    assert.equal(assessBinaryPolicy('shipping', observation('Free shipping.'), context).status, 'not_measured');
+    const returns = observation('All products are eligible if unused and may be returned within 30 days.', 'Use the original packaging.');
+    assert.equal(assessBinaryPolicy('returns', returns, context).fraction, 1);
+    assert.equal(assessBinaryPolicy('returns', observation('Unused items may be returned within 30 days.'), context).status, 'not_measured');
+    assert.equal(assessBinaryPolicy('returns', { status: 'measured', fraction: 0, url, location: 'complete policy', excerpt: 'No terms were found.' }).fraction, 0);
+    const withProduct = excerpt => ({
+      ...context, extracted: { productHtml: { complete: true, blocks: [{ text: excerpt, location: 'fulfillment terms' }] } },
+    });
+    const pickup = withProduct('This product is available for in-store pickup only. Shipping is unavailable.');
+    assert.equal(assessBinaryPolicy('shipping', null, pickup).rule, 'pickup_only');
+    assert.equal(assessBinaryPolicy('returns', null, withProduct('This product is final sale.')).fraction, 1);
+    const missing = withProduct('This product is ready to order.');
+    missing.snapshot.policies = { shipping: {
+      state: 'read', url: new URL('/shipping', url).href,
+      extraction: { complete: true, blocks: [{ text: 'Delivery estimates are not provided for all products.' }] },
+    } };
+    assert.equal(assessBinaryPolicy('shipping', null, missing).fraction, 0);
+    missing.snapshot.policies.shipping.extraction.complete = false;
+    assert.equal(assessBinaryPolicy('shipping', null, missing).status, 'not_measured');
+  });
+
   test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
   test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
