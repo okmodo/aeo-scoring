@@ -32,6 +32,7 @@ export interface Subcheck {
   points: number | null
   evidenceIds: string[]
   reason: string | null
+  components?: Array<Omit<Subcheck, 'components' | 'presentation'>>
   presentation?: { name: string; description: string; improve: string; fullCredit: string }
 }
 
@@ -66,6 +67,7 @@ export interface AuditReport {
   market: string | null
   currency: string | null
   score: { total: number; structure: number; content: number } | null
+  scoreBasis?: 'earned_points'
   earnedPoints: number
   criteria: Criterion[]
   evidence: Evidence[]
@@ -91,6 +93,7 @@ export interface Assessment {
   assessedUrl: string | null
   createdAt: string
   completedAt: string | null
+  checksCompletedAt?: string | null
   expiresAt: string
   cache: { hit: boolean; validUntil: string | null }
   report: AuditReport | null

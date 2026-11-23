@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Apply the merged earned-score API contract to the live grouped report design.",
+  "state":"Grouped frontend integration on codex/earned-score-grouped-ui. Backend source comes from merged PR #72 on the release branch. This integration is based on the grouped production frontend on main.",
+  "decisions":["Preserve the deployed report layout and rubric copy. Validate an earned score against the known component and pillar totals before rendering.","Retain verified misses from measured components in mixed rows so uncovered points remain distinct. Reuse the merged queue polling helper."],
+  "constraints":["Frontend integration only. Keep project deployment settings, access, costs, and unrelated services unchanged.","No production deployment as part of CI. Do not commit captured merchant data or secrets."],
+  "completed":["Verified the grouped report with a fixed incomplete fixture, tampered API score, mixed row with a measured zero, and an all-unmeasured report.","Independent Terra review confirmed chart coverage and tracking after the mixed-row adjustment."],
+  "remaining":["Verify hosted CI, then publish the exact static build to the existing Pages project and run the authorized Faherty check."],
+  "resumeCommands":["npm run test:preview","npm run evaluate -- --change earned-score-grouped-ui --base origin/main","npm run ci:gate -- origin/main"]
+}

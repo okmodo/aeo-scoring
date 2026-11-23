@@ -1,0 +1,12 @@
+{
+  "version":1,
+  "id":"earned-score-grouped-ui",
+  "task":"Integrate the merged earned-score and durable polling contract into the deployed grouped frontend.",
+  "scope":["src/App.tsx","src/audit.ts","src/live-report/**","contracts/v1/types.ts","contracts/report-contract.mjs","test/**","evals/changes/earned-score-grouped-ui/**"],
+  "nonGoals":["Preserve grouped report layout, copy and evidence validation. No spending, audit engine, access, or Cloudflare settings changes."],
+  "outcomes":[{"id":"O1","description":"Grouped report displays published earned points and coverage, scores zero correctly, and labels no measurements.","verification":"automated","evidence":"Frozen contract/render regression and real Faherty replay."},{"id":"O2","description":"Grouped frontend polls through checks completed and stops on terminal status.","verification":"automated","evidence":"Reused polling implementation with focused integration test."}],
+  "process":[{"id":"P1","description":"Prior plan commit, independent review, CI and exact candidate build.","verification":"human","evidence":"Git history, handoff, test and release details."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse the existing API and grouped layout.","verification":"human","evidence":"Scoped diff and review."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"Frontend consumes progress using the already released durable polling contract and adds no durable continuation."}
+}

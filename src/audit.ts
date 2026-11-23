@@ -55,3 +55,25 @@ async function response(res: Response): Promise<Assessment> {
   auditStatusUrl(assessment.statusUrl);
   return assessment;
 }
+
+// Keep polling until the report is terminal, even after all checks have completed.
+export async function pollAudit(initial: Assessment, password: string, signal: AbortSignal, onUpdate: (assessment: Assessment) => void, wait = waitForPoll): Promise<Assessment> {
+  let next = initial;
+  let attempt = 0;
+  while (next.status === 'pending') {
+    await wait(pollDelay(attempt++), signal);
+    next = await getAudit(next.statusUrl, password, signal);
+    if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+    onUpdate(next);
+  }
+  return next;
+}
+
+function waitForPoll(delay: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
+    const onAbort = () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); };
+    const timer = setTimeout(() => { signal.removeEventListener('abort', onAbort); resolve(); }, delay);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}

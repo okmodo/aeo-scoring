@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { getTestCopy } from '../contracts/report-contract.mjs'
+import { getTestCopy, validateReport } from '../contracts/report-contract.mjs'
 import { buildLiveReportModel } from '../src/live-report/model.ts'
 import { summarizeTestPoints } from '../src/live-report/test-copy.ts'
 
@@ -197,5 +197,48 @@ test('v3 report renders groups, labels and server subtotal', async () => {
     assert.match(html, /Verified \+4 points so far/)
     assert.match(html, /Some tests could not be completed/)
     assert.match(html, /rd-test-category[^>]*>[^<]+ · (Structural|Data)/)
+    const assessment = fixture()
+    const report = assessment.report
+    const points = pillar => report.criteria.filter(group => group.pillar === pillar).reduce((total,group) => total+group.points,0)
+    report.scoreBasis = 'earned_points'
+    report.score = { total: report.earnedPoints, structure: points('structure'), content: points('content') }
+    assert.equal(validateReport(report).valid, true)
+    const earned = renderToStaticMarkup(React.createElement(LiveReport, { assessment, onBack() {} }))
+    assert.match(earned, /Earned score: 94 of 100/)
+    assert.match(earned, /checks fully measured/)
+    assert.match(earned, /Not yet scored<\/span><strong>\d+/)
+    assert.doesNotMatch(earned, /Total score pending/)
+    const mixed = report.criteria[0].subchecks[0]
+    const component = mixed.components.find(component => component.status === 'measured')
+    assert.equal(component.points, 4)
+    component.points = 0
+    component.fraction = 0
+    mixed.earnedPoints -= 4
+    report.criteria[0].points -= 4
+    report.earnedPoints -= 4
+    report.score.total -= 4
+    report.score.structure -= 4
+    const mixedModel = buildLiveReportModel(assessment)
+    assert.equal(mixedModel.finalScore.total, 90)
+    assert.deepEqual(summarizeTestPoints(mixedModel.checks, null, 90), {earned:90,missed:7,unscored:3,total:100})
+    assert.match(renderToStaticMarkup(React.createElement(LiveReport, { assessment, onBack() {} })), /Verified \+0 points so far/)
+    report.score.total++
+    assert.equal(validateReport(report).valid, false)
+    for (const group of report.criteria) {
+      group.points = 0
+      group.complete = false
+      for (const row of group.subchecks) {
+        Object.assign(row, {status:'not_measured',points:null,earnedPoints:0,fraction:null,availablePoints:row.maxPoints})
+        for (const component of row.components) Object.assign(component, {status:'not_measured',points:null,fraction:null,availablePoints:component.maxPoints})
+      }
+    }
+    report.coverage = {...report.coverage,measured:0,notMeasured:24,notApplicable:0}
+    report.earnedPoints = 0
+    report.score = null
+    assert.equal(validateReport(report).valid, true)
+    const empty = renderToStaticMarkup(React.createElement(LiveReport, { assessment, onBack() {} }))
+    assert.match(empty, />No checks measured</)
+    assert.doesNotMatch(empty, /rd-points-doughnut|View overall score/)
+
   } finally { await vite.close() }
 })

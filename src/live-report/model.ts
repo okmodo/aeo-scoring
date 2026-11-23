@@ -9,6 +9,7 @@ export type CheckDetail = {
   status: Subcheck['status']
   points: number | null
   earnedPoints?: number
+  verifiedMissedPoints?: number
   maxPoints: number
   availablePoints: number | null
   fraction: number | null
@@ -74,8 +75,12 @@ export function buildLiveReportModel(assessment: Assessment): LiveReportModel {
     const copy = report.rubricVersion === '3.0.0'
       ? getTestCopy(report.rubricVersion, check.id)!
       : check.presentation ?? getTestCopy(report.rubricVersion, check.id)!
+    const measuredComponents = check.components?.filter(component => component.status === 'measured') ?? []
     return {
-      id: check.id, copy, guidance: null, status: check.status, points: check.points, earnedPoints: report.rubricVersion === '3.0.0' ? check.earnedPoints : undefined,
+      id: check.id, copy, guidance: null, status: check.status, points: check.points,
+      earnedPoints: measuredComponents.length ? check.earnedPoints : undefined,
+      verifiedMissedPoints: measuredComponents.reduce((sum, component) =>
+        sum + (component.availablePoints ?? component.maxPoints) - (component.points ?? 0), 0),
       maxPoints: check.maxPoints, availablePoints: check.availablePoints ?? availablePointsForCheck(report, check.id), fraction: check.fraction,
       reason: check.reason, exclusion: check.exclusion ?? null, ...resolved,
       fullCredit: copy.fullCredit,
@@ -104,7 +109,9 @@ export function buildLiveReportModel(assessment: Assessment): LiveReportModel {
   if (fixes.some((fix, index) => fix.checks.length !== report.fixes[index].checkIds.length)) {
     warnings.push('Some referenced checks are unavailable; their details are withheld.')
   }
-  const finalScore = assessment.status === 'complete' && report.status === 'complete' && counts.unmeasured === 0
-    ? report.score : null
+  const published = assessment.status === 'complete' || assessment.status === 'incomplete'
+  const earnedScore = published && report.scoreBasis === 'earned_points'
+  const legacyScore = assessment.status === 'complete' && report.status === 'complete' && counts.unmeasured === 0
+  const finalScore = earnedScore || legacyScore ? report.score : null
   return { assessment, report, finalScore, counts, checks, fixes, warnings }
 }
