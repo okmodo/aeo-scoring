@@ -1,0 +1,10 @@
+{
+  "version":1,
+  "task":"Restore the browser-rendered-only parser workflow from before PR #71.",
+  "state":"Scoped rollback on codex/rollback-parser-preparation based on d93ed54. PR #70 queue/D1 publication and PR #72 earned scores are preserved.",
+  "decisions":["Remove PR #71's auxiliary initial-HTML and supporting-resource pass from preparation and restore the prior scoring inputs.","Read already retained artifacts with auxiliary fields using their verified rendered extraction. Keep earlier evaluation history."],
+  "constraints":["Existing frontend, Cloudflare bindings, queue settings, model timeout, CPU cap and usage limits are preserved. No deployment in CI."],
+  "completed":["Independent Terra review confirmed the compatibility fix for retained inputs and the continued earned-score behavior.","Passed 38 focused workflow, source, queue and component tests. A local native workerd and D1 replay of the hash-verified sweater-shirt capture with a simulated model response published an earned score after all four messages without live inference."],
+  "remaining":["Verify hosted CI before deploying the exact backend-only rollback. This rollback removes the additional source inputs and does not establish that every live page stays within the CPU cap."],
+  "resumeCommands":["npm run test:granite-keyed-queue","npm run test:component-publication","node --test backend/browser-content-workflow.test.mjs backend/assessment-sources.test.mjs","npm run evaluate -- --change rollback-parser-preparation --base d93ed547cad4c836e8029d8ead404ebf96b8155c","npm run ci:gate -- d93ed547cad4c836e8029d8ead404ebf96b8155c"]
+}

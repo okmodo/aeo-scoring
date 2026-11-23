@@ -10,7 +10,7 @@ const frozen=JSON.parse(readFileSync(new URL('../evals/changes/browser-api-conte
 const html=frozen.body.result;
 const defaults=JSON.parse(readFileSync(new URL('../evals/changes/browser-content-defaults/default-request.json',import.meta.url),'utf8'));
 const response=(result=html,options={})=>Response.json({success:true,result,meta:{finalUrl:url,status:200,title:'Everyday Shorts'},...options},{headers:{'X-Browser-Ms-Used':'2500'}});
-function fixture({provider=async()=>response(),failPut=false,failPrepare=false,preprocessOverride,onGet,onPut,egress}={}) {
+function fixture({provider=async()=>response(),failPut=false,failPrepare=false,preprocessOverride,onGet,onPut}={}) {
  const sqlite=new DatabaseSync(':memory:');sqlite.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
  const db={prepare(sql){return{bind(...args){const s=sqlite.prepare(sql);return{first:async()=>s.get(...args)??null,all:async()=>({results:s.all(...args)}),run:async()=>{if(failPrepare&&sql.startsWith('INSERT INTO browser_audit_work'))throw Error('D1 unavailable');return{meta:{changes:Number(s.run(...args).changes)}};}};}};}};
  const objects=new Map(),events=[],calls=[],settlements=[];
@@ -18,7 +18,7 @@ function fixture({provider=async()=>response(),failPut=false,failPrepare=false,p
  const guard={reserve:async()=>({accepted:true,duplicate:false}),start:async()=>({accepted:true}),cancelUnstarted:async()=>{events.push('cancel');return{accepted:true}},settle:async v=>{settlements.push(v.response.headers.get('X-Browser-Ms-Used'));return{accepted:true}}};
  let extracted=0;
  const preprocess=preprocessOverride ?? (async ({rawHtml,sourceObjectKey,expiresAt})=>{events.push('preprocess');const html=new TextEncoder().encode(new TextDecoder().decode(rawHtml).replace(/<!--[\s\S]*?-->/g,''));const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');return {html,preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey,sourceSha256:await digest(rawHtml),sourceBytes:rawHtml.length,outputSha256:await digest(html),outputBytes:html.length,preparedAt:time,expiresAt}};});
- const flow=createBrowserContentWorkflow({db,snapshots,guard,preprocess,egress,binding:{quickAction:async(...args)=>{events.push('provider');calls.push(args);return provider();}},now:()=>time,extractPage:async input=>{events.push('extract');extracted++;assert.ok(input.body instanceof Uint8Array);return{productHtml:{complete:true,blocks:[{text:'Soft cotton shorts with an adjustable waist.',location:'main/p'}]},jsonLd:[],coverage:{html:true,usable:true,jsonLdTruncated:false}};}});
+ const flow=createBrowserContentWorkflow({db,snapshots,guard,preprocess,binding:{quickAction:async(...args)=>{events.push('provider');calls.push(args);return provider();}},now:()=>time,extractPage:async input=>{events.push('extract');extracted++;assert.ok(input.body instanceof Uint8Array);return{productHtml:{complete:true,blocks:[{text:'Soft cotton shorts with an adjustable waist.',location:'main/p'}]},jsonLd:[],coverage:{html:true,usable:true,jsonLdTruncated:false}};}});
  const audit={id,url,createdAt:time,expiresAt:time+86400000};
  return{flow,audit,snapshots,guard,db,sqlite,objects,events,calls,settlements,get extracted(){return extracted;}};
 }
@@ -125,9 +125,9 @@ test('prepared-only reader verifies provenance without original reads or parsing
  await assert.rejects(f.snapshots.readPrepared(id),{code:'snapshot_unavailable'});
  const raw=await f.snapshots.read(id),bytes=new TextEncoder().encode('<p>clean</p>');
  const digest=async v=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',v))].map(b=>b.toString(16).padStart(2,'0')).join('');
- await f.snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html:'<p>clean</p>',preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:raw.source.objectKey,sourceSha256:raw.source.sha256,sourceBytes:raw.source.bytes,expiresAt:raw.source.expiresAt,preparedAt:time,outputBytes:bytes.length,outputSha256:await digest(bytes)}}});
+ await f.snapshots.saveAssessment({auditId:id,kind:'prepared',artifact:{version:'1',html:'<p>clean</p>',observations:{initialExtracted:{coverage:{html:true},jsonLd:[]},support:{crawlerPolicy:{}}},preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey:raw.source.objectKey,sourceSha256:raw.source.sha256,sourceBytes:raw.source.bytes,expiresAt:raw.source.expiresAt,preparedAt:time,outputBytes:bytes.length,outputSha256:await digest(bytes)}}});
  f.objects.delete(raw.source.objectKey);
- const result=await f.snapshots.readPrepared(id);assert.deepEqual(result.snapshot.rawHtml,bytes);assert.equal(result.snapshot.browser.renderedHtml,'<p>clean</p>');assert.equal(result.extracted.productHtml,null);assert.equal(f.extracted,0);
+ const result=await f.snapshots.readPrepared(id);assert.deepEqual(result.snapshot.rawHtml,bytes);assert.equal(result.snapshot.browser.renderedHtml,'<p>clean</p>');assert.equal(result.extracted.productHtml,null);assert.equal(result.snapshot.browser.coverage.initialAvailable,false);assert.equal(result.snapshot.crawlerPolicy,undefined);assert.equal(f.extracted,0);
  await f.snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'2',snapshot:{},extracted:{productHtml:{identity:'different'}}}});
  reads.length=0;const after=await f.snapshots.readPrepared(id);assert.deepEqual(after,result);assert.ok(reads.every(key=>!key.endsWith('/html')&&!key.endsWith('/inputs')));
  const expired=createSnapshotStore({db:f.db,now:()=>time+86400000,bucket:{put:async()=>{},get:async()=>assert.fail('expired read'),delete:async()=>{}},allowance:{reserve:async()=>({accepted:true}),settle:async()=>({accepted:true})}});
@@ -145,8 +145,19 @@ test('automatic prepared publication stops before optional extraction and legacy
  await f.flow.read(id);assert.equal(f.extracted,1);assert.equal(f.sqlite.prepare('SELECT inputs_state FROM retained_snapshots').get().inputs_state,'ready');
 });
 
-test('optional egress is disabled without preparation admission',async()=>{
- let calls=0;const f=fixture({egress:{fetch:async()=>{calls++;throw Error('unexpected');}}});
- const grant=await f.flow.prepare(f.audit);await f.flow.capture(f.audit,grant);await f.flow.read(id,{preparedOnly:true});
- assert.equal(calls,0);
+test('old inputs with auxiliary observations still provide rendered evidence',async()=>{
+ const f=fixture();await f.flow.capture(f.audit,await f.flow.prepare(f.audit));
+ await f.flow.read(id,{preparedOnly:true});
+ const captured=await f.snapshots.read(id),prepared=await f.snapshots.readAssessment(id,'prepared');
+ const extracted={productHtml:{identity:'rendered product'}};
+ const snapshot={...captured.snapshot,preprocessing:prepared.preprocessing,crawlerPolicy:{},sitemap:{},guides:{},policies:{},
+   browser:{version:'browser-content-v3',captureType:'content-api',initialExtracted:{productHtml:{identity:'initial product'}},
+     coverage:{complete:true,initialAvailable:true,initialLimited:false,renderedLimited:false}}};
+ await f.snapshots.saveAssessment({auditId:id,kind:'inputs',artifact:{version:'2',snapshot,extracted}});
+ const replay=await f.flow.read(id);
+ assert.deepEqual(replay.extracted,extracted);
+ assert.equal(replay.snapshot.browser.coverage.initialAvailable,false);
+ assert.equal(replay.snapshot.browser.initialExtracted.productHtml,null);
+ for(const key of ['crawlerPolicy','sitemap','guides','policies']) assert.equal(replay.snapshot[key],undefined);
+ assert.equal(f.extracted,0);
 });

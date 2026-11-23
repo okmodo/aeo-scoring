@@ -263,7 +263,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     const observations = { ...(legacy ? schema.findings : revisedSchema.findings),
       ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
       ...(!legacy ? assessSourceAccessibility(snapshot, sourceExtracted) : {}),
-      ...content.findings, ...semanticFindings, ...((hasHtml || current) ? assessSupport(snapshot, extracted) : {}) };
+      ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
     if (current) {
       observations['C5.consistency'] = { status: 'not_measured', reason: 'A complete shopper-visible comparison inventory was not verified.' };
       observations['C5.claim-support'] = { status: 'not_measured', reason: 'A complete material claim inventory was not verified.' };
@@ -323,7 +323,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
           ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
         const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
           technicalFailures.has(id) && checks[id].status === 'measured');
-        const establishedLocal = current && (id.startsWith('S1.') || id.startsWith('S2.') || ['S7.identity', 'S7.links', 'C3.shipping', 'C3.returns'].includes(id));
+        const establishedLocal = current && ['C3.shipping', 'C3.returns'].includes(id);
         if (needsJudgment && !establishedTechnical && !establishedLocal) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
       }
       category = null;
@@ -332,8 +332,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       category = 'open-rubric';
       categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile?.category ?? 'Unclassified', decisionSupport: (aiAssessment.profile?.slots ?? []).filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
       const policyChecks = current ? { 'C3.shipping': checks['C3.shipping'], 'C3.returns': checks['C3.returns'] } : null;
-      const locallyOwned = current ? new Set(Object.keys(checks).filter(id => id.startsWith('S1.') || id.startsWith('S2.') || ['S7.identity', 'S7.links'].includes(id))) : new Set();
-      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence, locallyOwned });
+      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence });
       for (const [id, local] of Object.entries(policyChecks ?? {})) {
         const judged = checks[id];
         const binary = judged.status === 'measured' && [0, 1].includes(judged.fraction) && judged.evidenceIds?.length;

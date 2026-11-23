@@ -21,7 +21,6 @@
     "test:preview": "node --test test/preview.test.mjs",
     "test:browser-build": "npm --prefix backend ci --ignore-scripts --no-audit --no-fund && node scripts/browser-build-check.mjs",
     "test:granite-binary": "node --test test/granite-binary-harness.test.mjs",
-    "test:initial-support": "node --test backend/initial-support*.test.mjs backend/assessment-sources.test.mjs backend/browser-content-workflow.test.mjs backend/retrieval.test.mjs",
     "test:component-publication": "node --test backend/component-publication.test.mjs test/durable-results-frontend.test.mjs",
     "test:granite-keyed-queue": "node --test backend/granite-keyed-queue.test.mjs"
   },

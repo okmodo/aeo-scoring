@@ -28,7 +28,7 @@ import { PIPELINE_VERSION } from './pipeline-state.mjs';
 import { keyedGraniteEnabled, preparedAssessmentPolicy } from './prepared-assessment-policy.mjs';
 
 const url = 'https://example.com/solar-kettle';
-const html = `<!doctype html><html><head><title>Solar kettle</title><link rel="canonical" href="${url}">
+const html = `<!doctype html><html><head><title>Solar kettle</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Solar kettle"}</script></head><body><main>
 <article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2>
 <p>This insulated solar kettle warms six cups of water during outdoor trips.<span class="bopis">Store text excluded from keyed evidence.</span></p>
@@ -38,7 +38,7 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false, withInitialSupport = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
   if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
@@ -77,16 +77,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     get: async key => { const value = objects.get(key); return value && { size: value.length, body: new Response(value).body }; },
     delete: async key => objects.delete(key),
   } });
-  const inspected = [];
-  const egress = withInitialSupport ? {async fetch(target, options) {
-    assert.equal(options.redirect, 'manual');
-    assert.equal(options.method, 'GET');
-    inspected.push(target);
-    if (target === url) return new Response(html, {headers:{'content-type':'text/html'}});
-    if (target === new URL('/robots.txt',url).href) return new Response('User-agent: *\nAllow: /');
-    return new Response(null,{status:404});
-  }} : undefined;
-  const workflow = createBrowserContentWorkflow({ db, snapshots, egress, HTMLRewriter:HtmlTestRewriter, guard: {
+  const workflow = createBrowserContentWorkflow({ db, snapshots, guard: {
     ...allowance, start: allowance.reserve, cancelUnstarted: async () => {},
   }, now, binding: { quickAction: async () => retrievalFailure ? new Response(null, {status: 502}) :
     Response.json({ success: true, result: html, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
@@ -253,22 +244,14 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   const check = id => checks.find(item => item.id === id);
   const component = id => checks.flatMap(item => item.components).find(item => item.id === id);
   assert.equal(component('C1.explanation').points, 4);
-  if (withInitialSupport) {
-    assert.equal(inspected.filter(target=>target===url).length,1);
-    assert.ok(inspected.includes(new URL('/robots.txt',url).href));
-    assert.equal(component('S1.delivery').points,4);
-    assert.equal(component('S5.search').points,1);
-    assert.equal(evidence.get(component('S1.delivery').evidenceIds[0]).method,'raw');
-  }
-
   assert.equal(component('C3.availability').status, 'not_measured');
   assert.equal(check('C1.essential-specs').status, 'not_measured');
   const markup = check('S2.product-markup');
-  assert.equal(markup.earnedPoints, withInitialSupport ? 3 : 1);
-  assert.equal(markup.points, withInitialSupport ? 3 : null);
-  assert.equal(markup.fraction, withInitialSupport ? 1 : null);
+  assert.equal(markup.earnedPoints, 1);
+  assert.equal(markup.points, null);
+  assert.equal(markup.fraction, null);
   assert.deepEqual(markup.components.map(({ id, status }) => [id, status]),
-    [['S2.json-ld', 'measured'], ['S2.syntax', withInitialSupport ? 'measured' : 'not_measured']]);
+    [['S2.json-ld', 'measured'], ['S2.syntax', 'not_measured']]);
   assert.equal(evidence.get(component('S2.json-ld').evidenceIds[0]).method, 'rendered');
   assert.ok(audit.report.fixes.every(fix => fix.checkIds.every(id => check(id))));
   assert.ok(checks.every(row => row.evidenceIds.every(id => evidence.has(id))));
@@ -389,7 +372,6 @@ if (durableExit === 'export') {
   });
 
   test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
-  test('queued preparation passes initial HTML and supporting evidence to D1 scoring', async t => keyedScenario(t, { withInitialSupport: true }));
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));

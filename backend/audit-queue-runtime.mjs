@@ -1,4 +1,3 @@
-import {createPublicEgress} from './public-egress.mjs';
 import {recoverKeyedAuditAssessment} from './granite-keyed-prepared.mjs';
 import {keyedGraniteEnabled} from './prepared-assessment-policy.mjs';
 import {createAuditQueue,AUDIT_QUEUE_MAX_BATCH_SIZE} from './audit-queue.mjs';
@@ -32,7 +31,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
   const allowance = givenAllowance ?? createAnalyticsAllowanceGuard(db,scope);
   const queueAllowance = givenQueueAllowance ?? createAuditQueueAllowance(db,scope);
   const snapshots = () => givenSnapshots ?? createSnapshotStore({db,bucket:env.AUDIT_SNAPSHOTS,allowance:createR2AllowanceGuard(db,scope),now});
-  const workflow = () => givenWorkflow ?? createBrowserContentWorkflow({db,binding:env.AUDIT_BROWSER,snapshots:snapshots(),egress:createPublicEgress(),...scope,now});
+  const workflow = () => givenWorkflow ?? createBrowserContentWorkflow({db,binding:env.AUDIT_BROWSER,snapshots:snapshots(),...scope,now});
   const readAudit = id => db.prepare('SELECT id, url, status, created_at, expires_at FROM audits WHERE id=?1 AND expires_at>?2').bind(id,now()).first();
   const readSnapshot = id => db.prepare('SELECT state, prepared_state, facts_state FROM retained_snapshots WHERE audit_id=?1 AND expires_at>?2').bind(id,now()).first();
 
