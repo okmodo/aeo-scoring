@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "earned-score-grouped-ui",
+  "recordedAt": "2026-11-23T21:16:45.828Z",
+  "sourceCommit": "6ec44b92bc452dd2f497784b2be335392f074c21",
+  "sourceDigest": "d3ebdbb80a9ab6063a578c6e6fd068e2d38eab0fcb4ee9a12eee5c1cb43cc2c5",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 2324,
+      "outputSha256": "34dc8f9d25353172bc5ad71bd605aef537a5becd71063e19ff885865e8cc8ca6"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7196,
+      "outputSha256": "f9e50a799f6f6f4a22a3281f77be88af948b21c6c3bc5c2411e73a3f52e552ef"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 206,
+      "outputSha256": "3e1f600021e8823b75b1cbaa4d396f965052cc982ed67903edbf4634a60a017e"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 787,
+      "outputSha256": "88ceb188766ea49296c83aaee753fc5ea7fe26ca41866720fba8535210baa349"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 547,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 547,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 207,
+      "outputSha256": "82d4fba95ca98edfef4045a49255d7b7242175c53901ff4bb70512744fd5030f"
+    }
+  ]
+}
