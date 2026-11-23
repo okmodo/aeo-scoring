@@ -1,0 +1,170 @@
+{
+  "S1.readable-html": {
+    "name": "Can tools read your product details without clicking?",
+    "description": "Checks whether key product facts arrive with the initial page as readable text, without needing extra clicks or interactions.",
+    "group": "Page readability",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S1.scope": {
+    "name": "Can tools identify the main product on the page?",
+    "description": "Checks whether tools can separate the product being sold from recommendations, reviews, navigation, and other products.",
+    "group": "Page readability",
+    "type": "Structural",
+    "improve": "Clearly distinguish the audited product content from other page content."
+  },
+  "S1.configuration": {
+    "name": "Do the displayed details match the selected product option?",
+    "description": "Checks whether the displayed information clearly belongs to the selected size, color, model, or other option.",
+    "group": "Page readability",
+    "type": "Structural",
+    "improve": "Associate displayed product values with the correct selected option."
+  },
+  "S1.supporting-access": {
+    "name": "Can shoppers open your product guides and policies?",
+    "description": "Checks whether referenced specifications, guides, and policies can be read on the page or through working links.",
+    "group": "Page readability",
+    "type": "Structural",
+    "improve": "Provide readable sections or usable links to relevant specifications, guides and policies."
+  },
+  "S2.product-markup": {
+    "name": "Does your page include properly formatted product data for search tools?",
+    "description": "Checks whether the page includes product data in formats search and AI tools can read, including correctly formatted product JSON-LD.",
+    "group": "Product data for search and AI",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S2.product-identity": {
+    "name": "Does your search data identify the correct product and options?",
+    "description": "Checks whether the product data identifies the right product, connects its options, and matches the product shown to shoppers.",
+    "group": "Product data for search and AI",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S2.offer-agreement": {
+    "name": "Do search tools receive the same price and availability shoppers see?",
+    "description": "Checks whether the product data links to the correct product or option and matches its displayed price, currency, and availability.",
+    "group": "Product data for search and AI",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S2.identifiers": {
+    "name": "Are your product identification codes correct?",
+    "description": "Checks whether applicable identifiers, such as a barcode, manufacturer part number, or SKU, are valid and belong to the right product or option.",
+    "group": "Product data for search and AI",
+    "type": "Structural",
+    "improve": "Publish verified manufacturer or global product codes where applicable and link them to the correct product or option."
+  },
+  "S2.optional-claims": {
+    "name": "Do extra claims in your search data match your page?",
+    "description": "Checks whether additional claims in the product data agree with what shoppers can see on the page.",
+    "group": "Product data for search and AI",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S4.page-labels": {
+    "name": "Do your page title and headings clearly label the product and its details?",
+    "description": "Checks whether the title and main heading identify the product and whether section labels make its details easy to find.",
+    "group": "Easy-to-find details",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S4.image-alternatives": {
+    "name": "Do your product images have useful text descriptions?",
+    "description": "Checks whether informative product images include text descriptions that explain what they show.",
+    "group": "Easy-to-find details",
+    "type": "Structural",
+    "improve": "Give each informative product image an accurate text description. Verify which images need a change in the evidence below."
+  },
+  "S5.crawler-access": {
+    "name": "Does your website allow access by search and AI tools?",
+    "description": "Checks whether the website’s crawler rules allow the search and AI tools included in this audit to access the product URL.",
+    "group": "Page discovery",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S5.sitemap": {
+    "name": "Is your product page listed in a working sitemap?",
+    "description": "Checks whether the website has a readable sitemap that lists this product page or its verified preferred URL.",
+    "group": "Page discovery",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "S5.llms-txt": {
+    "name": "Does your website provide an information guide for AI tools?",
+    "description": "Checks whether the website provides an llms.txt file that explains the site and links to useful, working resources.",
+    "group": "Page discovery",
+    "type": "Structural",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C1.identity-explanation": {
+    "name": "Is it clear what your product is and what it does?",
+    "description": "Checks whether the page identifies the product, includes its brand or model where relevant, and specifically explains what it does.",
+    "group": "Product explanation and choice",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C1.options-selection": {
+    "name": "Can shoppers choose an option and see what’s included?",
+    "description": "Checks whether shoppers can understand the selected option, what comes with their purchase, and how to choose the right option.",
+    "group": "Product explanation and choice",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C1.essential-specs": {
+    "name": "Have you included the specifications shoppers need?",
+    "description": "Checks whether the page provides the specifications shoppers need for this type of product, including relevant measurements and units.",
+    "group": "Product explanation and choice",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C1.supporting-details": {
+    "name": "Have you explained product care and important precautions?",
+    "description": "Checks whether the page provides useful supporting details, care instructions, and relevant restrictions or precautions.",
+    "group": "Product explanation and choice",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C1.use-compatibility": {
+    "name": "Have you explained how to use the product and what it works with?",
+    "description": "Checks whether the page explains what the product is suitable for and what it works with, where relevant.",
+    "group": "Product explanation and choice",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C3.price-stock": {
+    "name": "Can shoppers see the price and whether their option is available?",
+    "description": "Checks whether shoppers can understand the current price, currency, pricing conditions, and availability of their selected option.",
+    "group": "Buying terms",
+    "type": "Data",
+    "improve": "Review the findings and update the relevant product information where needed."
+  },
+  "C3.shipping": {
+    "name": "Can shoppers understand shipping costs and delivery?",
+    "description": "Checks whether applicable shipping information explains delivery coverage, cost or how it is calculated, and delivery guidance.",
+    "group": "Buying terms",
+    "type": "Data",
+    "improve": "Provide verified shipping costs, delivery information and the conditions that apply."
+  },
+  "C3.returns": {
+    "name": "Can shoppers understand your return policy?",
+    "description": "Checks whether shoppers can understand return eligibility, the return window, and important conditions, including any final-sale restrictions.",
+    "group": "Buying terms",
+    "type": "Data",
+    "improve": "Make the applicable return window, eligibility and conditions clear."
+  },
+  "C5.consistency": {
+    "name": "Do your product details agree across the page?",
+    "description": "Checks whether comparable facts agree across the information shoppers see for the same product, option, and buying conditions.",
+    "group": "Consistent facts and supported claims",
+    "type": "Data",
+    "improve": "Resolve the conflicting facts identified in the findings and verify the correct value."
+  },
+  "C5.claim-support": {
+    "name": "Have you provided support for important product claims?",
+    "description": "Checks whether important product claims have relevant supporting information or clear qualifications on the page or in linked sources.",
+    "group": "Consistent facts and supported claims",
+    "type": "Data",
+    "improve": "Support the cited claims with relevant evidence or explain the conditions and limits."
+  }
+}

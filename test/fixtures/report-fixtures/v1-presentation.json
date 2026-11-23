@@ -1,0 +1,242 @@
+{
+  "S1.identity": {
+    "name": "Product name and selected option",
+    "description": "Can a visitor read the product name and see which option is selected?",
+    "improve": "Make the product name and selected size, colour or other option clear on the page.",
+    "fullCredit": "Readable name, model and selected variant"
+  },
+  "S1.description": {
+    "name": "Readable product description",
+    "description": "Does the page include a product description that can be read directly?",
+    "improve": "Publish a useful product description as readable page text.",
+    "fullCredit": "Meaningful readable description"
+  },
+  "S1.specifications": {
+    "name": "Readable product specifications",
+    "description": "Can visitors read the specifications needed to understand this product?",
+    "improve": "Show the relevant specifications as readable text, with units where needed.",
+    "fullCredit": "All applicable attributes readable"
+  },
+  "S1.price": {
+    "name": "Visible price and currency",
+    "description": "Can visitors see the price and the currency they will pay in?",
+    "improve": "Show the verified price and currency for the selected option.",
+    "fullCredit": "Readable price and currency"
+  },
+  "S1.availability": {
+    "name": "Visible stock availability",
+    "description": "Can visitors see whether the selected option is available?",
+    "improve": "Show the current availability of the selected option.",
+    "fullCredit": "Readable selected-variant availability"
+  },
+  "S2.entity": {
+    "name": "Product information for search tools",
+    "description": "Can search and AI tools identify the product from the page\u2019s structured product information?",
+    "improve": "Add a valid product record that clearly identifies the product on this page.",
+    "fullCredit": "Parseable product associated with page"
+  },
+  "S2.core-properties": {
+    "name": "Product name, description and image for search tools",
+    "description": "Does the product record include a name, description and image?",
+    "improve": "Include the verified product name, description and image in the product record.",
+    "fullCredit": "Name, description and image present"
+  },
+  "S2.offer": {
+    "name": "Price and stock details for search tools",
+    "description": "Can search and AI tools read the product\u2019s price, currency and availability?",
+    "improve": "Add an offer with the verified price, currency and availability to the product record.",
+    "fullCredit": "Price and currency plus availability"
+  },
+  "S2.identifiers": {
+    "name": "Brand and product identifiers",
+    "description": "Does the product record identify the brand and include the applicable product identifiers?",
+    "improve": "Add the verified brand and applicable manufacturer or global product identifiers. Keep the store\u2019s SKU in its own field.",
+    "fullCredit": "Brand and valid applicable identifier"
+  },
+  "S2.variants": {
+    "name": "Product options for search tools",
+    "description": "Can search and AI tools match each product option to its correct offer?",
+    "improve": "Connect each supported size, colour or configuration to the correct product record and offer.",
+    "fullCredit": "Variants and offers correctly associated"
+  },
+  "S3.identity": {
+    "name": "Product name agrees across the page",
+    "description": "Do the visible product details and the product record describe the same item and option?",
+    "improve": "Make the product name and option agree in the visible content and product record.",
+    "fullCredit": "Same product and variant agree"
+  },
+  "S3.price": {
+    "name": "Price agrees across the page",
+    "description": "Do the visible price and the price supplied to search tools agree for the same option?",
+    "improve": "Match the current price and currency across the visible page and product record.",
+    "fullCredit": "Price and currency agree in same context"
+  },
+  "S3.availability": {
+    "name": "Stock availability agrees across the page",
+    "description": "Does the availability shown to visitors agree with the product record?",
+    "improve": "Match the availability across the visible page and product record for the same option.",
+    "fullCredit": "Availability agrees in same context"
+  },
+  "S3.optional-claims": {
+    "name": "Product claims agree across the page",
+    "description": "Do product claims agree wherever they appear in the visible content and product record?",
+    "improve": "Review the cited claims and make their meaning and scope consistent.",
+    "fullCredit": "Supplied claim groups agree"
+  },
+  "S4.title": {
+    "name": "Clear page title and product heading",
+    "description": "Do the page title and main heading clearly identify the product?",
+    "improve": "Use a clear page title and main product heading that identify this product.",
+    "fullCredit": "Specific title and main product heading"
+  },
+  "S4.organization": {
+    "name": "Clear headings and specification labels",
+    "description": "Are product details organised under clear headings with readable labels?",
+    "improve": "Group the relevant details under clear headings and label the specifications so shoppers can find them.",
+    "fullCredit": "Clearly labeled sections and readable specifications"
+  },
+  "S4.image-alternatives": {
+    "name": "Useful product image descriptions",
+    "description": "Do informative product images have useful text descriptions for people and tools that cannot see them?",
+    "improve": "Give each informative product image an accurate text description. Verify which images need a change in the evidence below.",
+    "fullCredit": "Useful alternatives for informative images"
+  },
+  "S5.search": {
+    "name": "Access for search engines",
+    "description": "Does the website allow the search engines checked by this audit to access this product page?",
+    "improve": "Review the website\u2019s crawler permissions and decide which search engines should be allowed to access the product page.",
+    "fullCredit": "Both search crawlers allowed at product URL"
+  },
+  "S5.ai-retrieval": {
+    "name": "Access for AI answer tools",
+    "description": "Does the website allow the AI retrieval tools checked by this audit to access this product page?",
+    "improve": "Review the website\u2019s crawler permissions against the AI tools you want to allow.",
+    "fullCredit": "All listed retrieval crawlers allowed"
+  },
+  "S6.usable": {
+    "name": "Working website sitemap",
+    "description": "Can the audit find and read a sitemap that helps tools discover the website\u2019s pages?",
+    "improve": "Publish a readable sitemap containing the relevant website pages.",
+    "fullCredit": "Retrievable parseable sitemap or index with relevant children"
+  },
+  "S6.inclusion": {
+    "name": "Product included in the sitemap",
+    "description": "Does the website\u2019s sitemap include the product page assessed here?",
+    "improve": "Include the correct product URL in a readable sitemap.",
+    "fullCredit": "Audited or legitimate canonical URL listed"
+  },
+  "S7.identity": {
+    "name": "Website identity in the AI guide",
+    "description": "Does the website\u2019s llms.txt guide identify the business or website?",
+    "improve": "If you maintain an llms.txt guide, identify the business and website clearly.",
+    "fullCredit": "Meaningful llms.txt identifies site and purpose"
+  },
+  "S7.links": {
+    "name": "Useful links in the AI guide",
+    "description": "Does the llms.txt guide link to useful website resources?",
+    "improve": "If you maintain an llms.txt guide, add verified links to the relevant product, category or information pages.",
+    "fullCredit": "Useful working catalog and policy or help links"
+  },
+  "S8.context": {
+    "name": "Website context for AI tools",
+    "description": "Does the website\u2019s agent guide explain what the business and website provide?",
+    "improve": "If you maintain an agent guide, describe the business and the purpose of its website.",
+    "fullCredit": "Meaningful site-specific agent guide"
+  },
+  "S8.guidance": {
+    "name": "Clear guidance for AI tools",
+    "description": "Does the website\u2019s agent guide give tools useful instructions for using its information?",
+    "improve": "If you maintain an agent guide, add clear, accurate instructions and links that help AI tools use the website\u2019s information.",
+    "fullCredit": "Practical authoritative references"
+  },
+  "C1.identity": {
+    "name": "Product identity",
+    "description": "Does the page clearly identify the product, brand and model where applicable?",
+    "improve": "Provide the verified product identity, including brand and model where applicable.",
+    "fullCredit": "Specific product identity and applicable brand and model"
+  },
+  "C1.explanation": {
+    "name": "Specific product explanation",
+    "description": "Does the description explain this product in useful, specific terms?",
+    "improve": "Explain the product\u2019s relevant features and benefits with concrete, verified details.",
+    "fullCredit": "Clear complete explanation of product and function"
+  },
+  "C1.configuration": {
+    "name": "Options and included items explained",
+    "description": "Does the page explain the product\u2019s configurations and what is included?",
+    "improve": "Describe the available configurations and included items clearly.",
+    "fullCredit": "Clear selected configuration and included items"
+  },
+  "C2.essential": {
+    "name": "Essential product details",
+    "description": "Does the page provide the essential details shoppers need for this type of product?",
+    "improve": "Provide the essential product details identified by the findings, including units and scope where needed.",
+    "fullCredit": "Every applicable essential attribute explicit with required units and scope"
+  },
+  "C2.supporting": {
+    "name": "Additional useful product details",
+    "description": "Does the page include the additional details that help shoppers choose and use this product?",
+    "improve": "Add the supporting product details identified by the findings using verified information.",
+    "fullCredit": "Every applicable supporting attribute explicit with required units and scope"
+  },
+  "C3.price": {
+    "name": "Purchase price explained",
+    "description": "Is the price clear for the product and option being assessed?",
+    "improve": "Clarify the price, currency and any conditions for the selected option.",
+    "fullCredit": "Price, currency and material conditions clear"
+  },
+  "C3.availability": {
+    "name": "Stock information explained",
+    "description": "Does the content clearly explain the selected option\u2019s availability?",
+    "improve": "Publish current, option-specific availability information.",
+    "fullCredit": "Availability for selected configuration clear"
+  },
+  "C3.shipping": {
+    "name": "Shipping cost and delivery details",
+    "description": "Can shoppers understand the applicable shipping cost and delivery information?",
+    "improve": "Provide verified shipping costs, delivery information and the conditions that apply.",
+    "fullCredit": "Coverage, cost or calculation and delivery guidance clear"
+  },
+  "C3.returns": {
+    "name": "Returns policy explained",
+    "description": "Can shoppers understand the return window, eligibility and important conditions?",
+    "improve": "Make the applicable return window, eligibility and conditions clear.",
+    "fullCredit": "Eligibility, window and material conditions clear"
+  },
+  "C4.intended-use": {
+    "name": "Questions about product use answered",
+    "description": "Does the page answer the relevant questions about how and when to use the product?",
+    "improve": "Answer the product-use questions identified in the findings with specific, verified information.",
+    "fullCredit": "Applicable category questions answered specifically"
+  },
+  "C4.compatibility": {
+    "name": "Compatibility questions answered",
+    "description": "Does the page answer the relevant questions about what the product works with?",
+    "improve": "Explain relevant compatibility requirements and restrictions.",
+    "fullCredit": "Applicable category questions answered specifically"
+  },
+  "C4.limitations": {
+    "name": "Product limitations explained",
+    "description": "Does the page explain relevant limitations and situations where the product is unsuitable?",
+    "improve": "Describe the relevant limitations and conditions identified in the findings.",
+    "fullCredit": "Applicable category questions answered specifically"
+  },
+  "C4.selection": {
+    "name": "Help choosing the right option",
+    "description": "Does the page help shoppers choose the appropriate size, fit or other product option?",
+    "improve": "Add verified guidance that helps shoppers choose the correct option.",
+    "fullCredit": "Applicable category questions answered specifically"
+  },
+  "C5.consistency": {
+    "name": "Consistent product facts",
+    "description": "Do comparable product facts agree within the same product and option?",
+    "improve": "Resolve the conflicting facts identified in the findings and verify the correct value.",
+    "fullCredit": "No detected contradiction with sufficient comparable evidence"
+  },
+  "C5.claim-support": {
+    "name": "Evidence for product claims",
+    "description": "Are important product claims supported or clearly qualified?",
+    "improve": "Support the cited claims with relevant evidence or explain the conditions and limits.",
+    "fullCredit": "Material claims have relevant support or qualification"
+  }
+}

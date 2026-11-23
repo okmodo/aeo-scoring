@@ -1,0 +1,8 @@
+{
+  "cases": [
+    {"name":"queued", "events":[], "states":["Waiting","Waiting","Waiting","Waiting","Waiting"]},
+    {"name":"running", "events":[{"sequence":1,"stage":"retrieval","status":"completed"},{"sequence":2,"stage":"preparation","status":"running"}], "states":["Completed","Active","Waiting","Waiting","Waiting"]},
+    {"name":"partial", "events":[{"sequence":1,"stage":"retrieval","status":"completed"},{"sequence":2,"stage":"preparation","status":"completed"},{"sequence":3,"stage":"assessment","status":"failed"},{"sequence":4,"stage":"scoring","status":"running"}], "states":["Completed","Completed","Failed","Active","Waiting"]},
+    {"name":"skipped", "events":[{"sequence":1,"stage":"assessment","status":"skipped"}], "states":["Waiting","Waiting","Skipped","Waiting","Waiting"]}
+  ]
+}

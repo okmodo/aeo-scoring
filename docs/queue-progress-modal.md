@@ -1,0 +1,9 @@
+# Queue progress modal
+
+The audit progress modal reads bounded public progress from the authenticated audit status response. The queue persists its state and the frontend maps retrieval, preparation, assessment, and scoring to customer-facing steps. Publication determines the terminal report state. Incomplete reports show earned points with their coverage; an unavailable score is not represented as zero.
+
+## Offline local review
+
+With Node 24, run `npm run build`, then `node scripts/local-progress-container.mjs dist /private/tmp/aeo-business-report-container/site` to install the local static build. Start `node scripts/local-progress-review.mjs`. The existing `aeo-scoring-report-local` nginx container serves that directory on `http://127.0.0.1:4382` and proxies `/api/v1/` to `host.docker.internal:4383`. The build bridge directs API requests to this proxy and restricts connections to the local origin. The local API listens on `127.0.0.1:4383`; the review password is `review123`. The service uses the real queue runtime, SQLite persistence, scoring and report API. Capture and model responses are fictional frozen fixtures, and there is no live network fallback. Processing delays make transitions visible and do not represent production timing. Temporary SQLite databases are created in the operating system's temporary directory.
+
+The fixture produces an incomplete report with earned points: it does not establish that every check was measured. The integration tests exercise authentication, queue delivery, partial publication, duplicate and out-of-order messages, capture and preparation failures, an origin 404 after capture, and model failure. They do not claim to exercise a fully measured complete audit. Run `node --test test/queue-progress.test.mjs` for the offline integration checks.
