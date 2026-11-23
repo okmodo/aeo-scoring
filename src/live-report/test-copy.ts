@@ -70,7 +70,8 @@ export function summarizeTestPoints(checks: CheckDetail[], finalTotal: number | 
   const measured = checks.map(pointsForTest).filter(points => points !== null);
   const earned = Math.max(0, Math.min(total, finalTotal ?? earnedSubtotal ??
     measured.reduce((sum, points) => sum + points.earned, 0)));
-  const missed = finalTotal !== null ? total - earned :
-    Math.max(0, Math.min(total - earned, measured.reduce((sum, points) => sum + points.missed, 0)));
+  const verifiedMissed = checks.reduce((sum, check) =>
+    sum + (pointsForTest(check)?.missed ?? check.verifiedMissedPoints ?? 0), 0);
+  const missed = finalTotal !== null ? total - earned : Math.max(0, Math.min(total - earned, verifiedMissed));
   return { earned, missed, unscored: Math.max(0, total - earned - missed), total };
 }

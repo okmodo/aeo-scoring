@@ -158,7 +158,8 @@ export function validateV3Report(report) {
   if (report.evidence.some(e => !e || typeof e !== 'object' || ['id', 'excerpt', 'method', 'kind', 'url', 'location', 'observedAt'].some(k => typeof e[k] !== 'string'))) bad('Invalid evidence');
   if (report.fixes.some(f => !f || typeof f !== 'object' || ['id', 'title', 'owner', 'condition'].some(k => typeof f[k] !== 'string') || !v3Strings(f.checkIds) || !v3Strings(f.evidenceIds) || !(f.recoverablePoints === null || (v3Finite(f.recoverablePoints) && f.recoverablePoints >= 0)))) bad('Invalid fixes');
   const seenGroups = new Set(), seenRows = new Set(), sources = new Map();
-  let total = 0; const pillars = { structure: 0, content: 0 };
+  let total = 0, measuredComponents = 0;
+  const pillars = { structure: 0, content: 0 };
   for (const group of report.criteria) {
     const def = RUBRIC_V3_GROUPS.find(g => g.id === group?.id);
     if (!def || seenGroups.has(group.id) || group.pillar !== def.pillar || !Array.isArray(group.subchecks)) { bad('Invalid group'); continue; }
@@ -178,6 +179,7 @@ export function validateV3Report(report) {
         if (!v3Close(component.maxPoints, cd.maxPoints) || !v3Finite(component.availablePoints) || component.availablePoints < 0 || component.availablePoints > 100) bad('Invalid component points');
         if (!(component.reason === null || typeof component.reason === 'string') || !(component.exclusion === undefined || component.exclusion === null || typeof component.exclusion === 'string') || !v3Strings(component.evidenceIds)) bad('Invalid component details');
         if (component.status === 'measured') {
+          measuredComponents++;
           if (!v3Finite(component.fraction) || component.fraction < 0 || component.fraction > 1 || !v3Finite(component.points) || component.points < 0 || !v3Close(component.points, component.fraction * component.availablePoints)) bad('Invalid measured points');
         } else if (component.status === 'not_measured' || component.status === 'not_applicable') {
           if (component.points !== null || component.fraction !== null || (component.status === 'not_applicable' && component.availablePoints !== 0)) bad('Invalid unscored component');
@@ -214,9 +216,12 @@ export function validateV3Report(report) {
     if (group.complete !== complete) bad('Invalid group completion');
   }
   if (!v3Close(report.earnedPoints, total)) bad('Invalid earned points');
-  if (report.status === 'complete') {
-    const s = report.score;
-    if (report.criteria.some(c => !c?.complete) || !s || !v3Close(s.total, total) || !v3Close(s.structure, pillars.structure) || !v3Close(s.content, pillars.content) || !v3Close(s.total, s.structure + s.content) || s.total < 0 || s.total > 100) bad('Invalid complete score');
-  } else if (report.score !== null) bad('Invalid incomplete score');
+  const s = report.score;
+  const validScore = s && v3Close(s.total, total) && v3Close(s.structure, pillars.structure) &&
+    v3Close(s.content, pillars.content) && v3Close(s.total, s.structure + s.content) && s.total >= 0 && s.total <= 100;
+  if (report.status === 'complete' && (report.criteria.some(c => !c?.complete) || !validScore)) bad('Invalid complete score');
+  if (report.scoreBasis === 'earned_points') {
+    if (measuredComponents ? !validScore : s !== null) bad('Invalid earned score');
+  } else if (report.scoreBasis !== undefined || (report.status === 'incomplete' && s !== null)) bad('Invalid incomplete score');
   return { valid: errors.length === 0, errors };
 }

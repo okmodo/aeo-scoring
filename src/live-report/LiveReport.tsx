@@ -99,11 +99,13 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
   const selected = checks.find(check => check.id === selectedId) ?? defaultCheck;
   const counts = { Pass: 0, Fail: 0, 'Not completed': 0, 'Not applicable': 0 };
   checks.forEach(check => { counts[resultForTest(check)]++; });
-  const finalScore = counts['Not completed'] === 0 ? model.finalScore : null;
+  const finalScore = model.finalScore;
+  const earnedScore = report?.scoreBasis === 'earned_points';
+  const noChecksMeasured = earnedScore && finalScore === null;
   const completed = counts.Pass + counts.Fail;
-  const pointSummary = summarizeTestPoints(checks, finalScore?.total ?? null,
-    checks.some(check => check.copy.group) ? report?.earnedPoints ?? null : null);
-  const scoreLabel = finalScore ? 'Total score' : 'Points so far';
+  const pointSummary = summarizeTestPoints(checks, report?.status === 'complete' ? finalScore?.total ?? null : null,
+    finalScore?.total ?? (checks.some(check => check.copy.group) ? report?.earnedPoints ?? null : null));
+  const scoreLabel = finalScore ? (earnedScore ? 'Earned score' : 'Total score') : 'Points so far';
   const scoredEnd = pointSummary.earned + pointSummary.missed;
   const context = [report?.variant, report?.market, report?.currency].filter(Boolean).join(' · ');
   const displayStatus = model.warnings.length && !report ? 'Report unavailable' : statusText[assessment.status];
@@ -134,14 +136,14 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
             <section className="rd-hero" aria-labelledby="rd-live-summary">
               <div className="rd-hero-copy">
                 <h2 id="rd-live-summary">See what works.<br /><em>Know what to improve.</em></h2>
-                <p>{completed} of {checks.length} tests completed. {counts.Pass} passed and {counts.Fail} failed.</p>
+                <p>{completed} of {checks.length} {earnedScore ? 'checks fully measured' : 'tests completed'}. {counts.Pass} passed and {counts.Fail} failed.</p>
                 {counts['Not completed'] > 0 && <p>{counts['Not completed']} tests could not be completed with the information available.</p>}
                 {counts['Not applicable'] > 0 && <p>{counts['Not applicable']} tests do not apply to this product.</p>}
                 <a href="#live-tests">Review your test results ↓</a>
               </div>
               <figure className="rd-chart rd-live-chart">
                 <figcaption><h3>Your results at a glance</h3></figcaption>
-                <div className="rd-points-doughnut" role="img"
+                {noChecksMeasured ? <p className="rd-points-pending">No checks measured</p> : <><div className="rd-points-doughnut" role="img"
                   aria-label={scoreLabel + ': ' + formatPoints(pointSummary.earned) + ' of 100. ' +
                     formatPoints(pointSummary.missed) + ' points missed. ' +
                     formatPoints(pointSummary.unscored) + ' points not yet scored.'}
@@ -157,7 +159,7 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
                   <div><span><i className="rd-live-fulfilled" />Points earned</span><strong>{formatPoints(pointSummary.earned)}</strong></div>
                   <div><span><i className="rd-live-zero" />Points missed</span><strong>{formatPoints(pointSummary.missed)}</strong></div>
                   <div><span><i className="rd-live-unmeasured" />Not yet scored</span><strong>{formatPoints(pointSummary.unscored)}</strong></div>
-                </div>
+                </div></>}
               </figure>
             </section>
 
@@ -197,7 +199,7 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
 
             {finalScore ? (
               <section className="rd-section">
-                <details className="rd-measure">
+                <details className="rd-measure" open={earnedScore || undefined}>
                   <summary><span><strong>View overall score</strong></span><span>Expand ↓</span></summary>
                   <div className="rd-score-grid">
                     <div><span>OVERALL</span><strong>{formatPoints(finalScore.total)}<small> / 100</small></strong></div>
@@ -206,7 +208,7 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
                   </div>
                 </details>
               </section>
-            ) : <p className="rd-live-note">An overall score is unavailable until all applicable tests can be completed. The results and points above are available to review now.</p>}
+            ) : !noChecksMeasured && <p className="rd-live-note">An overall score is unavailable until all applicable tests can be completed. The results and points above are available to review now.</p>}
 
             <section className="rd-section rd-scope">
               <h2>About this report</h2>
@@ -225,7 +227,7 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
           <section className="rd-section rd-state">
             <h2>{displayStatus}</h2>
             {model.warnings.map((item, index) => <p key={index}>{item}</p>)}
-            {!model.warnings.length && <p>{assessment.status === 'pending' ? 'We’re checking the product page. Your test results will appear here when the audit finishes.' :
+            {!model.warnings.length && <p>{assessment.status === 'pending' && assessment.checksCompletedAt ? 'Checks are complete. We’re preparing the report.' : assessment.status === 'pending' ? 'We’re checking the product page. Your test results will appear here when the audit finishes.' :
               assessment.error?.message || 'No report was returned. Try another public product page or try again later.'}</p>}
             <button className="rd-live-retry" onClick={onBack}>Check another page ↗</button>
           </section>
