@@ -1,3 +1,4 @@
+import { createGraniteResponseStore } from '../scripts/granite-response-store.mjs';
 import {createTerraByokProvider} from './terra-byok-provider.mjs';
 import { createStore } from './store.mjs';
 import { createAllowanceGuard } from './allowance-store.mjs';
@@ -12,7 +13,7 @@ import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow } from './browser-workflow.mjs';
 import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
-import { PREPARED_ASSESSMENT_POLICY, preparedAssessmentPolicy, configuredAssessmentProvider } from './prepared-assessment-policy.mjs';
+import { PREPARED_ASSESSMENT_POLICY, preparedAssessmentPolicy, configuredAssessmentProvider, keyedGraniteEnabled } from './prepared-assessment-policy.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 
 const ROUTE = '/api/v1/audits';
@@ -385,7 +386,7 @@ export function handleAuditRequest(request, env, ctx, { egress = env.AUDIT_EGRES
     try { browserFlow = createBrowserContentWorkflow({db, binding:env.AUDIT_BROWSER, snapshots:snapshotStore, accountId, subscriptionId, token:analyticsToken}); }
     catch { /* Invalid browser capabilities fail closed below. */ }
   }
-  const policyVersion = preparedAssessmentPolicy(provider);
+  const policyVersion = preparedAssessmentPolicy(provider, queueRequired && keyedGraniteEnabled(env));
   const service = createAuditService({
     store: db ? createStore(db, {policyVersion,queueEnabled:queueRequired}) : null, policyVersion,
     allowance: db && billingScopeConfigured ? (
@@ -465,18 +466,19 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
   } finally { await allowance.settle?.({id}); }
 }
 
-export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now(), queueEnabled = false }) {
+export async function cleanupRetainedSnapshots({ db, snapshots, allowance, now = Date.now(), queueEnabled = false, keyed = false }) {
   const id = `snapshot-cleanup-${crypto.randomUUID()}`;
   const admission = await allowance.reserve({ id, now,
     // Up to 10 snapshot rows, 100 pipeline rows, 100 work rows,
     // 100 checkpoints and 25 jobs, plus ledger overhead.
-    costs: { requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: 500, d1StorageBytes: 4096 } });
+    costs: { requests: 1, cpuMs: RESERVED_INVOCATION_CPU_MS, d1Reads: 10000, d1Writes: keyed ? 650 : 500, d1StorageBytes: 4096 } });
   if (!admission?.accepted || admission.duplicate !== false) return { status: 'skipped' };
   const result = await snapshots.cleanup({ limit: 10 });
   await db.prepare('DELETE FROM audit_pipeline_state WHERE audit_id IN (SELECT audit_id FROM audit_pipeline_state WHERE expires_at <= ?1 LIMIT 100)').bind(now).run();
   // Work records contain no browser allowance holds; those are managed only by the watchdog.
   await db.prepare("DELETE FROM browser_audit_work WHERE audit_id IN (SELECT w.audit_id FROM browser_audit_work w WHERE w.expires_at <= ?1 AND NOT (w.state IN ('ready','assessing') AND EXISTS (SELECT 1 FROM retained_snapshots s WHERE s.audit_id=w.audit_id AND s.state='ready' AND s.expires_at>?1)) LIMIT 100)").bind(now).run();
   await createPreparedAssessmentJobs(db, {now:() => now}).cleanup();
+  if (keyed) await createGraniteResponseStore(db).prune(now);
   if(queueEnabled) {
     // Keep queue state until the audit's retention ends, including its deadline.
     await db.prepare('DELETE FROM audit_queue_jobs WHERE audit_id IN (SELECT audit_id FROM audit_queue_jobs WHERE expires_at <= ?1 ORDER BY expires_at LIMIT 25)').bind(now-DAY).run();
@@ -509,7 +511,7 @@ export async function runScheduledMaintenance(event, env, {now = Date.now(), all
     if (new Date(scheduledTime).getUTCMinutes() !== 0 || !env.AUDIT_SNAPSHOTS) return;
     const snapshots = makeSnapshots({ db, bucket: env.AUDIT_SNAPSHOTS,
       allowance: createR2AllowanceGuard(db, scope) });
-    await cleanupRetainedSnapshots({db,snapshots,allowance,now,queueEnabled:env.AUDIT_QUEUE_MODE==='enabled'});
+    await cleanupRetainedSnapshots({db,snapshots,allowance,now,queueEnabled:env.AUDIT_QUEUE_MODE==='enabled',keyed:keyedGraniteEnabled(env)});
 }
 
 export default {

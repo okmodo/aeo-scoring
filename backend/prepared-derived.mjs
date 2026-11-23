@@ -10,7 +10,7 @@ export function isPreparedObservations(value, snapshot) {
   if (!bound || bound.snapshot !== snapshot) return false;
   try { return bound.snapshotJSON === serializeSnapshot(snapshot) && bound.resultJSON === JSON.stringify(value); } catch { return false; }
 }
-export async function derivePreparedObservations(input, {HTMLRewriter = globalThis.HTMLRewriter} = {}) {
+export async function derivePreparedObservations(input, {HTMLRewriter = globalThis.HTMLRewriter, keyed = false} = {}) {
   const snapshot=input?.snapshot, html=snapshot?.browser?.renderedHtml, prepared=input?.prepared, p=prepared?.preprocessing, source=input?.source;
   if (typeof html !== 'string' || !HTMLRewriter || prepared?.version !== '1' || prepared.html !== html ||
       p?.version !== 'simplified-html-v1' || p.representation !== 'cleaned_rendered_html' || p.originalCapturePreserved !== true ||
@@ -20,7 +20,7 @@ export async function derivePreparedObservations(input, {HTMLRewriter = globalTh
   if (bytes.length > MAX_DERIVED_HTML_BYTES || p.outputBytes !== bytes.length || source.bytes !== preparedBytes.length ||
       await digest(bytes) !== p.outputSha256 || await digest(preparedBytes) !== source.preparedHash) return null;
   const snapshotJSON=serializeSnapshot(snapshot);
-  const result = await extract({body:html, htmlLimited:null}, {HTMLRewriter});
+  const result = await extract({body:html, htmlLimited:null}, {HTMLRewriter, keyed});
   if (snapshotJSON !== serializeSnapshot(snapshot)) return null;
   derivedInputs.set(result, {snapshot,snapshotJSON,resultJSON:JSON.stringify(result)});
   return result;

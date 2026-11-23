@@ -1,0 +1,211 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createAuditQueueRuntime, AUDIT_QUEUE_NAME } from './audit-queue-runtime.mjs';
+import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
+import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
+import { createAuditService } from './service.mjs';
+import { createStore } from './store.mjs';
+import { createSnapshotStore } from './snapshot-store.mjs';
+import { createBrowserContentWorkflow } from './browser-content-workflow.mjs';
+import { prepareKeyedAudit } from './granite-keyed-prepared.mjs';
+import { extract } from './retrieval.mjs';
+import { derivePreparedObservations } from './prepared-derived.mjs';
+import { HtmlTestRewriter } from './html-product-test-helper.mjs';
+import { OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
+import { CONTENT_FACTS_RELEASE_ID } from './content-facts-runner.mjs';
+import { PIPELINE_VERSION } from './pipeline-state.mjs';
+import { keyedGraniteEnabled, preparedAssessmentPolicy } from './prepared-assessment-policy.mjs';
+
+const url = 'https://example.com/solar-kettle';
+const html = `<!doctype html><html><head><title>Solar kettle</title></head><body><main>
+<article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2>
+<p>This insulated solar kettle warms six cups of water during outdoor trips.<span class="bopis">Store text excluded from keyed evidence.</span></p>
+<h2>Details</h2><ul><li>Brand: Example Outfitters</li><li>Material: Steel</li><li>Care: Hand wash only.</li></ul>
+<aside><p>Recommended: other products</p></aside></article></main></body></html>`;
+const encoder = new TextEncoder();
+const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+  byte => byte.toString(16).padStart(2, '0')).join('');
+
+async function keyedScenario(t, { interrupt = false, providerFailure = false, exported, previous } = {}) {
+  const sql = new DatabaseSync(previous?.database ?? exported?.database ?? ':memory:');
+  t.after(() => sql.close());
+  if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  const db = { prepare(query) {
+    return { bind(...params) {
+      if (interrupt && query.startsWith('UPDATE model_attempts SET results_digest'))
+        throw Object.assign(new Error('Suspended after raw D1 capture'), { code: 'job_lease_lost' });
+      const statement = sql.prepare(query);
+      const args = params.length && /\?\d+/.test(query)
+        ? [Object.fromEntries(params.map((value, index) => [String(index + 1), value]))] : params;
+      return { query, first: async () => statement.get(...args) ?? null,
+        all: async () => ({ results: statement.all(...args) }),
+        run: async () => ({ meta: { changes: Number(statement.run(...args).changes) } }) };
+    } };
+  }, async batch(statements) {
+    const results = [];
+    for (const statement of statements) results.push(await (/^SELECT/i.test(statement.query) ? statement.all() : statement.run()));
+    return results;
+  } };
+  let time = previous ? previous.time + 121000 : Date.UTC(2026, 10, 20);
+  let submissions = 0;
+  const now = () => time;
+  const allowance = { reserve: async () => ({ accepted: true, duplicate: false }), settle: async () => ({ accepted: true }) };
+  const messages = [], objects = new Map((previous?.objects ?? []).map(([key, bytes]) => [key, Uint8Array.from(atob(bytes), ch => ch.charCodeAt(0))]));
+  const snapshots = createSnapshotStore({ db, now, allowance, bucket: {
+    put: async (key, value) => objects.set(key, value.slice()),
+    get: async key => { const value = objects.get(key); return value && { size: value.length, body: new Response(value).body }; },
+    delete: async key => objects.delete(key),
+  } });
+  const workflow = createBrowserContentWorkflow({ db, snapshots, guard: {
+    ...allowance, start: allowance.reserve, cancelUnstarted: async () => {},
+  }, now, binding: { quickAction: async () =>
+    Response.json({ success: true, result: html, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
+  preprocess: async ({ rawHtml, sourceObjectKey, expiresAt }) => {
+    const bytes = encoder.encode(html);
+    return { html: bytes, preprocessing: { version: 'simplified-html-v1', representation: 'cleaned_rendered_html',
+      originalCapturePreserved: true, sourceObjectKey, sourceSha256: await hash(rawHtml), sourceBytes: rawHtml.length,
+      expiresAt, preparedAt: now(), outputBytes: bytes.length, outputSha256: await hash(bytes) } };
+  } });
+  const fetch = async (_url, request) => {
+    if (previous) assert.fail('Continuation attempted another provider request');
+    if (request.method === 'GET') return Response.json({ success: true, result: { id: 'default', workers_ai_billing_mode: 'postpaid' } });
+    submissions++;
+    const body = JSON.parse(request.body), wire = body.response_format.json_schema;
+    const meta = JSON.parse(body.messages[0].content.split('\n\n').at(-1));
+    assert.equal(wire.properties.results.required.length, 13);
+    assert.deepEqual(wire.properties.results.required, meta.questions.map(item => item.id));
+    assert.doesNotMatch(body.messages[0].content, /Recommended|Store text excluded/);
+    const results = Object.fromEntries(meta.questions.map(question => {
+      const evidenceIds = question.passKinds.flatMap(kind => {
+        const hit = meta.evidence.find(item => item.kind === kind && question.eligibleEvidenceIds.includes(item.id));
+        return hit ? [hit.id] : [];
+      });
+      return [question.id, { answer: 'pass', reason: 'The product source supports the finding.', evidenceIds }];
+    }));
+    if (providerFailure) return new Response('Provider unavailable', { status: 502 });
+    const output = { results, category: { label: 'Solar camp kettles', evidenceId: meta.categoryEvidenceIds[0] } };
+    return Response.json({ success: true, result: { response: JSON.stringify(output),
+      usage: { prompt_tokens: 100, completion_tokens: 100, neurons: 5 } } });
+  };
+  const env = {
+    AUDIT_DB: db, AUDIT_USAGE_READ_TOKEN: 'fixture', AUDIT_SNAPSHOTS: {}, AUDIT_BROWSER: {},
+    AUDIT_QUEUE_MODE: 'enabled', AUDIT_QUEUE: { send: async body => messages.push(structuredClone(body)) },
+    AUDIT_AI_PROVIDER: 'granite', AUDIT_GRANITE_KEYED: 'enabled', AUDIT_AI_GATEWAY_TOKEN: 'fixture',
+    AUDIT_RUBRIC_RELEASE: OPEN_RUBRIC_RELEASE_ID, AUDIT_CONTENT_RELEASE: CONTENT_FACTS_RELEASE_ID, AUDIT_PIPELINE_RELEASE: PIPELINE_VERSION,
+  };
+  const jobs = createPreparedAssessmentJobs(db, { now });
+
+  const runtime = createAuditQueueRuntime(env, { now, allowance, queueAllowance: allowance, workflow, snapshots,
+    derive: (input, options) => derivePreparedObservations(input, { ...options, HTMLRewriter: HtmlTestRewriter }),
+    assess: options => runPreparedAudit({ ...options, jobs, fetch }),
+  });
+  const policyVersion = preparedAssessmentPolicy('granite', keyedGraniteEnabled(env));
+  const handle = createAuditService({ store: createStore(db, { policyVersion, queueEnabled: true }), policyVersion,
+    allowance, egress: { fetch() { assert.fail('Unexpected page retrieval'); } }, secret: 'x'.repeat(32),
+    normalizeUrl: value => value, now, browserFlow: workflow, requireBrowser: true, snapshotStore: snapshots,
+    pipelineDb: db, enqueueAudit: auditId => runtime.start(auditId),
+  });
+  const options = { address: '192.0.2.1', defer: () => assert.fail('Queue work must be detached from the request') };
+  const deliver = async body => {
+    let decision;
+    await runtime.consume({ queue: AUDIT_QUEUE_NAME, messages: [{ body, ack() { decision = 'ack'; }, retry() { decision = 'retry'; } }] });
+    return decision;
+  };
+  let submitted = previous?.submitted;
+  let assessMessage = previous?.assessMessage;
+  if (!previous) {
+    const response = await handle(new Request('https://worker/api/v1/audits', { method: 'POST',
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) }), options);
+    assert.equal(response.status, 202);
+    submitted = await response.json();
+    assert.equal(submitted.status, 'pending');
+    assert.equal(await deliver(messages.shift()), 'ack');
+    assert.equal(await deliver(messages.shift()), 'ack');
+    assessMessage = messages.shift();
+  }
+  const decision = await deliver(assessMessage);
+  const diagnostics = () => JSON.stringify({queue:sql.prepare("SELECT state,code FROM audit_queue_jobs").get(),prepared:sql.prepare("SELECT state,code FROM prepared_assessment_jobs").get(),attempt:sql.prepare("SELECT status,outcome FROM model_attempts").get()});
+  if (interrupt) {
+    assert.equal(decision, 'retry', diagnostics());
+    assert.equal(submissions, 1);
+    assert.equal(sql.prepare('SELECT status FROM model_attempts').get().status, 'received');
+    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'started');
+    assert.equal(sql.prepare('SELECT status FROM audits').get().status, 'pending');
+    const state = { time, submitted, assessMessage, objects: [...objects].map(([key, value]) => [key, Buffer.from(value).toString('base64')]) };
+    if (exported) writeFileSync(exported.path, JSON.stringify({ ...state, database: exported.database }), { flag: 'wx', mode: 0o600 });
+    return state;
+  }
+  assert.equal(decision, 'ack', JSON.stringify(sql.prepare('SELECT state,code FROM audit_queue_jobs').get()));
+  assert.equal(await deliver(assessMessage), 'ack');
+  assert.equal(submissions, previous ? 0 : 1, diagnostics());
+  const response = await handle(new Request('https://worker' + submitted.statusUrl), options);
+  assert.equal(response.status, 200);
+  const audit = await response.json();
+  assert.equal(audit.status, 'incomplete');
+  assert.equal(audit.report.score, null);
+  if (providerFailure) {
+    assert.equal(sql.prepare('SELECT outcome FROM model_attempts').get().outcome, 'model_provider_failure');
+    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'uncertain');
+    assert.ok(audit.report.coverage.pipeline.stages.some(stage => stage.stage === 'content' &&
+      stage.status === 'failed' && stage.code === 'model_provider_failure'));
+    return;
+  }
+  assert.equal(audit.report.category, 'open-rubric');
+  assert.equal(audit.report.coverage.assessment.category, 'Solar camp kettles');
+  const checks = audit.report.criteria.flatMap(criterion => criterion.subchecks);
+  assert.equal(checks.find(check => check.id === 'C1.explanation').points, 4);
+  assert.equal(checks.find(check => check.id === 'C3.availability').status, 'not_measured');
+  assert.equal(checks.find(check => check.id === 'C2.essential').status, 'not_measured');
+  assert.ok(audit.report.evidence.some(item => item.excerpt.includes('warms six cups')));
+  assert.doesNotMatch(JSON.stringify(audit), /response_body_base64|model_attempts|chatcmpl/);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_attempts').get().n, 1);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_question_results WHERE answer IS NOT NULL').get().n, 13);
+  t.diagnostic(`Verified queue report with ${checks.filter(check => check.status === 'measured').length} measured checks and ${submissions} model submissions in this process`);
+}
+
+const exitStage = process.env.AEO_KEYED_QUEUE_EXIT_STAGE;
+if (exitStage === 'export') {
+  test('export interrupted keyed queue', async t => keyedScenario(t, { interrupt: true,
+    exported: { database: process.env.AEO_KEYED_QUEUE_DB, path: process.env.AEO_KEYED_QUEUE_EXPORT } }));
+} else if (exitStage === 'resume') {
+  test('resume keyed queue from export', async t => keyedScenario(t, {
+    previous: JSON.parse(readFileSync(process.env.AEO_KEYED_QUEUE_EXPORT, 'utf8')),
+  }));
+} else {
+  test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t));
+  test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
+  test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
+  test('the singular apparel label retains composition and measured dimensions', async () => {
+    const page = '<main><article class="product-detail"><h1>Drawstring Short</h1><ul>' +
+      '<li>Material: 98% cotton, 2% elastane</li><li>Fit: Relaxed Fit, Inseam 6 inches</li></ul></article></main>';
+    const bytes = encoder.encode(page);
+    const preprocessing = {
+      version: 'simplified-html-v1', representation: 'cleaned_rendered_html',
+      originalCapturePreserved: true, sourceSha256: 'a'.repeat(64),
+      sourceObjectKey: 'retained/' + 'a'.repeat(36) + '/' + 'b'.repeat(36) + '/html',
+      sourceBytes: bytes.length, outputBytes: bytes.length, outputSha256: await hash(bytes),
+    };
+    const input = {
+      snapshot: { url, rawHtml: bytes, retrievalMethod: 'browser_api_content', preprocessing,
+        browser: { initialExtracted: {}, renderedHtml: page, coverage: { initialAvailable: false, renderedLimited: false } } },
+      extracted: {}, source: { preparedHash: 'c'.repeat(64) },
+    };
+    const derived = await extract({ body: page, htmlLimited: null }, { HTMLRewriter: HtmlTestRewriter, keyed: true });
+    const { fixture } = await prepareKeyedAudit('synthetic', input, derived);
+    const question = fixture.questions.find(item => item.id === 'C2.essential');
+    assert.deepEqual(question.passKinds, ['composition', 'fit_dimension']);
+    assert.deepEqual(question.eligibleEvidenceIds.map(id => fixture.evidence.find(item => item.id === id).kind),
+      ['composition', 'fit_dimension']);
+  });
+
+  test('the keyed policy only applies to opted-in Granite queue audits', () => {
+    const enabled = { AUDIT_AI_PROVIDER: 'granite', AUDIT_QUEUE_MODE: 'enabled', AUDIT_GRANITE_KEYED: 'enabled' };
+    assert.equal(keyedGraniteEnabled(enabled), true);
+    assert.equal(keyedGraniteEnabled({ ...enabled, AUDIT_QUEUE_MODE: 'disabled' }), false);
+    assert.equal(keyedGraniteEnabled({ ...enabled, AUDIT_AI_PROVIDER: 'terra' }), false);
+    assert.equal(keyedGraniteEnabled({ ...enabled, AUDIT_GRANITE_KEYED: '' }), false);
+    assert.notEqual(preparedAssessmentPolicy('granite'), preparedAssessmentPolicy('granite', true));
+  });
+}

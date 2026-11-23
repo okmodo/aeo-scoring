@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
-
 const expiresAfterMs = 86_400_000;
-const sha = value => createHash('sha256').update(value).digest('hex');
+const encoder = new TextEncoder();
+const sha = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)))]
+  .map(byte => byte.toString(16).padStart(2, '0')).join('');
 const nullable = value => value ?? null;
 
 export function createGraniteResponseStore(db) {
@@ -13,7 +13,7 @@ export function createGraniteResponseStore(db) {
       promptVersion = benchmark.promptVersion, responseSchemaVersion = benchmark.responseSchemaVersion,
       requestBytes = benchmark.requestBytes }) {
       const expected = JSON.stringify(benchmark.questions.map(question => question.id));
-      const digest = sha(JSON.stringify([kind, capture?.auditId, capture?.sha256, model, gateway, promptVersion, responseSchemaVersion, requestBytes, benchmark.body,
+      const digest = await sha(JSON.stringify([kind, capture?.auditId, capture?.sha256, model, gateway, promptVersion, responseSchemaVersion, requestBytes, benchmark.body,
         benchmark.questions, [...benchmark.evidenceById]]));
       await statement(`INSERT OR IGNORE INTO model_attempts
         (attempt_id,kind,audit_id,prepared_hash,model,gateway,stage,prompt_version,response_schema_version,
@@ -25,11 +25,13 @@ export function createGraniteResponseStore(db) {
       if (existing?.input_digest !== digest) throw new Error('model_attempt_conflict');
     },
 
+    read: get,
+
     async capture(id, response) {
       const { outcome, httpStatus, modelElapsedMs, neurons, origin, bodyBase64, truncated } = response;
       const values = [outcome, nullable(httpStatus), nullable(modelElapsedMs), nullable(neurons),
         nullable(origin), nullable(bodyBase64), Number(truncated === true)];
-      const digest = sha(JSON.stringify(values));
+      const digest = await sha(JSON.stringify(values));
       await statement(`UPDATE model_attempts SET status='received',outcome=?2,http_status=?3,model_elapsed_ms=?4,
         neurons=?5,response_origin=?6,response_body_base64=?7,response_truncated=?8,response_digest=?9
         WHERE attempt_id=?1 AND status='pending'`, id, ...values, digest).run();
@@ -41,7 +43,7 @@ export function createGraniteResponseStore(db) {
         finding.id, finding.answer, finding.reason, finding.evidenceIds,
         finding.evidence, finding.validation, finding.points, finding.maxPoints,
       ]));
-      const digest = sha(JSON.stringify([rows, report.status, report.score]));
+      const digest = await sha(JSON.stringify([rows, report.status, report.score]));
       await statement(`UPDATE model_attempts SET results_digest=?2
         WHERE attempt_id=?1 AND status='received' AND results_digest IS NULL`, id, digest).run();
       if ((await get(id))?.results_digest !== digest) throw new Error('model_results_conflict');

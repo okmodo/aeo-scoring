@@ -7,6 +7,19 @@ const rubricChecks = new Map(rubric.criteria.flatMap(criterion =>
   criterion.subchecks.map(check => [check.id, { ...check, pillar: criterion.pillar }])));
 const answers = ['pass', 'fail'];
 const reasonLimit = 300;
+const encoder = new TextEncoder();
+const byteLength = value => encoder.encode(value).byteLength;
+function joinBytes(chunks, size, extra = 0) {
+  const bytes = new Uint8Array(size + extra);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes;
+}
+function base64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(binary);
+}
 const isText = value => typeof value === 'string' && value.trim().length > 0;
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const sourceUrl = value => {
@@ -57,10 +70,17 @@ export function prepareBinaryBenchmark(fixture) {
       eligibleEvidenceIds, passKinds, failKinds, verifiedAbsenceSourceIds };
   });
   const sentIds = [...new Set(preparedQuestions.flatMap(question => question.eligibleEvidenceIds))];
+  const categoryIds = fixture.categoryEvidenceIds;
+  if (categoryIds !== undefined && (!uniqueText(categoryIds) || !categoryIds.length ||
+      !categoryIds.every(id => sentIds.includes(id)))) throw new TypeError('Invalid category evidence');
+  const categoryInstruction = categoryIds
+    ? '\nAlso identify what kind of product is named in the eligible category evidence. Use a short free-form label and cite its evidence ID. The category label need not appear verbatim. Use null only if you cannot identify the kind of product.'
+    : '';
   const input = {
-    messages: [{ role: 'user', content: prompt + '\n\n' + JSON.stringify({
+    messages: [{ role: 'user', content: prompt + categoryInstruction + '\n\n' + JSON.stringify({
       questions: preparedQuestions.map(({ id, passRule, eligibleEvidenceIds, passKinds, failKinds, verifiedAbsenceSourceIds }) =>
         ({ id, passRule, eligibleEvidenceIds, passKinds, failKinds, verifiedAbsence: verifiedAbsenceSourceIds.length > 0 })),
+      ...(categoryIds ? { categoryEvidenceIds: categoryIds } : {}),
       evidence: sentIds.map(id => {
         const { kind, scope, quote } = evidenceById.get(id);
         return { id, kind, scope, text: quote };
@@ -69,8 +89,15 @@ export function prepareBinaryBenchmark(fixture) {
     response_format: {
       type: 'json_schema',
       json_schema: {
-        type: 'object', additionalProperties: false, required: ['results'],
+        type: 'object', additionalProperties: false, required: categoryIds ? ['results', 'category'] : ['results'],
         properties: {
+          ...(categoryIds ? { category: { anyOf: [{
+            type: 'object', additionalProperties: false, required: ['label', 'evidenceId'],
+            properties: {
+              label: { type: 'string', minLength: 1, maxLength: 160 },
+              evidenceId: { type: 'string', enum: categoryIds },
+            },
+          }, { type: 'null' }] } } : {}),
           results: {
             type: 'object', additionalProperties: false,
             required: preparedQuestions.map(question => question.id),
@@ -92,9 +119,9 @@ export function prepareBinaryBenchmark(fixture) {
   };
   const baseBody = serializeGraniteRequest(input);
   const body = JSON.stringify({ ...JSON.parse(baseBody), response_format: input.response_format });
-  const requestBytes = Buffer.byteLength(body);
+  const requestBytes = byteLength(body);
   if (requestBytes > GRANITE_MODEL_CONFIG.requestMaxBytes) throw new RangeError('request_limit');
-  return { input, body, requestBytes, promptVersion: 'granite-binary-v2', responseSchemaVersion: 2, schemaBytes: requestBytes - Buffer.byteLength(baseBody),
+  return { input, body, requestBytes, promptVersion: 'granite-binary-v2', responseSchemaVersion: 2, schemaBytes: requestBytes - byteLength(baseBody),
     questions: preparedQuestions, evidenceById };
 }
 
@@ -149,7 +176,7 @@ export function scoreBinaryBenchmark(benchmark, output) {
     unmeasured: findings.length - measured, unexpected, findings };
 }
 
-export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now, store, onCapture } = {}) {
+export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now, store, onCapture, attemptId } = {}) {
   const benchmark = prepareBinaryBenchmark(fixture);
   if (!store) throw new Error('model_response_store_required');
   const config = GRANITE_MODEL_CONFIG;
@@ -157,13 +184,13 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
     timeoutMs: config.timeoutMs, questions: benchmark.questions.length, inferenceRequests: 0,
     timeToHttpResponseMs: null, modelElapsedMs: null, neurons: null };
   const startedAt = now();
-  const id = 'granite-binary-' + crypto.randomUUID();
+  const id = attemptId ?? 'granite-binary-' + crypto.randomUUID();
   run.attemptId = id;
   const reservation = await allowance?.reserve({ id, costs: {
     requests: 1, d1Reads: 10_000, d1Writes: 300, // Keep room for the base64 body, normalized rows and index/storage overhead.
     d1StorageBytes: Math.ceil(config.outputMaxBytes / 3) * 4 + 4 * config.outputMaxBytes +
       benchmark.questions.reduce((sum, question) => sum + question.eligibleEvidenceIds
-        .map(id => Buffer.byteLength(JSON.stringify(benchmark.evidenceById.get(id))))
+        .map(id => byteLength(JSON.stringify(benchmark.evidenceById.get(id))))
         .sort((a, b) => b - a).slice(0, 2).reduce((n, size) => n + size, 0), 0),
   }, now: startedAt }).catch(() => null);
   if (reservation?.accepted !== true || reservation.duplicate !== false) {
@@ -221,8 +248,7 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
         if (options.signal.aborted) throw options.signal.reason;
         // The provider still handles envelope parsing, usage, and the existing
         // output-limit error. It sees one extra byte on an over-limit body.
-        const bytes = Buffer.concat(captured.chunks);
-        const body = captured.truncated ? Buffer.concat([bytes, Buffer.alloc(1)]) : bytes;
+        const body = joinBytes(captured.chunks, captured.bytes, Number(captured.truncated));
         return new Response(body.length ? body : null, { status: response.status, headers: response.headers });
       },
     });
@@ -255,7 +281,7 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
     if (run.failure === 'model_output_invalid' && run.diagnostic?.phase === 'output' &&
         captured.done && run.httpStatus >= 200 && run.httpStatus < 300) {
       try {
-        const envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(captured.chunks)));
+        const envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(joinBytes(captured.chunks, captured.bytes)));
         const result = envelope.result;
         const choice = result?.choices?.length === 1 ? result.choices[0] : null;
         if (envelope.success === true && !envelope.errors?.length &&
@@ -269,7 +295,7 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
     const response = {
       outcome: run.failure ?? 'response_received', httpStatus: run.httpStatus, modelElapsedMs: run.modelElapsedMs,
       neurons: run.neurons, origin: captured.origin,
-      bodyBase64: captured.bytes || captured.done ? Buffer.concat(captured.chunks).toString('base64') : null,
+      bodyBase64: captured.bytes || captured.done ? base64(joinBytes(captured.chunks, captured.bytes)) : null,
       truncated: captured.origin !== null && !captured.done,
     };
     try { await onCapture?.({ attemptId: id, response, output: run.output }); }

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Connect keyed Granite results to queued audits and publish supported findings through the existing report API.",
+  "state": "The opt-in keyed queue route is implemented and verified in a local queue and persistent D1. It is not deployed.",
+  "decisions": [
+    "Keep the existing queue transitions and request guard. Use a distinct policy and one stable checkpoint for the keyed route.",
+    "Use scoped product evidence from the verified prepared page and publish via the normal scorer and report API.",
+    "Retain raw model responses in D1 and reuse a received response on redelivery without starting another inference."
+  ],
+  "constraints": [
+    "No production, frontend, public report contract or account usage ceiling changes.",
+    "Keep the existing 60-second timeout and request and response bounds. Do not commit private merchant evidence or live transcripts."
+  ],
+  "completed": [
+    "Local Faherty queue processed its retained capture through three queue phases and returned the public report API representation.",
+    "An initial guarded call showed two measured checks and exposed the singular product-label guard. The corrected guarded call returned all 13 keyed answers, saved the full response and all rows in persistent local D1, and published seven measured checks and 32 earned points. The final score remained null. Corrected call: 28.8 seconds and 9.15047 neurons.",
+    "An independent fresh agent resumed an interrupted synthetic delivery from a raw D1 response without any fresh inference and verified evidence in the report."
+  ],
+  "remaining": [
+    "Production enablement, migration, and broader deterministic evidence coverage are outside this local rollout."
+  ],
+  "resumeCommands": [
+    "npm run test:granite-keyed-queue",
+    "npm run evaluate -- --change granite-keyed-queue --base ba3b8ec5b576e17f55692a02c98692fdfe115acb",
+    "EVALUATION_BASE=ba3b8ec5b576e17f55692a02c98692fdfe115acb npm run ci:gate"
+  ]
+}

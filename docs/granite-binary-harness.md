@@ -43,3 +43,11 @@ node scripts/granite-binary-benchmark.mjs replay /private/path/prepared-fixture.
 ```
 
 The local database distinguishes a saved model JSON object from a captured HTTP envelope. The replay reader accepts older array-shaped outputs and newer keyed outputs. Recorded request bytes take precedence over the reconstructed prompt size. Replay IDs include the normalizer’s request shape, so a schema upgrade can create a new replay record. With the same harness version, fixture, saved file, and local database, repeating the replay gives the same attempt and question rows.
+
+## Queued audits
+
+Set `AUDIT_GRANITE_KEYED=enabled` only for an audit Worker environment that already has the queue enabled, Granite configured, and the existing assessment release bindings. Apply migration 0014 to its audit D1 before enabling the route. The keyed policy has a separate cache and checkpoint namespace. The existing non-keyed paths remain available.
+
+The assess delivery reads the verified prepared capture and builds scoped evidence from its primary product region. It sends a single keyed request through the existing Granite guard. The response gets a stable D1 attempt ID bound to the audit and prepared input. Redelivery can finish a received response or reuse a completed checkpoint without submitting another inference. It cannot replace an unresolved attempt with a fresh inference. The hourly cleanup prunes expired response records when the keyed path is enabled.
+
+The public endpoint continues to serve the existing rubric report. The keyed route evaluates 13 selected semantic checks and the scorer retains its deterministic observations and evidence rules for the full rubric. The compact input does not establish exhaustive absence, an unknown size selection, or stock for that selection. Those checks remain unmeasured unless their evidence requirements are satisfied. The apparel attributes require both composition and fit with a dimension, and the current price requires amount and currency from the same scoped observation. The report keeps verified findings and omits a final score while applicable checks remain unresolved. Raw responses stay in D1 and are not served by the report API.
