@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "granite-binary-harness",
+  "task": "Make the single-prompt Granite binary scoring benchmark repeatable and verify its findings before converting them to points.",
+  "scope": [
+    "scripts/granite-binary-harness.mjs",
+    "scripts/granite-binary-benchmark.mjs",
+    "test/granite-binary-harness.test.mjs",
+    "evals/fixtures/granite-binary-harness.json",
+    "docs/granite-binary-harness.md",
+    "package.json",
+    "evals/changes/granite-binary-harness/**"
+  ],
+  "nonGoals": [
+    "No production scoring, rubric, Worker, queue, front end, provider configuration, or usage policy changes. No live inference in CI. No retained merchant data, secrets or live transcripts in Git."
+  ],
+  "outcomes": [
+    {"id":"O1","description":"One prompt asks one binary question per subcheck. Local validation rejects missing, duplicate or unknown IDs, nonbinary answers and reasons exceeding 300 characters.","verification":"automated","evidence":"Frozen request and malformed-output assertions."},
+    {"id":"O2","description":"Only eligible source-matched evidence supports points. Unproved absence stays unmeasured, including findings with model fail answers.","verification":"automated","evidence":"Frozen evidence, expected findings, partial totals and invalid citation cases."},
+    {"id":"O3","description":"The benchmark sends one bounded request through the existing guarded Granite provider, measures transport and total elapsed time, and returns provider usage or unknown.","verification":"automated","evidence":"Offline provider, admission denial and 60-second deadline tests."}
+  ],
+  "process": [
+    {"id":"P1","description":"Commit the plan before implementation, keep live usage opt-in and guarded, and obtain independent review before opening the change for merge.","verification":"human","evidence":"Git history, source-bound evaluation and review."}
+  ],
+  "styleEfficiency": [
+    {"id":"E1","description":"Reuse the current Granite, usage and evidence modules and keep the benchmark outside the application path.","verification":"human","evidence":"Scoped diff and offline replay."}
+  ],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-binary","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":false,"reason":"The local benchmark performs one stateless prompt and has no agent state transfer, resumption or checkpoint protocol."}
+}
