@@ -453,17 +453,6 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
         const timestamp = now();
         const audit = await db.prepare("SELECT url, expires_at FROM audits WHERE id=?1 AND status='pending' AND expires_at>?2").bind(auditId,timestamp).first();
         if (audit) {
-          // Queue preparation may publish an incomplete report on failure.
-          // A missing diagnostic must not prevent that terminal publication.
-          try {
-            const pipeline = createPipelineState({db,auditId,now});
-            await pipeline.load();
-            const stages = pipeline.summary().stages;
-            if (stages.some(x=>x.stage==='preparation')) {
-              if (!stages.some(x=>x.stage==='content' && x.status==='skipped') && stages.length<14) await pipeline.record('content','skipped','preparation_unavailable');
-              if (!stages.some(x=>x.code==='report_building') && pipeline.summary().stages.length<16) await pipeline.record('scoring','running','report_building');
-            }
-          } catch { /* Publication is authoritative. */ }
           const report = scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});
           report.status = 'incomplete'; report.score = null;
           report.coverage.limitations.push('The retained page could not be prepared and verified for assessment; AI assessment did not start.');

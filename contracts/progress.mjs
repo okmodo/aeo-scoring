@@ -29,6 +29,7 @@ export function auditProgress({auditId, queue, pipeline, prepared, retained, wor
   if (published) {
     const interrupted = queue.phase === 'prepare' ? 'preparation' : 'assessment';
     if (status === 'incomplete' && !states[interrupted].some(value=>value !== 'running')) add(interrupted,'failed');
+    if (interrupted === 'preparation' && status === 'incomplete' && states.assessment.length === 0) add('assessment','skipped');
     add('scoring','running'); add('scoring','completed');
   } else if (status === 'unable_to_assess') {
     add(queue.phase === 'capture' ? 'retrieval' : queue.phase === 'prepare' ? 'preparation' : 'assessment','failed');

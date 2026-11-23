@@ -98,7 +98,12 @@ test('preparation failure requests retry and model failure publishes partial fin
         if(result.retried){retry=true;break;}
       }
       const current=await (await review.request(req(initial.statusUrl))).json();
-      if(failure==='preparation') assert.equal(retry,true);
+      if(failure==='preparation') {
+        assert.equal(retry,true);
+        assert.equal(current.status,'incomplete');
+        assert.ok(current.progress.events.some(event=>event.stage==='preparation'&&event.status==='failed'));
+        assert.ok(current.progress.events.some(event=>event.stage==='assessment'&&event.status==='skipped'));
+      }
       else {assert.equal(retry,false);assert.equal(current.status,'incomplete');assert.ok(current.report);assert.equal(current.report.scoreBasis,'earned_points');}
     } finally {review.close();}
   }
