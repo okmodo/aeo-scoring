@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "granite-keyed-judgments",
+  "task": "Require every requested binary judgment by question ID on the Granite wire schema and verify one local Faherty run in D1.",
+  "scope": [
+    "scripts/granite-binary-harness.mjs",
+    "scripts/granite-binary-benchmark.mjs",
+    "scripts/granite-response-store.mjs",
+    "test/granite-binary-harness.test.mjs",
+    "docs/granite-binary-harness.md",
+    "evals/changes/granite-keyed-judgments/**"
+  ],
+  "nonGoals": ["No production migration, deployment, scoring, frontend, or limit changes. No live inference in CI and no merchant data in Git."],
+  "outcomes": [
+    {"id":"O1","description":"The actual gateway request requires exactly one keyed entry per requested question, with a binary answer and a 300-character reason limit.","verification":"automated","evidence":"Offline request serialization and required-property tests."},
+    {"id":"O2","description":"Keyed responses persist with existing D1 fields, incomplete results preserve supported findings, and legacy arrays remain replayable.","verification":"automated","evidence":"Offline normalization and D1 persistence tests."},
+    {"id":"O3","description":"Perform one guarded local Faherty model call and verify persisted answer coverage, score and metering.","verification":"human","evidence":"Readback from local D1 and default gateway usage corroboration, recorded outside Git."}
+  ],
+  "process": [{"id":"P1","description":"Record the plan separately, keep calibration private and obtain an independent review and hosted CI.","verification":"human","evidence":"PR, Git history and review."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the existing guarded transport and storage and avoid an application migration.","verification":"human","evidence":"Scoped diff."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-binary","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":false,"reason":"The change replaces a response shape in a stateless local benchmark. It does not change agent resumption or state transfer."}
+}
