@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "task": "Recover exact title, option and price evidence from the existing prepared HTML.",
+  "state": "Parser and mapping changes are implemented on the feature branch. The local retained-capture replay and independent review are complete.",
+  "decisions": [
+    "Use the document head title independently from SVG titles.",
+    "Record a serialized checked product option as a bounded observation rather than proof of a complete current selection or included items.",
+    "Match parser ordinals and tag counts to exact prepared source positions. Withhold uncertain citations and require verified currency for the full price check."
+  ],
+  "constraints": [
+    "Preserve the existing Browser API, R2 flow, queue, report contract, frontend, model timeout and usage limits.",
+    "Leave production untouched. Private retained merchant data and model responses stay outside Git."
+  ],
+  "completed": [
+    "Independent Terra review found cross-scope quote and incomplete configuration risks. The corrected diff passed re-review. The reviewer could not launch native workerd in the restricted subagent sandbox.",
+    "Native local replay of a previously retained Faherty capture recovered both title sources, the Stone control, and the displayed $64. With deterministic test responses, the score changed from 35 to 36 earned points and from 8 to 9 measured checks. The final score stayed null. No model call was made.",
+    "Local queue regressions verify the report and D1 flow for synthetic model responses, including fail-closed source association and unsupported score claims."
+  ],
+  "remaining": [
+    "The retained Faherty capture does not verify a complete current configuration, currency for the rendered price, selected stock, or compatibility. The parser work does not add supporting-resource inspections.",
+    "Live calibration and production rollout are outside this change."
+  ],
+  "resumeCommands": [
+    "node --test backend/prepared-derived.test.mjs backend/html-product.test.mjs backend/granite-keyed-queue.test.mjs",
+    "npm run evaluate -- --change faherty-parser-evidence --base ce27d19b0a3ba2bc9f9070a486d67d48be4997bb",
+    "EVALUATION_BASE=ce27d19b0a3ba2bc9f9070a486d67d48be4997bb npm run ci:gate"
+  ]
+}
