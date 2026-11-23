@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "durable-check-results",
+  "sourceDigest": "8575e6f6cd252e0237bb234cd557f8e68e10ba625c7574b29ae3b35f8b10ff7b",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/durable_exit",
+  "exportSha256": "edb78e5bfd73550fd375723bfe4afe42f7cc7134f90e75ac127b4e9b7d3bd356",
+  "interruptionPoint": "The synthetic queued audit had 39 outcome rows and a pending report. Saved the SQLite D1-compatible state and unconsumed finalize_report message, then stopped before delivery. Hash is over the JSON export followed by the SQLite file.",
+  "observedContinuation": "Using only the two exports and clean source, a fresh Terra agent delivered finalization and published the incomplete 24-check v3 report with two measured rows and a null final score. Duplicate delivery returned identical API state, and no model request or new queue message was made.",
+  "limitations": "The export used a synthetic capture and a local SQLite D1 adapter. Separate native workerd validation covered D1 migration and staging/publication. Hosted Cloudflare, real-page evidence, and inference latency were outside the exit test."
+}
