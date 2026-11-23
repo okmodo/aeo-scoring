@@ -1,0 +1,53 @@
+{
+  "sources": [
+    {
+      "id": "product",
+      "scope": "product",
+      "url": "https://example.com/products/shore-short",
+      "location": "parsed primary product",
+      "text": "Shore Short. Brand: Example Outfitters. A lightweight short for summer walks. Model: Morgan wears size M. Shipping &amp; Returns. Material: 98% cotton, 2% elastane. Relaxed fit with a 6-inch inseam."
+    },
+    {
+      "id": "shipping",
+      "scope": "shipping",
+      "url": "https://example.com/shipping",
+      "location": "complete shipping policy",
+      "complete": true,
+      "text": "Orders ship within two business days."
+    }
+  ],
+  "evidence": [
+    {"id":"name","sourceId":"product","scope":"product","kind":"product_name","quote":"Shore Short"},
+    {"id":"brand","sourceId":"product","scope":"product","kind":"product_brand","quote":"Brand: Example Outfitters."},
+    {"id":"description","sourceId":"product","scope":"product","kind":"product_description","quote":"A lightweight short for summer walks."},
+    {"id":"person","sourceId":"product","scope":"product","kind":"model_person","quote":"Model: Morgan wears size M."},
+    {"id":"shipping-heading","sourceId":"product","scope":"product","kind":"policy_heading","quote":"Shipping & Returns"},
+    {"id":"composition","sourceId":"product","scope":"product","kind":"composition","quote":"Material: 98% cotton, 2% elastane."},
+    {"id":"fit","sourceId":"product","scope":"product","kind":"fit_and_inseam","quote":"Relaxed fit with a 6-inch inseam."}
+  ],
+  "questions": [
+    {"id":"C1.identity","passRule":"Name the primary product and its brand.","eligibleEvidenceIds":["name","brand","person"],"passKinds":["product_name","product_brand"]},
+    {"id":"C1.explanation","eligibleEvidenceIds":["description"],"passKinds":["product_description"]},
+    {"id":"C2.essential","passRule":"Give material composition with percentages, fit, and inseam with units.","eligibleEvidenceIds":["composition","fit"],"passKinds":["composition","fit_and_inseam"]},
+    {"id":"C3.availability","eligibleEvidenceIds":["shipping-heading"],"passKinds":["selected_configuration_stock"]},
+    {"id":"C3.shipping","passRule":"Give the shipping cost or calculation.","eligibleEvidenceIds":[],"passKinds":["shipping_cost"],"verifiedAbsenceSourceIds":["shipping"]}
+  ],
+  "output": {
+    "results": [
+      {"id":"C1.identity","answer":"pass","reason":"The product and brand are both named.","evidenceIds":["name","brand"]},
+      {"id":"C1.explanation","answer":"pass","reason":"The description names the type and use.","evidenceIds":["description"]},
+      {"id":"C2.essential","answer":"pass","reason":"Composition, fit and inseam length are explicit.","evidenceIds":["composition","fit"]},
+      {"id":"C3.availability","answer":"fail","reason":"The supplied heading does not show stock status.","evidenceIds":["shipping-heading"]},
+      {"id":"C3.shipping","answer":"fail","reason":"The complete shipping policy omits cost.","evidenceIds":[]}
+    ]
+  },
+  "expected": {
+    "status":"incomplete",
+    "score":null,
+    "earnedPoints":21,
+    "maxPoints":26,
+    "measured":4,
+    "unmeasured":1,
+    "points":[3,4,14,null,0]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "task": "Implement a guarded local Granite benchmark with binary judgments and source-backed scoring.",
+  "state": "Local benchmark, frozen synthetic fixture, and operator documentation are ready for independent review and evaluation.",
+  "decisions": [
+    "Use one prompt and one binary result per selected rubric ID. Enforce exact response cardinality locally.",
+    "Require evidence kinds and question-specific eligibility in addition to source matching. Withhold points when a model failure is unproved.",
+    "Use the existing Granite provider, analytics guard, model timeout, and byte limits. Report the benchmark subset separately from the public audit score."
+  ],
+  "constraints": [
+    "No production audit, frontend, configuration, service, queue, or usage policy changes.",
+    "No live inference in evaluation or CI. Keep merchant captures, private credentials, and live transcripts outside Git."
+  ],
+  "completed": [
+    "Frozen fixture and tests cover the request, evidence, result validation, admission, and timeout."
+  ],
+  "remaining": [
+    "A separately authorized live Faherty benchmark can use the latest verified capture."
+  ],
+  "resumeCommands": [
+    "npm run test:granite-binary",
+    "npm run evaluate -- --change granite-binary-harness --base 69bea6a7d3f6a674b4280e0abea2855b4a8052c6",
+    "EVALUATION_BASE=69bea6a7d3f6a674b4280e0abea2855b4a8052c6 npm run ci:gate"
+  ]
+}
