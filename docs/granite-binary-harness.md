@@ -1,6 +1,6 @@
 # Granite binary benchmark
 
-The benchmark runs outside the audit Worker. It sends one question per selected rubric subcheck and one Granite request through the configured `default` gateway. The result covers only the selected subchecks and uses their rubric v2 weights.
+The benchmark runs outside the audit Worker. It sends one question per selected rubric subcheck and one Granite request through the configured `default` gateway. The response schema requires a `results` object with every requested question ID as a key. Each value contains a binary answer, a reason up to 300 characters, and eligible evidence IDs. The result covers only the selected subchecks and uses their rubric v2 weights.
 
 ## Replay the frozen fixture
 
@@ -42,4 +42,4 @@ npm --prefix backend ci --ignore-scripts --no-audit --no-fund
 node scripts/granite-binary-benchmark.mjs replay /private/path/prepared-fixture.json /private/path/new-report.json /private/path/saved-result.json /private/path/local-d1
 ```
 
-The local database distinguishes a saved model JSON object from a captured HTTP envelope. Use the same fixture, saved file, and local database to verify that replaying again produces the same attempt and question rows.
+The local database distinguishes a saved model JSON object from a captured HTTP envelope. The replay reader accepts older array-shaped outputs and newer keyed outputs. Recorded request bytes take precedence over the reconstructed prompt size. Replay IDs include the normalizer’s request shape, so a schema upgrade can create a new replay record. With the same harness version, fixture, saved file, and local database, repeating the replay gives the same attempt and question rows.

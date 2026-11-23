@@ -77,12 +77,16 @@ async function replay(fixture, savedPath, persistPath) {
     const store = createGraniteResponseStore(db);
     const now = Date.now();
     await store.prune(now);
+    const legacy = Array.isArray(output?.results);
+    const requestBytes = Number.isSafeInteger(saved.requestBytes) && saved.requestBytes > 0
+      ? saved.requestBytes : benchmark.requestBytes;
     await retryModelWrite(() => store.begin({ id, kind: 'replay', capture: fixture.capture,
-      model: saved.model ?? GRANITE_MODEL_CONFIG.model, gateway: saved.gateway ?? GRANITE_MODEL_CONFIG.gatewayId, benchmark, now }));
+      model: saved.model ?? GRANITE_MODEL_CONFIG.model, gateway: saved.gateway ?? GRANITE_MODEL_CONFIG.gatewayId, benchmark, now, requestBytes,
+      ...(legacy ? { promptVersion: 'granite-binary-v1', responseSchemaVersion: 1 } : {}) }));
     await retryModelWrite(() => store.capture(id, response));
     const report = scoreBinaryBenchmark(benchmark, output);
     await retryModelWrite(() => store.finish(id, report));
-    return { attemptId: id, inferenceRequests: 0, requestBytes: benchmark.requestBytes,
+    return { attemptId: id, inferenceRequests: 0, requestBytes,
       priorNeurons: response.neurons ?? null, report };
   } finally { await runtime.dispose(); }
 }
