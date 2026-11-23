@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "task": "Persist check results in D1 and publish through queued finalization, then display the v3 report through the existing poll route.",
+  "state": "Phase 1 is implemented and verified locally on codex/durable-check-results. The release base is e4959217d5f45a45f611845e6b63db32d334cbdd. Production was untouched.",
+  "decisions": [
+    "A single D1 batch commits 39 rubric components, the report draft and finalization intent, and checks_completed_at. The queue publishes from those rows, then records completed_at. Retries can advance from the durable intent without repeating inference.",
+    "The existing report API serves D1-backed status and results. The frontend continues polling when checksCompletedAt is present on a pending response and stops when it receives a terminal response. V3 report rows retain verified partial subtotals and component findings.",
+    "Pending staged reports stay pending across the queue horizon until publication or audit expiry. Retry and dead-letter handling use the existing queue, its budget checks, and lease fences."
+  ],
+  "constraints": [
+    "The 60-second model timeout, 1,000 ms Worker CPU cap, 60 percent operating limits, and configured Workers AI ceiling were preserved.",
+    "All new validation used synthetic local inputs and mocked provider replies. No live inference, merchant fetches, production writes, merges, or deployments."
+  ],
+  "completed": [
+    "Native workerd D1 applied migration 0015 over the prior schema, preserved an earlier report, staged 39 rows, refused a stale publication owner, and reconstructed the report from persisted findings.",
+    "Offline queue and storage regression tests passed, including atomic rollback, stale ownership, duplicate delivery, outgoing send failure, and delayed finalization after the queue horizon.",
+    "Local Chrome loaded the built frontend and replayed the queue test's exported API responses with all network requests intercepted. The UI progressed through inspection and report preparation to Assessment incomplete, and stopped after two status reads.",
+    "A fresh Terra agent resumed finalization from just the interrupted D1 export and clean source. It acknowledged a duplicate and made zero new model requests. Separate Terra review found and rechecked the queue-horizon fix, then found no remaining blocker."
+  ],
+  "remaining": [
+    "Complete Phase 2 separately by checking which rubric components receive real-page results and fixing any evidence or scoring gaps.",
+    "Apply migration 0015 and release the backend and frontend only under separately authorized rollout."
+  ],
+  "resumeCommands": [
+    "npm run test:component-publication",
+    "npm run test:granite-keyed-queue",
+    "AEO_DURABLE_EXIT_STAGE=export AEO_DURABLE_DB=/tmp/aeo-component-test.sqlite AEO_DURABLE_EXPORT=/tmp/aeo-component-test.json npm run test:granite-keyed-queue",
+    "AEO_DURABLE_EXIT_STAGE=resume AEO_DURABLE_EXPORT=/tmp/aeo-component-test.json npm run test:granite-keyed-queue",
+    "npm run evaluate -- --change durable-check-results --base e4959217d5f45a45f611845e6b63db32d334cbdd",
+    "npm run ci:gate -- e4959217d5f45a45f611845e6b63db32d334cbdd"
+  ]
+}
