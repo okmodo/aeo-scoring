@@ -1,0 +1,11 @@
+{"timestamp":"2026-11-23T05:38:51.926Z","tool":"npm","action":"npm run check","durationMs":5854,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:38:57.781Z","tool":"npm","action":"npm test","durationMs":7581,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:05.363Z","tool":"npm","action":"npm run test:exit","durationMs":198,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:05.561Z","tool":"npm","action":"npm run lint","durationMs":561,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:06.122Z","tool":"npm","action":"npm run typecheck","durationMs":584,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:06.706Z","tool":"npm","action":"npm run build","durationMs":243,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:06.949Z","tool":"npm","action":"npm run test:preview","durationMs":928,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:07.877Z","tool":"npm","action":"npm run test:progress","durationMs":396,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:08.273Z","tool":"npm","action":"npm run test:queue-progress","durationMs":217,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:08.490Z","tool":"npm","action":"npm run test:backend","durationMs":34674,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-23T05:39:43.164Z","tool":"npm","action":"npm run test:browser-build","durationMs":34576,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
