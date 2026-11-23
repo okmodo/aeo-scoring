@@ -123,3 +123,31 @@ test('origin 404 records the capture diagnostic but exposes retrieval failure',a
     assert.ok(JSON.parse(state.state_json).some(stage=>stage.code==='browser_api_captured'));
   } finally {review.close();}
 });
+
+test('a local fixture remains usable after idle time and a UTC cycle rollover', async () => {
+  let now = Date.UTC(2026, 0, 31, 23, 50);
+  const review = createLocalReview({ now: () => now, delayMs: 0, autoConsume: false });
+  const submit = url => review.request(req('/api/v1/audits', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  }));
+  try {
+    assert.equal((await submit('https://example.com/before-idle')).status, 202);
+    now += 6 * 60_000;
+    assert.equal((await submit('https://example.com/after-idle')).status, 202);
+    now += 5 * 60_000;
+    const response = await submit('https://example.com/after-rollover');
+    assert.equal(response.status, 202);
+    const accepted = await response.json();
+    assert.deepEqual(accepted.progress.events, []);
+    for (let i = 0; review.messages.length && i < 40; i++) {
+      assert.deepEqual(await review.deliver(review.messages.shift()), { acked: true, retried: false });
+    }
+    const result = await (await review.request(req(accepted.statusUrl))).json();
+    assert.equal(result.status, 'incomplete');
+    assert.equal(result.report.scoreBasis, 'earned_points');
+    assert.ok(result.progress.events.some(event => event.stage === 'scoring' && event.status === 'completed'));
+  } finally {
+    review.close();
+  }
+});

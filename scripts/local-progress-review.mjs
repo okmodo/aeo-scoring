@@ -21,7 +21,7 @@ import {PIPELINE_VERSION} from '../backend/pipeline-state.mjs';
 import {preparedAssessmentPolicy} from '../backend/prepared-assessment-policy.mjs';
 const fixtureHtml = `<!doctype html><html><head><title>Solar kettle</title></head><body><main><article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2><p>This insulated solar kettle warms six cups of water during outdoor trips.</p><h2>Details</h2><ul><li>Brand: Example Outfitters</li><li>Material: Steel</li><li>Care: Hand wash only.</li></ul></article></main></body></html>`;
 
-export function createLocalReview({delayMs=1200,deliveryDelayMs=delayMs,autoConsume=true,dbPath=':memory:',failure=null}={}) {
+export function createLocalReview({delayMs=1200,deliveryDelayMs=delayMs,autoConsume=true,dbPath=':memory:',failure=null,now=Date.now}={}) {
   const sql=new DatabaseSync(dbPath);
   sql.exec(readFileSync(new URL('../backend/schema.sql',import.meta.url),'utf8'));
   const operations=[];
@@ -29,11 +29,28 @@ export function createLocalReview({delayMs=1200,deliveryDelayMs=delayMs,autoCons
     first:async()=>{operations.push(query);return statement.get(...args)??null;},all:async()=>{operations.push(query);return {results:statement.all(...args)};},
     run:async()=>{operations.push(query);const changes=Number(statement.run(...args).changes);if(query.includes('INSERT INTO audit_pipeline_state')&&typeof params[2]==='string'){const stages=JSON.parse(params[2]);if(stages.at(-1)?.code==='report_building')await wait();}return {meta:{changes}};}};}};},
     async batch(statements){const results=[];for(const statement of statements) results.push(/^\s*SELECT/i.test(statement.query)?await statement.all():await statement.run());return results;}};
-  const now=Date.now, start=now(), messages=[], objects=new Map(), encoder=new TextEncoder();
+  const messages=[], objects=new Map(), encoder=new TextEncoder();
   const wait=()=>new Promise(resolve=>setTimeout(resolve,delayMs));
-  const evidence={verified:true,accountId:'fixture',observedAt:start,cycleStart:start-1000,cycleEnd:start+86400000,
-    aiDay:new Date(start).toISOString().slice(0,10),usage:Object.fromEntries(Object.keys(INCLUDED_CEILINGS).map(k=>[k,0]))};
-  const allowance=createTestAllowanceGuard(db,{accountId:'fixture',evidence});
+  const usage = Object.fromEntries(Object.keys(INCLUDED_CEILINGS).map(key => [key, 0]));
+  const accountId = 'fixture';
+  const ledger = createTestAllowanceGuard(db, {accountId});
+  const allowance = {
+    settle: ledger.settle,
+    reserve(request) {
+      const date = new Date(request.now);
+      const year = date.getUTCFullYear();
+      const month = date.getUTCMonth();
+      // Only the offline fixture supplies synthetic readings. Keep the same
+      // ledger and caps across requests within the simulated billing cycle.
+      const evidence = {
+        verified: true, accountId, usage, observedAt: request.now,
+        cycleStart: Date.UTC(year, month, 1),
+        cycleEnd: Date.UTC(year, month + 1, 1),
+        aiDay: date.toISOString().slice(0, 10),
+      };
+      return createTestAllowanceGuard(db, {accountId, evidence}).reserve(request);
+    },
+  };
   const guard={reserve:async()=>({accepted:true,duplicate:false}),start:async()=>({accepted:true,duplicate:false}),settle:async()=>({accepted:true}),cancelUnstarted:async()=>{}};
   const snapshots=createSnapshotStore({db,now,allowance:guard,bucket:{put:async(key,value)=>objects.set(key,value.slice()),
     get:async key=>{const value=objects.get(key);return value&&{size:value.length,body:new Response(value).body};},delete:async key=>objects.delete(key)}});

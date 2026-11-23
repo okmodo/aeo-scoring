@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "task": "Repair the local queue preview after idle time.",
+  "state": "The fixture now supplies fresh offline measurements for each reservation. The integration test verifies an aged local instance can submit and finish an audit.",
+  "decisions": ["Use the reservation timestamp to seed fictional metrics and a stable UTC monthly cycle in the local harness."],
+  "constraints": ["Preserve real age validation, the existing ledger and limits, local authentication, and cached-report behavior."],
+  "completed": ["Reproduced a 503 against the running local instance and traced it to synthetic measurements fixed at startup.", "Added a clock-controlled test across the freshness threshold and UTC cycle rollover."],
+  "remaining": ["The existing draft PR remains the review target. Any production release is separate."],
+  "resumeCommands": ["npm run test:queue-progress", "npm run evaluate -- --change local-stepper-fixture-freshness --base origin/main", "node scripts/local-progress-review.mjs"],
+  "evidenceLimitations": ["The harness supplies offline evidence, page and model responses. Evaluation traces cover the recorded commands, while the browser and local proxy checks are reported separately."]
+}
