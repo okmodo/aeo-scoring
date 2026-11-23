@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "durable-check-results",
+  "task": "Persist rubric components and evidence to D1, publish through an idempotent queue checkpoint, and consume the published rubric through frontend polling.",
+  "scope": ["backend/**","contracts/v1/**","src/App.tsx","src/audit.ts","src/live-report/**","test/**","package.json","evals/changes/durable-check-results/**"],
+  "nonGoals": ["No collection or rubric expansion, live model/browser calls in CI, production changes, new service, quota change or 60-second model timeout change.", "Keep frontend visual changes limited to the result adapter and pending-to-terminal behavior. Do not alter other PR branches."],
+  "outcomes": [
+    {"id":"O1","description":"A local user-started audit records the expected component outcomes, including verified programmatic findings and unresolved reasons, before it publishes a report.","verification":"automated","evidence":"Migration and SQLite/D1 queue-to-API tests with exact states and evidence joins."},
+    {"id":"O2","description":"Finalization is recoverable across dispatch failures and duplicate delivery and does not re-run completed inference.","verification":"automated","evidence":"Queue fault probes and independent continuation from a stored checkpoint."},
+    {"id":"O3","description":"The frontend displays pending and terminal v3 results with 24 rows, component evidence and earned subtotals.","verification":"automated","evidence":"Frontend contract and polling tests plus local browser verification."}
+  ],
+  "process": [{"id":"P1","description":"Use Terra agents, separately committed acceptance plan, genuine fresh-agent exit test, independent review and PR CI.","verification":"human","evidence":"Git history and recorded evaluation artifacts."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the existing queue, scoring, usage reservations, API envelope and poll flow.","verification":"human","evidence":"Scoped diff, fault coverage and independent review."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:component-publication","npm run test:granite-keyed-queue","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":true,"reason":"The persisted result to queue publication handoff adds a new resumable boundary. A fresh agent must finish an interrupted local audit from only the saved checkpoint."}
+}
