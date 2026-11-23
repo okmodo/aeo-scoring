@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "id": "queue-progress-modal",
+  "task": "Expose durable audit queue progress, add preparation and report-building events, drive the existing modal from backend status, and update only the local Docker review.",
+  "scope": [
+    "backend/**",
+    "contracts/**",
+    "src/**",
+    "test/**",
+    "scripts/local-progress-review.mjs",
+    "package.json",
+    "config/rubric.v2.json",
+    "docs/queue-progress-modal.md",
+    "evals/changes/queue-progress-modal/**"
+  ],
+  "nonGoals": [
+    "Production or public Pages deployment, merging PRs, live model or browser-capture calls, billing/usage/CPU limit increases, credential or scoring-rule changes, rewriting existing branch history or evaluation checks."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Authenticated audit responses expose bounded versioned progress from actual persisted queue and pipeline state, including preparation start/completion and score-card building start before final publication.",
+      "verification": "automated",
+      "evidence": "Producer/status contract tests with queued, running, retry, skipped, failure, partial and terminal publication cases."
+    },
+    {
+      "id": "O2",
+      "description": "Modal shows waiting, active, completed, skipped and failed states from backend progress without timers inventing completion, preserves the page/focus, and opens the report only when published. Legacy APIs remain indeterminate.",
+      "verification": "automated",
+      "evidence": "Frozen progress fixtures, frontend render tests and local queue-to-modal browser verification."
+    },
+    {
+      "id": "O3",
+      "description": "Password gate, retry idempotency and usage reservations remain enforced; no model calls or production mutations occur in testing/local review.",
+      "verification": "automated",
+      "evidence": "Existing guard/queue regressions and deterministic local fixture harness using actual queue producer/consumer progress."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan before code, use Terra agents with separated scopes and independent review, run genuine source-bound checks and open a feature PR without merge/deploy.",
+      "verification": "human",
+      "evidence": "Git history, evaluation traces, review and hosted CI. Feature branch base is queue backend ce27d19; retain required main-base command observation separately and use actual integration base for PR evidence."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Use a shared sanitized progress contract, bounded event writes covered by existing allowances, and reuse the reviewed modal/frontend. Keep original audit-progress branch and production unchanged.",
+      "verification": "human",
+      "evidence": "Diff, event budget tests, browser proof and local container review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:progress",
+    "npm run test:queue-progress",
+    "npm run test:backend",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "This changes application queue status and modal presentation, not agent memory, portability, resumability or agent workflow. Existing genuine exit evidence is not reused and required exit smoke tests still run."
+  }
+}
