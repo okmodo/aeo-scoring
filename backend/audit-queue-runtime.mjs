@@ -68,8 +68,12 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
     if(phase==='prepare') {
       if(retained?.prepared_state==='ready') return {next:'assess'};
       if(retained?.state!=='ready') return {next:null,code:'retrieval_failed'};
+      const pipeline = createPipelineState({db,auditId,now});
+      await pipeline.load();
+      if (!pipeline.summary().stages.some(x=>x.stage==='preparation' && x.status==='running')) await pipeline.record('preparation','running','preparation_started');
       const result = await prepare({env,auditId,now,allowance,workflow:workflow()});
       if(result.status!=='ready') throw Error('queue_preparation_unavailable');
+      if (!pipeline.summary().stages.some(x=>x.stage==='preparation' && x.status==='completed')) await pipeline.record('preparation','completed','preparation_ready');
       return {next:'assess'};
     }
     if(retained?.prepared_state!=='ready') return {next:null,code:'assessment_timeout'};
@@ -87,6 +91,12 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
     const hasUsableCapture = retained?.state==='ready' && (phase!=='capture' || code!=='retrieval_failed');
     let report = null, assessedUrl = null, error = null;
     if(hasUsableCapture) {
+      // Progress is advisory; a diagnostics outage must not prevent a partial report.
+      try {
+        const pipeline = createPipelineState({db,auditId,now});
+        await pipeline.load();
+        if (!pipeline.summary().stages.some(x=>x.stage==='scoring' && x.status==='running') && pipeline.summary().stages.length<16) await pipeline.record('scoring','running','report_building');
+      } catch { /* Terminal publication remains authoritative. */ }
       const store = snapshots();
       const input = retained.prepared_state==='ready' ? await store.readPrepared(auditId).catch(()=>null) : null;
       let derived, assessment;

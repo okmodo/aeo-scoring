@@ -1,3 +1,4 @@
+import {auditProgress} from '../contracts/progress.mjs';
 import {PREPARED_ASSESSMENT_POLICY} from './prepared-assessment-policy.mjs';
 // A D1 batch is transactional; the quota check and admission commit together.
 const ADMIT = `INSERT INTO audit_admissions (id, rate_key, created_at)
@@ -50,19 +51,25 @@ export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY,queueEn
     },
     async get(id, now) {
       const row = await db.prepare('SELECT * FROM audits WHERE id = ?1 AND expires_at >= ?2').bind(id, now).first();
-      let preparedPending=false;
+      let preparedPending=false, queueFound=false;
       if(row?.status==='pending' && now>=row.created_at+(row.lease_ms??LEASE_MS)) {
         if(queueEnabled) {
           const job=await db.prepare('SELECT state, expires_at FROM audit_queue_jobs WHERE audit_id=?1').bind(id).first();
-          if(job) return audit(row,now,job.state!=='complete' && now<job.expires_at);
+          if(job) { queueFound=true; preparedPending = job.state!=='complete' && now<job.expires_at; }
         }
-        try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
+        if (!queueFound) try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
           WHERE r.audit_id=?1 AND r.state='ready' AND r.created_at<=?2 AND r.expires_at>?2
           AND (r.prepared_state='ready' OR EXISTS(SELECT 1 FROM browser_audit_work w WHERE w.audit_id=r.audit_id AND w.state='assessing' AND w.expires_at>?2))
           AND NOT EXISTS(SELECT 1 FROM prepared_assessment_jobs j WHERE j.audit_id=r.audit_id AND j.prepared_hash=r.prepared_hash AND j.policy_version=?3 AND j.state IN ('complete','failed','uncertain'))`).bind(id,now,policyVersion).first());}
         catch { /* Missing migrations or unreadable readiness cannot extend a lease. */ }
       }
-      return audit(row, now, preparedPending);
+      const result = audit(row, now, preparedPending);
+      if (result && queueEnabled) {
+        const progress = await db.prepare(`SELECT q.sequence,q.phase,p.state_json,r.prepared_state FROM audit_queue_jobs q
+          LEFT JOIN audit_pipeline_state p ON p.audit_id=q.audit_id LEFT JOIN retained_snapshots r ON r.audit_id=q.audit_id WHERE q.audit_id=?1`).bind(id).first();
+        if (progress) result.progress = auditProgress({auditId:id,queue:progress,pipeline:progress.state_json,prepared:progress.prepared_state,status:result.status,report:result.report});
+      }
+      return result;
     },
     async finish(id, { status, report = null, error = null, completedAt, cacheUntil = null, assessedUrl = null }) {
       if (!['complete', 'incomplete', 'unable_to_assess'].includes(status) || !Number.isSafeInteger(completedAt) ||

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "task": "Add durable queue-driven progress events and connect the five-stage modal on a dedicated feature branch; update local Docker only.",
+  "state": "Feature implementation on codex/queue-progress-modal based on ce27d19 (origin/codex/terra-gateway-payload). Local Docker frontend4382 proxies to isolated queue harness4383. Browser observed all four processing stages active in order and published partial40-test report. Final source-bound evaluations and hosted CI pending at this checkpoint; production is unchanged.",
+  "decisions": [
+    "Carry reviewed report/modal UI and catalogs from6194bbe without importing unrelated evaluation history; preserve original PR59 branch.",
+    "Add optional sanitized version1 progress to existing authenticated202/poll responses, using persisted lifecycle/readiness and publication-gated completion.",
+    "Record preparation start/ready and scoring start idempotently; validated assessment precedes report assembly. Bound retained events to16; existing invocation reservations cover added indexed reads and marker writes.",
+    "Frontend validates progress shape, accepts newer same-audit revisions and authoritative terminal reports, supports skipped/failure states and legacy indeterminate fallback.",
+    "Local review uses real queue/runtime/store/response projection with local delivery and fixture browser/Granite results; all actual external fetch fallbacks are disabled."
+  ],
+  "constraints": [
+    "No production writes, public Pages/Worker deployment, migration, merge, real model calls or changes to CPU/timeout/allowance policies.",
+    "Production Worker version0f04a103-9a81-447f-9656-8d11e7f1050f, bindings/runtime and canonical Pages deployment were read-only compared and unchanged; CPU1000ms.",
+    "PR target is the backend integration branch because main lacks queued-engine code. Required main-base evaluation invocation is retained privately; final PR evidence/gate use actual integration base. No evaluator/history rule changes.",
+    "Local fixture API requires review123; this is not a production secret. Temporary SQLite and asset files can be removed by OS cleanup."
+  ],
+  "completed": [
+    "Plan93e6678 committed before implementation; Terra backend/frontend/harness agents used separated scopes.",
+    "Independent review identified malformed-progress, terminal-fallback and skipped-outcome issues; fixes and regressions implemented. Reviewer independently ran13 targeted tests before final coverage additions.",
+    "Local browser proved queued state, each active stage tied to returned revision, modal background retention, final publication and partial-report/no-score behavior; zero production audit requests and zero page errors.",
+    "Strong keyed fixture tests assert response_received, measured findings, thirteen persisted answers and no duplicate inference after redelivery.",
+    "Exploratory full backend/native checks passed after granting localhost test permissions; final evaluator records will supersede untraced exploratory commands."
+  ],
+  "remaining": [
+    "Commit implementation then run required main-base evaluator, preserve its observation outside committed final PR records, and evaluate/gate against origin/codex/terra-gateway-payload.",
+    "Commit current source-bound evidence, open feature PR against backend integration branch and wait for hosted CI and final independent review.",
+    "Keep localhost queue service running for review. Merge/public release require separate authorization."
+  ],
+  "resumeCommands": [
+    "npm ci --ignore-scripts",
+    "npm run evaluate -- --change queue-progress-modal --base origin/main",
+    "npm run evaluate -- --change queue-progress-modal --base origin/codex/terra-gateway-payload",
+    "npm run ci:gate -- origin/codex/terra-gateway-payload",
+    "node scripts/local-progress-review.mjs"
+  ],
+  "traceLimitations": [
+    "Earlier development commands and browser interactions are outside evaluator command-only trace; evidence is explicitly separate.",
+    "No reliable host token or cost metrics available. No actual model API used during checks."
+  ]
+}

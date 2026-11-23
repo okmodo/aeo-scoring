@@ -1,0 +1,109 @@
+{
+  "localUrl": "http://127.0.0.1:4382",
+  "unauthenticatedStatus": 401,
+  "stages": [
+    {
+      "stage": "retrieval",
+      "revision": 3,
+      "states": [
+        "Active",
+        "Waiting",
+        "Waiting",
+        "Waiting",
+        "Waiting"
+      ]
+    },
+    {
+      "stage": "preparation",
+      "revision": 112,
+      "states": [
+        "Completed",
+        "Active",
+        "Waiting",
+        "Waiting",
+        "Waiting"
+      ]
+    },
+    {
+      "stage": "assessment",
+      "revision": 219,
+      "states": [
+        "Completed",
+        "Completed",
+        "Active",
+        "Waiting",
+        "Waiting"
+      ]
+    },
+    {
+      "stage": "scoring",
+      "revision": 225,
+      "states": [
+        "Completed",
+        "Completed",
+        "Completed",
+        "Active",
+        "Waiting"
+      ]
+    }
+  ],
+  "terminal": {
+    "status": "incomplete",
+    "progress": {
+      "version": "1",
+      "auditId": "a313fb31-bdee-45cf-8acc-ea9652a79f57",
+      "revision": 330,
+      "events": [
+        {
+          "sequence": 1,
+          "stage": "retrieval",
+          "status": "running"
+        },
+        {
+          "sequence": 2,
+          "stage": "retrieval",
+          "status": "completed"
+        },
+        {
+          "sequence": 5,
+          "stage": "preparation",
+          "status": "running"
+        },
+        {
+          "sequence": 6,
+          "stage": "preparation",
+          "status": "completed"
+        },
+        {
+          "sequence": 9,
+          "stage": "assessment",
+          "status": "running"
+        },
+        {
+          "sequence": 10,
+          "stage": "assessment",
+          "status": "completed"
+        },
+        {
+          "sequence": 13,
+          "stage": "scoring",
+          "status": "running"
+        },
+        {
+          "sequence": 14,
+          "stage": "scoring",
+          "status": "completed"
+        }
+      ]
+    }
+  },
+  "reportTests": 40,
+  "productionRequests": 0,
+  "pageErrors": [],
+  "localWork": "Actual queue, SQLite progress, consumer and report API; page/model responses are frozen fixtures.",
+  "limitations": [
+    "Local delivery invokes actual queue/runtime code with SQLite; it does not send messages through the production Cloudflare Queue.",
+    "Capture and keyed AI responses are synthetic fixtures; local work delays aid review and do not estimate production run time.",
+    "Implementation agent ran browser interactions; independent review assesses the source and evidence separately."
+  ]
+}
