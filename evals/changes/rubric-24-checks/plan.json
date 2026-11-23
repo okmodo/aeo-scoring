@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "rubric-24-checks",
+  "task": "Publish the agreed 24-check v3 rubric with evidence-backed components, binary shipping and returns, and the documented frontend lookup IDs.",
+  "scope": ["config/rubric.v3.mjs","config/rubric.v3.json","backend/rubric-presentation.mjs","backend/rubric-policy.mjs","backend/structure-schema.mjs","backend/scoring.mjs","backend/**","contracts/v1/README.md","contracts/v1/types.ts","evals/changes/rubric-24-checks/**"],
+  "nonGoals": ["No frontend, production, Browser API or R2 collection, timeout, usage limits, or queue protocol changes. No live inference in CI. Keep frozen older reports."],
+  "outcomes": [
+    {"id":"O1","description":"New reports expose seven groups and 24 stable check IDs, Structure /40, Content /60, evidence joins, and correct unresolved component subtotals.","verification":"automated","evidence":"Synthetic and queue regression fixtures and contract tests."},
+    {"id":"O2","description":"Shipping and returns are evidence-gated binary checks. Product JSON-LD presence replaces the old agent guide points. Historical rubric replay is preserved.","verification":"automated","evidence":"Policy, parser and frozen report assertions."},
+    {"id":"O3","description":"Replay the verified retained Faherty artifact locally and identify measured results and genuine coverage gaps.","verification":"human","evidence":"Native local Worker replay and sanitized evaluation handoff."}
+  ],
+  "process": [{"id":"P1","description":"Use Terra agents, separate plan, independent review, and normal PR CI.","verification":"human","evidence":"Git history, actual traces, review and hosted CI."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse existing source observations and criterion scoring. Keep IDs deterministic and preserve established API envelope.","verification":"human","evidence":"Reviewed diff and scoped regression tests."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue","npm run test:foundations","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":false,"reason":"Rubric scoring, validation and report serialization change no queue checkpoints, handoff or resume protocol."}
+}
