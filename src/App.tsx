@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { total } from "./sample";
 import "./style.css";
-import { getAudit, pollDelay, PreviewPasswordRequired, requestAudit } from "./audit";
+import { acceptAuditUpdate, getAudit, pollDelay, PreviewPasswordRequired, requestAudit } from "./audit";
 import { PreviewPassword } from "./PreviewPassword";
 import { LiveReport } from "./live-report/LiveReport";
+import { AuditProgress, AuditCompletion } from "./AuditProgress";
 import type { Assessment } from "../contracts/v1/types";
 export function App() {
-  const [screen, setScreen] = useState<"entry" | "live">(
+  const [screen, setScreen] = useState<"entry" | "progress" | "live">(
       "entry",
     ),
     [url, setUrl] = useState("");
@@ -25,19 +26,30 @@ export function App() {
   }, [screen]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!password) return;
+    if (!password || submitting) return;
     controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setError("");
+    setAssessment(null);
     setSubmitting(true);
+    setScreen("progress");
+    let timedOut = false;
+    let timeout: number | undefined;
+    const stopAt = (deadline: number) => {
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => { timedOut = true; request.abort(); }, Math.max(0, deadline - Date.now()));
+    };
+    // Bound the initial request as well as the server-provided lifetime.
+    stopAt(Date.now() + 120_000);
     try {
       let next = await requestAudit(url, password, request.signal);
       if (request.signal.aborted) return;
       setAssessment(next);
-      setScreen("live");
       let attempt = 0;
-      const deadline = Date.now() + 120_000;
+      const expires = Date.parse(next.expiresAt);
+      const deadline = Number.isFinite(expires) ? Math.min(expires, Date.now() + 24 * 60 * 60 * 1000) : Date.now() + 120_000;
+      stopAt(deadline);
       while (next.status === "pending") {
         if (Date.now() >= deadline) throw new Error("The assessment is taking longer than expected. Please try again later.");
         await new Promise<void>((resolve, reject) => {
@@ -45,19 +57,23 @@ export function App() {
           const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
           request.signal.addEventListener("abort", onAbort, { once: true });
         });
-        next = await getAudit(next.statusUrl, password, request.signal);
+        const update = await getAudit(next.statusUrl, password, request.signal);
         if (request.signal.aborted) return;
-        setAssessment(next);
+        if (acceptAuditUpdate(next, update)) { next = update; setAssessment(next); }
       }
+      setScreen("live");
     } catch (err) {
-      if (!request.signal.aborted) {
+      if (controller.current === request && (!request.signal.aborted || timedOut)) {
         if (err instanceof PreviewPasswordRequired) setPassword(null);
-        setError(err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
+        setError(timedOut ? "The audit is taking longer than expected. Please try again later." : err instanceof TypeError ? "Could not reach the audit service. Check your connection and try again." : err instanceof Error ? err.message : "The audit service is unavailable.");
         setScreen("entry");
       }
-    } finally { if (!request.signal.aborted) setSubmitting(false); }
+    } finally {
+      window.clearTimeout(timeout);
+      if (controller.current === request) setSubmitting(false);
+    }
   }
-  function back() { controller.current?.abort(); setSubmitting(false); setScreen("entry"); }
+  function back() { controller.current?.abort(); controller.current = null; setAssessment(null); setSubmitting(false); setScreen("entry"); }
   return (
     <>
       {password === null && <PreviewPassword onUnlock={setPassword} />}
@@ -76,7 +92,7 @@ export function App() {
         </span>
       </header>
       </>}
-      {screen === "entry" && (
+      {screen !== "live" && (
         <main id="home">
           <nav className="section-nav" aria-label="Page sections">
             <strong>AEO report</strong>
@@ -237,7 +253,8 @@ export function App() {
           </footer>
         </main>
       )}
-      {screen === "live" && assessment && <LiveReport assessment={assessment} onBack={back} />}
+      {screen === "progress" && <AuditProgress assessment={assessment} onCancel={back} />}
+      {screen === "live" && assessment && <><AuditCompletion assessment={assessment} /><LiveReport assessment={assessment} onBack={back} /></>}
     </>
   );
 }

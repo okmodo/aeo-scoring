@@ -38,11 +38,12 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',code:'usage_admission_denied'};
   let grant,input,report,audit;const jobs=givenJobs??createPreparedAssessmentJobs(db,{now}),store=createStore(db,{policyVersion}),pipeline=createPipelineState({db,auditId,now});
   const snapshots=givenSnapshots??createSnapshotStore({db,bucket:env.AUDIT_SNAPSHOTS,allowance:createR2AllowanceGuard(db,config),now});
-  const record=async(stage,status,code)=>{const items=pipeline.summary().stages;if(!items.some(x=>x.stage===stage&&x.code===code)&&items.length<11)await pipeline.record(stage,status,code);};
+  const record=async(stage,status,code)=>{const items=pipeline.summary().stages;if(!items.some(x=>x.stage===stage&&x.code===code)&&items.length<15)await pipeline.record(stage,status,code);};
   const persist=async(kind,artifact)=>{try{await snapshots.saveAssessment({auditId,kind,artifact});}catch(error){if(error.code!=='snapshot_exists')throw error;const stored=await snapshots.readAssessment(auditId,kind);if(JSON.stringify(stored)!==JSON.stringify(artifact))throw Object.assign(Error('Conflicting retained assessment'),{code:'assessment_artifact_conflict'});}};
   const publish=async(code,complete=false)=>{
     await jobs.assertLease(grant);
     if(!report){
+      await record('scoring','running','report_building');
       const derived=input ? await derive(input).catch(()=>null) : null;
       report=input ? scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true}) : scorePage({url:audit.url,status:200,contentType:'text/html'},empty(),{requireAiAssessment:true});
     }
@@ -84,9 +85,10 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
       await record('content','running','facts_preparing');
       const derived=await derive(input,{keyed:true});
       const assessment=await runKeyedPreparedAudit({env,auditId,input,derived,jobs,grant,allowance,now,fetch:fetchImpl});
+      await record('content','completed','judgments_validated');
+      await record('scoring','running','report_building');
       report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,
         deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:assessment});
-      await record('content','completed','judgments_validated');
       await publish('assessment_completed',true);
       await jobs.release(grant,{state:'complete',code:'assessment_completed'});
       return {status:'completed',code:'assessment_completed',reportStatus:report.status};
@@ -104,8 +106,9 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     if(result.profile)await persist('profile',result.profile);
     await persist('facts',result.replayArtifact);
     const derived=await derive(input).catch(()=>null);
-    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:result.assessment});
     await record('snapshot','completed','assessment_retained');await record('content','completed','judgments_validated');
+    await record('scoring','running','report_building');
+    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:result.assessment});
     await publish('assessment_completed',true);
     await jobs.release(grant,{state:'complete',code:'assessment_completed'});
     return{status:'completed',code:'assessment_completed',reportStatus:report.status};

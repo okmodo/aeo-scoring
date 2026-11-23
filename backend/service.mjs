@@ -75,6 +75,7 @@ function assessment(audit, hit = false) {
     expiresAt: timestamp(audit.expiresAt),
     cache: { hit, validUntil: timestamp(audit.cacheUntil) },
     report: audit.report, error: audit.error ? problem(audit.error) : null,
+    ...(audit.progress ? {progress:audit.progress} : {}),
   };
 }
 
@@ -319,7 +320,11 @@ export function createAuditService({
             await store.finish(result.audit.id, {status:'unable_to_assess',error:'service_unavailable',completedAt:now()});
             return dispatched?.reason === 'allowance_exhausted' ? errorResponse(429,'rate_limited') : errorResponse(503,'service_unavailable');
           }
-          return json(assessment(result.audit), 202, {location: ROUTE+'/'+result.audit.id});
+          // Queue admission is already reserved; refresh the durable waiting state
+          // within that reservation so the first response can show progress.
+          let queuedAudit;
+          try { queuedAudit = await store.get(result.audit.id, now()); } catch { /* The accepted audit remains available for polling. */ }
+          return json(assessment(queuedAudit ?? result.audit), 202, {location: ROUTE+'/'+result.audit.id});
         }
         let grant;
         try { grant = browserFlow ? await browserFlow.prepare(result.audit) : undefined; }
@@ -445,6 +450,14 @@ export async function runPreparation({env, auditId, now = Date.now, allowance: i
         const timestamp = now();
         const audit = await db.prepare("SELECT url, expires_at FROM audits WHERE id=?1 AND status='pending' AND expires_at>?2").bind(auditId,timestamp).first();
         if (audit) {
+          // Queue preparation may publish an incomplete report on failure.
+          // A missing diagnostic must not prevent that terminal publication.
+          try {
+            const pipeline = createPipelineState({db,auditId,now});
+            await pipeline.load();
+            const stages = pipeline.summary().stages;
+            if (stages.some(x=>x.stage==='preparation') && !stages.some(x=>x.stage==='scoring' && x.status==='running') && stages.length<16) await pipeline.record('scoring','running','report_building');
+          } catch { /* Publication is authoritative. */ }
           const report = scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});
           report.status = 'incomplete'; report.score = null;
           report.coverage.limitations.push('The retained page could not be prepared and verified for assessment; AI assessment did not start.');

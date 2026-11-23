@@ -33,7 +33,9 @@ test('queued audit progresses through durable model checkpoints without an open 
     const now=()=>time, calls=[], messages=[], objects=new Map();
     const evidence={verified:true,accountId:'fixture',observedAt:start,cycleStart:start-1000,cycleEnd:start+86400000,
       aiDay:'2026-11-20',usage:Object.fromEntries(Object.keys(INCLUDED_CEILINGS).map(k=>[k,0]))};
-    const allowance=createTestAllowanceGuard(db,{accountId:'fixture',evidence});
+    const allowanceGuard=createTestAllowanceGuard(db,{accountId:'fixture',evidence});
+    const reservations=[];
+    const allowance={...allowanceGuard,reserve:async input=>{reservations.push(input);return allowanceGuard.reserve(input);}};
     const snapshots=createSnapshotStore({db,now,allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>({accepted:true})},bucket:{
       put:async(key,value)=>objects.set(key,value.slice()),get:async key=>{const value=objects.get(key);return value&&{size:value.length,body:new Response(value).body};},delete:async key=>objects.delete(key)}});
     const guard={reserve:async()=>({accepted:true,duplicate:false}),start:async()=>({accepted:true,duplicate:false}),settle:async()=>({accepted:true}),cancelUnstarted:async()=>{}};
@@ -55,6 +57,9 @@ test('queued audit progresses through durable model checkpoints without an open 
     const options={address:'192.0.2.1',defer:()=>assert.fail('queue mode must not schedule request work')};
     const response=await handle(new Request('https://worker/api/v1/audits',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url})}),options);
     assert.equal(response.status,202);const submitted=await response.json();assert.equal(submitted.status,'pending');assert.equal(messages.length,1);assert.equal(browserCalls,0);
+    assert.equal(response.headers.get('location'),submitted.statusUrl);
+    assert.deepEqual(submitted.progress,{version:'1',auditId:submitted.id,revision:0,events:[]});
+    assert.equal(reservations.length,1);assert.equal(reservations[0].costs.d1Reads,10000);
     const poll=await handle(new Request('https://worker'+submitted.statusUrl),options);assert.equal((await poll.json()).status,'pending');assert.equal(browserCalls,0);assert.equal(calls.length,0);
     const deliver=async body=>{let acked=false,retried=false;await runtime.consume({queue:'aeo-audit-checkpoints',messages:[{body,ack(){acked=true;},retry(){retried=true;}}]});assert.equal(retried,false,JSON.stringify({body,row:sql.prepare('SELECT * FROM audit_queue_jobs WHERE audit_id=?').get(body.auditId)}));assert.equal(acked,true);};
     // After this point the client is closed: only queue deliveries advance the audit.
@@ -67,6 +72,9 @@ test('queued audit progresses through durable model checkpoints without an open 
     assert.equal(messages.length,0);assert.ok(firstAssessment);assert.ok(time-start>30000);assert.ok(calls.length>=5);assert.equal(browserCalls,1);
     assert.equal(sql.prepare('SELECT state FROM audit_queue_jobs WHERE audit_id=?').get(submitted.id).state,'complete');
     assert.equal(sql.prepare('SELECT state FROM prepared_assessment_jobs WHERE audit_id=?').get(submitted.id).state,'complete');
+    const stages=JSON.parse(sql.prepare('SELECT state_json FROM audit_pipeline_state WHERE audit_id=?').get(submitted.id).state_json);
+    assert.ok(stages.findIndex(x=>x.code==='judgments_validated') < stages.findIndex(x=>x.code==='report_building'));
+    assert.ok(stages.some(x=>x.code==='judgments_validated') && stages.some(x=>x.code==='report_building'));
     const completedResponse=await handle(new Request('https://worker'+submitted.statusUrl),options);assert.equal(completedResponse.status,200);const completed=await completedResponse.json();
     assert.equal(completed.status,'incomplete');const checks=completed.report.criteria.flatMap(c=>c.subchecks),identity=checks.find(c=>c.id==='C1.identity');
     assert.equal(identity.points,3);assert.ok(identity.evidenceIds.length>0&&identity.evidenceIds.every(id=>completed.report.evidence.some(e=>e.id===id)));

@@ -152,6 +152,10 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
       stage.status === 'failed' && stage.code === 'model_provider_failure'));
     return;
   }
+  const stages = audit.report.coverage.pipeline.stages;
+  const validated = stages.findIndex(stage => stage.code === 'judgments_validated');
+  const building = stages.findIndex(stage => stage.code === 'report_building');
+  assert.ok(validated >= 0 && building > validated);
   assert.equal(audit.report.category, 'open-rubric');
   assert.equal(audit.report.coverage.assessment.category, 'Solar camp kettles');
   const checks = audit.report.criteria.flatMap(criterion => criterion.subchecks);

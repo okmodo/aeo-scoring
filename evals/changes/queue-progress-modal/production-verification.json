@@ -1,0 +1,9 @@
+{
+  "method": "Read-only Cloudflare metadata before and after local implementation; no cloud mutations",
+  "workerVersionUnchanged": true,
+  "workerResourcesUnchanged": true,
+  "pagesDeploymentUnchanged": true,
+  "workerVersion": "0f04a103-9a81-447f-9656-8d11e7f1050f",
+  "trafficPercent": 100,
+  "cpuMs": 1000
+}
