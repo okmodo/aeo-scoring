@@ -9,16 +9,18 @@ export function createGraniteResponseStore(db) {
   const get = id => statement('SELECT * FROM model_attempts WHERE attempt_id=?1', id).first();
 
   return {
-    async begin({ id, kind, capture, model, gateway, benchmark, now }) {
+    async begin({ id, kind, capture, model, gateway, benchmark, now,
+      promptVersion = benchmark.promptVersion, responseSchemaVersion = benchmark.responseSchemaVersion,
+      requestBytes = benchmark.requestBytes }) {
       const expected = JSON.stringify(benchmark.questions.map(question => question.id));
-      const digest = sha(JSON.stringify([kind, capture?.auditId, capture?.sha256, model, gateway, benchmark.body,
+      const digest = sha(JSON.stringify([kind, capture?.auditId, capture?.sha256, model, gateway, promptVersion, responseSchemaVersion, requestBytes, benchmark.body,
         benchmark.questions, [...benchmark.evidenceById]]));
       await statement(`INSERT OR IGNORE INTO model_attempts
         (attempt_id,kind,audit_id,prepared_hash,model,gateway,stage,prompt_version,response_schema_version,
          input_digest,request_bytes,expected_question_ids_json,status,created_at,expires_at)
-        VALUES (?1,?2,?3,?4,?5,?6,'binary_judgment','granite-binary-v1',1,?7,?8,?9,'pending',?10,?11)`,
+        VALUES (?1,?2,?3,?4,?5,?6,'binary_judgment',?7,?8,?9,?10,?11,'pending',?12,?13)`,
       id, kind, nullable(capture?.auditId), nullable(capture?.sha256), model, gateway,
-      digest, benchmark.requestBytes, expected, now, now + expiresAfterMs).run();
+      promptVersion, responseSchemaVersion, digest, requestBytes, expected, now, now + expiresAfterMs).run();
       const existing = await get(id);
       if (existing?.input_digest !== digest) throw new Error('model_attempt_conflict');
     },

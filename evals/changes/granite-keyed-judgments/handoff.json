@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Require keyed binary Granite results and verify answer coverage in local D1.",
+  "state": "The local keyed schema and compatibility changes are complete. A guarded Faherty run was verified in persistent local D1.",
+  "decisions": [
+    "Require each requested question ID as a property of the results object and keep per-question evidence IDs, binary answers and the 300-character reason limit.",
+    "Normalize keyed results into the existing question rows. Keep older array outputs replayable and record response schema version 2 for live keyed runs.",
+    "Send the full keyed schema through the existing guarded provider and retain unsupported passes as unmeasured."
+  ],
+  "constraints": [
+    "Keep the 60-second timeout, request and response bounds, and existing usage policy.",
+    "Keep model response data local. No production deployment, migration, or application change."
+  ],
+  "completed": [
+    "Thirteen offline harness tests passed. Independent review confirmed keyed wire requirements and compatibility.",
+    "One uncached guarded Faherty call returned all 13 required keys. Persistent local D1 contained one response and 13 binary answers. Ten findings earned 39 of 47 benchmark points, three passes lacked eligible evidence, and the final score remained null.",
+    "The HTTP 200 call took 26.0 seconds in the harness and used 8.90907 neurons, corroborated by the default gateway log."
+  ],
+  "remaining": [
+    "Any production integration would require separate authorization."
+  ],
+  "resumeCommands": [
+    "npm run test:granite-binary",
+    "npm run evaluate -- --change granite-keyed-judgments --base c743aab4ce979118a1f4197f6fc3d2a9e209a8cc",
+    "EVALUATION_BASE=c743aab4ce979118a1f4197f6fc3d2a9e209a8cc npm run ci:gate"
+  ]
+}

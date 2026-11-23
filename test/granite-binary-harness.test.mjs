@@ -22,6 +22,7 @@ function localStore(t) {
   } };
   return { sqlite, store: createGraniteResponseStore(db) };
 }
+const keyed = output => ({ results: Object.fromEntries(output.results.map(({ id, ...row }) => [id, row])) });
 const env = { AUDIT_AI_GATEWAY_TOKEN: 'mock-token' };
 const gateway = () => Response.json({ success: true, result: { id: 'default', workers_ai_billing_mode: 'postpaid' } });
 const providerResponse = output => Response.json({ success: true, result: {
@@ -36,17 +37,24 @@ const ledger = () => {
   };
 };
 
-test('the frozen request uses one prompt, binary answers and local cardinality', () => {
+test('the actual schema requires every question as a unique result key', () => {
   const { input, requestBytes } = prepareBinaryBenchmark(fixture);
   assert.equal(input.messages.length, 1);
-  assert.match(input.messages[0].content, /exactly one response/);
+  assert.match(input.messages[0].content, /one entry for every ID/);
   assert.doesNotMatch(input.messages[0].content, /\/partial|\/full|half credit/i);
   const results = input.response_format.json_schema.properties.results;
-  assert.equal(results.minItems, undefined);
-  assert.equal(results.maxItems, undefined);
-  assert.deepEqual(results.items.properties.id.enum, fixture.questions.map(question => question.id));
-  assert.deepEqual(results.items.properties.answer.enum, ['pass', 'fail']);
-  assert.equal(results.items.properties.reason.maxLength, 300);
+  assert.equal(results.type, 'object');
+  assert.equal(results.additionalProperties, false);
+  assert.deepEqual(results.required, fixture.questions.map(question => question.id));
+  assert.deepEqual(Object.keys(results.properties), results.required);
+  for (const [id, schema] of Object.entries(results.properties)) {
+    assert.deepEqual(schema.required, ['answer', 'reason', 'evidenceIds']);
+    assert.equal(schema.additionalProperties, false);
+    assert.deepEqual(schema.properties.answer.enum, ['pass', 'fail']);
+    assert.equal(schema.properties.reason.maxLength, 300);
+    const eligible = fixture.questions.find(check => check.id === id).eligibleEvidenceIds;
+    assert.deepEqual(schema.properties.evidenceIds.items.enum ?? [], eligible);
+  }
   assert.ok(requestBytes < config.requestMaxBytes);
 });
 
@@ -59,6 +67,7 @@ test('the frozen response earns only evidenced points from the current rubric', 
   assert.equal(findings[3].validation, 'failure_unverified');
   assert.deepEqual(findings[4].verifiedAbsenceSourceIds, ['shipping']);
   assert.equal(findings[0].evidence[1].quote, 'Brand: Example Outfitters.');
+  assert.deepEqual(scoreBinaryBenchmark(prepareBinaryBenchmark(fixture), keyed(fixture.output)), report);
 });
 
 test('source matching does not grant credit to a person name or a shipping heading', () => {
@@ -137,7 +146,7 @@ test('single guarded call records request size, timing, score and provider neuro
         config.maxTokens * config.outputNeuronsPerMillion) / 1_000_000) + 64;
       assert.ok(reserved >= minimum);
       time += 24;
-      return providerResponse(fixture.output);
+      return providerResponse(keyed(fixture.output));
     },
   });
   assert.equal(run.inferenceRequests, 1);
@@ -151,7 +160,9 @@ test('single guarded call records request size, timing, score and provider neuro
   assert.deepEqual(allowance.calls.map(([method]) => method), ['reserve', 'reserve', 'settle', 'settle']);
   const row = sqlite.prepare('SELECT * FROM model_attempts').get();
   assert.equal(row.status, 'incomplete');
-  assert.deepEqual(JSON.parse(Buffer.from(row.response_body_base64, 'base64')).result.response, JSON.stringify(fixture.output));
+  assert.equal(row.response_schema_version, 2);
+  assert.equal(row.prompt_version, 'granite-binary-v2');
+  assert.deepEqual(JSON.parse(Buffer.from(row.response_body_base64, 'base64')).result.response, JSON.stringify(keyed(fixture.output)));
   assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM model_question_results').get().n, fixture.questions.length);
 });
 
@@ -266,4 +277,18 @@ test('parseable token-limited output retains valid rows after the raw capture', 
   assert.equal(run.neurons, 0.3);
   const result = sqlite.prepare('SELECT status,measured,unmeasured FROM model_attempts').get();
   assert.deepEqual({ ...result }, { status: 'incomplete', measured: 2, unmeasured: 3 });
+});
+
+
+test('keyed missing, malformed, and unexpected answers keep the other findings', () => {
+  const output = keyed(fixture.output);
+  delete output.results['C1.identity'];
+  output.results['C1.explanation'] = null;
+  output.results['C3.alien'] = { answer: 'pass', reason: 'Unexpected', evidenceIds: [] };
+  const report = scoreBinaryBenchmark(prepareBinaryBenchmark(fixture), output);
+  assert.equal(report.status, 'incomplete');
+  assert.equal(report.unexpected, 1);
+  assert.equal(report.findings[0].validation, 'missing_answer');
+  assert.equal(report.findings[1].validation, 'invalid_answer');
+  assert.equal(report.findings[2].points, 14);
 });
