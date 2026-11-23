@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "id": "granite-incomplete-storage",
+  "task": "Retain Granite attempts in D1 and preserve independently valid findings in incomplete benchmark responses.",
+  "scope": [
+    "backend/migrations/0014-model-attempts.sql",
+    "scripts/granite-binary-harness.mjs",
+    "scripts/granite-binary-benchmark.mjs",
+    "scripts/granite-response-store.mjs",
+    "test/granite-binary-harness.test.mjs",
+    "test/granite-response-store.test.mjs",
+    "docs/granite-binary-harness.md",
+    "evals/changes/granite-incomplete-storage/**"
+  ],
+  "nonGoals": ["No live inference or production changes, migrations, merges, or deployment. No committed Faherty response body or capture. Preserve the existing timeout, byte bounds and usage ceilings."],
+  "outcomes": [
+    {"id":"O1","description":"Persist each bounded response and one consistent row per expected question. Preserve valid findings when rows are missing, malformed, unsupported or duplicated.","verification":"automated","evidence":"Offline fixtures and actual local D1 replay of the saved Faherty result."},
+    {"id":"O2","description":"Timeouts and provider errors have immutable attempt records. Storage retries are idempotent and never require another inference.","verification":"automated","evidence":"Storage, failure, and replay tests."}
+  ],
+  "process": [{"id":"P1","description":"Update the existing PR, run offline CI, and independently review storage and usage safeguards.","verification":"human","evidence":"Separate plan commit, review, scoped PR and measured replay."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the existing guarded transport, byte caps and source matching. Keep the Worker path out of scope.","verification":"human","evidence":"Scoped diff and review."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-binary","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"Database write retry and replay are deterministic benchmark operations with no agent state transfer."}
+}
