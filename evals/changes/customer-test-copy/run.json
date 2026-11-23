@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "changeId": "customer-test-copy",
+  "recordedAt": "2026-11-23T06:38:27.568Z",
+  "sourceCommit": "099fc8c4f9afe52da89fc0f6d753c962d8a43fbc",
+  "sourceDigest": "c1c61d0d07b8487fa10b5f84d0d78091ba03a21ffaff25e6ab869e391c24573c",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 2289,
+      "outputSha256": "c77a889b7c77fd1f49e77ff5209ee101889180253a4f549b7442df9094c57cca"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7383,
+      "outputSha256": "721a253faf0a9a607609a109a30ba5839d258e0a4eb42948839881da07f0f692"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 189,
+      "outputSha256": "45ca00dfe7b4267220cdf4126cd948a4b91e0e20ddc5d70d1d3e862caf290c42"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 592,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 557,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 304,
+      "outputSha256": "f80931d4ebb2183dfeee7a3272dadf8d165ebd7ab936911d3ad7537d57478a92"
+    },
+    {
+      "command": "npm run test:preview",
+      "exitCode": 0,
+      "durationMs": 783,
+      "outputSha256": "9ac9f601d0e3b453cff1074e791c6a2b00778d74e03822bdae4dba19c3641c62"
+    },
+    {
+      "command": "npm run test:report-contract",
+      "exitCode": 0,
+      "durationMs": 507,
+      "outputSha256": "de573e4aac2f74712b938d9c0d13786e6b5bfe39dec54f295fe4dc27d87be002"
+    }
+  ]
+}

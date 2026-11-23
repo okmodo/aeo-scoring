@@ -141,3 +141,75 @@ test('legacy omitted available points use criterion redistribution and reject al
   assert.equal(validateReport(input.report).valid, false)
   assert.equal(buildLiveReportModel(input).report, null)
 })
+
+test('v3 frozen reports validate complete and unresolved component totals', async () => {
+  const { availablePointsForCheck, RUBRIC_V3_GROUPS } = await import('../contracts/report-contract.mjs')
+  const complete = json('./fixtures/customer-copy/complete.json').report
+  const unresolved = json('./fixtures/customer-copy/assessment.json').report
+  assert.equal(validateReport(complete).valid, true)
+  assert.equal(validateReport(unresolved).valid, true)
+  assert.equal(RUBRIC_V3_GROUPS.length, 7)
+  const rows = checks(unresolved)
+  assert.equal(rows.length, 24)
+  assert.equal(rows.find(c => c.id === 'S1.readable-html').status, 'not_measured')
+  assert.equal(rows.find(c => c.id === 'S1.readable-html').earnedPoints, 4)
+  assert.equal(rows.find(c => c.id === 'S2.optional-claims').status, 'not_applicable')
+  assert.equal(availablePointsForCheck(unresolved, 'S2.optional-claims'), 0)
+  assert.equal(availablePointsForCheck(unresolved, 'S1.readable-html'), 7)
+  for (const row of rows) {
+    const copy = getTestCopy('3.0.0', row.id)
+    assert.ok(copy?.name && copy.description && copy.improve && copy.fullCredit && copy.group && copy.type, row.id)
+  }
+  assert.equal(getTestCopy('3.0.0', 'S8.context'), null)
+})
+
+test('v3 rejects altered components, totals, completion and evidence shapes', async () => {
+  const { availablePointsForCheck } = await import('../contracts/report-contract.mjs')
+  for (const mutate of [
+    r => { r.criteria[0].subchecks[0].components[0].points = -1 },
+    r => { r.criteria[0].subchecks[0].availablePoints = 99 },
+    r => { r.criteria[0].subchecks[0].earnedPoints = 99 },
+    r => { r.criteria[0].subchecks[0].components[0].availablePoints = 0 },
+    r => { r.criteria[0].subchecks[0].components[0].evidenceIds = null },
+    r => { r.criteria[0].subchecks[0].evidenceIds = ['forged'] },
+    r => { r.criteria[0].subchecks[0].components.pop() },
+    r => { r.criteria[0].complete = true },
+    r => { r.earnedPoints = 100 },
+    r => { r.status = 'complete'; r.score = { total: 100, structure: 40, content: 60 } },
+    r => { r.criteria[1].subchecks[4].components[0].availablePoints = 2 },
+    r => { r.rubricVersion = '9.0.0' },
+  ]) {
+    const r = json('./fixtures/customer-copy/assessment.json').report
+    mutate(r)
+    assert.equal(validateReport(r).valid, false)
+    assert.equal(availablePointsForCheck(r, 'S1.readable-html'), null)
+    assert.throws(() => serializeReport(r), TypeError)
+  }
+})
+
+test('v3 malformed evidence references and null components fail without throwing', () => {
+  for (const value of ['x', null, { length: 1 }]) {
+    const report = json('./fixtures/customer-copy/assessment.json').report
+    report.criteria[0].subchecks[0].evidenceIds = value
+    assert.doesNotThrow(() => validateReport(report))
+    assert.equal(validateReport(report).valid, false)
+  }
+  const report = json('./fixtures/customer-copy/assessment.json').report
+  report.criteria[0].subchecks[0].components[0] = null
+  assert.doesNotThrow(() => validateReport(report))
+  assert.equal(validateReport(report).valid, false)
+})
+
+test('v3 fixture envelope, score and coverage match the report', () => {
+  for (const name of ['assessment', 'complete']) {
+    const fixture = json(`./fixtures/customer-copy/${name}.json`)
+    const report = fixture.report
+    const rows = checks(report)
+    assert.equal(fixture.status, report.status)
+    assert.equal(report.score === null, report.status === 'incomplete')
+    assert.equal(report.coverage.total, rows.length)
+    assert.equal(report.coverage.measured, rows.filter(row => row.status === 'measured').length)
+    assert.equal(report.coverage.notMeasured, rows.filter(row => row.status === 'not_measured').length)
+    assert.equal(report.coverage.notApplicable, rows.filter(row => row.status === 'not_applicable').length)
+  }
+})

@@ -258,3 +258,5 @@ test('v2 complete and unfinished reports render catalog names, points and score 
     }
   } finally { await vite.close() }
 })
+
+import './customer-copy.test.mjs'

@@ -65,10 +65,10 @@ export function findingsForTest(check: CheckDetail): Finding[] {
   return [{ text, label: 'Audit finding' }];
 }
 
-export function summarizeTestPoints(checks: CheckDetail[], finalTotal: number | null) {
+export function summarizeTestPoints(checks: CheckDetail[], finalTotal: number | null, earnedSubtotal: number | null = null) {
   const total = 100;
   const measured = checks.map(pointsForTest).filter(points => points !== null);
-  const earned = Math.max(0, Math.min(total, finalTotal ??
+  const earned = Math.max(0, Math.min(total, finalTotal ?? earnedSubtotal ??
     measured.reduce((sum, points) => sum + points.earned, 0)));
   const missed = finalTotal !== null ? total - earned :
     Math.max(0, Math.min(total - earned, measured.reduce((sum, points) => sum + points.missed, 0)));
