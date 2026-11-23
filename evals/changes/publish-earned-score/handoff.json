@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "task": "Publish earned points from D1 after queued audit finalization and display available scores with coverage.",
+  "state": "Implemented and verified locally on codex/publish-earned-score, based on merge commit 93515416ce67345a89f1137f0f96c7391afb8615. No production changes.",
+  "decisions": [
+    "Finalization sums measured component.points already stored in D1; the front end consumes the resulting score using the existing report API and polling.",
+    "New queued reports mark the score as earned_points. A stored verified zero is numeric. No measured components means a null score and the UI shows No checks measured. Retrieval failure keeps its unable_to_assess state with no report.",
+    "Preserve historical reports and in-flight drafts without the marker, and preserve rubric-level redistribution for evidenced exclusions. Display totals to two decimal places with fixed pillar maxima of 40 and 60."
+  ],
+  "constraints": [
+    "Preserve the 60-second model timeout, the 1,000 ms Worker CPU cap, and the existing usage guards and limits.",
+    "Do not deploy, make production changes, invoke the live model, or commit merchant data."
+  ],
+  "completed": [
+    "Native local workerd and D1 replay used a hash-verified saved Faherty capture, saved public supporting resources, and a deterministic model response. D1 stored 39 components and the existing queue published 38 total, 4 Structure, and 34 Content with 4 of 24 checks fully measured and incomplete status.",
+    "Local Chrome rendered the three Faherty scores and published coverage from the actual local API response, with browser traffic intercepted. It stopped polling after the terminal response.",
+    "Queue and display fixtures cover measured zero, no measured components, retrieval failure, the configured model timeout, incomplete coverage with component points, and a complete report with an evidenced exclusion.",
+    "Independent Terra review confirmed D1/API behavior and identified test and presentation refinements. Final review confirmed the complete exclusion fixture and score display changes, with no remaining blocker."
+  ],
+  "remaining": [
+    "Production rollout requires separate authorization. Existing cached reports retain their original interpretation.",
+    "Real model behavior and wider Faherty check coverage are outside this change."
+  ],
+  "resumeCommands": [
+    "npm run test:component-publication",
+    "npm run test:granite-keyed-queue",
+    "npm run test:preview",
+    "npm run evaluate -- --change publish-earned-score --base 93515416ce67345a89f1137f0f96c7391afb8615",
+    "npm run ci:gate -- 93515416ce67345a89f1137f0f96c7391afb8615"
+  ]
+}

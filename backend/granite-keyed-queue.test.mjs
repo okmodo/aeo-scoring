@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createAuditQueueRuntime, AUDIT_QUEUE_NAME } from './audit-queue-runtime.mjs';
 import { AUDIT_QUEUE_HORIZON_MS } from './audit-queue.mjs';
+import { GRANITE_MODEL_CONFIG } from './granite-provider.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 import { createAuditService } from './service.mjs';
@@ -37,7 +38,8 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false, withInitialSupport = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false, withInitialSupport = false } = {}) {
+  if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
   if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
@@ -86,7 +88,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
   }} : undefined;
   const workflow = createBrowserContentWorkflow({ db, snapshots, egress, HTMLRewriter:HtmlTestRewriter, guard: {
     ...allowance, start: allowance.reserve, cancelUnstarted: async () => {},
-  }, now, binding: { quickAction: async () =>
+  }, now, binding: { quickAction: async () => retrievalFailure ? new Response(null, {status: 502}) :
     Response.json({ success: true, result: html, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
   preprocess: async ({ rawHtml, sourceObjectKey, expiresAt }) => {
     const bytes = encoder.encode(html);
@@ -110,6 +112,11 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
       });
       return [question.id, { answer: 'pass', reason: 'The product source supports the finding.', evidenceIds }];
     }));
+    if (providerTimeout) {
+      assert.equal(GRANITE_MODEL_CONFIG.timeoutMs, 60_000);
+      setImmediate(() => t.mock.timers.tick(GRANITE_MODEL_CONFIG.timeoutMs));
+      return new Promise((_, reject) => request.signal.addEventListener('abort', () => reject(request.signal.reason), {once:true}));
+    }
     if (providerFailure) return new Response('Provider unavailable', { status: 502 });
     const output = { results, category: { label: 'Solar camp kettles', evidenceId: meta.categoryEvidenceIds[0] } };
     return Response.json({ success: true, result: { response: JSON.stringify(output),
@@ -151,6 +158,18 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
     submitted = await response.json();
     assert.equal(submitted.status, 'pending');
     assert.equal(await deliver(messages.shift()), 'ack');
+    if (retrievalFailure) {
+      assert.equal(messages.length, 0);
+      assert.equal(submissions, 0);
+      const result = await handle(new Request('https://worker' + submitted.statusUrl), options);
+      assert.equal(result.status, 200);
+      const audit = await result.json();
+      assert.equal(audit.status, 'unable_to_assess');
+      assert.equal(audit.report, null);
+      assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM audit_check_results').get().n, 0);
+      return;
+    }
+
     assert.equal(await deliver(messages.shift()), 'ack');
     assessMessage = messages.shift();
   }
@@ -207,14 +226,24 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
   assert.equal(messages.length, 0);
   if (browserExport) writeFileSync(browserExport, JSON.stringify({ submitted, staged, audit }), { mode: 0o600 });
   assert.equal(audit.status, 'incomplete');
-  assert.equal(audit.report.score, null);
+  assert.equal(audit.report.scoreBasis, 'earned_points');
+  const stored = sql.prepare('SELECT component_id, result_json FROM audit_check_results').all();
+  const results = new Map(stored.map(row => [row.component_id, JSON.parse(row.result_json)]));
+  const earned = {structure: 0, content: 0};
+  for (const group of audit.report.criteria) for (const row of group.subchecks) for (const component of row.components) {
+    assert.deepEqual(results.get(component.id), component);
+    if (component.status === 'measured') earned[group.pillar] += component.points;
+  }
+  assert.deepEqual(audit.report.score, {...earned, total: earned.structure + earned.content});
+
   assert.equal(audit.report.rubricVersion, '3.0.0');
   assert.equal(audit.report.coverage.total, 24);
-  if (providerFailure) {
-    assert.equal(sql.prepare('SELECT outcome FROM model_attempts').get().outcome, 'model_provider_failure');
+  if (providerFailure || providerTimeout) {
+    const code = providerTimeout ? 'model_timeout' : 'model_provider_failure';
+    assert.equal(sql.prepare('SELECT outcome FROM model_attempts').get().outcome, code);
     assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'uncertain');
     assert.ok(audit.report.coverage.pipeline.stages.some(stage => stage.stage === 'content' &&
-      stage.status === 'failed' && stage.code === 'model_provider_failure'));
+      stage.status === 'failed' && stage.code === code));
     return;
   }
   assert.equal(audit.report.category, 'open-rubric');
@@ -364,6 +393,8 @@ if (durableExit === 'export') {
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
+  test('a model timeout keeps measured programmatic points in the published report', async t => keyedScenario(t, { providerTimeout: true }));
+  test('a retrieval failure publishes no report or score', async t => keyedScenario(t, { retrievalFailure: true }));
   test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
   test('the singular apparel label retains composition and measured dimensions', async () => {
     const page = '<main><article class="product-detail"><h1>Drawstring Short</h1><ul>' +

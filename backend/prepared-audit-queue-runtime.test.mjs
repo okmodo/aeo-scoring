@@ -88,7 +88,7 @@ test('queued audit progresses through durable model checkpoints without an open 
     const deadBody=messages.shift();let deadAck=false;
     await runtime.consume({queue:'aeo-audit-checkpoints-dead',messages:[{body:deadBody,ack(){deadAck=true;},retry(){assert.fail('dead-letter finalization retried');}}]});
     assert.equal(deadAck,true);const deadResponse=await handle(new Request('https://worker'+dead.statusUrl),options);
-    const partial=await deadResponse.json();assert.equal(deadResponse.status,200);assert.equal(partial.status,'incomplete');assert.equal(partial.report.score,null);
+    const partial=await deadResponse.json();assert.equal(deadResponse.status,200);assert.equal(partial.status,'incomplete');assert.deepEqual(partial.report.score,{total:1,structure:1,content:0});assert.equal(partial.report.scoreBasis,'earned_points');
     assert.equal(sql.prepare('SELECT code FROM audit_queue_jobs WHERE audit_id=?').get(dead.id).code,'queue_delivery_exhausted');
 
     // Capture was persisted but the invocation stopped before the ready transition.

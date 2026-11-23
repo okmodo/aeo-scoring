@@ -33,6 +33,7 @@ export type LiveReportModel = {
   assessment: Assessment
   report: AuditReport | null
   finalScore: AuditReport['score']
+  scoreBasis: 'earned_points' | 'legacy' | null
   counts: { measured: number; partial: number; zero: number; unmeasured: number; excluded: number }
   checks: CheckDetail[]
   fixes: FixDetail[]
@@ -71,10 +72,10 @@ export function buildLiveReportModel(assessment: Assessment): LiveReportModel {
   const report = assessment.report
   const counts = { measured: 0, partial: 0, zero: 0, unmeasured: 0, excluded: 0 }
   const warnings: string[] = []
-  if (!report) return { assessment, report, finalScore: null, counts, checks: [], fixes: [], warnings }
+  if (!report) return { assessment, report, finalScore: null, scoreBasis: null, counts, checks: [], fixes: [], warnings }
   if (report.evidence.some(item => item.method === 'synthetic')) {
     warnings.push('This report contains synthetic test evidence; no live findings are available.')
-    return { assessment: { ...assessment, report: null }, report: null, finalScore: null, counts, checks: [], fixes: [], warnings }
+    return { assessment: { ...assessment, report: null }, report: null, finalScore: null, scoreBasis: null, counts, checks: [], fixes: [], warnings }
   }
   const evidenceById = new Map(report.evidence.filter(item => item.method !== 'synthetic').map(item => [item.id, item]))
   function resolve(ids: string[]) {
@@ -126,7 +127,11 @@ export function buildLiveReportModel(assessment: Assessment): LiveReportModel {
   if (fixes.some((fix, index) => fix.checks.length !== report.fixes[index].checkIds.length)) {
     warnings.push('Some referenced checks are unavailable; their details are withheld.')
   }
-  const finalScore = assessment.status === 'complete' && report.status === 'complete' && counts.unmeasured === 0
-    ? report.score : null
-  return { assessment, report, finalScore, counts, checks, fixes, warnings }
+  // Older envelopes only published a final score for complete reports. New earned
+  // scores are explicitly marked, so incomplete historical scores stay withheld.
+  const earnedScore = report.scoreBasis === 'earned_points' && assessment.status !== 'unable_to_assess'
+  const legacyScore = assessment.status === 'complete' && report.status === 'complete' && counts.unmeasured === 0
+  const finalScore = earnedScore || legacyScore ? report.score : null
+  const scoreBasis = finalScore ? (earnedScore ? 'earned_points' : 'legacy') : null
+  return { assessment, report, finalScore, scoreBasis, counts, checks, fixes, warnings }
 }

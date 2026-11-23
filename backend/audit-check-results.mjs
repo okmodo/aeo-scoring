@@ -4,6 +4,27 @@ const ids = new Set(rubric.criteria.flatMap(c => c.subchecks.map(s => s.id)));
 const invalid = () => Object.assign(new Error('Invalid audit result'), {code:'invalid_audit_result'});
 const time = n => Number.isSafeInteger(n) && n >= 0;
 
+// Scores use committed measurements, including any approved criterion-level
+// redistribution. The published pillar maxima remain 40 and 60.
+function projectEarnedScore(report) {
+  let measured=0;
+  const totals={structure:0,content:0};
+  for (const criterion of report.criteria) {
+    if (!Object.hasOwn(totals,criterion.pillar)) throw invalid();
+    for (const subcheck of criterion.subchecks) for (const component of subcheck.components) {
+      if (!ids.has(component.id) || !['measured','not_measured','not_applicable'].includes(component.status)) throw invalid();
+      if (component.status==='measured') {
+        if (!Number.isFinite(component.points) || component.points<0) throw invalid();
+        measured++;
+        totals[criterion.pillar]+=component.points;
+      }
+    }
+  }
+  const total=totals.structure+totals.content;
+  report.earnedPoints=total;
+  report.score=measured ? {total,structure:totals.structure,content:totals.content} : null;
+}
+
 // The outbox and every component are committed in one D1 batch. The random
 // write token prevents a later attempt from adding rows to an existing outbox.
 export function createAuditResultStore(db) {
@@ -12,6 +33,7 @@ export function createAuditResultStore(db) {
     async stage(auditId,{grant,report,assessedUrl,now,sequence,owner,terminalizing=false}) {
       if (typeof auditId !== 'string' || (!terminalizing && (grant?.auditId !== auditId || !grant.preparedHash || !grant.policyVersion || !grant.owner)) || typeof owner !== 'string' || !time(now) || !time(sequence) || (!terminalizing && sequence < 1) || typeof assessedUrl !== 'string' || !['complete','incomplete'].includes(report?.status) || report.rubricVersion !== rubric.version || !Array.isArray(report.criteria)) throw invalid();
       const metadata=structuredClone(report), components=[];
+      metadata.scoreBasis='earned_points';
       for (const criterion of metadata.criteria) {
         if (!Array.isArray(criterion.subchecks)) throw invalid();
         for (const row of criterion.subchecks) {
@@ -54,6 +76,8 @@ export function createAuditResultStore(db) {
       const values=new Map(records.results.map(r=>[r.component_id,JSON.parse(r.result_json)]));
       const report=JSON.parse(row.report_json);
       for (const criterion of report.criteria) for (const subcheck of criterion.subchecks) subcheck.components=subcheck.components.map(id=>{if (!values.has(id)) throw invalid(); return values.get(id);});
+      // Old staged drafts retain the scoring policy under which they were written.
+      if (report.scoreBasis==='earned_points') projectEarnedScore(report);
       const result=await db.prepare(`UPDATE audits SET status=?2,report_json=?3,error_json=NULL,completed_at=?4,cache_until=MIN(?4+3600000,expires_at),assessed_url=?5
         WHERE id=?1 AND status='pending' AND expires_at>?4 AND EXISTS(SELECT 1 FROM audit_queue_jobs q WHERE q.audit_id=?1 AND q.sequence=?6 AND q.owner=?7 AND q.state=?8 AND q.lease_until>?4 AND (?8='terminalizing' OR q.expires_at>?4))
         AND EXISTS(SELECT 1 FROM audit_result_outbox o WHERE o.audit_id=?1 AND o.write_token=?9)`).bind(auditId,row.status,JSON.stringify(report),now,row.assessed_url,sequence,owner,terminalizing?'terminalizing':'running',row.write_token).run();
