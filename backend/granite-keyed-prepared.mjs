@@ -16,6 +16,7 @@ const policies = {
   'S4.organization': ['description_heading', 'details_heading'],
   'C1.identity': ['heading', 'brand'],
   'C1.explanation': ['description'],
+  // Reserved for evidence that establishes the complete current configuration and inclusions.
   'C1.configuration': ['selected_configuration'],
   'C2.essential': ['composition', 'fit_dimension'],
   'C2.supporting': ['construction', 'care'],
@@ -54,19 +55,99 @@ function primaryProductData(scripts, name, url) {
   return matches.length === 1 ? matches[0] : null;
 }
 
+// Resolve parser-verified selected controls back to their original markup. The
+// raw tag is the evidence: a value alone does not show that it was selected.
+function selectedOptionQuote(tags, item) {
+  if (item.kind !== 'selected-option' || !item.name || !item.text || !item.value) return null;
+  const safe = value => typeof value === 'string' && /^[^&<>"'\s]+$/.test(value);
+  if (![item.name, item.value].every(safe) || typeof item.text !== 'string' || /[&<>"']/.test(item.text)) return null;
+  const parse = tag => {
+    const attrs = new Map();
+    const pattern = /\s+([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/gy;
+    let pos = '<input'.length;
+    while (pos < tag.length) {
+      if (/^\s*\/?>$/.test(tag.slice(pos))) return attrs;
+      pattern.lastIndex = pos;
+      const match = pattern.exec(tag);
+      if (!match) return null;
+      const name = match[1].toLowerCase();
+      if (attrs.has(name)) return null;
+      attrs.set(name, match[2] ?? match[3] ?? match[4] ?? '');
+      pos = pattern.lastIndex;
+    }
+    return null;
+  };
+  const ref = indexedTag(tags, item), tag = ref?.quote;
+  if (!tag || tag.length > 1000) return null;
+  const attrs = parse(tag);
+  return attrs?.get('name') === item.name && attrs.get('value') === item.value &&
+    attrs.get('data-option-name') === item.text && attrs.has('checked') && !attrs.has('disabled') ? ref : null;
+}
+
+// Match parser ordinals against the original document, including excluded regions.
+// A count disagreement means serialization cannot safely be tied to the parser.
+function indexedTag(tags, item) {
+  return Number.isSafeInteger(item.tagOrdinal) && item.tagOrdinal >= 0 &&
+    item.tagCount === tags.length && item.tagOrdinal < tags.length ? tags[item.tagOrdinal] : null;
+}
+
+function rawTagIndex(html) {
+  const inputs = [...html.matchAll(/<input\b[^>]*>/gi)].map(match => ({ quote: match[0], offset: match.index }));
+  const prices = [], stack = [];
+  for (const match of html.matchAll(/<\/?sale-price\b[^>]*>/gi)) {
+    if (/^<\//.test(match[0])) {
+      const open = stack.pop();
+      if (open && stack.length === 0 && !open.nested && match.index + match[0].length - open.start <= 1000)
+        prices[open.ordinal] = { quote: html.slice(open.start, match.index + match[0].length), offset: open.start };
+    } else {
+      if (stack.length) stack.at(-1).nested = true;
+      const open = { ordinal: prices.length, start: match.index, nested: stack.length > 0 };
+      prices.push(null);
+      stack.push(open);
+    }
+  }
+  return { inputs, prices };
+}
+
+// Retain the original element so the amount is visibly tied to a sale price.
+function salePriceQuote(tags, item) {
+  if (item.tag !== 'sale-price' || !/\d/.test(item.text)) return null;
+  const ref = indexedTag(tags, item), quote = ref?.quote;
+  if (!quote) return null;
+  const match = quote.match(/^<sale-price\b[^>]*>([\s\S]*?)<\/sale-price\s*>$/i);
+  if (!match || !/^(?:[^<&]|<span(?:\s[^<>]*)?>|<\/span\s*>)*$/i.test(match[1])) return null;
+  const compact = text => text.replace(/\s+/g, '');
+  return compact(match[1].replace(/<\/?span(?:\s[^<>]*)?>/gi, '')) === compact(item.text) ? ref : null;
+}
+
 export async function prepareKeyedAudit(auditId, input, derived) {
   const { snapshot, extracted, source } = input;
   const bundle = await prepareAssessmentSources(snapshot, extracted);
   if (!bundle.coverage.preparedHtml || !bundle.coverage.complete || !derived) throw fail('invalid_prepared_input');
 
   const productSources = bundle.sources.filter(item => item.scope === 'product' && item.origin === 'rendered');
+  // Raw offsets use JavaScript string units. All product sections in a
+  // prepared bundle are consecutive slices of this same rendered document.
+  let sectionOffset = 0;
+  const productSections = productSources.map(item => {
+    const start = sectionOffset;
+    sectionOffset += item.text.length;
+    return { item, start, end: sectionOffset };
+  });
   const scoped = derived.productHtml?.keyedPrimary ?? [];
   const names = [...new Set(scoped.filter(item => item.tag === 'h1').map(item => item.text))];
+  const rawTags = scoped.some(item => Number.isSafeInteger(item.tagCount))
+    ? rawTagIndex(snapshot.browser.renderedHtml) : { inputs: [], prices: [] };
   const evidence = [];
   const seen = new Set();
-  function add(kind, quote) {
+  function add(kind, candidate) {
+    const quote = typeof candidate === 'string' ? candidate : candidate?.quote;
     if (typeof quote !== 'string' || !quote.trim() || quote.length > 1000 || seen.has(kind + quote)) return;
-    const exact = productSources.find(item => item.text.includes(quote));
+    const offset = candidate?.offset;
+    const exact = typeof offset === 'number'
+      ? productSections.find(({item, start, end}) => start <= offset && offset + quote.length <= end &&
+        item.text.startsWith(quote, offset - start))?.item
+      : productSources.find(item => item.text.includes(quote));
     if (!exact) return;
     evidence.push({ id: 'e' + (evidence.length + 1), kind, scope: 'product', sourceId: exact.id, quote });
     seen.add(kind + quote);
@@ -78,6 +159,10 @@ export async function prepareKeyedAudit(auditId, input, derived) {
     add('title', derived.productHtml.identity?.title || derived.title);
     for (const item of scoped) {
       const { tag, text } = item;
+      if (item.kind === 'selected-option') {
+        add('observed_option', selectedOptionQuote(rawTags.inputs, item));
+        continue;
+      }
       if (/^(?:summary|h[2-6])$/.test(tag)) {
         const label = text.replace(/[+−-]\s*$/, '').trim();
         if (/^(?:description|overview|about this product)$/i.test(label)) add('description_heading', label);
@@ -102,10 +187,11 @@ export async function prepareKeyedAudit(auditId, input, derived) {
       } else if (tag === 'p' && text.length >= 40 &&
           !/\b(?:returns?|shipping|review|find a store|pickup)\b/i.test(text)) {
         add('description', text);
-      } else if (tag === 'sale-price' && /\d/.test(text) && /\b(?:USD|CAD|GBP|EUR|AUD|NZD)\b/.test(text)) {
-        // Keep amount and explicit currency tied to the same rendered offer.
-        add('price', text);
-        add('currency', text);
+      } else if (tag === 'sale-price' && /\d/.test(text)) {
+        const quote = salePriceQuote(rawTags.prices, item);
+        add('price', quote);
+        // A currency symbol alone is not an ISO currency.
+        if (/\b(?:USD|CAD|GBP|EUR|AUD|NZD)\b/.test(text)) add('currency', quote);
       }
     }
     const product = primaryProductData(derived.jsonLd, primaryName, snapshot.url);
@@ -117,7 +203,8 @@ export async function prepareKeyedAudit(auditId, input, derived) {
 
   const questions = Object.entries(policies).map(([id, passKinds]) => ({
     id, passRule: questionRules[id] ?? rubricChecks.get(id).full, passKinds,
-    eligibleEvidenceIds: evidence.filter(item => passKinds.includes(item.kind)).slice(0, 8).map(item => item.id),
+    eligibleEvidenceIds: evidence.filter(item => passKinds.includes(item.kind) ||
+      (id === 'C1.configuration' && item.kind === 'observed_option')).slice(0, 8).map(item => item.id),
   }));
   const categoryEvidenceIds = evidence.filter(item => item.kind === 'heading').map(item => item.id);
   const fixture = { capture: { auditId, sha256: source.preparedHash }, sources: productSources, evidence, questions,
