@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { total } from "./sample";
 import "./style.css";
-import { getAudit, pollDelay, PreviewPasswordRequired, requestAudit } from "./audit";
+import { pollAudit, PreviewPasswordRequired, requestAudit } from "./audit";
 import { PreviewPassword } from "./PreviewPassword";
 import { LiveReport } from "./live-report/LiveReport";
 import type { Assessment } from "../contracts/v1/types";
@@ -32,23 +32,11 @@ export function App() {
     setError("");
     setSubmitting(true);
     try {
-      let next = await requestAudit(url, password, request.signal);
+      const next = await requestAudit(url, password, request.signal);
       if (request.signal.aborted) return;
       setAssessment(next);
       setScreen("live");
-      let attempt = 0;
-      const deadline = Date.now() + 120_000;
-      while (next.status === "pending") {
-        if (Date.now() >= deadline) throw new Error("The assessment is taking longer than expected. Please try again later.");
-        await new Promise<void>((resolve, reject) => {
-          const onAbort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
-          const timer = setTimeout(() => { request.signal.removeEventListener("abort", onAbort); resolve(); }, pollDelay(attempt++));
-          request.signal.addEventListener("abort", onAbort, { once: true });
-        });
-        next = await getAudit(next.statusUrl, password, request.signal);
-        if (request.signal.aborted) return;
-        setAssessment(next);
-      }
+      await pollAudit(next, password, request.signal, setAssessment);
     } catch (err) {
       if (!request.signal.aborted) {
         if (err instanceof PreviewPasswordRequired) setPassword(null);

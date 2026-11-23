@@ -13,11 +13,11 @@ import {runPreparedAudit} from './prepared-assessment-consumer.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
 import {restoreRubricAssessment} from './ai-rubric-assessment.mjs';
 import {scoreAudit} from './scoring.mjs';
+import {createAuditResultStore} from './audit-check-results.mjs';
 
 export const AUDIT_QUEUE_NAME = 'aeo-audit-checkpoints';
 export const AUDIT_DEAD_QUEUE_NAME = 'aeo-audit-checkpoints-dead';
 const INVOCATION_COSTS = {requests:1,cpuMs:RESERVED_INVOCATION_CPU_MS,d1Reads:10_000,d1Writes:200,d1StorageBytes:512*1024};
-const hour = 3_600_000;
 const encoder = new TextEncoder();
 const publicErrors = new Set(['retrieval_failed','retrieval_timeout','response_too_large','unsupported_content','assessment_timeout']);
 const unavailable = () => ({accepted:false,reason:'invalid_evidence'});
@@ -35,7 +35,9 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
   const readAudit = id => db.prepare('SELECT id, url, status, created_at, expires_at FROM audits WHERE id=?1 AND expires_at>?2').bind(id,now()).first();
   const readSnapshot = id => db.prepare('SELECT state, prepared_state, facts_state FROM retained_snapshots WHERE audit_id=?1 AND expires_at>?2').bind(id,now()).first();
 
-  async function runStep({auditId,phase}) {
+  const results = createAuditResultStore(db);
+
+  async function runStep({auditId,phase,owner,sequence}) {
     const audit = await readAudit(auditId);
     if(!audit || audit.status!=='pending') return {next:null};
     const retained = await readSnapshot(auditId);
@@ -72,8 +74,18 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
       if(result.status!=='ready') throw Error('queue_preparation_unavailable');
       return {next:'assess'};
     }
+    const pending = await results.pending(auditId);
+    if (pending) {
+      if (pending.sequence === sequence) {
+        if (!await results.publish(auditId,{now:now(),sequence,owner})) throw Error('queue_publish_lease_lost');
+        return {next:null};
+      }
+      if (pending.sequence === sequence+1) return {next:'assess'};
+      throw Error('queue_result_sequence_mismatch');
+    }
     if(retained?.prepared_state!=='ready') return {next:null,code:'assessment_timeout'};
-    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive});
+    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive,queueLease:{owner,sequence}});
+    if (await results.pending(auditId)) return {next:'assess'};
     if(result.status==='yield') return {next:'assess'};
     if(result.status==='completed') return {next:null};
     if(result.status==='waiting' || result.code==='assessment_not_claimed' || (keyed && result.code==='job_lease_lost')) throw Error('queue_assessment_unavailable');
@@ -83,6 +95,11 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
   async function finalize({auditId,phase,code,owner,sequence}) {
     const audit = await readAudit(auditId);
     if(!audit || audit.status!=='pending') return;
+    const pending = await results.pending(auditId);
+    if (pending) {
+      if (!await results.publish(auditId,{now:now(),sequence,owner,terminalizing:true})) throw Error('queue_terminal_lease_lost');
+      return;
+    }
     const retained = await readSnapshot(auditId);
     const hasUsableCapture = retained?.state==='ready' && (phase!=='capture' || code!=='retrieval_failed');
     let report = null, assessedUrl = null, error = null;
@@ -111,15 +128,25 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
       if(encoder.encode(JSON.stringify(report)).length>256*1024) throw Error('queue_report_size_limit');
     } else error = publicErrors.has(code) ? code : 'assessment_timeout';
     const at = now();
-    const result = await db.prepare(`UPDATE audits SET status=?2,report_json=?3,error_json=?4,completed_at=?5,cache_until=?6,assessed_url=?7
-      WHERE id=?1 AND status='pending' AND expires_at>?5 AND EXISTS (
-        SELECT 1 FROM audit_queue_jobs WHERE audit_id=?1 AND state='terminalizing' AND owner=?8 AND sequence=?9 AND lease_until>?5
-      )`).bind(auditId,report?'incomplete':'unable_to_assess',report?JSON.stringify(report):null,error?JSON.stringify(error):null,
-        at,report?Math.min(at+hour,audit.expires_at):null,assessedUrl,owner,sequence).run();
+    if (report) {
+      if (!await results.stage(auditId,{report,assessedUrl,now:at,sequence,owner,terminalizing:true}) ||
+          !await results.publish(auditId,{now:now(),sequence,owner,terminalizing:true})) throw Error('queue_terminal_lease_lost');
+      return;
+    }
+    const result = await db.prepare(`UPDATE audits SET status='unable_to_assess',report_json=NULL,error_json=?2,
+      completed_at=?3,cache_until=NULL,assessed_url=NULL
+      WHERE id=?1 AND status='pending' AND expires_at>?3 AND EXISTS (
+        SELECT 1 FROM audit_queue_jobs WHERE audit_id=?1 AND state='terminalizing' AND owner=?4 AND sequence=?5 AND lease_until>?3
+      )`).bind(auditId,JSON.stringify(error),at,owner,sequence).run();
     if(result.meta.changes!==1 && (await readAudit(auditId))?.status==='pending') throw Error('queue_terminal_lease_lost');
   }
 
-  const queue = createAuditQueue({db,queue:env.AUDIT_QUEUE,reserveSend:()=>queueAllowance.reserve({now:now()}),runStep,finalize,now});
+  const queue = createAuditQueue({db,queue:env.AUDIT_QUEUE,reserveSend:()=>queueAllowance.reserve({now:now()}),runStep,finalize,messageFor:async row=>{
+    const pending=await results.pending(row.audit_id);
+    return pending?.sequence===row.sequence
+      ? {auditId:row.audit_id,sequence:row.sequence,kind:'finalize_report',rubricVersion:pending.rubricVersion}
+      : {auditId:row.audit_id,sequence:row.sequence};
+  },now});
   return {
     start:queue.start,
     async consume(batch) {

@@ -5,7 +5,7 @@ export const AUDIT_QUEUE_RETRY_SECONDS = Math.ceil(AUDIT_QUEUE_LEASE_MS / 1000) 
 export const AUDIT_QUEUE_MAX_BATCH_SIZE = 1;
 export const AUDIT_QUEUE_HORIZON_MS = 20 * 60 * 1000;
 
-export function createAuditQueue({db, queue, reserveSend, runStep, finalize, now = Date.now}) {
+export function createAuditQueue({db, queue, reserveSend, runStep, finalize, messageFor, now = Date.now}) {
   const read = async id => db.prepare('SELECT * FROM audit_queue_jobs WHERE audit_id=?1').bind(id).first();
   const retry = message => message.retry({delaySeconds: AUDIT_QUEUE_RETRY_SECONDS});
   const finish = async (row, code) => {
@@ -37,7 +37,7 @@ export function createAuditQueue({db, queue, reserveSend, runStep, finalize, now
         const finished=released ? await finish(released,'queue_budget_denied') : false;
         return {accepted:false,reason:reservation.reason || 'queue_budget_denied',finished};
       }
-      await queue.send({auditId:row.audit_id,sequence:row.sequence});
+      await queue.send(messageFor ? await messageFor(row) : {auditId:row.audit_id,sequence:row.sequence});
       const confirmed=await db.prepare("UPDATE audit_queue_jobs SET state='waiting',owner=NULL,lease_until=NULL,updated_at=?4 WHERE audit_id=?1 AND sequence=?2 AND state='dispatching' AND owner=?3 RETURNING audit_id")
         .bind(row.audit_id,row.sequence,owner,now()).first();
       return {accepted:Boolean(confirmed),finished:false};
@@ -116,7 +116,7 @@ export function createAuditQueue({db, queue, reserveSend, runStep, finalize, now
             WHERE audit_id=?1 AND sequence=?5 AND expires_at>?2 AND (state='waiting' OR (state='running' AND lease_until<=?2)) RETURNING *`)
             .bind(body.auditId,t,owner,t+AUDIT_QUEUE_LEASE_MS,body.sequence).first();
           if (!row) { retry(message); continue; }
-          const result=await runStep({auditId:row.audit_id,phase:row.phase});
+          const result=await runStep({auditId:row.audit_id,phase:row.phase,owner,sequence:row.sequence,body});
           if (!result || ![null,'prepare','assess'].includes(result.next) || (row.phase==='capture' && result.next!==null && result.next!=='prepare') || (row.phase==='prepare' && result.next!==null && result.next!=='assess') || (row.phase==='assess' && result.next!==null && result.next!=='assess')) throw Error('invalid_queue_transition');
           t=now();
           if (result.next===null && result.code) {

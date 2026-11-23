@@ -14,7 +14,8 @@ function audit(row, now, preparedPending = false) {
   const stale = row.status === 'pending' && !preparedPending && now >= row.created_at + (row.lease_ms ?? LEASE_MS);
   return {
     id: row.id, url: row.url, assessedUrl: row.assessed_url, status: stale ? 'unable_to_assess' : row.status, createdAt: row.created_at,
-    expiresAt: row.expires_at, completedAt: row.completed_at, cacheUntil: row.cache_until,
+    expiresAt: row.expires_at, completedAt: row.completed_at, checksCompletedAt: row.checks_completed_at,
+    cacheUntil: row.cache_until,
     report: row.report_json === null ? null : JSON.parse(row.report_json),
     error: stale ? 'assessment_timeout' : row.error_json === null ? null : JSON.parse(row.error_json),
   };
@@ -54,7 +55,7 @@ export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY,queueEn
       if(row?.status==='pending' && now>=row.created_at+(row.lease_ms??LEASE_MS)) {
         if(queueEnabled) {
           const job=await db.prepare('SELECT state, expires_at FROM audit_queue_jobs WHERE audit_id=?1').bind(id).first();
-          if(job) return audit(row,now,job.state!=='complete' && now<job.expires_at);
+          if(job) return audit(row,now,job.state!=='complete' && (row.checks_completed_at != null || now<job.expires_at));
         }
         try {preparedPending=Boolean(await db.prepare(`SELECT r.audit_id FROM retained_snapshots r
           WHERE r.audit_id=?1 AND r.state='ready' AND r.created_at<=?2 AND r.expires_at>?2
