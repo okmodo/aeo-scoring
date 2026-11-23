@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "task": "Store Granite attempts in D1 and retain valid findings when the model response is incomplete.",
+  "state": "The local benchmark works with persistent D1. The migration has been applied in the local emulator only.",
+  "decisions": [
+    "Persist attempt metadata and the bounded raw response before scoring. Store one normalized row per expected question.",
+    "Use one immutable attempt ID and input, raw response and result digests for idempotent storage retry.",
+    "Preserve verified rows and accrued benchmark points while leaving the final score null for incomplete assessments."
+  ],
+  "constraints": [
+    "Keep the existing 60-second model timeout, 64 KiB response bound and account usage ceilings.",
+    "No additional model call or production service change. Keep raw responses and captures outside Git."
+  ],
+  "completed": [
+    "Replayed the saved Faherty response twice using persistent local D1. Readback found one attempt and 13 question rows, with four verified findings, nine missing answers, 19 of 47 benchmark points and a null final score.",
+    "The stored model JSON matched the saved output. Replay issued zero inference calls.",
+    "Offline tests cover missing, duplicate, malformed, oversized and token-limited responses, timeouts, and idempotent D1 write retry."
+  ],
+  "remaining": [
+    "Any live migration and Worker integration require a separate rollout. The existing application checkpoint tables are unchanged."
+  ],
+  "resumeCommands": [
+    "npm run test:granite-binary",
+    "npm run evaluate -- --change granite-incomplete-storage --base 69bea6a7d3f6a674b4280e0abea2855b4a8052c6",
+    "EVALUATION_BASE=69bea6a7d3f6a674b4280e0abea2855b4a8052c6 npm run ci:gate"
+  ]
+}

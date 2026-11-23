@@ -1,10 +1,27 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { createGraniteResponseStore, retryModelWrite } from '../scripts/granite-response-store.mjs';
 import { test } from 'node:test';
 import { GRANITE_MODEL_CONFIG as config } from '../backend/granite-provider.mjs';
 import { prepareBinaryBenchmark, runBinaryBenchmark, scoreBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('../evals/fixtures/granite-binary-harness.json', import.meta.url)));
+const migration = readFileSync(new URL('../backend/migrations/0014-model-attempts.sql', import.meta.url), 'utf8');
+function localStore(t) {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec('PRAGMA foreign_keys=ON;');
+  sqlite.exec(migration);
+  t.after(() => sqlite.close());
+  const db = { prepare(sql) {
+    const statement = sqlite.prepare(sql);
+    return { bind(...params) {
+      const numbered = Object.fromEntries(params.map((value, index) => [String(index + 1), value]));
+      return { run: async () => statement.run(numbered), first: async () => statement.get(numbered) ?? null };
+    } };
+  } };
+  return { sqlite, store: createGraniteResponseStore(db) };
+}
 const env = { AUDIT_AI_GATEWAY_TOKEN: 'mock-token' };
 const gateway = () => Response.json({ success: true, result: { id: 'default', workers_ai_billing_mode: 'postpaid' } });
 const providerResponse = output => Response.json({ success: true, result: {
@@ -35,8 +52,9 @@ test('the frozen request uses one prompt, binary answers and local cardinality',
 
 test('the frozen response earns only evidenced points from the current rubric', () => {
   const report = scoreBinaryBenchmark(prepareBinaryBenchmark(fixture), fixture.output);
-  const { findings, scope, ...summary } = report;
+  const { findings, scope, unexpected, ...summary } = report;
   assert.equal(scope, 'benchmark_questions');
+  assert.equal(unexpected, 0);
   assert.deepEqual({ ...summary, points: findings.map(finding => finding.points) }, fixture.expected);
   assert.equal(findings[3].validation, 'failure_unverified');
   assert.deepEqual(findings[4].verifiedAbsenceSourceIds, ['shipping']);
@@ -75,31 +93,38 @@ test('the serialized schema and data count toward the existing request limit', (
   assert.throws(() => prepareBinaryBenchmark(large), /request_limit/);
 });
 
-test('rejects malformed output before scoring any row', () => {
+test('missing and invalid answers leave independent results intact', () => {
   const benchmark = prepareBinaryBenchmark(fixture);
-  for (const edit of [
-    rows => rows.pop(),
-    rows => { rows[1].id = rows[0].id; },
-    rows => { rows[0].id = 'C6.alien'; },
-    rows => { rows[0].answer = 'partial'; },
-    rows => { rows[0].reason = '💡'.repeat(301); },
-    rows => { rows[0].evidenceIds = ['brand', 'brand']; },
-    rows => { rows[0].evidenceIds = ['invented']; },
-  ]) {
+  const cases = [
+    [rows => rows.pop(), 4, 'missing_answer'],
+    [rows => { rows[1].id = rows[0].id; }, 0, 'duplicate_answer'],
+    [rows => { rows[0].id = 'C6.alien'; }, 0, 'missing_answer'],
+    [rows => { rows[0].answer = 'partial'; }, 0, 'invalid_answer'],
+    [rows => { rows[0].reason = '💡'.repeat(301); }, 0, 'invalid_answer'],
+    [rows => { rows[0].evidenceIds = ['brand', 'brand']; }, 0, 'invalid_answer'],
+    [rows => { rows[0].evidenceIds = ['invented']; }, 0, 'ineligible_evidence'],
+  ];
+  for (const [edit, index, code] of cases) {
     const output = structuredClone(fixture.output);
     edit(output.results);
-    assert.throws(() => scoreBinaryBenchmark(benchmark, output), /invalid_binary_response/);
+    const report = scoreBinaryBenchmark(benchmark, output);
+    assert.equal(report.status, 'incomplete');
+    assert.equal(report.findings[index].validation, code);
+    assert.equal(report.findings[index].points, null);
+    assert.equal(report.findings[2].points, 14);
   }
   const output = structuredClone(fixture.output);
   output.results[0].reason = '💡'.repeat(300);
   assert.equal(scoreBinaryBenchmark(benchmark, output).findings[0].points, 3);
+  assert.equal(scoreBinaryBenchmark(benchmark, {}).findings[0].validation, 'response_unavailable');
 });
 
-test('single guarded call records request size, timing, score and provider neurons', async () => {
+test('single guarded call records request size, timing, score and provider neurons', async t => {
   const allowance = ledger();
   let time = 0;
   const benchmark = prepareBinaryBenchmark(fixture);
-  const run = await runBinaryBenchmark(fixture, { env, allowance, now: () => time,
+  const { sqlite, store } = localStore(t);
+  const run = await runBinaryBenchmark(fixture, { env, allowance, store, now: () => time,
     fetch: async (url, request) => {
       if (url === config.gatewayEndpoint) return gateway();
       assert.equal(url, config.endpoint);
@@ -124,26 +149,33 @@ test('single guarded call records request size, timing, score and provider neuro
   assert.equal(run.report.earnedPoints, fixture.expected.earnedPoints);
   assert.equal(run.reservationSettled, true);
   assert.deepEqual(allowance.calls.map(([method]) => method), ['reserve', 'reserve', 'settle', 'settle']);
+  const row = sqlite.prepare('SELECT * FROM model_attempts').get();
+  assert.equal(row.status, 'incomplete');
+  assert.deepEqual(JSON.parse(Buffer.from(row.response_body_base64, 'base64')).result.response, JSON.stringify(fixture.output));
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM model_question_results').get().n, fixture.questions.length);
 });
 
-test('usage admission denial prevents an inference request', async () => {
+test('usage admission denial prevents an inference request', async t => {
   const allowance = ledger();
   const reserve = allowance.reserve;
   allowance.reserve = async request => request.costs.aiNeurons ? { accepted: false } : reserve(request);
-  const run = await runBinaryBenchmark(fixture, { env, allowance, fetch: async url => {
+  const { sqlite, store } = localStore(t);
+  const run = await runBinaryBenchmark(fixture, { env, allowance, store, fetch: async url => {
     assert.equal(url, config.gatewayEndpoint);
     return gateway();
   } });
   assert.equal(run.failure, 'admission_failed');
   assert.equal(run.inferenceRequests, 0);
   assert.equal(run.neurons, null);
+  assert.equal(sqlite.prepare('SELECT outcome FROM model_attempts').get().outcome, 'admission_failed');
 });
 
 test('timeout aborts the only model request and preserves unknown usage', async t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   const allowance = ledger();
   const requestStarted = Promise.withResolvers();
-  const running = runBinaryBenchmark(fixture, { env, allowance, fetch: async (url, options) => {
+  const { sqlite, store } = localStore(t);
+  const running = runBinaryBenchmark(fixture, { env, allowance, store, fetch: async (url, options) => {
     if (url === config.gatewayEndpoint) return gateway();
     requestStarted.resolve(options.signal);
     return new Promise((_, reject) => options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true }));
@@ -160,4 +192,78 @@ test('timeout aborts the only model request and preserves unknown usage', async 
   assert.equal(run.timeToHttpResponseMs, null);
   assert.equal(run.neurons, null);
   assert.equal(allowance.calls.filter(([method]) => method === 'settle').length, 1);
+  const attempt = sqlite.prepare('SELECT status,outcome,response_body_base64 FROM model_attempts').get();
+  assert.deepEqual({ ...attempt }, { status: 'incomplete', outcome: 'model_timeout', response_body_base64: null });
+});
+
+test('HTTP failures and malformed bytes are stored within the existing byte bound', async t => {
+  const { sqlite, store } = localStore(t);
+  for (const [body, status, expectedBytes, truncated] of [
+    [Buffer.from([0xff, 0x00]), 200, 2, 0],
+    ['provider error', 502, 14, 0],
+    ['x'.repeat(config.outputMaxBytes + 1), 200, config.outputMaxBytes, 1],
+  ]) {
+    const run = await runBinaryBenchmark(fixture, { env, allowance: ledger(), store,
+      fetch: async url => url === config.gatewayEndpoint ? gateway() : new Response(body, { status }) });
+    const attempt = sqlite.prepare('SELECT * FROM model_attempts WHERE attempt_id=?').get(run.attemptId);
+    assert.equal(attempt.status, 'incomplete');
+    assert.equal(attempt.http_status, status);
+    assert.equal(attempt.response_truncated, truncated);
+    const stored = Buffer.from(attempt.response_body_base64, 'base64');
+    assert.equal(stored.length, expectedBytes);
+    assert.deepEqual(stored, Buffer.from(body).subarray(0, expectedBytes));
+    assert.ok(run.failure);
+    if (truncated) assert.equal(run.failure, 'output_limit');
+  }
+});
+
+test('D1 write retries preserve the same raw response and rows', async t => {
+  const { sqlite, store } = localStore(t);
+  const benchmark = prepareBinaryBenchmark(fixture);
+  const params = { id: 'saved', kind: 'replay', model: config.model, gateway: config.gatewayId, benchmark, now: 100 };
+  const output = { results: fixture.output.results.slice(0, 2) };
+  const response = { outcome: 'replayed', origin: 'saved_model_output', bodyBase64: Buffer.from(JSON.stringify(output)).toString('base64') };
+  const report = scoreBinaryBenchmark(benchmark, output);
+  await store.begin(params);
+  let tries = 0;
+  await retryModelWrite(async () => {
+    await store.capture(params.id, response);
+    if (++tries === 1) throw new Error('D1 lost acknowledgment');
+  });
+  await store.finish(params.id, report);
+  await store.begin(params);
+  await store.capture(params.id, response);
+  await store.finish(params.id, report);
+  assert.equal(tries, 2);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM model_attempts').get().n, 1);
+  const rows = sqlite.prepare('SELECT * FROM model_question_results').all();
+  assert.equal(rows.length, fixture.questions.length);
+  assert.equal(rows.filter(row => row.validation_status === 'missing_answer' && row.answer === null).length, 3);
+  const attempt = sqlite.prepare('SELECT * FROM model_attempts').get();
+  assert.equal(attempt.status, 'incomplete');
+  assert.equal(attempt.earned_points, 7);
+  assert.equal(attempt.final_score, null);
+  await assert.rejects(store.capture(params.id, { ...response, bodyBase64: '' }), /model_response_conflict/);
+  const changed = structuredClone(report);
+  changed.findings[0].reason = 'Different text with an identical score.';
+  await assert.rejects(store.finish(params.id, changed), /model_results_conflict/);
+  await store.prune(100 + 86_400_000);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM model_question_results').get().n, 0);
+});
+
+
+test('parseable token-limited output retains valid rows after the raw capture', async t => {
+  const { sqlite, store } = localStore(t);
+  const output = { results: fixture.output.results.slice(0, 2) };
+  const run = await runBinaryBenchmark(fixture, { env, allowance: ledger(), store,
+    fetch: async url => url === config.gatewayEndpoint ? gateway() : Response.json({ success: true, result: {
+      choices: [{ message: { role: 'assistant', content: JSON.stringify(output) }, finish_reason: 'length' }],
+      usage: { prompt_tokens: 10, completion_tokens: 5, neurons: 0.3 },
+    } }) });
+  assert.equal(run.failure, 'model_output_invalid');
+  assert.equal(run.report.measured, 2);
+  assert.equal(run.report.score, null);
+  assert.equal(run.neurons, 0.3);
+  const result = sqlite.prepare('SELECT status,measured,unmeasured FROM model_attempts').get();
+  assert.deepEqual({ ...result }, { status: 'incomplete', measured: 2, unmeasured: 3 });
 });

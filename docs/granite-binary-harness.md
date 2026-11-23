@@ -17,7 +17,7 @@ Build a private JSON input in the fixture format with one question per selected 
 
 A question can override the rubric's full-credit text with a category-specific pass rule. It lists eligible evidence IDs and up to two required evidence kinds. Use a distinct kind for a person modeling a product, a shipping heading, or a selected configuration's stock status. The harness verifies quotes and scopes and requires all the declared kinds for credit. This check relies on correct source selection and field labels when preparing the input. Reasons are model explanations. Inspect them for semantic errors separately from source and field checks.
 
-A model `fail` earns zero only with eligible evidence of failure or an operator-verified absence backed by complete relevant sources. Set `verifiedAbsenceSourceIds` only after establishing the absence and checking the coverage of the cited sources. An unresolved check has no points and makes the benchmark score incomplete. The benchmark still reports measured findings and their earned points.
+A model `fail` earns zero only with eligible evidence of failure or an operator-verified absence backed by complete relevant sources. Set `verifiedAbsenceSourceIds` only after establishing the absence and checking the coverage of the cited sources. An unresolved check has no points and makes the benchmark score incomplete. An incomplete response still retains the other findings. The benchmark still reports measured findings and their earned points.
 
 For a live calibration, use a private environment with the project account, Workers Paid subscription, and D1 usage ledger. The environment accepts `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_SUBSCRIPTION_ID`, `CLOUDFLARE_BILLING_READ_TOKEN`, `CLOUDFLARE_D1_API_TOKEN`, and `AUDIT_AI_GATEWAY_TOKEN`. An optional `AUDIT_AI_GATEWAY_READ_TOKEN` can read gateway metadata. Use the project's existing billing, D1, and inference permissions. The CLI pins the shared project D1 ledger so it sees the production reservations.
 
@@ -26,3 +26,20 @@ node --env-file=/private/path/granite-benchmark.env scripts/granite-binary-bench
 ```
 
 The live benchmark checks the existing shared usage ledger before sending any inference. It preserves the 60-second model timeout and current request and response bounds. The result records the serialized request size, time from sending the inference request to receiving HTTP headers, time spent in the model call including admission, total benchmark time, and provider-reported neurons when available. A timed-out inference keeps unknown usage. Live calibration writes usage bookkeeping to the existing ledger and saves the model output and verified findings to the private result path.
+
+## Stored attempts and incomplete results
+
+Migration `backend/migrations/0014-model-attempts.sql` adds `model_attempts` and `model_question_results`. The live CLI needs these tables in its existing project database before it can send an inference. The harness leaves deployment and migration rollout to a separate operation.
+
+Each attempt stores the response bytes as base64 before scoring, with the model, stage, expected question IDs, capture hash, timing, and reported neurons. A timeout without a response stores a null body. Oversized or interrupted bodies retain the bytes received up to the existing 64 KiB limit with a truncation flag. The raw record preserves unexpected or invalid answers. Every expected question gets a normalized row. A missing, duplicate, or invalid answer has null points and an explicit validation status. Valid findings count independently, and the benchmark score remains null when the report is incomplete.
+
+The attempt ID makes write retries idempotent. Attempts expire after 24 hours, and the CLI prunes one expired attempt with its questions at each admitted live run or offline replay. The live CLI keeps a private `.capture.json` fallback if D1 fails to save the result. Keep that file private and remove it after recovery. An interruption before response capture can leave a pending attempt.
+
+Replay a previous result without contacting Cloudflare or Granite. Install the locked backend development dependencies to use its local D1 runtime.
+
+```sh
+npm --prefix backend ci --ignore-scripts --no-audit --no-fund
+node scripts/granite-binary-benchmark.mjs replay /private/path/prepared-fixture.json /private/path/new-report.json /private/path/saved-result.json /private/path/local-d1
+```
+
+The local database distinguishes a saved model JSON object from a captured HTTP envelope. Use the same fixture, saved file, and local database to verify that replaying again produces the same attempt and question rows.

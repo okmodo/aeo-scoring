@@ -1,0 +1,43 @@
+CREATE TABLE IF NOT EXISTS model_attempts (
+  attempt_id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('live','replay')),
+  audit_id TEXT,
+  prepared_hash TEXT,
+  model TEXT NOT NULL,
+  gateway TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  prompt_version TEXT NOT NULL,
+  response_schema_version INTEGER NOT NULL,
+  input_digest TEXT NOT NULL,
+  request_bytes INTEGER NOT NULL,
+  expected_question_ids_json TEXT NOT NULL CHECK (json_valid(expected_question_ids_json)),
+  status TEXT NOT NULL CHECK (status IN ('pending','received','complete','incomplete')),
+  outcome TEXT,
+  http_status INTEGER,
+  model_elapsed_ms INTEGER,
+  neurons REAL,
+  response_origin TEXT CHECK (response_origin IN ('http','saved_model_output')),
+  response_body_base64 TEXT,
+  response_truncated INTEGER NOT NULL DEFAULT 0 CHECK (response_truncated IN (0,1)),
+  response_digest TEXT,
+  results_digest TEXT,
+  measured INTEGER,
+  unmeasured INTEGER,
+  earned_points REAL,
+  final_score REAL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS model_attempts_expiry ON model_attempts(expires_at);
+CREATE TABLE IF NOT EXISTS model_question_results (
+  attempt_id TEXT NOT NULL REFERENCES model_attempts(attempt_id) ON DELETE CASCADE,
+  question_id TEXT NOT NULL,
+  answer TEXT CHECK (answer IN ('pass','fail')),
+  reason TEXT CHECK (reason IS NULL OR length(reason) <= 300),
+  evidence_ids_json TEXT NOT NULL CHECK (json_valid(evidence_ids_json)),
+  evidence_json TEXT NOT NULL CHECK (json_valid(evidence_json)),
+  validation_status TEXT NOT NULL,
+  points REAL,
+  max_points REAL NOT NULL,
+  PRIMARY KEY (attempt_id, question_id)
+);

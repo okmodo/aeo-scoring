@@ -1,3 +1,4 @@
+import { retryModelWrite } from './granite-response-store.mjs';
 import rubric from '../config/rubric.v2.json' with { type: 'json' };
 import { createGraniteProvider, GRANITE_MODEL_CONFIG, serializeGraniteRequest } from '../backend/granite-provider.mjs';
 import { resolvePreparedReferences } from '../backend/prepared-finding-evidence.mjs';
@@ -99,20 +100,27 @@ export function prepareBinaryBenchmark(fixture) {
 export function scoreBinaryBenchmark(benchmark, output) {
   const { questions, evidenceById } = benchmark;
   const questionIds = new Set(questions.map(question => question.id));
-  if (!isObject(output) || Object.keys(output).length !== 1 || !Array.isArray(output.results) ||
-      output.results.length !== questions.length) throw new TypeError('invalid_binary_response');
+  const hasResults = isObject(output) && Array.isArray(output.results);
+  const returned = hasResults ? output.results : [];
   const byId = new Map();
-  for (const item of output.results) {
-    if (!isObject(item) || Object.keys(item).sort().join() !== 'answer,evidenceIds,id,reason' ||
-        !questionIds.has(item.id) || byId.has(item.id) || !answers.includes(item.answer) ||
-        !isText(item.reason) || [...item.reason].length > reasonLimit ||
-        !uniqueText(item.evidenceIds) || item.evidenceIds.length > 2 ||
-        !item.evidenceIds.every(id => evidenceById.has(id))) throw new TypeError('invalid_binary_response');
-    byId.set(item.id, item);
+  let unexpected = 0;
+  for (const item of returned) {
+    if (!isObject(item) || !questionIds.has(item.id)) { unexpected++; continue; }
+    const group = byId.get(item.id) ?? [];
+    group.push(item);
+    byId.set(item.id, group);
   }
   const findings = questions.map(question => {
     const { id, maxPoints, pillar, eligibleEvidenceIds, passKinds, failKinds, verifiedAbsenceSourceIds } = question;
-    const result = byId.get(id);
+    const rows = byId.get(id) ?? [];
+    const empty = validation => ({ id, pillar, answer: null, reason: null, evidenceIds: [], evidence: [],
+      status: 'not_measured', points: null, maxPoints, validation });
+    if (!rows.length) return empty(hasResults ? 'missing_answer' : 'response_unavailable');
+    if (rows.length > 1) return empty('duplicate_answer');
+    const [result] = rows;
+    if (Object.keys(result).sort().join() !== 'answer,evidenceIds,id,reason' ||
+        !answers.includes(result.answer) || !isText(result.reason) || [...result.reason].length > reasonLimit ||
+        !uniqueText(result.evidenceIds) || result.evidenceIds.length > 2) return empty('invalid_answer');
     const eligible = result.evidenceIds.every(evidenceId => eligibleEvidenceIds.includes(evidenceId));
     const evidence = eligible ? result.evidenceIds.map(evidenceId => evidenceById.get(evidenceId)) : [];
     const hasKinds = kinds => kinds.length > 0 && kinds.every(kind => evidence.some(item => item.kind === kind));
@@ -122,34 +130,47 @@ export function scoreBinaryBenchmark(benchmark, output) {
     return {
       id, pillar, answer: result.answer, reason: result.reason, status: justified ? 'measured' : 'not_measured',
       points: justified ? (result.answer === 'pass' ? maxPoints : 0) : null, maxPoints,
-      evidence, ...(!eligible ? { validation: 'ineligible_evidence' } :
-        !justified ? { validation: result.answer === 'pass' ? 'pass_evidence_missing' : 'failure_unverified' } : {}),
+      evidenceIds: result.evidenceIds, evidence,
+      validation: !eligible ? 'ineligible_evidence' : justified ? 'verified' :
+        result.answer === 'pass' ? 'pass_evidence_missing' : 'failure_unverified',
       ...(justified && result.answer === 'fail' && !hasKinds(failKinds) ? { verifiedAbsenceSourceIds } : {}),
     };
   });
   const earnedPoints = findings.reduce((sum, finding) => sum + (finding.points ?? 0), 0);
   const maxPoints = findings.reduce((sum, finding) => sum + finding.maxPoints, 0);
   const measured = findings.filter(finding => finding.status === 'measured').length;
-  return { scope: 'benchmark_questions', status: measured === findings.length ? 'complete' : 'incomplete',
-    score: measured === findings.length ? earnedPoints : null, earnedPoints, maxPoints, measured,
-    unmeasured: findings.length - measured, findings };
+  const complete = measured === findings.length && unexpected === 0;
+  return { scope: 'benchmark_questions', status: complete ? 'complete' : 'incomplete',
+    score: complete ? earnedPoints : null, earnedPoints, maxPoints, measured,
+    unmeasured: findings.length - measured, unexpected, findings };
 }
 
-export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now } = {}) {
+export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now, store, onCapture } = {}) {
   const benchmark = prepareBinaryBenchmark(fixture);
+  if (!store) throw new Error('model_response_store_required');
   const config = GRANITE_MODEL_CONFIG;
   const run = { model: config.model, gateway: config.gatewayId, requestBytes: benchmark.requestBytes,
     timeoutMs: config.timeoutMs, questions: benchmark.questions.length, inferenceRequests: 0,
     timeToHttpResponseMs: null, modelElapsedMs: null, neurons: null };
   const startedAt = now();
   const id = 'granite-binary-' + crypto.randomUUID();
+  run.attemptId = id;
   const reservation = await allowance?.reserve({ id, costs: {
-    requests: 1, d1Reads: 10_000, d1Writes: 200, d1StorageBytes: 4096,
+    requests: 1, d1Reads: 10_000, d1Writes: 300, // Keep room for the base64 body, normalized rows and index/storage overhead.
+    d1StorageBytes: Math.ceil(config.outputMaxBytes / 3) * 4 + 4 * config.outputMaxBytes +
+      benchmark.questions.reduce((sum, question) => sum + question.eligibleEvidenceIds
+        .map(id => Buffer.byteLength(JSON.stringify(benchmark.evidenceById.get(id))))
+        .sort((a, b) => b - a).slice(0, 2).reduce((n, size) => n + size, 0), 0),
   }, now: startedAt }).catch(() => null);
   if (reservation?.accepted !== true || reservation.duplicate !== false) {
     return { ...run, failure: 'admission_failed', elapsedMs: now() - startedAt };
   }
   try {
+    await store.prune(startedAt);
+    await retryModelWrite(() => store.begin({ id, kind: 'live', capture: fixture.capture,
+      model: run.model, gateway: run.gateway, benchmark, now: startedAt }));
+    const captured = { chunks: [], bytes: 0, origin: null, truncated: false, done: false };
+    let pendingRead;
     const AI = createGraniteProvider(env, {
       // The shared provider meters its base request. Reserve the input cost
       // of the harness-only schema too, using the same conservative byte rate.
@@ -171,9 +192,34 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
         const response = await send(url, { ...options, body: benchmark.body, headers: {
           ...options.headers, 'cf-aig-skip-cache': 'true',
         } });
+        if (options.signal.aborted) throw options.signal.reason;
         run.timeToHttpResponseMs = now() - sentAt;
         run.httpStatus = response.status;
-        return response;
+        captured.origin = 'http';
+        const reader = response.body?.getReader();
+        if (!reader) { captured.done = true; return response; }
+        pendingRead = reader;
+        try {
+          while (!options.signal.aborted) {
+            const { done, value } = await reader.read();
+            if (options.signal.aborted) break;
+            if (done) { captured.done = true; break; }
+            const keep = Math.min(value.byteLength, config.outputMaxBytes - captured.bytes);
+            if (keep) captured.chunks.push(value.slice(0, keep));
+            captured.bytes += keep;
+            if (keep < value.byteLength) {
+              captured.truncated = true;
+              void reader.cancel().catch(() => {});
+              break;
+            }
+          }
+        } finally { pendingRead = null; }
+        if (options.signal.aborted) throw options.signal.reason;
+        // The provider still handles envelope parsing, usage, and the existing
+        // output-limit error. It sees one extra byte on an over-limit body.
+        const bytes = Buffer.concat(captured.chunks);
+        const body = captured.truncated ? Buffer.concat([bytes, Buffer.alloc(1)]) : bytes;
+        return new Response(body.length ? body : null, { status: response.status, headers: response.headers });
       },
     });
     const controller = new AbortController();
@@ -186,12 +232,12 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
           timer = setTimeout(() => {
             reject(new Error('model_timeout'));
             controller.abort();
+            if (pendingRead) void pendingRead.cancel().catch(() => {});
           }, config.timeoutMs);
         }),
       ]);
       if (Number.isFinite(result.usage?.neurons) && result.usage.neurons >= 0) run.neurons = result.usage.neurons;
       run.output = result.response;
-      run.report = scoreBinaryBenchmark(benchmark, result.response);
     } catch (error) {
       const expected = ['admission_failed', 'model_timeout', 'model_provider_failure', 'model_output_invalid', 'output_limit', 'invalid_binary_response'];
       run.failure = expected.includes(error.message) ? error.message : 'benchmark_failure';
@@ -199,6 +245,34 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
       clearTimeout(timer);
       run.modelElapsedMs = now() - modelStartedAt;
     }
+    // A token-limited but syntactically complete JSON reply can still contain
+    // usable answers. Only recover a successful, fully captured envelope that
+    // reached the provider's output check after its normal usage handling.
+    if (run.failure === 'model_output_invalid' && run.diagnostic?.phase === 'output' &&
+        captured.done && run.httpStatus >= 200 && run.httpStatus < 300) {
+      try {
+        const envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(captured.chunks)));
+        const result = envelope.result;
+        const choice = result?.choices?.length === 1 ? result.choices[0] : null;
+        if (envelope.success === true && !envelope.errors?.length &&
+            (result?.finish_reason === 'length' || choice?.finish_reason === 'length')) {
+          const output = JSON.parse(result.response ?? choice?.message?.content);
+          if (Number.isFinite(result.usage?.neurons) && result.usage.neurons >= 0) run.neurons = result.usage.neurons;
+          run.output = output;
+        }
+      } catch { /* The raw response remains available even if JSON was cut off. */ }
+    }
+    const response = {
+      outcome: run.failure ?? 'response_received', httpStatus: run.httpStatus, modelElapsedMs: run.modelElapsedMs,
+      neurons: run.neurons, origin: captured.origin,
+      bodyBase64: captured.bytes || captured.done ? Buffer.concat(captured.chunks).toString('base64') : null,
+      truncated: captured.origin !== null && !captured.done,
+    };
+    try { await onCapture?.({ attemptId: id, response, output: run.output }); }
+    catch { run.localCaptureFailed = true; }
+    await retryModelWrite(() => store.capture(id, response));
+    run.report = scoreBinaryBenchmark(benchmark, run.output);
+    await retryModelWrite(() => store.finish(id, run.report));
   } finally {
     run.reservationSettled = (await allowance.settle({ id, now: now() }).catch(() => null))?.accepted === true;
     run.elapsedMs = now() - startedAt;
