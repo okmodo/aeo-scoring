@@ -40,7 +40,12 @@ function Sources({ evidence, missing }: { evidence: Evidence[]; missing: string[
 
 function TestPoints({ check }: { check: CheckDetail }) {
   const points = pointsForTest(check);
-  if (!points) return <span className="rd-test-no-points">Points unavailable</span>;
+  if (!points) {
+    if (resultForTest(check) === 'Not completed' && typeof check.earnedPoints === 'number' && Number.isFinite(check.earnedPoints)) {
+      return <span className="rd-test-no-points">Verified +{formatPoints(check.earnedPoints)} points so far</span>;
+    }
+    return <span className="rd-test-no-points">Points unavailable</span>;
+  }
   return (
     <span className="rd-test-points">
       <span>Earned <strong>+{formatPoints(points.earned)}</strong></span>
@@ -58,6 +63,7 @@ function TestFinding({ check }: { check: CheckDetail }) {
     <article className="rd-test-detail" aria-live="polite" aria-atomic="true">
       <span className={'rd-test-result rd-test-' + result.toLowerCase().replaceAll(' ', '-')}>{result}</span>
       <h3>{copy.name}</h3>
+      {copy.group && <p className="rd-test-category">{copy.group} · {copy.type}</p>}
       <p className="rd-test-description">{copy.description}</p>
       <TestPoints check={check} />
       {points && <p className="rd-test-point-note">
@@ -87,13 +93,16 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus(); }, []);
 
+  const groups = Array.from(new Set(checks.map(check => check.copy.group ?? '')))
+    .map(name => ({ name, checks: checks.filter(check => (check.copy.group ?? '') === name) }));
   const defaultCheck = checks.find(check => resultForTest(check) === 'Fail') ?? checks[0];
   const selected = checks.find(check => check.id === selectedId) ?? defaultCheck;
   const counts = { Pass: 0, Fail: 0, 'Not completed': 0, 'Not applicable': 0 };
   checks.forEach(check => { counts[resultForTest(check)]++; });
   const finalScore = counts['Not completed'] === 0 ? model.finalScore : null;
   const completed = counts.Pass + counts.Fail;
-  const pointSummary = summarizeTestPoints(checks, finalScore?.total ?? null);
+  const pointSummary = summarizeTestPoints(checks, finalScore?.total ?? null,
+    checks.some(check => check.copy.group) ? report?.earnedPoints ?? null : null);
   const scoreLabel = finalScore ? 'Total score' : 'Points so far';
   const scoredEnd = pointSummary.earned + pointSummary.missed;
   const context = [report?.variant, report?.market, report?.currency].filter(Boolean).join(' · ');
@@ -163,20 +172,22 @@ export function LiveReport({ assessment, onBack }: { assessment: Assessment; onB
                     <div className="rd-test-list-heading"><h3>Website tests</h3><span>Result &amp; points</span></div>
                     <p className="rd-test-point-note">Earned and missed points describe this audit. Changes are measured when you run it again.</p>
                     <div className="rd-test-buttons">
-                      {checks.map(check => {
+                      {groups.map(group => <React.Fragment key={group.name}>
+                        {group.name && <h4 className="rd-test-group">{group.name}</h4>}
+                        {group.checks.map(check => {
                         const result = resultForTest(check);
                         return (
                           <button key={check.id} type="button" className="rd-test-button"
                             aria-pressed={selected?.id === check.id} aria-controls="selected-test-result"
                             onClick={() => setSelectedId(check.id)}>
-                            <span className="rd-test-name">{check.copy.name}</span>
+                            <span className="rd-test-name">{check.copy.name}{check.copy.type && <small className="rd-test-type">{check.copy.type}</small>}</span>
                             <span className="rd-test-summary">
                               <span className={'rd-test-result rd-test-' + result.toLowerCase().replaceAll(' ', '-')}>{result}</span>
                               <TestPoints check={check} />
                             </span>
                           </button>
                         );
-                      })}
+                      })}</React.Fragment>)}
                     </div>
                   </div>
                   <div id="selected-test-result">{selected && <TestFinding check={selected} />}</div>

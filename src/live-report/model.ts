@@ -1,13 +1,14 @@
 import { availablePointsForCheck, getTestCopy, validateReport, type TestCopy } from '../../contracts/report-contract.mjs'
 import type { Assessment, AuditReport, Evidence, Subcheck } from '../../contracts/v1/types'
 
-type ExtendedSubcheck = Subcheck & { availablePoints?: number; exclusion?: string | null; presentation?: TestCopy }
+type ExtendedSubcheck = Subcheck & { earnedPoints?: number; availablePoints?: number; exclusion?: string | null; presentation?: TestCopy }
 export type CheckDetail = {
   id: string
-  copy: { name: string; description: string; improve: string; fullCredit: string | null }
+  copy: { name: string; description: string; improve: string; fullCredit: string | null; group?: string; type?: 'Structural' | 'Data' }
   guidance: string | null
   status: Subcheck['status']
   points: number | null
+  earnedPoints?: number
   maxPoints: number
   availablePoints: number | null
   fraction: number | null
@@ -70,9 +71,11 @@ export function buildLiveReportModel(assessment: Assessment): LiveReportModel {
     else if (check.fraction < 1) counts.partial++
     else counts.measured++
     const resolved = resolve(check.evidenceIds)
-    const copy = check.presentation ?? getTestCopy(report.rubricVersion, check.id)!
+    const copy = report.rubricVersion === '3.0.0'
+      ? getTestCopy(report.rubricVersion, check.id)!
+      : check.presentation ?? getTestCopy(report.rubricVersion, check.id)!
     return {
-      id: check.id, copy, guidance: null, status: check.status, points: check.points,
+      id: check.id, copy, guidance: null, status: check.status, points: check.points, earnedPoints: report.rubricVersion === '3.0.0' ? check.earnedPoints : undefined,
       maxPoints: check.maxPoints, availablePoints: check.availablePoints ?? availablePointsForCheck(report, check.id), fraction: check.fraction,
       reason: check.reason, exclusion: check.exclusion ?? null, ...resolved,
       fullCredit: copy.fullCredit,

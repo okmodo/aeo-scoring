@@ -71,3 +71,7 @@
 @media (max-width: 760px) {
   .rd-live .rd-test-list-heading { grid-template-columns: minmax(0, 1fr) 115px; gap: 8px; }
 }
+
+.rd-test-group { margin: 1.25rem 0 .5rem; font-size: .95rem; }
+.rd-test-category, .rd-test-type { color: #555d6b; font-size: .8rem; }
+.rd-test-type { display: block; margin-top: .25rem; }

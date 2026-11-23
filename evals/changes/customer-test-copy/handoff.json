@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "task": "Customer-facing 24-test report copy and local review",
+  "state": "Implemented on codex/customer-test-copy in an isolated worktree. Local-only container review on port4385; evaluation and final independent recheck pending.",
+  "decisions": [
+    "Version3 uses the approved local presentation catalog with 24 question titles, seven groups, descriptions and Structural/Data labels.",
+    "Legacy v1/v2 reports retain version-specific presentation; no aggregation of old results into the new rubric.",
+    "Consumer validates v3 component-bearing payloads against frozen compatibility metadata and displays server-returned scores, effective points and verified subtotals.",
+    "Local server serves fictional frozen results behind the existing password UI; browser API traffic is redirected locally by a script injected only into the served local HTML."
+  ],
+  "constraints": [
+    "No backend, scoring config, password implementation, usage admission or Cloudflare resources changed.",
+    "The new copy activates for rubricVersion3.0.0; the independent engine update is required before live reports use it.",
+    "No model calls or paid services; no merge or public deployment authorized."
+  ],
+  "completed": [
+    "Terra implementation agents added copy, grouping, versioned compatibility and regression fixtures.",
+    "Focused tests and typecheck passed. Independent reviewer found malformed-reference crash; fixed with regression coverage.",
+    "Browser reviewed 24 grouped tests, descriptions and labels; local request bridge corrected to forward buffered request bodies."
+  ],
+  "remaining": [
+    "Complete final evaluation and independent recheck, open PR and check hosted CI.",
+    "User reviews local fictional report; future live rollout depends on rubric3 engine and separate release authorization."
+  ],
+  "resumeCommands": [
+    "PATH=/private/tmp/node-v24.11.1-darwin-arm64/bin:$PATH npm run evaluate -- --change customer-test-copy --base origin/main",
+    "LOCAL_REVIEW_PASSWORD=<local-password> /private/tmp/node-v24.11.1-darwin-arm64/bin/node scripts/local-copy-review.mjs"
+  ],
+  "evidenceLimitations": [
+    "Evaluation records trace evaluation commands only; exploratory edits, agent work, container and browser checks are summarized manually. No token/cost telemetry available.",
+    "Local fixture is fictional and does not establish successful live audit integration."
+  ]
+}
