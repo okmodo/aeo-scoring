@@ -13,7 +13,7 @@ const decode = value => value.replace(/&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[\da-
     return value > 0 && value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff) ? String.fromCodePoint(value) : entity;
 });
 const clean = value => decode(value).replace(/\s+/g, ' ').trim();
-const attributeNames = ['id', 'class', 'role', 'itemtype', 'typeof', 'hidden', 'inert', 'aria-hidden', 'style', 'href', 'alt', 'type', 'name', 'value', 'checked', 'disabled', 'selected', 'multiple', 'itemprop', 'content', 'data-section-type', 'data-product-recommendations', 'data-related-products', 'data-upsell', 'data-product-price-without-tax', 'data-product-price-with-tax', 'data-product-non-sale-price-without-tax', 'data-product-non-sale-price-with-tax', 'data-product-attribute', 'data-product-option-change', 'aria-label', 'itemscope', 'itemid', 'itemref', 'src', 'property', 'vocab', 'typeof'];
+const attributeNames = ['id', 'class', 'role', 'itemtype', 'typeof', 'hidden', 'inert', 'aria-hidden', 'style', 'href', 'alt', 'type', 'name', 'value', 'checked', 'disabled', 'selected', 'multiple', 'itemprop', 'content', 'data-section-type', 'data-product-recommendations', 'data-related-products', 'data-upsell', 'data-product-price-without-tax', 'data-product-price-with-tax', 'data-product-non-sale-price-without-tax', 'data-product-non-sale-price-with-tax', 'data-product-attribute', 'data-product-option-change', 'data-option-name', 'data-option-position', 'form', 'form-id', 'aria-label', 'itemscope', 'itemid', 'itemref', 'src', 'property', 'vocab', 'typeof'];
 const wantedAttributes = new Set(attributeNames);
 function attributes(element) {
     const result = {};
@@ -44,10 +44,11 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
     const result = { complete: true, blocks: [], headings: [], images: [], links: [], identity: { title: null, mainH1: null }, visibility: 'unknown', discoveryLinks: [], otherProductMarkup: false, selectedControls: [], priceCandidates: [], hasVariantControls: false, singleConfiguration: null, structuredRecords: [], unsupportedProductMarkup: false, platform: null };
     const stack = [];
     const primaryScopes = [];
+    const keyedTagCounts = { input: 0, 'sale-price': 0 };
     const keyedTags = /^(?:h[1-6]|p|li|dt|dd|summary|sale-price)$/;
     function recordKeyed(node, text) {
         if (!node.keyedScope || node.keyedBlocked || !keyedTags.test(node.tag) || !text || text.length > 1000) return;
-        if (node.keyedScope.items.length < 75) node.keyedScope.items.push({ tag: node.tag, text, location: node.location });
+        if (node.keyedScope.items.length < 75) node.keyedScope.items.push({ tag: node.tag, text, location: node.location, ...(node.tag === 'sale-price' ? { tagOrdinal: node.tagOrdinal } : {}) });
     }
     const sourceObservation = result.sourceObservation = { complete: false, regions: 0, productImages: 0, opaqueScripts: 0, controls: 0, unselectedControls: 0, informationalImages: 0, deferredContent: 0, inlineSupport: [], blocks: [], headings: [], links: [], selectedControls: [], hasVariantControls: false };
     let sourceRegionCount = 0, sourceCount = 0, sourceLimited = false;
@@ -111,7 +112,7 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
             else if (/^(?:p|li|dt|dd|blockquote)$/.test(node.tag) || (/^(?:div|span)$/.test(node.tag) && !node.hasStructuralChild && !node.blockAncestor)) sourceAdd(sourceObservation.blocks, { text, location: node.location });
         }
         if (node.tag === 'a' && !node.s1DiscoveryBlocked && node.attrs.href && text) sourceAdd(sourceObservation.links, { url: node.attrs.href, text, location: node.location });
-        if (node.tag === 'title') {
+        if (node.tag === 'title' && node.headTitle) {
             titleCount++;
             if (text)
                 titles.push(text);
@@ -152,6 +153,7 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
                 return;
             }
             const tag = (element.tagName || '').toLowerCase(), a = attributes(element), parent = stack.at(-1);
+            const tagOrdinal = keyed && Object.hasOwn(keyedTagCounts, tag) ? keyedTagCounts[tag]++ : null;
             if (tag === 'meta' && a.name?.toLowerCase() === 'platform' && a.content === 'bigcommerce.stencil' && stack.some(node=>node.tag==='head')) result.platform = a.content;
             const parentScope = [...stack].reverse().find(frame => frame.microScope)?.microScope;
             const rawBlocked = !!parent?.rawBlocked || discoveryExcluded.test(tag) || /^(?:nav|header|footer|aside)$/.test(tag) || related(a, tag);
@@ -167,6 +169,8 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
             if (/(?:^|\s)https?:\/\/schema\.org\/Product(?:\s|$)/i.test(a.itemtype || '') || /(?:^|\s)(?:schema:)?Product(?:\s|$)/i.test(a.typeof || ''))
                 result.otherProductMarkup = true;
             const node = { tag, attrs: a, location: `html:element:${count}`, text: '', inside: !!parent?.inside || ownRegion || policy && (tag === 'body' || !!parent?.inside), blocked: !!parent?.blocked || hidden(a) || excluded.test(tag) || related(a, tag), discoveryBlocked: !!parent?.discoveryBlocked || hidden(a) || discoveryExcluded.test(tag), s1Inside: !!parent?.s1Inside || s1OwnRegion || policy && (tag === 'body' || !!parent?.s1Inside), s1Blocked, s1ParentBlocked: !!parent?.s1Blocked, s1DiscoveryBlocked: !!parent?.s1DiscoveryBlocked || hidden(a) || discoveryExcluded.test(tag) || related(a, tag) || review, blockAncestor: !!parent?.blockAncestor || /^(?:p|li|dt|dd|blockquote|h[1-6])$/.test(parent?.tag || ''), hasStructuralChild: false, parentBlocked: !!parent?.blocked, options: [], rawBlocked, microOwner: parentScope, microScope: null, microNames: (a.itemprop || '').trim().split(/\s+/).filter(Boolean), microText: '', microValueSet: false };
+            node.tagOrdinal = tagOrdinal;
+            node.headTitle = tag === 'title' && parent?.tag === 'head' && !node.discoveryBlocked;
             if (keyed) {
                 node.keyedBlocked = !!parent?.keyedBlocked || node.blocked || review || a.role?.toLowerCase() === 'dialog' ||
                     /(?:bopis|store[-_ ]?pickup|pickup[-_ ]?availability|quick[-_ ]?(?:add|buy)|wishlist|store[-_ ]?locator)/i.test(`${tag} ${a.id || ''} ${a.class || ''}`);
@@ -177,8 +181,17 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
                      /(?:^|\s)(?:productView|product-detail|product-details)(?:\s|$)/i.test(a.class || '') ||
                      /^https?:\/\/schema\.org\/Product$/i.test(a.itemtype || ''));
                 if (primary) {
-                    node.keyedScope = { items: [] };
+                    node.keyedScope = { items: [], checkedNames: new Map() };
                     primaryScopes.push(node.keyedScope);
+                }
+                node.pickerForm = tag === 'variant-picker' ? a['form-id'] || null : parent?.pickerForm;
+                node.optionGroup = tag === 'fieldset' ? (/^(?:size|colou?r|material|style|width|length)$/i.test(a['data-option-name'] || '') ? a['data-option-name'] : null) : parent?.optionGroup;
+                if (node.keyedScope && tag === 'input' && /^radio$/i.test(a.type || '') && 'checked' in a && a.name) {
+                    const names = node.keyedScope.checkedNames;
+                    names.set(a.name, (names.get(a.name) || 0) + 1);
+                    const position = a['data-option-position'];
+                    if (!node.keyedBlocked && !('disabled' in a) && node.pickerForm && node.optionGroup && a.form === node.pickerForm && /^[1-9]\d*$/.test(position || '') && a.name === `${node.pickerForm}-option${position}` && a['data-option-name'] && a['data-option-name'].length <= 1000 && node.keyedScope.items.length < 75)
+                        node.keyedScope.items.push({ tag, kind: 'selected-option', name: a.name, value: a.value ?? null, text: a['data-option-name'], location: node.location, tagOrdinal });
                 }
             }
             const scopeType = (a.itemtype || '').match(/^https?:\/\/schema\.org\/(Product|Offer|Brand|UnitPriceSpecification)$/)?.[1];
@@ -314,6 +327,7 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
             if (node?.tag === 'script' && (node.attrs.type || '').toLowerCase() === 'application/ld+json')
                 stack.pop();
         }, finish(incomplete = false) {
+            const tagInventoryComplete = available && !incomplete && !exhausted && stack.length === 0;
             if (!available || incomplete || stack.length)
                 result.complete = false;
             while (stack.length)
@@ -331,7 +345,8 @@ export function productHtmlAccumulator(rewriter, { policy = false, keyed = false
             const h1s = result.headings.filter(item => item.level === 1);
             result.identity.mainH1 = h1s.length === 1 ? h1s[0].text : null;
             if (keyed) {
-                result.keyedPrimary = primaryScopes.length === 1 ? primaryScopes[0].items : [];
+                const scope = primaryScopes.length === 1 ? primaryScopes[0] : null;
+                result.keyedPrimary = scope ? scope.items.filter(item => item.kind !== 'selected-option' || scope.checkedNames.get(item.name) === 1).map(item => tagInventoryComplete && Object.hasOwn(keyedTagCounts, item.tag) ? { ...item, tagCount: keyedTagCounts[item.tag] } : item) : [];
             }
             return result;
         } };

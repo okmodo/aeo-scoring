@@ -10,6 +10,7 @@ import { createStore } from './store.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
 import { createBrowserContentWorkflow } from './browser-content-workflow.mjs';
 import { prepareKeyedAudit } from './granite-keyed-prepared.mjs';
+import { scoreBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
 import { extract } from './retrieval.mjs';
 import { derivePreparedObservations } from './prepared-derived.mjs';
 import { HtmlTestRewriter } from './html-product-test-helper.mjs';
@@ -198,6 +199,47 @@ if (exitStage === 'export') {
     assert.deepEqual(question.passKinds, ['composition', 'fit_dimension']);
     assert.deepEqual(question.eligibleEvidenceIds.map(id => fixture.evidence.find(item => item.id === id).kind),
       ['composition', 'fit_dimension']);
+  });
+
+  test('prepared evidence preserves the head title and only cites an unambiguous selected primary control', async () => {
+    const selected = '<input type="radio" name="pf-option1" value="123" form="pf" data-option-position="1" data-option-name="Stone" checked>';
+    const price = '<sale-price> <span>Sale price</span>$64</sale-price>';
+    const quickBuy = '<aside><input type="radio" name="quick-option2" value="xs" checked="checked" data-option-name="XS"></aside>';
+    const make = async (duplicate, unsupported = false) => {
+      const page = '<html><head><title>Drawstring Short - Stone | Brand</title></head><body><main>' +
+        '<product-rerender id="product-info-main"><h1>Drawstring Short - Stone</h1><variant-picker form-id="pf">' +
+        '<fieldset data-option-name="Color">' + selected + '</fieldset></variant-picker>' +
+        (unsupported ? '<sale-price> <b>Sale price</b>$64</sale-price>' : price) + quickBuy +
+        '<svg><title>Brand</title></svg></product-rerender>' + (duplicate ? selected + price : '') + '</main></body></html>';
+      const bytes = encoder.encode(page);
+      const preprocessing = { version: 'simplified-html-v1', representation: 'cleaned_rendered_html',
+        originalCapturePreserved: true, sourceSha256: 'a'.repeat(64),
+        sourceObjectKey: 'retained/' + 'a'.repeat(36) + '/' + 'b'.repeat(36) + '/html',
+        sourceBytes: bytes.length, outputBytes: bytes.length, outputSha256: await hash(bytes) };
+      const input = { snapshot: { url, rawHtml: bytes, retrievalMethod: 'browser_api_content', preprocessing,
+        browser: { initialExtracted: {}, renderedHtml: page, coverage: { initialAvailable: false, renderedLimited: false } } },
+        extracted: {}, source: { preparedHash: 'c'.repeat(64) } };
+      const derived = await extract({ body: page, htmlLimited: null }, { HTMLRewriter: HtmlTestRewriter, keyed: true });
+      return prepareKeyedAudit('synthetic', input, derived);
+    };
+    const prepared = await make(false), fixture = prepared.fixture;
+    assert.ok(fixture.evidence.some(item => item.kind === 'title' && item.quote === 'Drawstring Short - Stone | Brand'));
+    assert.deepEqual(fixture.evidence.filter(item => item.kind === 'observed_option').map(item => item.quote), [selected]);
+    assert.equal(fixture.evidence.some(item => item.quote.includes('quick-option2')), false);
+    assert.ok(fixture.evidence.some(item => item.kind === 'price' && item.quote === price));
+    const ambiguous = (await make(true)).fixture;
+    assert.ok(ambiguous.evidence.some(item => item.kind === 'observed_option'));
+    assert.ok(ambiguous.evidence.some(item => item.kind === 'price'));
+    const unrelatedPrice = (await make(true, true)).fixture;
+    assert.equal(unrelatedPrice.evidence.some(item => item.kind === 'price'), false);
+    const selectedId = fixture.evidence.find(item => item.kind === 'observed_option').id;
+    const priceId = fixture.evidence.find(item => item.kind === 'price').id;
+    const output = { results: Object.fromEntries([['C1.configuration', selectedId], ['C3.price', priceId]]
+      .map(([id, evidenceId]) => [id, { answer: 'pass', reason: 'Claimed pass', evidenceIds: [evidenceId] }])) };
+    const findings = scoreBinaryBenchmark(prepared.benchmark, output).findings;
+    for (const id of ['C1.configuration', 'C3.price'])
+      assert.equal(findings.find(item => item.id === id).status, 'not_measured');
+    assert.equal(fixture.evidence.some(item => ['selected_stock', 'currency', 'compatibility'].includes(item.kind)), false);
   });
 
   test('the keyed policy only applies to opted-in Granite queue audits', () => {
