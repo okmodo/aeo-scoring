@@ -273,7 +273,9 @@ if (exitStage === 'export') {
     });
     const pickup = withProduct('This product is available for in-store pickup only. Shipping is unavailable.');
     assert.equal(assessBinaryPolicy('shipping', null, pickup).rule, 'pickup_only');
+    assert.equal(assessBinaryPolicy('shipping', null, withProduct('This product is not available for pickup only. Shipping is unavailable.')).status, 'not_measured');
     assert.equal(assessBinaryPolicy('returns', null, withProduct('This product is final sale.')).fraction, 1);
+    assert.equal(assessBinaryPolicy('returns', null, withProduct('This product is not final sale.')).status, 'not_measured');
     const missing = withProduct('This product is ready to order.');
     missing.snapshot.policies = { shipping: {
       state: 'read', url: new URL('/shipping', url).href,

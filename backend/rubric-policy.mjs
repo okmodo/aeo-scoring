@@ -44,7 +44,7 @@ const patterns = {
     /\b(?:original packaging|return shipping|refund(?:ed|s)?\s+(?:to|go)|restocking fee)\b/i,
   ],
 };
-const contextual = /\b(?:other|different|another)\s+(?:products?|items?|orders?)\b|\b(?:except|excludes?|excluding|not applicable|may not apply|restrictions apply|select items?|some items?)\b/i;
+const contextual = /\b(?:other|different|another)\s+(?:products?|items?|orders?)\b|\b(?:except|excludes?|excluding|not applicable|may not apply|restrictions apply|select items?|some items?|not all products?|not all items?|not all orders?)\b/i;
 const unsafe = /\b(?:ignore (?:all )?(?:previous |prior )?instructions|system prompt|give (?:full|maximum) (?:credit|points))\b/i;
 const supported = evidence => evidence && typeof evidence.url === 'string' && /^https?:\/\//i.test(evidence.url) &&
   typeof evidence.location === 'string' && evidence.location.trim() && typeof evidence.excerpt === 'string' && evidence.excerpt.trim() &&
@@ -52,8 +52,8 @@ const supported = evidence => evidence && typeof evidence.url === 'string' && /^
 
 // Only directly product-scoped statements are eligible for these special cases.
 const productScope = /\b(?:this (?:product|item)|all (?:products|items|orders))\b/i;
-const pickupOnly = /\bthis (?:product|item)\b[^.!?]{0,100}\b(?:available|offered)\s+(?:for\s+)?(?:in[ -]store\s+)?pickup\s+only\b/i;
-const finalSale = /\bthis (?:product|item)\b[^.!?]{0,80}\b(?:is\s+)?final sale\b/i;
+const pickupOnly = /\bthis (?:product|item)\s+is\s+(?:available|offered)\s+(?:for\s+)?(?:in[ -]store\s+)?pickup\s+only\b/i;
+const finalSale = /\bthis (?:product|item)\s+is\s+final sale\b/i;
 const missingTerms = {
   shipping: /\b(?:shipping (?:destinations?|coverage|costs?|fees?|rates?)|delivery (?:times?|estimates?|guidance))\s+(?:is|are)\s+(?:not (?:provided|specified|stated|available)|unspecified)\b/i,
   returns: /\b(?:return (?:eligibility|window|period|conditions?))\s+(?:is|are)\s+(?:not (?:provided|specified|stated|available)|unspecified)\b/i,
