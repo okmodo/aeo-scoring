@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "id": "granite-keyed-queue",
+  "task": "Connect guarded keyed Granite results from verified prepared pages to queued audits and the existing report API.",
+  "scope": [
+    "backend/granite-keyed-prepared.mjs",
+    "backend/granite-keyed-queue.test.mjs",
+    "backend/prepared-assessment-consumer.mjs",
+    "backend/prepared-assessment-policy.mjs",
+    "backend/prepared-derived.mjs",
+    "backend/html-product.mjs",
+    "backend/retrieval.mjs",
+    "backend/service.mjs",
+    "backend/audit-queue-runtime.mjs",
+    "backend/schema.sql",
+    "scripts/granite-binary-harness.mjs",
+    "scripts/granite-response-store.mjs",
+    "package.json",
+    "docs/granite-binary-harness.md",
+    "evals/changes/granite-keyed-queue/**"
+  ],
+  "nonGoals": [
+    "No frontend, public contract, production migration, deployment, or account usage/timeout change. No live inference in CI. No private merchant data in Git."
+  ],
+  "outcomes": [
+    {"id":"O1","description":"A keyed-enabled Granite queue consumes verified prepared data, stores one bounded response and normalized question rows, and never resends an uncertain attempt.","verification":"automated","evidence":"Queue delivery, checkpoint and D1 tests."},
+    {"id":"O2","description":"The existing report API exposes supported findings and their evidence while withholding a final score with unresolved checks.","verification":"automated","evidence":"Queue-to-report fixture and API assertions."},
+    {"id":"O3","description":"One local Faherty queue test uses the default gateway and the existing safeguards.","verification":"human","evidence":"Persistent local database, report API output, and reconciled gateway usage."}
+  ],
+  "process": [{"id":"P1","description":"Record a separate plan, run an independent review and fresh-agent checkpoint continuation, and use the standard PR workflow.","verification":"human","evidence":"Git history, review, exit artifact and hosted CI."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the report scorer, guarded transport, prepared parser and queue ownership model.","verification":"human","evidence":"Scoped diff and integration tests."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-binary","npm run test:granite-keyed-queue","npm run test:foundations","npm run test:feasibility","npm run test:preview","npm run test:browser-build","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":true,"reason":"The keyed queue route adds a new checkpoint and publication handoff that must survive independent continuation."}
+}
