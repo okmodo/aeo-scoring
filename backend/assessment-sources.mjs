@@ -39,8 +39,13 @@ export async function prepareAssessmentSources(snapshot, extracted) {
         !browser.coverage || typeof browser.coverage !== 'object') throw new TypeError('Invalid retained browser capture');
     renderedHtml = browser.renderedHtml;
     if (encoder.encode(renderedHtml).length > (renderedOnly ? 8 : 1) * 1024 * 1024) throw new RangeError('Rendered HTML exceeds limit');
-    if (renderedOnly && (browser.coverage.initialAvailable !== false || renderedHtml !== html)) throw new TypeError('Invalid rendered-only browser capture');
     initialExtracted = browser.initialExtracted;
+    // A separate initial-response observation can inform deterministic checks.
+    // The prepared document and model product sources still describe rendered HTML.
+    const separateObservation = preparedHtml && browser.coverage.initialAvailable === true &&
+      browser.coverage.initialLimited === false && initialExtracted.coverage?.html === true;
+    if (renderedOnly && (renderedHtml !== html || !(browser.coverage.initialAvailable === false || separateObservation)))
+      throw new TypeError('Invalid rendered-only browser capture');
     const {initialExtracted: ignoredInitial, renderedHtml: ignoredRendered, ...rest} = browser;
     browserMetadata = rest;
     delete metadata.browser;

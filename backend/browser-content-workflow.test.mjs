@@ -10,7 +10,7 @@ const frozen=JSON.parse(readFileSync(new URL('../evals/changes/browser-api-conte
 const html=frozen.body.result;
 const defaults=JSON.parse(readFileSync(new URL('../evals/changes/browser-content-defaults/default-request.json',import.meta.url),'utf8'));
 const response=(result=html,options={})=>Response.json({success:true,result,meta:{finalUrl:url,status:200,title:'Everyday Shorts'},...options},{headers:{'X-Browser-Ms-Used':'2500'}});
-function fixture({provider=async()=>response(),failPut=false,failPrepare=false,preprocessOverride,onGet,onPut}={}) {
+function fixture({provider=async()=>response(),failPut=false,failPrepare=false,preprocessOverride,onGet,onPut,egress}={}) {
  const sqlite=new DatabaseSync(':memory:');sqlite.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
  const db={prepare(sql){return{bind(...args){const s=sqlite.prepare(sql);return{first:async()=>s.get(...args)??null,all:async()=>({results:s.all(...args)}),run:async()=>{if(failPrepare&&sql.startsWith('INSERT INTO browser_audit_work'))throw Error('D1 unavailable');return{meta:{changes:Number(s.run(...args).changes)}};}};}};}};
  const objects=new Map(),events=[],calls=[],settlements=[];
@@ -18,7 +18,7 @@ function fixture({provider=async()=>response(),failPut=false,failPrepare=false,p
  const guard={reserve:async()=>({accepted:true,duplicate:false}),start:async()=>({accepted:true}),cancelUnstarted:async()=>{events.push('cancel');return{accepted:true}},settle:async v=>{settlements.push(v.response.headers.get('X-Browser-Ms-Used'));return{accepted:true}}};
  let extracted=0;
  const preprocess=preprocessOverride ?? (async ({rawHtml,sourceObjectKey,expiresAt})=>{events.push('preprocess');const html=new TextEncoder().encode(new TextDecoder().decode(rawHtml).replace(/<!--[\s\S]*?-->/g,''));const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');return {html,preprocessing:{version:'simplified-html-v1',representation:'cleaned_rendered_html',originalCapturePreserved:true,sourceObjectKey,sourceSha256:await digest(rawHtml),sourceBytes:rawHtml.length,outputSha256:await digest(html),outputBytes:html.length,preparedAt:time,expiresAt}};});
- const flow=createBrowserContentWorkflow({db,snapshots,guard,preprocess,binding:{quickAction:async(...args)=>{events.push('provider');calls.push(args);return provider();}},now:()=>time,extractPage:async input=>{events.push('extract');extracted++;assert.ok(input.body instanceof Uint8Array);return{productHtml:{complete:true,blocks:[{text:'Soft cotton shorts with an adjustable waist.',location:'main/p'}]},jsonLd:[],coverage:{html:true,usable:true,jsonLdTruncated:false}};}});
+ const flow=createBrowserContentWorkflow({db,snapshots,guard,preprocess,egress,binding:{quickAction:async(...args)=>{events.push('provider');calls.push(args);return provider();}},now:()=>time,extractPage:async input=>{events.push('extract');extracted++;assert.ok(input.body instanceof Uint8Array);return{productHtml:{complete:true,blocks:[{text:'Soft cotton shorts with an adjustable waist.',location:'main/p'}]},jsonLd:[],coverage:{html:true,usable:true,jsonLdTruncated:false}};}});
  const audit={id,url,createdAt:time,expiresAt:time+86400000};
  return{flow,audit,snapshots,guard,db,sqlite,objects,events,calls,settlements,get extracted(){return extracted;}};
 }
@@ -143,4 +143,10 @@ test('automatic prepared publication stops before optional extraction and legacy
  assert.equal(notified,1);assert.equal(f.extracted,0);const row=f.sqlite.prepare('SELECT prepared_state,inputs_state FROM retained_snapshots').get();
  assert.equal(row.prepared_state,'ready');assert.equal(row.inputs_state,null);
  await f.flow.read(id);assert.equal(f.extracted,1);assert.equal(f.sqlite.prepare('SELECT inputs_state FROM retained_snapshots').get().inputs_state,'ready');
+});
+
+test('optional egress is disabled without preparation admission',async()=>{
+ let calls=0;const f=fixture({egress:{fetch:async()=>{calls++;throw Error('unexpected');}}});
+ const grant=await f.flow.prepare(f.audit);await f.flow.capture(f.audit,grant);await f.flow.read(id,{preparedOnly:true});
+ assert.equal(calls,0);
 });

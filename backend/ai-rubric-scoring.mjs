@@ -18,12 +18,12 @@ const semanticChecks = new Set([
   'C5.consistency', 'C5.claim-support',
 ]);
 
-export function applyRubricAssessment(checks, assessment, { snapshot, extracted, addEvidence }) {
+export function applyRubricAssessment(checks, assessment, { snapshot, extracted, addEvidence, locallyOwned = new Set() }) {
   const html = extracted?.productHtml;
   const complete = !snapshot?.htmlLimited && (html?.complete === true || Boolean(snapshot?.rawHtml));
   if (!complete) return;
   for (const [id, finding] of Object.entries(assessment.findings)) {
-    if (!semanticChecks.has(id) || !Object.hasOwn(checks, id)) continue;
+    if (!semanticChecks.has(id) || !Object.hasOwn(checks, id) || locallyOwned.has(id)) continue;
     if (finding.status === 'not_measured') {
       if ((checks[id].status !== 'not_applicable' || id.startsWith('C4.')) &&
           !(technicalCaps.has(id) && checks[id].status === 'measured') &&

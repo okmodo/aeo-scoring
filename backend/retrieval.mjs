@@ -317,19 +317,27 @@ async function inspectGuides({ url, fetchBounded, signal }) {
 
 async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
   const result = { shipping: { state: 'unknown' }, returns: { state: 'unknown' } };
-  const targets = new Map();
+  const candidates = new Map();
   for (const link of links || []) {
-    let target;
-    try { target = checkedUrl(new URL(link.url, url).href); } catch { continue; }
-    if (target.origin !== url.origin || target.href === url.href || target.search) continue;
-    const name = `${link.text} ${target.pathname}`.toLowerCase();
+    let target, fragment;
+    try {
+      const candidate = new URL(link.url, url);
+      fragment = candidate.hash;
+      target = checkedUrl(candidate.href);
+    } catch { continue; }
+    if (target.origin !== url.origin || target.href === url.href || target.search || /^\/(?:collections|products)\//i.test(target.pathname)) continue;
+    const address = (target.pathname + fragment).toLowerCase();
+    const label = String(link.text ?? '').trim().toLowerCase();
     for (const [kind, pattern] of [['shipping', /\b(?:shipping|delivery)\b/], ['returns', /\b(?:returns?|refunds?)\b/]]) {
-      if (pattern.test(name) && result[kind].state === 'unknown') {
-        result[kind] = { state: 'failed', url: target.href };
-        if (!targets.has(target.href)) targets.set(target.href, []);
-        targets.get(target.href).push(kind);
-      }
+      const rank = pattern.test(address) ? 2 : label.length <= 80 && pattern.test(label) ? 1 : 0;
+      if (rank && rank > (candidates.get(kind)?.rank ?? 0)) candidates.set(kind, { url: target.href, rank });
     }
+  }
+  const targets = new Map();
+  for (const [kind, candidate] of candidates) {
+    result[kind] = { state: 'failed', url: candidate.url };
+    if (!targets.has(candidate.url)) targets.set(candidate.url, []);
+    targets.get(candidate.url).push(kind);
   }
   const optional = new AbortController();
   const abort = () => optional.abort();

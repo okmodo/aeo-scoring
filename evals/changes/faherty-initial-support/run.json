@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "changeId": "faherty-initial-support",
+  "recordedAt": "2026-11-23T20:46:29.678Z",
+  "sourceCommit": "930c7feb7278fbe4e562e59dd3ae6bd2e8f182b4",
+  "sourceDigest": "6d436c7d693d1f5316944aeed79486002df697a18d78a32fa598af33b058862b",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 6281,
+      "outputSha256": "1c9acef4b69bea142838a2cd733985b4dab405e0434b547abd2573ba70fe22c2"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 6756,
+      "outputSha256": "5e95b780d1aca7b1d317bbe3b38fb6f3e5230a279f01eaa632b7d27a45171cda"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 199,
+      "outputSha256": "12681db0473e4d45c8d713ca362d87ec534fa25434aedf9a1c5d4f4bb0451aeb"
+    },
+    {
+      "command": "npm run test:granite-keyed-queue",
+      "exitCode": 0,
+      "durationMs": 218,
+      "outputSha256": "70ce409186132b7eb5fa98c9bd5d1634ed8ce95c99a7ca45683b371616800e38"
+    },
+    {
+      "command": "npm run test:component-publication",
+      "exitCode": 0,
+      "durationMs": 316,
+      "outputSha256": "06067cf5a7e5bf08ad4903f275f70735e6117f8be181048b36a7d68d9565c974"
+    },
+    {
+      "command": "npm run test:initial-support",
+      "exitCode": 0,
+      "durationMs": 1331,
+      "outputSha256": "726c4dd5b2d8b7813a2fb1ddc08bd697e570ec8a15199ace3f8a845b84ed1c84"
+    }
+  ]
+}

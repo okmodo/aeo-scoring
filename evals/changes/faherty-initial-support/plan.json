@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "faherty-initial-support",
+  "task": "Wire initial product HTML and existing supporting-resource observations to queued rubric scoring.",
+  "scope": ["backend/**","scripts/**","package.json","evals/changes/faherty-initial-support/**"],
+  "nonGoals": ["No frontend, production, rubric weight, model timeout, CPU cap, usage policy, or real model changes.", "Exclude image visibility, selected variant evidence expansion, and claim inventory work."],
+  "outcomes": [
+    {"id":"O1","description":"A queued audit can score verified initial source separately from rendered evidence.","verification":"automated","evidence":"Frozen initial and rendered fixtures with separate expected findings and safe absence behavior."},
+    {"id":"O2","description":"Existing supporting-resource observations feed scoring without gating audit completion.","verification":"automated","evidence":"Local crawler, sitemap, guide and policy outcomes, transport fault and denial cases."},
+    {"id":"O3","description":"Rerun Faherty locally and classify all newly scored and unresolved results.","verification":"human","evidence":"Local capture provenance and D1 readback compared against the Phase 2 baseline."}
+  ],
+  "process":[{"id":"P1","description":"Terra implementation and independent review, no production actions.","verification":"human","evidence":"Implementation, handoff and local evaluation."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse guarded transport, scorer and supported inspection functions.","verification":"human","evidence":"Scoped diff and independent review."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue","npm run test:component-publication","npm run test:initial-support"],
+  "exitTest":{"required":false,"reason":"The intended change supplies scoring observations to existing audit stages. No new queue checkpoint or continuation protocol is intended."}
+}
