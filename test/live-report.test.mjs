@@ -96,3 +96,54 @@ test('live report renders real state, actions, evidence and cache context safely
     assert.doesNotMatch(partialHtml, /View score &amp; rubric/)
   } finally { await vite.close() }
 })
+
+
+test('earned scores display on incomplete reports and distinguish zero from no measurement', async () => {
+  const { createServer } = await import('vite')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const React = await import('react')
+  const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' })
+  try {
+    const { LiveReport } = await vite.ssrLoadModule('/src/live-report/LiveReport.tsx')
+    const render = assessment => renderToStaticMarkup(React.createElement(LiveReport, { assessment, onBack() {} }))
+    const assessment = fixture('assessment-incomplete')
+    assessment.report.scoreBasis = 'earned_points'
+    assessment.report.score = { total: 4, structure: 4, content: 0 }
+    let html = render(assessment)
+    assert.match(html, /<details class="rd-measure" open="">/)
+    assert.match(html, /4<small> \/ 100/)
+    assert.match(html, /4<small> \/ 40/)
+    assert.match(html, /0<small> \/ 60/)
+    assert.match(html, /2 of 40 checks fully measured/)
+    assessment.report.criteria = [{ id: 'S1', pillar: 'structure', maxPoints: 4, points: 1, complete: false, subchecks: [
+      { id: 'S1.readable-html', maxPoints: 4, status: 'not_measured', fraction: null, points: null, earnedPoints: 1, evidenceIds: [], reason: null, components: [{ id: 'S1.delivery', maxPoints: 2, status: 'measured', fraction: 0.5, points: 1, evidenceIds: [], reason: null }] },
+      { id: 'S1.scope', maxPoints: 1, status: 'not_measured', fraction: null, points: null, earnedPoints: 0, evidenceIds: [], reason: null, components: [{ id: 'S1.readability', maxPoints: 1, status: 'not_measured', fraction: null, points: null, evidenceIds: [], reason: null }] },
+    ] }]
+    assessment.report.fixes = [{ id: 'fix', title: 'Review details', owner: 'Merchant', checkIds: [], evidenceIds: [], recoverablePoints: null, condition: '' }]
+    html = render(assessment)
+    assert.doesNotMatch(html, /No checks were measured/)
+    assert.match(html, /Verified partial subtotal: 1 of 4/)
+    assert.doesNotMatch(html, /Verified partial subtotal: 0 of 1/)
+    assert.ok(html.indexOf('View score &amp; rubric') < html.indexOf('id="live-actions"'))
+    assessment.report.fixes = []
+    html = render(assessment)
+    assert.doesNotMatch(html, /No checks were measured/)
+    assessment.report.score = { total: 0, structure: 0, content: 0 }
+    html = render(assessment)
+    assert.match(html, /0<small> \/ 100/)
+    assert.doesNotMatch(html, /No checks measured/)
+    assessment.report.score = null
+    html = render(assessment)
+    assert.match(html, />No checks measured</)
+    assert.doesNotMatch(html, /View score &amp; rubric/)
+    const complete = fixture('assessment-complete')
+    complete.report.evidence = []
+    complete.report.scoreBasis = 'earned_points'
+    complete.report.score = { total: 20.488095238095237, structure: 4, content: 16.488095238095237 }
+    assert.match(render(complete), /20\.49<small> \/ 100/)
+    assert.doesNotMatch(render(complete), /Remaining checks may change the score/)
+    assessment.status = 'unable_to_assess'
+    assessment.report = null
+    assert.match(render(assessment), /Unable to assess/)
+  } finally { await vite.close() }
+})

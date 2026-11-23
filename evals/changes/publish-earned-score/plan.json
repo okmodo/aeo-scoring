@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "publish-earned-score",
+  "task": "Publish verified earned points from D1 when audit coverage is incomplete and render them through the existing report API.",
+  "scope": ["backend/**","contracts/v1/**","src/live-report/**","test/**","package.json","evals/changes/publish-earned-score/**"],
+  "nonGoals": ["No new rubric evidence rules, model or timeout changes, usage or CPU limit changes, production deployment, or changes outside the existing report display."],
+  "outcomes":[
+    {"id":"O1","description":"Publish stored measured component points with Structure out of 40 and Content out of 60, including the earned subtotal of unresolved rows.","verification":"automated","evidence":"Queue-to-D1 tests and a native Faherty replay comparing stored outcomes with the API."},
+    {"id":"O2","description":"Render earned totals with coverage, including verified zero. Show No checks measured when component coverage is empty, and retain the retrieval-failure state.","verification":"automated","evidence":"API and frontend regression fixtures and a local replay of published report output."}
+  ],
+  "process":[{"id":"P1","description":"Use Terra agents and independent review, test locally, and open a PR without deployment.","verification":"human","evidence":"Commits, independent review summary, and handoff."}],
+  "styleEfficiency":[{"id":"E1","description":"Reuse the existing D1 result rows, finalization queue, report API, and frontend polling.","verification":"human","evidence":"Scoped diff and reviewer confirmation."}],
+  "commands":["npm run check","npm test","npm run test:exit","npm run test:component-publication","npm run test:granite-keyed-queue","npm run test:preview","npm run lint","npm run typecheck","npm run build"],
+  "exitTest":{"required":false,"reason":"This changes the report projection within the existing D1-to-queue finalization and frontend polling paths. It does not introduce a durable step or resumability behavior."}
+}

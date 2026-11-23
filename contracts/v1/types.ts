@@ -70,6 +70,7 @@ export interface AuditReport {
   market: string | null
   currency: string | null
   score: { total: number; structure: number; content: number } | null
+  scoreBasis?: 'earned_points'
   earnedPoints: number
   criteria: Criterion[]
   evidence: Evidence[]
