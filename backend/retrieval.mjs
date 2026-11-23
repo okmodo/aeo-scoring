@@ -476,7 +476,7 @@ export async function extract(snapshot, options = {}) {
   const result = { title: '', description: '', headings: [], canonical: '', jsonLd: [], coverage: { html: true, bodyText: false, usable: false, visibility: 'unknown', jsonLdTruncated: false } };
   const maxItems = 100, maxText = 8192;
   const rewriter = new Rewriter();
-  const productAccumulator = productHtmlAccumulator(rewriter);
+  const productAccumulator = productHtmlAccumulator(rewriter, { keyed: options.keyed === true });
   // Keep identity evidence independent from the legacy, per-text-node fields.
   // Element end callbacks are required so nested text nodes form one complete value.
   result.labelEvidence = { title: null, mainH1: null };

@@ -1,3 +1,4 @@
+import {runKeyedPreparedAudit} from './granite-keyed-prepared.mjs';
 import {createTerraByokProvider} from './terra-byok-provider.mjs';
 import {createGraniteProvider,GRANITE_MODEL_CONFIG} from './granite-provider.mjs';
 import {createAnalyticsAllowanceGuard} from './analytics-allowance.mjs';
@@ -13,7 +14,7 @@ import {derivePreparedObservations} from './prepared-derived.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
 import {CONTENT_FACTS_RELEASE_ID} from './content-facts-runner.mjs';
 
-import {PREPARED_ASSESSMENT_POLICY,preparedAssessmentPolicy,configuredAssessmentProvider} from './prepared-assessment-policy.mjs';
+import {PREPARED_ASSESSMENT_POLICY,preparedAssessmentPolicy,configuredAssessmentProvider,keyedGraniteEnabled} from './prepared-assessment-policy.mjs';
 export {PREPARED_ASSESSMENT_POLICY};
 const COSTS={requests:1,cpuMs:RESERVED_INVOCATION_CPU_MS,d1Reads:10000,d1Writes:200,d1StorageBytes:512*1024};
 const empty=()=>({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
@@ -30,7 +31,8 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
   if (!provider) return {status:'skipped',code:'invalid_assessment_provider'};
-  const policyVersion=preparedAssessmentPolicy(provider);
+  const keyed=keyedGraniteEnabled(env);
+  const policyVersion=preparedAssessmentPolicy(provider,keyed);
   const reservation='prepared-worker-'+crypto.randomUUID();
   const admitted=await allowance.reserve({id:reservation,costs:COSTS,now:now()}).catch(()=>null);
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',code:'usage_admission_denied'};
@@ -77,6 +79,18 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     if(input.source?.preparedHash!==grant.preparedHash)throw Object.assign(Error('Prepared input changed'),{code:'prepared_hash_changed'});
     await jobs.assertLease(grant);
     if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
+    if (keyed) {
+      if (!activated(env)) throw Object.assign(new Error('Keyed assessment is disabled'), {code:'assessment_unavailable'});
+      await record('content','running','facts_preparing');
+      const derived=await derive(input,{keyed:true});
+      const assessment=await runKeyedPreparedAudit({env,auditId,input,derived,jobs,grant,allowance,now,fetch:fetchImpl});
+      report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,
+        deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:assessment});
+      await record('content','completed','judgments_validated');
+      await publish('assessment_completed',true);
+      await jobs.release(grant,{state:'complete',code:'assessment_completed'});
+      return {status:'completed',code:'assessment_completed',reportStatus:report.status};
+    }
     await record('category','running','classification_started');
     const AI = modelProvider ?? (provider === 'granite'
       ? createGraniteProvider(env,{fetch:fetchImpl,allowance,now})
@@ -98,7 +112,8 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
   }catch(error){
     const code=safeCode(error);
     if(grant&&code!=='job_lease_lost'){
-      try{await publish(code);await jobs.release(grant,{state:'failed',code});}catch{/* Preserve ownership and uncertain work for bounded recovery. */}
+      const uncertain=keyed&&['model_usage_uncertain','model_timeout','model_provider_failure','model_output_invalid','output_limit'].includes(code);
+      try{await publish(code);await jobs.release(grant,{state:uncertain?'uncertain':'failed',code});}catch{/* Preserve ownership and uncertain work for bounded recovery. */}
     }
     return{status:'failed',code};
   }finally{await allowance.settle?.({id:reservation,now:now()}).catch(()=>{});}
@@ -112,6 +127,6 @@ export async function recoverPreparedAudits({env,now=Date.now,allowance:givenAll
   const allowance=givenAllowance??createAnalyticsAllowanceGuard(env.AUDIT_DB,scope(env)),id='prepared-recovery-'+crypto.randomUUID();
   const admitted=await allowance.reserve({id,costs:{...COSTS,d1StorageBytes:4096},now:now()}).catch(()=>null);
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',auditIds:[]};
-  try{const jobs=givenJobs??createPreparedAssessmentJobs(env.AUDIT_DB,{now});const ready=await jobs.discover({policyVersion:preparedAssessmentPolicy(provider),limit:3,now:now()});await jobs.cleanup();return{status:'ready',auditIds:ready.map(x=>x.auditId)};}
+  try{const jobs=givenJobs??createPreparedAssessmentJobs(env.AUDIT_DB,{now});const ready=await jobs.discover({policyVersion:preparedAssessmentPolicy(provider,keyedGraniteEnabled(env)),limit:3,now:now()});await jobs.cleanup();return{status:'ready',auditIds:ready.map(x=>x.auditId)};}
   finally{await allowance.settle?.({id,now:now()}).catch(()=>{});}
 }

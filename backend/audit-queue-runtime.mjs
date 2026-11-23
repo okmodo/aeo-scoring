@@ -1,3 +1,5 @@
+import {recoverKeyedAuditAssessment} from './granite-keyed-prepared.mjs';
+import {keyedGraniteEnabled} from './prepared-assessment-policy.mjs';
 import {createAuditQueue,AUDIT_QUEUE_MAX_BATCH_SIZE} from './audit-queue.mjs';
 import {createAuditQueueAllowance} from './audit-queue-allowance.mjs';
 import {createAnalyticsAllowanceGuard} from './analytics-allowance.mjs';
@@ -24,6 +26,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
   workflow:givenWorkflow,snapshots:givenSnapshots,prepare=runPreparation,assess=runPreparedAudit,derive=derivePreparedObservations}={}) {
   const db = env?.AUDIT_DB;
   if(env?.AUDIT_QUEUE_MODE!=='enabled' || !db?.prepare || typeof env.AUDIT_QUEUE?.send!=='function') return {start:async()=>unavailable(),consume:async()=>{throw Error('audit_queue_disabled');}};
+  const keyed = keyedGraniteEnabled(env);
   const scope = {accountId:env.AUDIT_BILLING_ACCOUNT_ID,subscriptionId:env.AUDIT_BILLING_SUBSCRIPTION_ID,token:env.AUDIT_USAGE_READ_TOKEN};
   const allowance = givenAllowance ?? createAnalyticsAllowanceGuard(db,scope);
   const queueAllowance = givenQueueAllowance ?? createAuditQueueAllowance(db,scope);
@@ -73,7 +76,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
     const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive});
     if(result.status==='yield') return {next:'assess'};
     if(result.status==='completed') return {next:null};
-    if(result.status==='waiting' || result.code==='assessment_not_claimed') throw Error('queue_assessment_unavailable');
+    if(result.status==='waiting' || result.code==='assessment_not_claimed' || (keyed && result.code==='job_lease_lost')) throw Error('queue_assessment_unavailable');
     return {next:null,code:result.code??'assessment_timeout'};
   }
 
@@ -88,8 +91,10 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
       const input = retained.prepared_state==='ready' ? await store.readPrepared(auditId).catch(()=>null) : null;
       let derived, assessment;
       if(input) {
-        derived = await derive(input).catch(()=>undefined);
-        if(retained.facts_state==='ready') {
+        derived = await derive(input,{keyed}).catch(()=>undefined);
+        if (keyed && derived) {
+          assessment = await recoverKeyedAuditAssessment({ db, auditId, input, derived }).catch(()=>undefined);
+        } else if(retained.facts_state==='ready') {
           try {
             const facts = await store.readAssessment(auditId,'facts');
             if(facts) assessment = await restoreRubricAssessment(input.snapshot,input.extracted,facts);

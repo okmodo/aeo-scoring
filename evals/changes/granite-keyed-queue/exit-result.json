@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "granite-keyed-queue",
+  "sourceDigest": "fe1b5027b12143ef8abc281fa01523ca19bbf2a93bae1a721f9fbea7b6a2483f",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/keyed_queue_exit_release",
+  "exportSha256": "2124bed83517204f0475e5cf78b29dafe31f1df87fa2a0f6b5d0a9e29621852e",
+  "interruptionPoint": "Synthetic queue delivery stopped after raw response capture in D1 and before normalized question rows, checkpoint completion, or report publication. The fresh agent received the export and source paths only.",
+  "observedContinuation": "The exported state resumed with exit code 0. Both deliveries acknowledged and the report API returned HTTP 200, incomplete with a null final score, six measured checks, and exact product evidence. One retained attempt, 13 persisted answers and zero new model submissions were verified.",
+  "limitations": "Uses a synthetic Browser capture, local SQLite adapter and mocked model transport. The interrupted checkpoint remained uncertain while the queue and report completed using the retained response. The separate local Faherty test used live metered gateway inference."
+}

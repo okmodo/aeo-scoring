@@ -40,9 +40,15 @@ function related(a, tag = '') {
         /(?:^|[\s_-])(?:recommendations?|related|upsells?|cross[\s_-]?sells?)(?:$|[\s_-])/i.test(`${a.id || ''} ${a.class || ''} ${a['data-section-type'] || ''}`);
 }
 function region(tag, a) { return tag === 'main' || a.role?.toLowerCase() === 'main' || /(?:^|\s)https?:\/\/schema\.org\/Product(?:\s|$)/i.test(a.itemtype || '') || /(?:^|\s)(?:productView|product-detail|product-details|product-page)(?:\s|$)/i.test(a.class || ''); }
-export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
+export function productHtmlAccumulator(rewriter, { policy = false, keyed = false } = {}) {
     const result = { complete: true, blocks: [], headings: [], images: [], links: [], identity: { title: null, mainH1: null }, visibility: 'unknown', discoveryLinks: [], otherProductMarkup: false, selectedControls: [], priceCandidates: [], hasVariantControls: false, singleConfiguration: null, structuredRecords: [], unsupportedProductMarkup: false, platform: null };
     const stack = [];
+    const primaryScopes = [];
+    const keyedTags = /^(?:h[1-6]|p|li|dt|dd|summary|sale-price)$/;
+    function recordKeyed(node, text) {
+        if (!node.keyedScope || node.keyedBlocked || !keyedTags.test(node.tag) || !text || text.length > 1000) return;
+        if (node.keyedScope.items.length < 75) node.keyedScope.items.push({ tag: node.tag, text, location: node.location });
+    }
     const sourceObservation = result.sourceObservation = { complete: false, regions: 0, productImages: 0, opaqueScripts: 0, controls: 0, unselectedControls: 0, informationalImages: 0, deferredContent: 0, inlineSupport: [], blocks: [], headings: [], links: [], selectedControls: [], hasVariantControls: false };
     let sourceRegionCount = 0, sourceCount = 0, sourceLimited = false;
     const sourceAdd = (list, item) => { if (++sourceCount > MAX_ITEMS) sourceLimited = true; else list.push(item); };
@@ -87,6 +93,7 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
         }
         const text = clean(node.text);
         const parent = stack.at(-1);
+        if (node.keyedText) recordKeyed(node, clean(node.keyedText));
         if (node.s1Inside && !node.s1Blocked && /^h[2-6]$/.test(node.tag) && parent) {
             parent.supportSection = null;
             if (/\b(?:shipping|delivery|returns?|refunds?|polic(?:y|ies)|guides?|size charts?|specifications?|manuals?|instructions?|warrant(?:y|ies))\b/i.test(text)) {
@@ -160,6 +167,20 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
             if (/(?:^|\s)https?:\/\/schema\.org\/Product(?:\s|$)/i.test(a.itemtype || '') || /(?:^|\s)(?:schema:)?Product(?:\s|$)/i.test(a.typeof || ''))
                 result.otherProductMarkup = true;
             const node = { tag, attrs: a, location: `html:element:${count}`, text: '', inside: !!parent?.inside || ownRegion || policy && (tag === 'body' || !!parent?.inside), blocked: !!parent?.blocked || hidden(a) || excluded.test(tag) || related(a, tag), discoveryBlocked: !!parent?.discoveryBlocked || hidden(a) || discoveryExcluded.test(tag), s1Inside: !!parent?.s1Inside || s1OwnRegion || policy && (tag === 'body' || !!parent?.s1Inside), s1Blocked, s1ParentBlocked: !!parent?.s1Blocked, s1DiscoveryBlocked: !!parent?.s1DiscoveryBlocked || hidden(a) || discoveryExcluded.test(tag) || related(a, tag) || review, blockAncestor: !!parent?.blockAncestor || /^(?:p|li|dt|dd|blockquote|h[1-6])$/.test(parent?.tag || ''), hasStructuralChild: false, parentBlocked: !!parent?.blocked, options: [], rawBlocked, microOwner: parentScope, microScope: null, microNames: (a.itemprop || '').trim().split(/\s+/).filter(Boolean), microText: '', microValueSet: false };
+            if (keyed) {
+                node.keyedBlocked = !!parent?.keyedBlocked || node.blocked || review || a.role?.toLowerCase() === 'dialog' ||
+                    /(?:bopis|store[-_ ]?pickup|pickup[-_ ]?availability|quick[-_ ]?(?:add|buy)|wishlist|store[-_ ]?locator)/i.test(`${tag} ${a.id || ''} ${a.class || ''}`);
+                if (keyedTags.test(tag)) node.keyedText = '';
+                node.keyedScope = parent?.keyedScope;
+                const primary = node.inside && !node.keyedBlocked && !node.keyedScope &&
+                    (tag === 'product-rerender' && /^product-info-/.test(a.id || '') ||
+                     /(?:^|\s)(?:productView|product-detail|product-details)(?:\s|$)/i.test(a.class || '') ||
+                     /^https?:\/\/schema\.org\/Product$/i.test(a.itemtype || ''));
+                if (primary) {
+                    node.keyedScope = { items: [] };
+                    primaryScopes.push(node.keyedScope);
+                }
+            }
             const scopeType = (a.itemtype || '').match(/^https?:\/\/schema\.org\/(Product|Offer|Brand|UnitPriceSpecification)$/)?.[1];
             if (!rawBlocked && a.typeof && /(?:^|\s)(?:schema:)?Product(?:\s|$)/i.test(a.typeof))
                 result.unsupportedProductMarkup = true;
@@ -256,6 +277,13 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
                 const top = stack.at(-1);
                 if (exhausted || !top)
                     return;
+                if (keyed && top.keyedScope && !top.keyedBlocked) {
+                    for (let i = stack.length - 1; i >= 0 && stack[i].keyedScope === top.keyedScope; i--) {
+                        const node = stack[i];
+                        if (node.keyedText !== undefined && node.keyedText.length <= 1000)
+                            node.keyedText += chunk.text.slice(0, 1001 - node.keyedText.length);
+                    }
+                }
                 if (!top.rawBlocked) {
                     const activeScope = [...stack].reverse().find(node => node.microScope)?.microScope;
                     for (const node of stack)
@@ -302,6 +330,9 @@ export function productHtmlAccumulator(rewriter, { policy = false } = {}) {
             result.identity.title = titleCount === 1 ? titles[0] || null : null;
             const h1s = result.headings.filter(item => item.level === 1);
             result.identity.mainH1 = h1s.length === 1 ? h1s[0].text : null;
+            if (keyed) {
+                result.keyedPrimary = primaryScopes.length === 1 ? primaryScopes[0].items : [];
+            }
             return result;
         } };
 }
