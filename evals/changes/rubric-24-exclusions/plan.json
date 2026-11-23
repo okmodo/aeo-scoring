@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "rubric-24-exclusions",
+  "task": "Authorize verified v3 shipping and image exclusions while preserving historical criterion proof requirements.",
+  "scope": ["scripts/scoring-foundations.mjs","evals/changes/rubric-24-exclusions/**"],
+  "nonGoals": ["No scoring changes to the historical rubrics or changes to service limits."],
+  "outcomes": [{"id":"O1","description":"Only recognized and evidenced exclusions redistribute v3 criterion weights.","verification":"automated","evidence":"Reference scorer and queue assertions."}],
+  "process": [{"id":"P1","description":"Independently review the exception rules and retain a separate plan.","verification":"human","evidence":"Git history and review."}],
+  "styleEfficiency": [{"id":"E1","description":"Extend the existing exclusion guard without changing the score calculation.","verification":"human","evidence":"Scoped source diff."}],
+  "commands": ["npm run test:foundations","npm run test:granite-keyed-queue"],
+  "exitTest": {"required":false,"reason":"The exclusion gate is a pure scoring rule."}
+}
