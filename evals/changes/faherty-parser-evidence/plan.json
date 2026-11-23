@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "faherty-parser-evidence",
+  "task": "Recover and map verifiable title, selected configuration, current offer, availability and compatibility evidence from the current prepared product capture.",
+  "scope": ["backend/html-product.mjs","backend/granite-keyed-prepared.mjs","backend/granite-keyed-queue.test.mjs","backend/prepared-derived.test.mjs","evals/changes/faherty-parser-evidence/**"],
+  "nonGoals": ["Preserve the Browser API request, R2 flow, queue workflow, report contract, frontend, rubric weights, 60-second timeout and existing usage limits. No production deployment or migration."],
+  "outcomes": [
+    {"id":"O1","description":"Prepared HTML evidence is scoped to the audited product and correctly maps document title, selected configuration, offer currency and stock, and compatibility when supported.","verification":"automated","evidence":"Frozen local queue regression scenarios with supported and ambiguous inputs."},
+    {"id":"O2","description":"A local retained Faherty test shows newly recovered evidence and the remaining unresolved findings.","verification":"human","evidence":"Local retained snapshot replay, D1 rows and report API verification."}
+  ],
+  "process": [{"id":"P1","description":"Use Terra agents, a prior committed plan, evaluation records, an independent review and normal PR CI.","verification":"human","evidence":"Git history, real command trace and independent review."}],
+  "styleEfficiency": [{"id":"E1","description":"Limit implementation to existing prepared parsing and evidence mapping. Preserve fail-closed evidence, public report and runtime controls.","verification":"human","evidence":"Reviewed scoped diff and frozen regression results."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-binary","npm run test:granite-keyed-queue","npm run lint","npm run typecheck","npm run build"],
+  "exitTest": {"required":false,"reason":"Parsing and evidence mapping changes do not alter queue continuation, agent handoff or recovery protocols."}
+}
