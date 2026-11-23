@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "test:preview": "node --test test/preview.test.mjs",
-    "test:browser-build": "npm --prefix backend ci --ignore-scripts --no-audit --no-fund && node scripts/browser-build-check.mjs"
+    "test:browser-build": "npm --prefix backend ci --ignore-scripts --no-audit --no-fund && node scripts/browser-build-check.mjs",
+    "test:granite-binary": "node --test test/granite-binary-harness.test.mjs"
   },
   "dependencies": {
     "parse5": "^7.3.0",
