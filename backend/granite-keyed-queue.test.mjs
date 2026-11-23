@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createAuditQueueRuntime, AUDIT_QUEUE_NAME } from './audit-queue-runtime.mjs';
+import { AUDIT_QUEUE_HORIZON_MS } from './audit-queue.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 import { createAuditService } from './service.mjs';
@@ -36,8 +37,8 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, exported, previous } = {}) {
-  const sql = new DatabaseSync(previous?.database ?? exported?.database ?? ':memory:');
+async function keyedScenario(t, { interrupt = false, providerFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
+  const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
   if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
   const db = { prepare(query) {
@@ -52,12 +53,20 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
         run: async () => ({ meta: { changes: Number(statement.run(...args).changes) } }) };
     } };
   }, async batch(statements) {
-    const results = [];
-    for (const statement of statements) results.push(await (/^SELECT/i.test(statement.query) ? statement.all() : statement.run()));
-    return results;
+    sql.exec('BEGIN');
+    try {
+      const results = [];
+      for (const statement of statements) results.push(await (/^SELECT/i.test(statement.query) ? statement.all() : statement.run()));
+      sql.exec('COMMIT');
+      return results;
+    } catch (error) {
+      sql.exec('ROLLBACK');
+      throw error;
+    }
   } };
   let time = previous ? previous.time + 121000 : Date.UTC(2026, 10, 20);
   let submissions = 0;
+  let sendFailures = 0;
   const now = () => time;
   const allowance = { reserve: async () => ({ accepted: true, duplicate: false }), settle: async () => ({ accepted: true }) };
   const messages = [], objects = new Map((previous?.objects ?? []).map(([key, bytes]) => [key, Uint8Array.from(atob(bytes), ch => ch.charCodeAt(0))]));
@@ -99,7 +108,10 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
   };
   const env = {
     AUDIT_DB: db, AUDIT_USAGE_READ_TOKEN: 'fixture', AUDIT_SNAPSHOTS: {}, AUDIT_BROWSER: {},
-    AUDIT_QUEUE_MODE: 'enabled', AUDIT_QUEUE: { send: async body => messages.push(structuredClone(body)) },
+    AUDIT_QUEUE_MODE: 'enabled', AUDIT_QUEUE: { send: async body => {
+      if (failFinalizationSend && body.kind === 'finalize_report' && sendFailures++ === 0) throw Error('fixture send failure');
+      messages.push(structuredClone(body));
+    } },
     AUDIT_AI_PROVIDER: 'granite', AUDIT_GRANITE_KEYED: 'enabled', AUDIT_AI_GATEWAY_TOKEN: 'fixture',
     AUDIT_RUBRIC_RELEASE: OPEN_RUBRIC_RELEASE_ID, AUDIT_CONTENT_RELEASE: CONTENT_FACTS_RELEASE_ID, AUDIT_PIPELINE_RELEASE: PIPELINE_VERSION,
   };
@@ -133,7 +145,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
     assert.equal(await deliver(messages.shift()), 'ack');
     assessMessage = messages.shift();
   }
-  const decision = await deliver(assessMessage);
+  const decision = previous?.finalizeMessage ? null : await deliver(assessMessage);
   const diagnostics = () => JSON.stringify({queue:sql.prepare("SELECT state,code FROM audit_queue_jobs").get(),prepared:sql.prepare("SELECT state,code FROM prepared_assessment_jobs").get(),attempt:sql.prepare("SELECT status,outcome FROM model_attempts").get()});
   if (interrupt) {
     assert.equal(decision, 'retry', diagnostics());
@@ -145,12 +157,46 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
     if (exported) writeFileSync(exported.path, JSON.stringify({ ...state, database: exported.database }), { flag: 'wx', mode: 0o600 });
     return state;
   }
-  assert.equal(decision, 'ack', JSON.stringify(sql.prepare('SELECT state,code FROM audit_queue_jobs').get()));
-  assert.equal(await deliver(assessMessage), 'ack');
+  const reportRequest = async () => {
+    const response = await handle(new Request('https://worker' + submitted.statusUrl), options);
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  if (!previous?.finalizeMessage) {
+    assert.equal(decision, failFinalizationSend ? 'retry' : 'ack', diagnostics());
+    if (failFinalizationSend) {
+      assert.equal(sql.prepare('SELECT state FROM audit_queue_jobs').get().state, 'dispatching');
+      assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM audit_check_results').get().n, 39);
+      assert.equal(messages.length, 0);
+    }
+    assert.equal(await deliver(assessMessage), 'ack');
+  }
   assert.equal(submissions, previous ? 0 : 1, diagnostics());
-  const response = await handle(new Request('https://worker' + submitted.statusUrl), options);
-  assert.equal(response.status, 200);
-  const audit = await response.json();
+  const finalizeMessage = previous?.finalizeMessage ?? messages.shift();
+  assert.equal(finalizeMessage.kind, 'finalize_report');
+  assert.equal(finalizeMessage.rubricVersion, '3.0.0');
+  assert.equal(messages.length, 0);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM audit_check_results').get().n, 39);
+  if (pastQueueHorizon) time += AUDIT_QUEUE_HORIZON_MS;
+  const staged = await reportRequest();
+  assert.equal(staged.status, 'pending');
+  assert.equal(staged.report, null);
+  assert.ok(staged.checksCompletedAt);
+  if (finalizeExport) {
+    writeFileSync(finalizeExport.path, JSON.stringify({ time, submitted, finalizeMessage, database: finalizeExport.database }),
+      { flag: 'wx', mode: 0o600 });
+    return;
+  }
+  time += 1000;
+  assert.equal(await deliver(finalizeMessage), 'ack');
+  const audit = await reportRequest();
+  assert.equal(audit.checksCompletedAt, staged.checksCompletedAt);
+  assert.equal(Date.parse(audit.completedAt), time);
+  time += 1000;
+  assert.equal(await deliver(finalizeMessage), 'ack');
+  assert.deepEqual(await reportRequest(), audit);
+  assert.equal(messages.length, 0);
+  if (browserExport) writeFileSync(browserExport, JSON.stringify({ submitted, staged, audit }), { mode: 0o600 });
   assert.equal(audit.status, 'incomplete');
   assert.equal(audit.report.score, null);
   assert.equal(audit.report.rubricVersion, '3.0.0');
@@ -188,7 +234,16 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, ex
 }
 
 const exitStage = process.env.AEO_KEYED_QUEUE_EXIT_STAGE;
-if (exitStage === 'export') {
+const durableExit = process.env.AEO_DURABLE_EXIT_STAGE;
+if (durableExit === 'export') {
+  test('export after staging D1 results before finalization', async t => keyedScenario(t, {
+    finalizeExport: { database: process.env.AEO_DURABLE_DB, path: process.env.AEO_DURABLE_EXPORT },
+  }));
+} else if (durableExit === 'resume') {
+  test('publish only from the durable D1 export', async t => keyedScenario(t, {
+    previous: JSON.parse(readFileSync(process.env.AEO_DURABLE_EXPORT, 'utf8')),
+  }));
+} else if (exitStage === 'export') {
   test('export interrupted keyed queue', async t => keyedScenario(t, { interrupt: true,
     exported: { database: process.env.AEO_KEYED_QUEUE_DB, path: process.env.AEO_KEYED_QUEUE_EXPORT } }));
 } else if (exitStage === 'resume') {
@@ -286,7 +341,9 @@ if (exitStage === 'export') {
     assert.equal(assessBinaryPolicy('shipping', null, missing).status, 'not_measured');
   });
 
-  test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t));
+  test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
+  test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
+  test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
   test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
   test('the singular apparel label retains composition and measured dimensions', async () => {

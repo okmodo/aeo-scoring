@@ -71,7 +71,9 @@ function assessment(audit, hit = false) {
   return {
     version: '1', id: audit.id, status: audit.status, statusUrl: ROUTE + '/' + audit.id,
     submittedUrl: audit.url, assessedUrl: audit.assessedUrl ?? null,
-    createdAt: timestamp(audit.createdAt), completedAt: timestamp(audit.completedAt),
+    createdAt: timestamp(audit.createdAt),
+    ...(audit.checksCompletedAt != null ? { checksCompletedAt: timestamp(audit.checksCompletedAt) } : {}),
+    completedAt: timestamp(audit.completedAt),
     expiresAt: timestamp(audit.expiresAt),
     cache: { hit, validUntil: timestamp(audit.cacheUntil) },
     report: audit.report, error: audit.error ? problem(audit.error) : null,

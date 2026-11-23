@@ -63,3 +63,9 @@ Use this mapping when `report.rubricVersion` is `"3.0.0"`. The wire version, rou
 - A row with any unresolved applicable component has `status: "not_measured"` and null `points` and `fraction`. Read row `earnedPoints` for its verified subtotal and `components[].status` and `reason` for the gap. A measured zero has `status: "measured"` and `points: 0`.
 - Join row and component `evidenceIds[]` to `report.evidence[].id`. Join `report.fixes[].checkIds[]` to outer row IDs. Coverage counts outer rows, so `report.coverage.total` is 24.
 - Shipping and returns have binary measured fractions of zero or one. The nominal weights are three and two points, respectively. Where supported exclusions apply, use the supplied effective `availablePoints`.
+
+## Queued result publication
+
+New queued audits store each v3 component outcome in D1 before publication. The optional `checksCompletedAt` timestamp is present after the component outcomes are committed. A response can still be `pending` with `report: null` while the queue prepares publication. Continue polling `statusUrl` until the assessment is terminal. `completedAt` is the publication timestamp. An `incomplete` report may have both timestamps and a null final score.
+
+The report API is the frontend's D1 read path. Raw model responses, queue messages, database bindings, and the internal report metadata are private.

@@ -94,6 +94,7 @@ export interface Assessment {
   submittedUrl: string
   assessedUrl: string | null
   createdAt: string
+  checksCompletedAt?: string | null
   completedAt: string | null
   expiresAt: string
   cache: { hit: boolean; validUntil: string | null }

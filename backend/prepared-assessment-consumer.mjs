@@ -8,6 +8,7 @@ import {createSnapshotStore} from './snapshot-store.mjs';
 import {createPreparedAssessmentJobs} from './prepared-assessment-jobs.mjs';
 import {runPreparedAssessmentStep} from './prepared-assessment-engine.mjs';
 import {createStore} from './store.mjs';
+import {createAuditResultStore} from './audit-check-results.mjs';
 import {createPipelineState,PIPELINE_VERSION} from './pipeline-state.mjs';
 import {scoreAudit} from './scoring.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
@@ -26,7 +27,7 @@ const safeCode=error=>/^[a-z][a-z0-9_]{0,63}$/.test(error?.code||'')?error.code:
 // Only this consumer performs AI work. Preparation readiness is never changed.
 // Dependencies are injectable for offline tests; production uses canonical guards.
 export async function runPreparedAudit({env,auditId,now=Date.now,allowance:givenAllowance,snapshots:givenSnapshots,jobs:givenJobs,
-  modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
+  queueLease,modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
@@ -50,7 +51,9 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     await record('scoring','completed',report.status==='complete'?'report_complete':'report_incomplete');
     report.coverage.pipeline=pipeline.summary();
     if(new TextEncoder().encode(JSON.stringify(report)).length>256*1024)throw Object.assign(Error('Report too large'),{code:'report_size_limit'});
-    const completedAt=now();const stored=await store.finishPrepared(auditId,{grant,status:report.status,report,completedAt,cacheUntil:Math.min(completedAt+3600000,audit.expires_at),assessedUrl:input?.snapshot.url??audit.url});
+    const completedAt=now();const stored=queueLease
+      ? await createAuditResultStore(db).stage(auditId,{grant,report,assessedUrl:input?.snapshot.url??audit.url,now:completedAt,sequence:queueLease.sequence+1,owner:queueLease.owner})
+      : await store.finishPrepared(auditId,{grant,status:report.status,report,completedAt,cacheUntil:Math.min(completedAt+3600000,audit.expires_at),assessedUrl:input?.snapshot.url??audit.url});
     if(!stored)throw Object.assign(Error('Report publication lease lost'),{code:'job_lease_lost'});
   };
   try {
