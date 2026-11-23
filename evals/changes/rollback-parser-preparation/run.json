@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "changeId": "rollback-parser-preparation",
+  "recordedAt": "2026-11-23T23:58:36.083Z",
+  "sourceCommit": "29ea7b54a1a149497b7d3c75bcc8d1089ed677ea",
+  "sourceDigest": "83b19c9ba770c221e5f9cd6b70df3e895132bb1d8a7024a3d0f0937861e2fd4d",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 7204,
+      "outputSha256": "63bd55c9e23baa2a42e2403f4d535f811f938df7fc1130c35ca5c01f81146ebc"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8780,
+      "outputSha256": "fc6d88c31442146d2344156d05206ec5bca7d3ea259af5f48cc9536c6430f82d"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 225,
+      "outputSha256": "188dc2e51e2bd84b739ebff1451327c52bb8a5cdbb187eeeeda42a9459d11ba4"
+    },
+    {
+      "command": "npm run test:granite-keyed-queue",
+      "exitCode": 0,
+      "durationMs": 231,
+      "outputSha256": "b7b61fa7ff44505d66ef970b734bfdd933f7dd61a42ac4cd2a96aad25ec4975e"
+    },
+    {
+      "command": "npm run test:component-publication",
+      "exitCode": 0,
+      "durationMs": 355,
+      "outputSha256": "7d76a9b566873f4adea3c2d65e66e10c642a3de69d9ffb69ad119432f09a5d4d"
+    }
+  ]
+}
