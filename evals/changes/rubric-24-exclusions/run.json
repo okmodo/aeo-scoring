@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "changeId": "rubric-24-exclusions",
+  "recordedAt": "2026-11-23T06:38:11.703Z",
+  "sourceCommit": "28f9c4a05b35377d6d058353fd6f6b74b9456335",
+  "sourceDigest": "9bb11f9c7f63be04a6488fee2495a0084638e1eeffef35ecb8d08c08ff9ef2ee",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run test:foundations",
+      "exitCode": 0,
+      "durationMs": 140,
+      "outputSha256": "b3940cabe390b3a891f6b7c42c00c607f79eb6d7d2ebe5ddd158ea7510518d4c"
+    },
+    {
+      "command": "npm run test:granite-keyed-queue",
+      "exitCode": 0,
+      "durationMs": 213,
+      "outputSha256": "ecdca5639007d51b10fe7f4c703eb432f801ec825b178df07a75588495e8b7db"
+    }
+  ]
+}

@@ -26,7 +26,7 @@ test('derived HTML does not erase independently verified sitemap observations',a
  input.snapshot.sitemap={complete:true,usableSource:'https://example.com/sitemap.xml',inclusionSource:'https://example.com/sitemap.xml'};
  const result=await derivePreparedObservations(input,{HTMLRewriter:HtmlTestRewriter});
  const report=scoreAudit(input.snapshot,{}, {initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:result,requireAiAssessment:true});
- const checks=report.criteria.flatMap(c=>c.subchecks);
+ const checks=report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components));
  for(const id of ['S5.search','S5.ai-retrieval','S6.usable','S6.inclusion'])assert.equal(checks.find(c=>c.id===id).fraction,1);
 });
 
@@ -34,7 +34,7 @@ test('hidden or unselected images and missing labels do not become rendered find
  const input=await inputFor('<html><head><style>.hidden{display:none}</style></head><body><main><div class="hidden"><img alt="Solar kettle" src="hidden.jpg"></div><img alt="Unselected blue variant" src="blue.jpg"></main></body></html>');
  const derived=await derivePreparedObservations(input,{HTMLRewriter:HtmlTestRewriter});
  const report=scoreAudit(input.snapshot,{}, {initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true});
- const checks=report.criteria.flatMap(c=>c.subchecks);
+ const checks=report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components));
  for(const id of ['S4.title','S4.image-alternatives'])assert.equal(checks.find(c=>c.id===id).status,'not_measured');
 });
 

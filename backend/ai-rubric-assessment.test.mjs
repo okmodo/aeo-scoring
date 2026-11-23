@@ -511,3 +511,28 @@ test('prepared inspections cannot claim to inspect a source from another model b
  assert.ok(result.replayArtifact.diagnostics.some(x=>x.context==='inspection'&&x.sourceId===second.id&&x.reason==='source_not_in_batch'));
  assert.equal(result.replayArtifact.inspections.some(x=>x.sourceId===second.id),false);
 });
+
+test('shopper-visible consistency uses complete rendered inventory without initial structured product and survives replay',async()=>{
+ const f=await fixture(); f.snapshot.retrievalMethod='browser';
+ f.snapshot.browser={renderedHtml:'<main><h1>Solar kettle</h1><p>Weight: 1 kg</p><p>Weight: 1000 g</p></main>',initialExtracted:{productHtml:{complete:true,blocks:[]}},coverage:{complete:true,initialLimited:false,renderedLimited:false}};
+ f.extracted.productHtml.blocks.push({text:'Weight: 1 kg',location:'product weight'},{text:'Weight: 1000 g',location:'product specifications'});
+ f.bundle=await prepareAssessmentSources(f.snapshot,f.extracted);
+ assert.equal(f.bundle.sources.some(s=>s.kind==='structured_product'),false);
+ const heading=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Solar kettle');
+ const one=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Weight: 1 kg');
+ const two=f.bundle.sources.find(s=>s.origin==='rendered'&&s.kind==='text'&&s.text==='Weight: 1000 g');
+ f.profile.evidence=[{sourceId:heading.id,quote:heading.text}];
+ const inspections=f.bundle.sources.map(s=>({sourceId:s.id,claimsComplete:true,comparisonsComplete:true,claims:[],comparisons:s.id===one.id||s.id===two.id?[{field:'weight',context:'same product',quote:s.text}]:[],checks:[...direct,...f.profile.slots.map(x=>x.id)].map(id=>({id,status:'absent',evidence:[]}))}));
+ f.judgments.c5={claims:[],comparisons:[{candidateIds:[`${one.id}-comparison-0`,`${two.id}-comparison-0`],status:'measured',fraction:1,reason:'Equivalent units',context:'same product'}]};
+ const run=()=>validateRubricAssessment(f.bundle,f.profile,f.judgments,{...f,inspections,supportInspections:[],shopperVisibleComparisons:true}).findings['C5.consistency'];
+ assert.equal(run().fraction,1);
+ const artifact={version:'1',sourceDigest:f.bundle.sourceDigest,profileDigest:await rubricProfileDigest(f.profile),profile:f.profile,inspections,supportInspections:[],judgments:f.judgments,shopperVisibleComparisons:true};
+ assert.equal((await restoreRubricAssessment(f.snapshot,f.extracted,artifact)).findings['C5.consistency'].fraction,1);
+ inspections.find(s=>s.sourceId===two.id).comparisonsComplete=false;
+ assert.equal(run().status,'not_measured');
+ inspections.find(s=>s.sourceId===two.id).comparisonsComplete=true;
+ const raw=f.bundle.sources.find(s=>s.origin==='initial'&&s.kind==='html');
+ inspections.find(s=>s.sourceId===raw.id).comparisons=[{field:'weight',context:'same product',quote:'Solar kettle'}];
+ f.judgments.c5.comparisons[0].candidateIds.push(`${raw.id}-comparison-0`);
+ assert.equal(run().status,'not_measured');
+});

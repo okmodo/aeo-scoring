@@ -446,7 +446,7 @@ test('an incomplete sitemap cannot earn full usability even when an exact URL wa
   const {scoreAudit}=await import('./scoring.mjs');
   const source='https://example.com/first.xml';
   const snapshot={url:'https://example.com/a',observedAt:'2026-11-09T00:00:00.000Z',sitemap:{usableSource:source,inclusionSource:source,complete:false}};
-  const check=(report,id)=>report.criteria.flatMap(c=>c.subchecks).find(c=>c.id===id);
+  const check=(report,id)=>report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components)).find(c=>c.id===id);
   for (const extracted of [null,{productHtml:{complete:false,blocks:[],headings:[],links:[]},coverage:{jsonLdTruncated:false},jsonLd:[]}]) {
     const report=scoreAudit(snapshot,extracted);
     assert.equal(check(report,'S6.usable').status,'not_measured');

@@ -51,7 +51,7 @@ export async function runPreparedAssessmentStep({grant,jobs,preparedInput,AI,all
     }
   };
   try {
-    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,modelCall,provider,calibrationApproved});
+    const result=await assessRetainedRubric({AI,allowance,now,...preparedInput,onProfile,modelCall,provider,calibrationApproved,shopperVisibleComparisons:true});
     return result.status==='assessed' ? {...result,status:'completed'} : {...result,code:result.code || 'assessment_unavailable'};
   } catch (error) {
     if (error?.resumableAssessment) return {status:error.code==='yield' ? 'yield' : 'unavailable',code:error.code};

@@ -86,7 +86,7 @@ test('submitted audit reaches a polled report through Granite and retained prepa
     assert.equal(polled.status,200); const completed=await polled.json();
     assert.equal(completed.version,'1'); assert.equal(completed.id,submitted.id); assert.equal(completed.status,'incomplete');
     assert.equal(completed.report.score,null); assert.ok(Array.isArray(completed.report.evidence));
-    const checks=completed.report.criteria.flatMap(c=>c.subchecks);
+    const checks=completed.report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components));
     assert.equal(checks.find(c=>c.id==='S4.title').fraction,1);
     const identity=checks.find(c=>c.id==='C1.identity');
     assert.equal(identity.points,3);

@@ -207,6 +207,7 @@ export function createAuditService({
         await pipeline?.record('category', 'running', 'classification_started');
         aiAttempted = true;
         const contentFacts = await (openRubricEnabled ? assessRubric : assessContent)({AI,allowance,now,snapshot,extracted,report,deadlineAt,calibrationApproved:contentCalibrationApproved,
+          ...(openRubricEnabled ? {shopperVisibleComparisons: true} : {}),
           ...(retained ? {onProfile: async categoryProfile => {
             await snapshotStore.saveAssessment({ auditId: audit.id, kind: 'profile', artifact: openRubricEnabled ? categoryProfile : {version:'1',categoryProfile} });
             profileRetained = true;

@@ -107,6 +107,54 @@ function variantResult(group, product, html, finding, source) {
   return finding(distinct ? 1 : variants.length || validDims ? 0.5 : 0, `ProductGroup variesBy=${evidenceValue(group.variesBy)}; ${variants.length} variant(s) inspected${distinct ? ' with distinct attributes' : ' with incomplete or indistinct attributes'}.`);
 }
 
+// Presence is independent of entity association and the richer S2 validation.
+// Unsupported contexts or malformed/truncated scripts cannot prove absence.
+export function inspectProductJsonLdPresence(snapshot, extracted) {
+  const scripts = extracted?.jsonLd;
+  if (!Array.isArray(scripts)) return unknown('JSON-LD inspection is unavailable.');
+  const finding = (fraction, excerpt) => ({ status: 'measured', fraction, url: snapshot?.url,
+    location: 'on-page script[type="application/ld+json"]', excerpt });
+  let unresolved = false, visited = 0;
+  const vocabulary = (context, inherited) => {
+    const entries = Array.isArray(context) ? context : [context];
+    let active = inherited;
+    for (const entry of entries) {
+      if (entry === null) active = false;
+      else if (typeof entry === 'string') active = contexts.has(entry) ? true : null;
+      else if (obj(entry)) {
+        // Aliases and scoped contexts are not expanded by this inspector.
+        if (Object.keys(entry).some(key => key !== '@vocab')) active = null;
+        else if (own(entry, '@vocab')) active = contexts.has(entry['@vocab']) ? true : entry['@vocab'] === null ? false : null;
+      } else active = null;
+    }
+    return active;
+  };
+  for (const [index, script] of scripts.entries()) {
+    if (typeof script !== 'string' || script.length > 131072) { unresolved = true; continue; }
+    let parsed;
+    try { parsed = JSON.parse(script); } catch { continue; }
+    const nodes = [{ node: parsed, inherited: false }];
+    while (nodes.length) {
+      if (++visited > 20000) { unresolved = true; break; }
+      const { node, inherited } = nodes.pop();
+      if (!obj(node) && !Array.isArray(node)) continue;
+      const active = obj(node) && own(node, '@context') ? vocabulary(node['@context'], inherited) : inherited;
+      if (active === null) unresolved = true;
+      if (obj(node)) {
+        const types = Array.isArray(node['@type']) ? node['@type'] : [node['@type']];
+        const found = types.find(t => ['https://schema.org/Product', 'http://schema.org/Product', 'https://schema.org/ProductGroup', 'http://schema.org/ProductGroup'].includes(t) || active === true && ['Product', 'ProductGroup'].includes(t));
+        if (found) return finding(1, `JSON-LD block ${index + 1} declares Schema.org ${found.replace(/^https?:\/\/schema\.org\//, '')}.`);
+      }
+      for (const [key, value] of Object.entries(node))
+        if (key !== '@context' && key !== '@value' && value !== null && typeof value === 'object') nodes.push({ node: value, inherited: active });
+    }
+  }
+  if (!unresolved && extracted.coverage?.html === true && extracted.coverage.jsonLdTruncated === false &&
+      !snapshot?.htmlLimited && !snapshot?.browser?.coverage?.initialLimited && !snapshot?.browser?.coverage?.renderedLimited)
+    return finding(0, 'Complete JSON-LD inspection found no Schema.org Product or ProductGroup record.');
+  return unknown('JSON-LD inspection did not establish whether product markup is present.');
+}
+
 export function inspectRevisedProductSchema(snapshot, extracted) {
   const html = extracted?.productHtml, source = snapshot?.url;
   const bounded = Boolean(html?.complete && !snapshot?.htmlLimited && extracted?.coverage?.jsonLdTruncated === false);

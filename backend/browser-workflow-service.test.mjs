@@ -77,5 +77,5 @@ test('stored capture with preprocessing failure remains incomplete without AI or
  const handle=createAuditService({store:{reserve:async()=>({kind:'created',audit}),get:async()=>audit,finish:async(_id,result)=>{audit={...audit,...result};}},allowance:{reserve:async()=>({accepted:true,duplicate:false}),settle:async()=>{}},browserFlow:flow,requireBrowser:true,openRubricEnabled:true,AI:{},snapshotStore:{},egress:{fetch:()=>assert.fail()},secret:'x'.repeat(32),normalizeUrl:x=>x,now:()=>now,assessRubric:async()=>assert.fail('AI must not run before prepared R2 verifies')});
  const call=(method,path,body)=>handle(new Request('https://audit.test'+path,{method,...(body?{headers:{'content-type':'application/json'},body:JSON.stringify(body)}:{})}),{address:'192.0.2.1',defer:p=>{task=p;}});
  await call('POST','/api/v1/audits',{url});await task;await call('GET','/api/v1/audits/'+id);await task;
- assert.equal(audit.status,'incomplete');assert.equal(audit.report.score,null);assert.equal(audit.report.coverage.measured,0);assert.equal(audit.report.coverage.notMeasured,40);assert.doesNotMatch(JSON.stringify(audit),/private content/);
+ assert.equal(audit.status,'incomplete');assert.equal(audit.report.score,null);assert.equal(audit.report.coverage.measured,0);assert.equal(audit.report.coverage.notMeasured,24);assert.doesNotMatch(JSON.stringify(audit),/private content/);
 });

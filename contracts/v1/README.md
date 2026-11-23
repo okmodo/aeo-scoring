@@ -44,3 +44,22 @@ The scoring-engine revision preserves version `1`, routes, assessment statuses a
 Semantic allowance exhaustion leaves the assessment incomplete with a limitation; it does not convert into an input error or an invented score. Existing submission quotas and cached-result statuses remain unchanged. The backend owns these additions. The frontend can ignore optional fields until its adapter is updated by its owner. No presentation or shared dependencies are changed here. See [the engine specification](../../docs/complete-scoring-engine.md) for coverage and release limitations.
 
 `assessment-engine-complete.json` is a second complete example produced from the frozen synthetic HTML and independently adjudicated judgments. Its exact score is 78.125 (Structure 20, Content 58.125), including three permitted exclusions and partial fit-guidance credit. It demonstrates arithmetic and response shape; it is **not** evidence that the disabled live semantic judge passed calibration. Optional `coverage.notApplicable` reconciles the check counts.
+
+## Rubric 3.0.0 lookup keys
+
+Use this mapping when `report.rubricVersion` is `"3.0.0"`. The wire version, routes, and assessment statuses are unchanged. Older responses retain their original IDs.
+
+| `report.criteria[].id` | Nominal points | `subchecks[].id` in display order |
+| --- | ---: | --- |
+| `S1` | 13 | `S1.readable-html`, `S1.scope`, `S1.configuration`, `S1.supporting-access` |
+| `S2` | 19 | `S2.product-markup`, `S2.product-identity`, `S2.offer-agreement`, `S2.identifiers`, `S2.optional-claims` |
+| `S4` | 3 | `S4.page-labels`, `S4.image-alternatives` |
+| `S5` | 5 | `S5.crawler-access`, `S5.sitemap`, `S5.llms-txt` |
+| `C1` | 40 | `C1.identity-explanation`, `C1.options-selection`, `C1.essential-specs`, `C1.supporting-details`, `C1.use-compatibility` |
+| `C3` | 10 | `C3.price-stock`, `C3.shipping`, `C3.returns` |
+| `C5` | 10 | `C5.consistency`, `C5.claim-support` |
+
+- Each row has `components[]`. Those entries use the original component IDs and score fields. For example, `S5.sitemap` contains `S6.usable` and `S6.inclusion`. Product JSON-LD presence is `S2.json-ld` inside `S2.product-markup`.
+- A row with any unresolved applicable component has `status: "not_measured"` and null `points` and `fraction`. Read row `earnedPoints` for its verified subtotal and `components[].status` and `reason` for the gap. A measured zero has `status: "measured"` and `points: 0`.
+- Join row and component `evidenceIds[]` to `report.evidence[].id`. Join `report.fixes[].checkIds[]` to outer row IDs. Coverage counts outer rows, so `report.coverage.total` is 24.
+- Shipping and returns have binary measured fractions of zero or one. The nominal weights are three and two points, respectively. Where supported exclusions apply, use the supplied effective `availablePoints`.

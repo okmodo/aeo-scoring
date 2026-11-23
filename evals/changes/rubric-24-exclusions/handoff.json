@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "task": "Verify the evidence gates for v3 shipping and image exclusions.",
+  "state": "The v3 reference scorer recognizes only named exclusions with a justification and source evidence.",
+  "decisions": [
+    "Use pickup_only for an explicitly pickup-only product with unavailable shipping.",
+    "Use no_informative_images only after a complete rendered product-region inspection finds no visible product image elements."
+  ],
+  "constraints": [
+    "Retain the previous point redistribution formula and all historical rubric gates.",
+    "Captured HTML without computed visibility cannot authorize an image exclusion."
+  ],
+  "completed": [
+    "Added binary shipping and returns enforcement and verified source requirements for the new exclusions."
+  ],
+  "remaining": [
+    "Production adoption is outside this change."
+  ],
+  "resumeCommands": [
+    "npm run test:foundations",
+    "npm run test:granite-keyed-queue"
+  ]
+}

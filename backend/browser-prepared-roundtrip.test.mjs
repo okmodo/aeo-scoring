@@ -21,8 +21,8 @@ test('prepared-ready alone reaches actual assessor checkpoints, retained finding
  assert.equal(result.status,'completed',JSON.stringify({result,jobs:sql.prepare('SELECT state,code FROM prepared_assessment_jobs').all(),calls:modelCalls}));assert.ok(modelCalls>=5);assert.ok(settlements.every(x=>!x.costs?.aiNeurons));
  const final=sql.prepare('SELECT * FROM audits').get(),report=JSON.parse(final.report_json);assert.equal(final.status,'incomplete');assert.equal(report.score,null);
  const facts=await snapshots.readAssessment(id,'facts');assert.equal(facts.judgments.judgments.find(x=>x.id==='C1.identity').fraction,1);assert.ok(facts.diagnostics.some(x=>x.context==='judgment:C1.explanation'));
- assert.equal(derivations,1);assert.equal(report.criteria.find(x=>x.id==='S4').subchecks.find(x=>x.id==='S4.title').fraction,1);
- assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.find(x=>x.id==='C1.identity').fraction,1);assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.find(x=>x.id==='C1.identity').points,3);assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.find(x=>x.id==='C1.explanation').status,'not_measured');
+ assert.equal(derivations,1);assert.equal(report.criteria.find(x=>x.id==='S4').subchecks.flatMap(s=>s.components).find(x=>x.id==='S4.title').fraction,1);
+ assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.flatMap(s=>s.components).find(x=>x.id==='C1.identity').fraction,1);assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.flatMap(s=>s.components).find(x=>x.id==='C1.identity').points,3);assert.equal(report.criteria.find(x=>x.id==='C1').subchecks.flatMap(s=>s.components).find(x=>x.id==='C1.explanation').status,'not_measured');
  assert.equal(sql.prepare('SELECT inputs_state FROM retained_snapshots').get().inputs_state,null);assert.equal(sql.prepare('SELECT state FROM prepared_assessment_jobs').get().state,'complete');
  assert.ok(reads.length>0&&reads.every(k=>!k.endsWith('/html')&&!k.endsWith('/inputs')));assert.equal(reservations.filter(x=>x.costs.aiNeurons>0).length,0);
 });
@@ -42,10 +42,10 @@ test('timeout publishes deterministic evidence from verified prepared bytes with
  const result=await runPreparedAudit({env,auditId:id,now:()=>time,allowance,snapshots,derive,engine:async()=>{calls++;return{status:'unavailable',code:'model_timeout'}}});
  assert.equal(result.code,'model_timeout');assert.equal(calls,1);assert.equal(derivations,1);
  const report=JSON.parse(sql.prepare('SELECT report_json FROM audits').get().report_json);
- const checks=report.criteria.flatMap(c=>c.subchecks);const title=checks.find(c=>c.id==='S4.title');
+ const checks=report.criteria.flatMap(c=>c.subchecks.flatMap(s=>s.components));const title=checks.find(c=>c.id==='S4.title');
  assert.equal(title.status,'measured');assert.ok(title.fraction>0);assert.equal(report.score,null);
  assert.ok(report.evidence.some(e=>e.method==='rendered'&&e.excerpt.includes('Solar kettle')));
- assert.ok(checks.filter(c=>/^S[12]\./.test(c.id)).every(c=>c.status==='not_measured'));
+ assert.ok(checks.filter(c=>/^S[12]\./.test(c.id)&&c.id!=='S2.json-ld').every(c=>c.status==='not_measured'));
  assert.ok(reads.every(k=>!k.endsWith('/html')&&!k.endsWith('/inputs')));
  assert.equal((await runPreparedAudit({env,auditId:id,now:()=>time,allowance,snapshots,derive,engine:async()=>{calls++;}})).status,'skipped');
  assert.equal(calls,1);assert.equal(derivations,1);
