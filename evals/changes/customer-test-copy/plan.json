@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "customer-test-copy",
+  "task": "Apply approved customer-facing 24-test names, seven groups and descriptions to the frontend, with a local-only review deployment.",
+  "scope": [
+    "src/live-report/**",
+    "src/App.tsx",
+    "contracts/catalog.v3.json",
+    "contracts/report-contract.mjs",
+    "contracts/report-contract.d.mts",
+    "test/**",
+    "scripts/local-copy-review.mjs",
+    "evals/changes/customer-test-copy/**"
+  ],
+  "nonGoals": [
+    "No scoring rules, weights, backend, authentication, usage safeguards, public deployment or merge changes.",
+    "Do not relabel or combine legacy v1/v2 outcomes as v3 results.",
+    "Do not change the separately developed rubric engine or unrelated user files."
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "All 24 approved question titles/descriptions appear in seven named groups with Structural or Data labels for rubric v3. Legacy reports retain correct version-specific checks.",
+      "verification": "automated",
+      "evidence": "Frozen copy expectations and report rendering regressions."
+    },
+    {
+      "id": "O2",
+      "description": "V3 presentation consumes returned component results without calculating new scores and fails safely on invalid/unsupported reports.",
+      "verification": "automated",
+      "evidence": "Compatibility regressions for measured, unresolved, excluded and malformed data."
+    },
+    {
+      "id": "O3",
+      "description": "A clearly marked local fixture preview shows the new copy behind the existing password UI, without production audit calls.",
+      "verification": "human",
+      "evidence": "Local browser review, mobile layout and authentication checks."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Commit plan before implementation; use Terra implementation and independent review; record real evaluation and limitations.",
+      "verification": "human",
+      "evidence": "Git history, source-bound evaluation, review and handoff."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse report layout; isolate presentation changes and avoid dependencies or unrelated refactors.",
+      "verification": "human",
+      "evidence": "Independent diff review."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:report-contract"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "Frontend copy/group display and local visual review do not alter agent portability, memory, resumability, or handoff mechanisms."
+  }
+}
