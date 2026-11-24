@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "remove-ip-audit-quota",
+  "task": "Remove the five-submissions-per-IP hourly audit cap.",
+  "scope": ["backend/service.mjs","backend/store.mjs","backend/service.test.mjs","backend/store.test.mjs","backend/granite-keyed-queue.test.mjs","evals/changes/remove-ip-audit-quota/**"],
+  "nonGoals": ["Keep the shared 60-submissions-per-hour cap, cache accounting, usage safeguards, parser, frontend, production, and D1 schema unchanged."],
+  "outcomes": [{"id":"O1","description":"A single client can submit more than five audits per hour while app-wide admission still caps at 60.","verification":"automated","evidence":"Queue submission and transactional D1 admission tests, including cache hits and hour rollover."}],
+  "process": [{"id":"P1","description":"Obtain independent review and run hosted CI before release.","verification":"human","evidence":"Separate plan, tests, review and pull request."}],
+  "styleEfficiency": [{"id":"E1","description":"Remove only the per-IP rejection path and preserve current audit storage and accounting.","verification":"human","evidence":"Scoped diff."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue"],
+  "exitTest": {"required":false,"reason":"Only the admission predicate changes. Queue ownership, checkpoints and resume are unaffected."}
+}

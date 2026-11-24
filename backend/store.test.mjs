@@ -24,29 +24,29 @@ function setup() {
     catch (e) { sqlite.exec('ROLLBACK'); throw e; }
   } });
 }
-const request = (id, overrides = {}) => ({ id, url: 'https://example.com/p', cacheKey: 'key', rateKey: 'hashed-client', now: 1000, expiresAt: 100000, windowStart: 0, windowEnd: 3600000, limit: 2, globalLimit: 3, ...overrides });
+const request = (id, overrides = {}) => ({ id, url: 'https://example.com/p', cacheKey: 'key', rateKey: 'hashed-client', now: 1000, expiresAt: 100000, windowStart: 0, windowEnd: 3600000, globalLimit: 3, ...overrides });
 
 test('accepted records persist, cache reuses ID, and both requests count', async () => {
   const store = setup();
-  const first = await store.reserve(request('a'));
+  const first = await store.reserve(request('a', { globalLimit: 2 }));
   assert.equal(first.kind, 'created');
   assert.equal((await store.get('a', 1000)).status, 'pending');
   assert.equal(await store.finish('a', { status: 'complete', report: { score: 5 }, completedAt: 2000, cacheUntil: 90000 }), true);
-  const hit = await store.reserve(request('b', { now: 3000 }));
+  const hit = await store.reserve(request('b', { now: 3000, globalLimit: 2 }));
   assert.equal(hit.kind, 'cached');
   assert.equal(hit.audit.id, 'a');
   assert.deepEqual(hit.audit.report, { score: 5 });
   assert.equal(hit.audit.cacheUntil, 90000);
-  assert.equal((await store.reserve(request('c', { now: 4000 }))).kind, 'limited');
+  assert.equal((await store.reserve(request('c', { now: 4000, globalLimit: 2 }))).kind, 'limited');
   assert.equal(await store.get('b', 4000), null);
 });
 
-test('global and client limits remain atomic for concurrent calls', async () => {
+test('one client can pass five submissions and the app-wide limit is atomic', async () => {
   const store = setup();
-  const result = await Promise.all(Array.from({ length: 10 }, (_, i) => store.reserve(request(String(i), { rateKey: String(i), globalLimit: 3 }))));
-  assert.equal(result.filter(r => r.kind === 'created').length, 3);
-  assert.equal(result.filter(r => r.kind === 'limited').length, 7);
-  assert.equal(result[3].retryAfter, 3599);
+  const result = await Promise.all(Array.from({ length: 61 }, (_, i) => store.reserve(request(String(i), { globalLimit: 60 }))));
+  assert.equal(result[5].kind, 'created');
+  assert.equal(result.filter(r => r.kind === 'created').length, 60);
+  assert.deepEqual(result[60], {kind:'limited',retryAfter:3599});
 });
 
 test('stale and expired records cannot be completed or cached', async () => {
@@ -86,12 +86,12 @@ test('incomplete reports retain assessed URL and are cached until expiry', async
 
 test('pruning cannot remove current fixed-hour admissions', async () => {
   const store = setup();
-  await store.reserve(request('a', { limit: 1 }));
+  await store.reserve(request('a', { globalLimit: 1 }));
   await assert.rejects(store.prune({ now: 3000, admissionBefore: 3000 }), TypeError);
   await store.prune({ now: 3000, admissionBefore: 0 });
-  assert.equal((await store.reserve(request('b', { now: 3000, limit: 1 }))).kind, 'limited');
+  assert.equal((await store.reserve(request('b', { now: 3000, globalLimit: 1 }))).kind, 'limited');
   await store.prune({ now: 3600000, admissionBefore: 3600000 });
-  assert.equal((await store.reserve(request('c', { now: 3600000, expiresAt: 3700000, windowStart: 3600000, windowEnd: 7200000, limit: 1 }))).kind, 'created');
+  assert.equal((await store.reserve(request('c', { now: 3600000, expiresAt: 3700000, windowStart: 3600000, windowEnd: 7200000, globalLimit: 1 }))).kind, 'created');
 });
 
 test('legacy daily-only semantic reservations cannot authorize inference under the account allowance policy', async () => {

@@ -311,7 +311,7 @@ export function createAuditService({
         const result = await store.reserve({
           id: crypto.randomUUID(), url, cacheKey: await cacheKey(url, Boolean(AI), contentCalibrationApproved, Boolean(snapshotStore) || requireSnapshots || openRubricEnabled || Boolean(browserFlow), openRubricEnabled, Boolean(browserFlow), policyVersion, Boolean(enqueueAudit)),
           rateKey: await rateKey(secret, address, windowStart), now: createdAt,
-          expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, limit: 5, globalLimit: 60,
+          expiresAt: createdAt + DAY, windowStart, windowEnd: windowStart + HOUR, globalLimit: 60,
           ...(browserFlow ? {leaseMs:120000} : {}),
         });
         if (result.kind === 'limited') return errorResponse(429, 'rate_limited', result.retryAfter);
