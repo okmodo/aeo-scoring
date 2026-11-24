@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "publish-granite-answers",
+  "sourceDigest": "fac96a69a15a832c501590fafa6ae66cac48c47cf031f3cdef5cd9557257784b",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/direct_granite_exit",
+  "exportSha256": "c0f0d07a964531db1495bdf1f2b9756d3d42f2f8ea0eb1a8ec25916d87f52a35",
+  "interruptionPoint": "A synthetic queued audit stopped after capture of the raw model response and an unfinished scoring digest from the prior validator.",
+  "observedContinuation": "A fresh Terra agent resumed from the exported D1 fixture and handoff. One test passed, all 13 stored answers and reasons were published with their points, and the saved programmatic results remained measured. The resumed run made zero model submissions and domain resource requests.",
+  "limitations": "Uses synthetic inputs, a SQLite-backed D1 fixture, and simulated network responses. It does not measure production Worker or model performance."
+}
