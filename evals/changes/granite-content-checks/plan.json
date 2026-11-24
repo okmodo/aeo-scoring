@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "granite-content-checks",
+  "task": "Assess essential specs, supporting details, consistency and claim support in one Granite call using prepared R2 data.",
+  "scope": ["backend/**","scripts/granite-binary-harness.mjs","evals/changes/granite-content-checks/**"],
+  "nonGoals": ["Do not change the parser, capture, rubric weights, frontend, production, schema, provider settings, or usage limits. Do not add an evidence regrader or another model request."],
+  "outcomes": [{"id":"O1","description":"Ask for 15 keyed answers with category-aware evidence and publish available answers through the existing D1 report.","verification":"automated","evidence":"Keyed request, saved-response recovery and queue/API tests plus local Bear Butt replay."}],
+  "process": [{"id":"P1","description":"Use Terra agents and independent review. Run hosted CI before release.","verification":"human","evidence":"Separate plan, evaluation and handoff."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse bounded prepared observations, the Granite schema and the D1 publication path.","verification":"human","evidence":"Scoped diff and request byte proof."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue","npm run test:component-publication"],
+  "exitTest": {"required":true,"reason":"The keyed request changes. Verify redelivery can resume both current and previous request revisions without another model call."}
+}
