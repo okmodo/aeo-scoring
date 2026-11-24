@@ -73,6 +73,11 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
     if(phase==='prepare') {
       if(retained?.prepared_state==='ready') return {next:'assess'};
       if(retained?.state!=='ready') return {next:null,code:'retrieval_failed'};
+      try {
+        const pipeline = createPipelineState({db,auditId,now});
+        await pipeline.load();
+        if (!pipeline.summary().stages.some(x=>x.code==='preparation_started') && pipeline.summary().stages.length<15) await pipeline.record('preparation','running','preparation_started',{owner,sequence,state:'running'});
+      } catch { /* Diagnostics must not block preparation. */ }
       const result = await prepare({env,auditId,now,allowance,workflow:workflow()});
       if(result.status!=='ready') throw Error('queue_preparation_unavailable');
       return {next:'assess'};
@@ -130,6 +135,16 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
           } catch { /* Unverified model output earns no credit. */ }
         }
       }
+      // Recovery can validate retained judgments even after the original worker stopped.
+      try {
+        const pipeline = createPipelineState({db,auditId,now});
+        await pipeline.load();
+        const record = async (stage,status,code) => {
+          if (!pipeline.summary().stages.some(x=>x.code===code) && pipeline.summary().stages.length<16) await pipeline.record(stage,status,code,{owner,sequence,state:'terminalizing'});
+        };
+        await record('content',assessment ? 'completed' : 'failed',assessment ? 'judgments_recovered' : 'assessment_interrupted');
+        await record('scoring','running','report_building');
+      } catch { /* Publication remains authoritative. */ }
       report = input
         ? scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:assessment})
         : scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});

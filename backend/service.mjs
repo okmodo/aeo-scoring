@@ -77,6 +77,7 @@ function assessment(audit, hit = false) {
     expiresAt: timestamp(audit.expiresAt),
     cache: { hit, validUntil: timestamp(audit.cacheUntil) },
     report: audit.report, error: audit.error ? problem(audit.error) : null,
+    ...(audit.progress ? {progress:audit.progress} : {}),
   };
 }
 
@@ -322,7 +323,11 @@ export function createAuditService({
             await store.finish(result.audit.id, {status:'unable_to_assess',error:'service_unavailable',completedAt:now()});
             return dispatched?.reason === 'allowance_exhausted' ? errorResponse(429,'rate_limited') : errorResponse(503,'service_unavailable');
           }
-          return json(assessment(result.audit), 202, {location: ROUTE+'/'+result.audit.id});
+          // Queue admission is already reserved; refresh the durable waiting state
+          // within that reservation so the first response can show progress.
+          let queuedAudit;
+          try { queuedAudit = await store.get(result.audit.id, now()); } catch { /* The accepted audit remains available for polling. */ }
+          return json(assessment(queuedAudit ?? result.audit), 202, {location: ROUTE+'/'+result.audit.id});
         }
         let grant;
         try { grant = browserFlow ? await browserFlow.prepare(result.audit) : undefined; }

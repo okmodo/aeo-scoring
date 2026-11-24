@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "id": "queue-progress-modal-refresh",
+  "task": "Connect the audit progress modal to persisted milestones from the current queue and rubric v3 report pipeline.",
+  "scope": [
+    "backend/**",
+    "contracts/**",
+    "src/App.tsx",
+    "src/AuditProgress.tsx",
+    "src/audit-progress.css",
+    "src/audit.ts",
+    "src/live-report/**",
+    "test/**",
+    "scripts/local-progress-review.mjs",
+    "package.json",
+    "docs/queue-progress-modal.md",
+    "evals/changes/queue-progress-modal-refresh/**",
+    "scripts/local-progress-container.mjs"
+  ],
+  "nonGoals": [
+    "Changes to rubric scoring, queue scheduling, credential handling, usage ceilings, billing, or the Worker CPU limit.",
+    "Merge or production deployment as part of implementation or CI.",
+    "A separate streaming connection or timer-based stage advancement.",
+    "Changing the earned-score publication or grouped report behavior already released separately."
+  ],
+  "observations": [
+    "On Nov 23, 2026 at 2:20 p.m. Pacific, the newest audit was submitted. When inspected, its queue phase was assess/running, preparation was ready, and the Granite checkpoint was started. The report was pending.",
+    "The 1:22 p.m. audit published an incomplete rubric v3 report at 1:23 p.m. Its pipeline recorded browser_loading, browser_api_captured, browser_content_stored, facts_preparing, judgments_validated and report_incomplete. The queue subsequently showed complete.",
+    "A nearby capture failure recorded browser_api_captured before ending unable_to_assess with retrieval_failed. Capture alone does not establish that a usable page is available.",
+    "The inspected records had no dedicated preparation start/completion markers or report-building start marker. The old modal branch already prototypes these additions against an earlier engine base."
+  ],
+  "stageMapping": [
+    {
+      "ui": "Waiting to start",
+      "start": "Accepted audit before capture is claimed",
+      "finish": "browser_loading or a verified running capture phase"
+    },
+    {
+      "ui": "Page download",
+      "start": "browser_loading",
+      "finish": "Capture accepted as usable and durably retained. browser_api_captured alone is insufficient."
+    },
+    {
+      "ui": "Data extraction",
+      "start": "A claimed prepare phase and an idempotent preparation_started milestone",
+      "finish": "Persisted prepared_state=ready, projected as preparation complete. This covers HTML preparation, not completion of every extraction or rubric check."
+    },
+    {
+      "ui": "AI Review",
+      "start": "Persisted assessment running state, with facts_preparing or a started model checkpoint as applicable",
+      "finish": "Validated usable judgments or explicit skipped, failed, or recovered outcome. A model reply alone is insufficient."
+    },
+    {
+      "ui": "Score Card Building",
+      "start": "Idempotent report_building milestone immediately before report assembly and after recording the assessment outcome",
+      "finish": "report_complete or report_incomplete indicates internal assembly completion. Publication still has to succeed."
+    },
+    {
+      "ui": "Audit complete",
+      "start": "None. Wait for publication.",
+      "finish": "Open a published complete or incomplete report immediately. Preserve the current verified earned score and coverage labels, without presenting incomplete coverage as a final score. A reportless failure follows the existing failure path."
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "O1",
+      "description": "Port the progress-specific work from the existing modal branch onto the integration base containing the current queue and rubric v3 consumer. Preserve the merged v3 frontend and verify controller, checkpoint and publication paths against that base.",
+      "verification": "human",
+      "evidence": "Branch and path comparison against the active runtime source, with review of the scoped diff."
+    },
+    {
+      "id": "O2",
+      "description": "Provide an optional versioned progress object from the authenticated audit response, with a bounded allowlist, audit ID and monotonic revision. Derive preparation completion from stored readiness. Persist only missing timing markers and guard against duplicate or stale deliveries.",
+      "verification": "automated",
+      "evidence": "Tests cover waiting, working, checkpointed, retrying, duplicate, out-of-order, unavailable, partial, and fully published records."
+    },
+    {
+      "id": "O3",
+      "description": "Drive the five-row overlay from the existing status polling. Keep the prior step display for stale responses, handle absent or invalid progress without guessed advancement, distinguish stopping the wait from cancellation of engine work, and accept the same audit's terminal response as authoritative.",
+      "verification": "automated",
+      "evidence": "Contract, model and browser tests cover stale revisions, missing progress, failure, cache hits, and correct transitions into both report types."
+    },
+    {
+      "id": "O4",
+      "description": "Review in a local container with frozen rendered capture and model fixtures through the real queue producer, consumer and status endpoint. Measure and verify added status reads and milestone writes against existing usage reservations.",
+      "verification": "human",
+      "evidence": "Local browser recording and regression tests for password access, usage admission, normal polls, failure and partial publication."
+    }
+  ],
+  "process": [
+    {
+      "id": "P1",
+      "description": "Create a new codex feature branch and commit the new plan before implementation. Preserve the old plan and feature history. Record exact test commands, handoff, source-bound evaluation, independent review and hosted CI before requesting merge.",
+      "verification": "human",
+      "evidence": "Git history, handoff, evaluator trace, independent review and CI. Integration base is origin/codex/terra-gateway-payload at d93ed547, which contains the current queue and earned-score producer. Run the required origin/main evaluation, and record the result separately if existing divergent history requires base-specific CI evidence."
+    }
+  ],
+  "styleEfficiency": [
+    {
+      "id": "E1",
+      "description": "Reuse the existing accessible modal and authenticated poll. Avoid mandatory new queries per stage, artificial stage delays and exposure of raw provider messages or merchant data.",
+      "verification": "human",
+      "evidence": "Review the integration diff, status query budget and browser output. A stage may be too short to appear active between polls."
+    }
+  ],
+  "commands": [
+    "npm run check",
+    "npm test",
+    "npm run test:exit",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build",
+    "npm run test:preview",
+    "npm run test:report-contract",
+    "npm run test:progress",
+    "npm run test:queue-progress",
+    "npm run test:backend",
+    "npm run test:browser-build"
+  ],
+  "exitTest": {
+    "required": false,
+    "reason": "The plan changes application progress reporting and presentation. It does not alter agent workflow, memory, portability, or resumability. The standard exit smoke test still runs."
+  }
+}

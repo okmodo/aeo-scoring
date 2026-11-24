@@ -4,25 +4,15 @@ import { readFileSync } from 'node:fs'
 import { buildLiveReportModel } from '../src/live-report/model.ts'
 
 test('v3 retains row coverage, component evidence and verified subtotal', () => {
-  const assessment = JSON.parse(readFileSync(new URL('../contracts/v1/examples/assessment-incomplete.json', import.meta.url)))
-  assessment.report.rubricVersion = '3.0.0'
-  assessment.report.evidence = [{ id:'e', url:'https://example.com', method:'raw', kind:'source_excerpt', observedAt:'', location:'body', excerpt:'Product' }]
-  assessment.report.criteria = [{ id:'S2', pillar:'structure', maxPoints:2, points:1, complete:false, subchecks:[{
-    id:'S2.product-markup', maxPoints:2, availablePoints:2, status:'not_measured', points:null, earnedPoints:1, fraction:null, reason:'Syntax unavailable', evidenceIds:['e'], components:[
-      { id:'S2.json-ld', maxPoints:1, availablePoints:1, status:'measured', points:1, fraction:1, reason:null, evidenceIds:['e'] },
-      { id:'S2.syntax', maxPoints:1, availablePoints:1, status:'not_measured', points:null, fraction:null, reason:'Syntax unavailable', evidenceIds:[] },
-    ]
-  }] }]
-  assessment.report.fixes = []
+  const assessment = JSON.parse(readFileSync(new URL('./fixtures/customer-copy/assessment.json', import.meta.url)))
   const model = buildLiveReportModel(assessment)
-  assert.equal(model.counts.unmeasured, 1)
-  assert.equal(model.checks.length, 1)
-  assert.equal(model.checks[0].label, 'Product markup')
-  assert.equal(model.checks[0].earnedPoints, 1)
-  assert.equal(model.checks[0].components[0].label, 'Product JSON-LD')
-  assert.equal(model.checks[0].components[0].evidence[0].id, 'e')
-  assert.equal(model.checks[0].components[1].reason, 'Syntax unavailable')
-  assert.equal(model.finalScore, null)
+  const check = model.checks.find(item => item.id === 'S1.readable-html')
+  assert.equal(check.status, 'not_measured')
+  assert.equal(check.earnedPoints, 4)
+  assert.ok(check.components.some(component => component.status === 'measured'))
+  assert.ok(check.components.some(component => component.status === 'not_measured'))
+  assert.equal(model.report.status, 'incomplete')
+
 })
 
 test('polling continues after checks complete and stops at terminal report', async () => {
@@ -62,11 +52,11 @@ test('staged and partial v3 report states render clearly', async () => {
     const assessment = JSON.parse(readFileSync(new URL('../contracts/v1/examples/assessment-incomplete.json', import.meta.url)))
     assessment.status = 'pending'; assessment.report = null; assessment.checksCompletedAt = '2026-11-23T12:00:00Z'
     assert.match(renderToStaticMarkup(React.createElement(LiveReport, {assessment, onBack() {}})), /Checks are complete.*preparing the report/)
-    assessment.status = 'incomplete'
-    assessment.report = { rubricVersion:'3.0.0', status:'incomplete', score:null, criteria:[{ id:'S2', subchecks:[{id:'S2.product-markup', status:'not_measured', points:null, earnedPoints:1, maxPoints:2, availablePoints:2, fraction:null, reason:'Waiting', evidenceIds:[], components:[{id:'S2.json-ld', status:'measured', points:1, maxPoints:1, fraction:1, reason:null, evidenceIds:[]}]}]}], evidence:[], fixes:[], coverage:{limitations:[]} }
-    const html = renderToStaticMarkup(React.createElement(LiveReport, {assessment, onBack() {}}))
-    assert.match(html, /Verified partial subtotal: 1 of 2 available points/)
-    assert.match(html, /Product JSON-LD/)
-    assert.match(html, /Final score unavailable/)
+    const partial = JSON.parse(readFileSync(new URL('./fixtures/customer-copy/assessment.json', import.meta.url)))
+    const html = renderToStaticMarkup(React.createElement(LiveReport, {assessment: partial, onBack() {}}))
+    assert.match(html, /Some tests could not be completed/)
+    assert.match(html, /Verified \+4 points so far/)
+    assert.doesNotMatch(html, /Report unavailable/)
+
   } finally { await vite.close() }
 })

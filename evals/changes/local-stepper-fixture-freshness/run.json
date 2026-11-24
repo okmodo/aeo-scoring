@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "changeId": "local-stepper-fixture-freshness",
+  "recordedAt": "2026-11-23T23:56:05.548Z",
+  "sourceCommit": "e3c262d87881a654d03b50364fda261a27c3309f",
+  "sourceDigest": "768fb2106b576d2289975b79bc03e28d98192bb0ef5e1ed5aa993066aeae852b",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 5970,
+      "outputSha256": "519ee197fcbb3dc2d62085014ebb79ce84db879f82f0892d6d6ce865900ff775"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 7733,
+      "outputSha256": "e7ed8ccbab072e52d102dfcac7e6d142629b450447e38a9f0c2407e9d3aed23d"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 205,
+      "outputSha256": "ffa0cb85096923d61fc138724708fd8439bbf10f98840fd5c3a9650b226e2a10"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "durationMs": 596,
+      "outputSha256": "2e1a02877f3b76a8d1fa0fb51b4f7371a7bab12aca8231366c6f53c727c34d84"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "durationMs": 604,
+      "outputSha256": "db3f95f12f32276abc01d7ef111ac4370010ef4ea5a9d4e8b90180df1acb1a51"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "durationMs": 248,
+      "outputSha256": "90c56beeaafbef78ce2da3698f921d4bcb0e5a292b968e6527cedb0a74c1932b"
+    },
+    {
+      "command": "npm run test:queue-progress",
+      "exitCode": 0,
+      "durationMs": 317,
+      "outputSha256": "e6b890ae084e4c5cc91e8f14bdd4e96f2290f3db60a50626e5f632b958dfb71f"
+    }
+  ]
+}

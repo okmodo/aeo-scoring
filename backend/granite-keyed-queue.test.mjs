@@ -241,6 +241,13 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   assert.equal(staged.status, 'pending');
   assert.equal(staged.report, null);
   assert.ok(staged.checksCompletedAt);
+  assert.ok(staged.progress.events.some(event => event.stage === 'retrieval' && event.status === 'completed'));
+  assert.ok(staged.progress.events.some(event => event.stage === 'preparation' && event.status === 'completed'));
+  assert.ok(staged.progress.events.some(event => event.stage === 'scoring' && event.status === 'completed'));
+  const stages=sql.prepare('SELECT state_json FROM audit_pipeline_state').get();
+  const markers=JSON.parse(stages.state_json).map(event=>event.code);
+  assert.ok(markers.indexOf('report_building') < markers.indexOf('report_incomplete'));
+  assert.ok(markers.indexOf(providerFailure || providerTimeout ? (providerTimeout ? 'model_timeout' : 'model_provider_failure') : 'judgments_validated') < markers.indexOf('report_building'));
   if (finalizeExport) {
     writeFileSync(finalizeExport.path, JSON.stringify({ time, submitted, finalizeMessage, database: finalizeExport.database }),
       { flag: 'wx', mode: 0o600 });
@@ -250,6 +257,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   assert.equal(await deliver(finalizeMessage), 'ack');
   const audit = await reportRequest();
   assert.equal(audit.checksCompletedAt, staged.checksCompletedAt);
+  assert.ok(audit.progress.revision > staged.progress.revision);
   assert.equal(Date.parse(audit.completedAt), time);
   time += 1000;
   assert.equal(await deliver(finalizeMessage), 'ack');

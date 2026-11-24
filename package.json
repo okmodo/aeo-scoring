@@ -22,7 +22,11 @@
     "test:browser-build": "npm --prefix backend ci --ignore-scripts --no-audit --no-fund && node scripts/browser-build-check.mjs",
     "test:granite-binary": "node --test test/granite-binary-harness.test.mjs",
     "test:component-publication": "node --test backend/component-publication.test.mjs test/durable-results-frontend.test.mjs",
-    "test:granite-keyed-queue": "node --test backend/granite-keyed-queue.test.mjs"
+    "test:granite-keyed-queue": "node --test backend/granite-keyed-queue.test.mjs",
+    "test:report-contract": "node --test test/live-report.test.mjs test/report-contract.test.mjs test/durable-results-frontend.test.mjs",
+    "test:progress": "node --test test/audit-progress.test.mjs",
+    "test:queue-progress": "node --test test/queue-progress.test.mjs",
+    "test:backend": "npm --prefix backend ci --ignore-scripts --no-audit --no-fund && node --test backend/*.test.mjs"
   },
   "dependencies": {
     "parse5": "^7.3.0",

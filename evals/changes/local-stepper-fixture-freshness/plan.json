@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "local-stepper-fixture-freshness",
+  "task": "Keep local queue review operational after the fixture server has been running longer than the allowance snapshot freshness window.",
+  "scope": ["scripts/local-progress-review.mjs", "test/queue-progress.test.mjs", "evals/changes/local-stepper-fixture-freshness/**"],
+  "nonGoals": ["Production changes, live provider calls, password changes, changes to allowance validation, reservation limits, or cache behavior."],
+  "outcomes": [{"id":"O1","description":"An authenticated local submission after fixture evidence would have expired is accepted and runs through persisted queue progress to a report.","verification":"automated","evidence":"Clock-controlled queue integration regression after the five-minute window and across a UTC day/month boundary."}],
+  "process": [{"id":"P1","description":"Commit the corrective plan before implementation and update the existing feature PR with source-bound evidence.","verification":"human","evidence":"Git history, evaluation, local container verification and independent review."}],
+  "styleEfficiency": [{"id":"E1","description":"Refresh synthetic metrics at the fixture boundary and reuse the existing test guard, caps and ledger.","verification":"human","evidence":"Scoped diff and queue integration tests."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run lint", "npm run typecheck", "npm run build", "npm run test:queue-progress"],
+  "exitTest": {"required":false,"reason":"This corrects fixture input timestamps and adds a runtime regression, with no agent workflow or portability changes."}
+}
