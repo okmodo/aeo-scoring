@@ -1,0 +1,5 @@
+{"timestamp":"2026-11-24T23:19:43.453Z","tool":"npm","action":"npm run check","durationMs":13924,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T23:19:57.378Z","tool":"npm","action":"npm test","durationMs":7936,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T23:20:05.314Z","tool":"npm","action":"npm run test:exit","durationMs":381,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T23:20:05.696Z","tool":"npm","action":"npm run test:granite-keyed-queue","durationMs":446,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T23:20:06.142Z","tool":"npm","action":"npm run test:component-publication","durationMs":500,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}

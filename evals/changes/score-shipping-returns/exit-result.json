@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "score-shipping-returns",
+  "sourceDigest": "5cc12c26883f1bd621b56a8f0e7619b7facc37e3f276c99b40b84592c0c68ac3",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/policies_release_exit",
+  "exportSha256": "73f8e84f82b9bd34412727a1eef45941349dd9d0f3664f6367fe7079ec5a53f4",
+  "interruptionPoint": "The local queued audit stopped with the programmatic policy results checkpointed before report publication.",
+  "observedContinuation": "A fresh Terra agent resumed the exported audit. Shipping scored 3/3 with product-page evidence and returns scored 2/2 with linked policy evidence. D1 agreed with the report, duplicate finalization left the results intact, and no new domain or model calls were made.",
+  "limitations": "Resume used a synthetic fixture and local SQLite. A separate workerd replay used the retained Bear Butt capture and saved returns policy response with simulated inference."
+}
