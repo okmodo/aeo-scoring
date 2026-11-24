@@ -1,0 +1,4 @@
+{"timestamp":"2026-11-24T01:47:12.192Z","tool":"npm","action":"npm run check","durationMs":14893,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:47:27.086Z","tool":"npm","action":"npm test","durationMs":8619,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:47:35.706Z","tool":"npm","action":"npm run test:exit","durationMs":414,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:47:36.121Z","tool":"npm","action":"npm run test:granite-keyed-queue","durationMs":470,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
