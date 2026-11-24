@@ -44,7 +44,6 @@ test('submission, polling, and cache reuse match the frozen service responses', 
       assert.equal(input.url, pending.submittedUrl);
       assert.match(input.rateKey, /^[a-f0-9]{64}$/);
       assert.match(input.cacheKey, /^[a-f0-9]{64}$/);
-      assert.equal(input.limit, 5);
       assert.equal(input.globalLimit, 60);
       if (audit?.status === 'incomplete') return {kind:'cached', audit};
       audit = {...fixtureAudit};

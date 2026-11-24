@@ -3,8 +3,7 @@ import {PREPARED_ASSESSMENT_POLICY} from './prepared-assessment-policy.mjs';
 // A D1 batch is transactional; the quota check and admission commit together.
 const ADMIT = `INSERT INTO audit_admissions (id, rate_key, created_at)
 SELECT ?1, ?2, ?3
-WHERE (SELECT COUNT(*) FROM audit_admissions WHERE rate_key = ?2 AND created_at >= ?4 AND created_at < ?5) < ?6
-  AND (SELECT COUNT(*) FROM audit_admissions WHERE created_at >= ?4 AND created_at < ?5) < ?7`;
+WHERE (SELECT COUNT(*) FROM audit_admissions WHERE created_at >= ?4 AND created_at < ?5) < ?6`;
 const CACHE = `SELECT * FROM audits WHERE cache_key = ?1 AND status IN ('complete', 'incomplete')
   AND cache_until > ?2 AND expires_at >= ?2 AND report_json IS NOT NULL
   ORDER BY completed_at DESC LIMIT 1`;
@@ -24,13 +23,13 @@ function audit(row, now, preparedPending = false) {
 
 export function createStore(db,{policyVersion=PREPARED_ASSESSMENT_POLICY,queueEnabled=false}={}) {
   return {
-    async reserve({ id, url, cacheKey, rateKey, now, expiresAt, windowStart, windowEnd, limit, globalLimit, leaseMs = LEASE_MS }) {
-      if (![now, expiresAt, windowStart, windowEnd, limit, globalLimit].every(Number.isSafeInteger) ||
-          !id || !url || !cacheKey || !rateKey || ![LEASE_MS,120000].includes(leaseMs) || expiresAt <= now || windowStart !== Math.floor(now / 3_600_000) * 3_600_000 || windowEnd !== windowStart + 3_600_000 || limit < 1 || globalLimit < 1) {
+    async reserve({ id, url, cacheKey, rateKey, now, expiresAt, windowStart, windowEnd, globalLimit, leaseMs = LEASE_MS }) {
+      if (![now, expiresAt, windowStart, windowEnd, globalLimit].every(Number.isSafeInteger) ||
+          !id || !url || !cacheKey || !rateKey || ![LEASE_MS,120000].includes(leaseMs) || expiresAt <= now || windowStart !== Math.floor(now / 3_600_000) * 3_600_000 || windowEnd !== windowStart + 3_600_000 || globalLimit < 1) {
         throw new TypeError('Invalid reservation');
       }
       const results = await db.batch([
-        db.prepare(ADMIT).bind(id, rateKey, now, windowStart, windowEnd, limit, globalLimit),
+        db.prepare(ADMIT).bind(id, rateKey, now, windowStart, windowEnd, globalLimit),
         db.prepare(`INSERT INTO audits (id, url, cache_key, status, created_at, expires_at, lease_ms)
           SELECT ?1, ?2, ?3, 'pending', ?4, ?5, ?6
           WHERE EXISTS (SELECT 1 FROM audit_admissions WHERE id = ?1)

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Remove the per-IP audit submission cap.",
+  "state": "Implemented in an isolated worktree from release merge 79cd4e3. Production unchanged.",
+  "decisions": ["Remove the per-client SQL admission predicate and its service parameter. Keep the shared quota, existing admission rows, transactional accounting and rate-key storage for compatibility."],
+  "constraints": ["Retain the 60-submission shared hourly cap, cache behavior, Cloudflare usage limits and CPU cap. No frontend, parser or schema changes."],
+  "completed": ["The SQLite-backed store test admitted 60 requests with the same client key, including the sixth, and rejected the 61st. Existing service and queue tests confirmed unchanged cache and allowance handling."],
+  "remaining": ["Merge and deploy only after authorization."],
+  "resumeCommands": ["node --test backend/store.test.mjs backend/service.test.mjs backend/granite-keyed-queue.test.mjs","npm run evaluate -- --change remove-ip-audit-quota --base origin/codex/terra-gateway-payload"]
+}
