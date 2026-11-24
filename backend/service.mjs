@@ -13,7 +13,7 @@ import { createR2AllowanceGuard } from './allowance-r2.mjs';
 import { createBrowserWorkflow } from './browser-workflow.mjs';
 import { createBrowserContentWorkflow, BROWSER_CONTENT_VERSION as BROWSER_RETRIEVAL_VERSION } from './browser-content-workflow.mjs';
 import { assessRetainedRubric, OPEN_RUBRIC_RELEASE_ID } from './ai-rubric-assessment.mjs';
-import { PREPARED_ASSESSMENT_POLICY, preparedAssessmentPolicy, configuredAssessmentProvider, keyedGraniteEnabled } from './prepared-assessment-policy.mjs';
+import { PREPARED_ASSESSMENT_POLICY, KEYED_GRANITE_ASSESSMENT_POLICY, preparedAssessmentPolicy, configuredAssessmentProvider, keyedGraniteEnabled } from './prepared-assessment-policy.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 
 const ROUTE = '/api/v1/audits';
@@ -121,7 +121,10 @@ function hex(bytes) {
 }
 
 async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false, policyVersion = PREPARED_ASSESSMENT_POLICY, queued = false) {
-  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion + (queued ? ':queue-v1' : '') : '') + ':' + url)));
+  // The stored-answer rollout changes report scoring without changing the
+  // identity of prepared jobs that may still need to resume.
+  const scoringRevision = browser && queued && policyVersion === KEYED_GRANITE_ASSESSMENT_POLICY ? ':direct-granite-answers-v1' : '';
+  return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion + (queued ? ':queue-v1' : '') : '') + scoringRevision + ':' + url)));
 }
 
 async function rateKey(secret, address, windowStart) {

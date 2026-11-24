@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Separate cached reports graded by the old Granite validator from new submissions.",
+  "state": "Worktree codex/refresh-scoring-cache based on 9cabb10. No production changes.",
+  "decisions": ["Change only the queued keyed-Granite cache fingerprint. Keep existing audit IDs readable and retain the same cache duration, credit rules and job policy."],
+  "constraints": ["Preserve parser, frontend, D1 schema, limits, unrelated Cloudflare services, and active Worker settings."],
+  "completed": ["Production D1 showed an admission after the PR #77 deployment without a new audit. The regression reproduced the old cache hit by seeding a report under the prior fingerprint, then verified that the revised code queues a fresh audit, caches the new result and still serves the historical report."],
+  "remaining": ["Deploy only after the new PR is reviewed, green and authorized for rollout."],
+  "resumeCommands": ["node --test --test-name-pattern='legacy cached' backend/granite-keyed-queue.test.mjs","npm run evaluate -- --change refresh-scoring-cache --base origin/codex/terra-gateway-payload"]
+}
