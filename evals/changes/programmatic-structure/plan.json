@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "programmatic-structure",
+  "task": "Score five Product JSON-LD and three domain-resource report checks independently of Granite.",
+  "scope": ["backend/**", "evals/changes/programmatic-structure/**"],
+  "nonGoals": ["No changes to parser, prepared artifact format, front end, production, CPU cap, model timeout, or usage limits.", "No secondary product-page fetch. Domain inspection is limited to robots.txt, sitemap resources, and llms.txt."],
+  "outcomes": [
+    {"id":"O1","description":"Score rendered Product markup and supported product comparisons from the existing prepared artifact without AI.","verification":"automated","evidence":"Focused scorer regression tests and replay of an unchanged retained Faherty artifact."},
+    {"id":"O2","description":"Score robots, sitemap, and llms.txt observations independently and publish available programmatic results in the existing D1 result schema.","verification":"automated","evidence":"Queue and D1 results when Granite is unavailable, plus bounded resource-inspection coverage."}
+  ],
+  "process": [{"id":"P1","description":"Obtain Terra implementation and independent review, run local testing and hosted CI, and preserve production.","verification":"human","evidence":"Source-bound evaluation record, independent review, and handoff."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the retained input reader, current result writer, source validation, support inspector and usage admission.","verification":"human","evidence":"Scoped implementation diff and reviewer findings."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:granite-keyed-queue", "npm run test:component-publication"],
+  "exitTest": {"required":true,"reason":"The scoring work must survive queue redelivery and an independent continuation must verify retained programmatic findings."}
+}
