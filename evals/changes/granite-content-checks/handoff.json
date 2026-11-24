@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "task": "Assess four content checks in the existing Granite request.",
+  "state": "Branch codex/granite-content-checks from b044805. No production changes.",
+  "decisions": [
+    "Keep one Granite inference and the keyed pass/fail, reason, and evidence ID fields. Version the 15-question payload and report cache independently of the job policy.",
+    "Use category-specific guidance when relevant and allow a free-form product category. Select material, size, care, restrictions, and comparison facts from existing prepared observations.",
+    "Use supplemental observations only for a uniquely named product-details section in a complete source region when UI markers do not make its scope uncertain. Limit only supplemental facts to fit the existing byte cap.",
+    "Publish available answers, reasons, and citations from existing D1 tables. Do not perform a second assessment of Granite answers."
+  ],
+  "constraints": ["No parser, schema, frontend, provider settings, Cloudflare production, or budget changes."],
+  "completed": ["The native local Bear Butt replay used hash-verified retained prepared and snapshot data, one simulated inference, and zero live inference. The payload was 22,381 bytes, D1 recorded 15 answers, and all 39 components matched the report. The simulated report earned 38 points with 12 of 24 rows measured."],
+  "remaining": ["The local replay tests evidence selection, storage and delivery. Live model performance and production runtime remain unverified."],
+  "resumeCommands": ["npm run test:granite-keyed-queue","npm run test:component-publication","npm run evaluate -- --change granite-content-checks --base origin/codex/terra-gateway-payload"]
+}

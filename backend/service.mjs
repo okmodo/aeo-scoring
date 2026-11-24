@@ -123,7 +123,7 @@ function hex(bytes) {
 async function cacheKey(url, semanticEnabled = false, calibrated = CONTENT_FACTS_CALIBRATION_APPROVED, retained = false, openRubric = false, browser = false, policyVersion = PREPARED_ASSESSMENT_POLICY, queued = false) {
   // The stored-answer rollout changes report scoring without changing the
   // identity of prepared jobs that may still need to resume.
-  const scoringRevision = browser && queued && policyVersion === KEYED_GRANITE_ASSESSMENT_POLICY ? ':direct-granite-answers-v1' : '';
+  const scoringRevision = browser && queued && policyVersion === KEYED_GRANITE_ASSESSMENT_POLICY ? ':granite-content-checks-v1' : '';
   return hex(await crypto.subtle.digest('SHA-256', encoding.encode('audit-v1:rubric-' + RUBRIC_VERSION + ':categories-1.2:scoring-' + ENGINE_VERSION + ':content-facts-1.0.0:ai-' + (semanticEnabled ? '1' : '0') + ':calibrated-' + (calibrated ? '1:' + CONTENT_FACTS_RELEASE_ID : '0') + ':pipeline-' + (retained ? PIPELINE_VERSION : 'legacy') + ':open-rubric-' + (openRubric ? OPEN_RUBRIC_RELEASE_ID : 'off') + (browser ? ':retrieval-' + BROWSER_RETRIEVAL_VERSION + ':assessment-' + policyVersion + (queued ? ':queue-v1' : '') : '') + scoringRevision + ':' + url)));
 }
 

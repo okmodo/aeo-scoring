@@ -1,11 +1,13 @@
 import rubric from '../config/rubric.v2.json' with { type: 'json' };
+import categories from '../config/categories.v1.2.json' with { type: 'json' };
 import { prepareBinaryBenchmark, runBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
 import { createGraniteResponseStore, retryModelWrite } from '../scripts/granite-response-store.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
 
 const encoder = new TextEncoder();
 const checkpoint = 'granite-keyed';
-const attempt = ({ fixture, inputDigest }) => `granite-queue-${fixture.capture.auditId}-${inputDigest}`;
+const attemptPrefix = auditId => 'granite-queue-' + auditId;
+const attempt = ({ fixture, inputDigest }) => attemptPrefix(fixture.capture.auditId) + '-' + inputDigest;
 const fail = code => Object.assign(new Error(code), { code });
 const digest = async value => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value))),
   byte => byte.toString(16).padStart(2, '0')).join('');
@@ -119,7 +121,45 @@ function salePriceQuote(tags, item) {
   return compact(match[1].replace(/<\/?span(?:\s[^<>]*)?>/gi, '')) === compact(item.text) ? ref : null;
 }
 
-export async function prepareKeyedAudit(auditId, input, derived) {
+// Category guidance is supplied to the same model call as the product evidence.
+// Unknown categories use the generic rule rather than an unrelated template.
+const categoryGuide = field => categories.categories.map(category => {
+  const values = category[field].map(attribute => `${attribute.label}: ${attribute.full}${attribute.condition ? ` (when ${attribute.condition})` : ''}`).join('; ');
+  return `${category.name} (${category.scope}): ${values}`;
+}).join(' | ');
+const limitationGuide = categories.categories.map(category => {
+  const rule = category.decisionSupport.find(item => item.subcheckId === 'C4.limitations');
+  return `${category.name}: ${rule.full} Condition: ${rule.condition}`;
+}).join(' | ');
+const contentRules = {
+  'C2.essential': `Identify the primary product category from its evidence. For a matching category, pass only when its essential attributes are explicitly specified for the product or selected variant: ${categoryGuide('essentialAttributes')}. For other categories, pass only when the important identifying specifications for that product type are explicit. Do not infer missing values.`,
+  'C2.supporting': `Identify the primary product category from its evidence. For a matching category, pass when the relevant supporting attributes are specifically disclosed: ${categoryGuide('supportingAttributes')}. For other categories, assess the relevant supporting specifications for that product type. Specific applicable care is sufficient for the care portion. Do not require drying instructions or repeat essential specifications. Do not infer missing values.`,
+  'C4.limitations': `Assess product-specific limitations or exclusions, taking the category and claims into account: ${limitationGuide}. For other categories, require an applicable specific restriction or boundary. Do not infer an absent limitation.`,
+  'C5.consistency': 'Pass only if there is sufficient comparable evidence about the same product and configuration and no material contradiction. Fail for a material contradiction or insufficient comparable evidence. Do not treat differences between variants or equivalent units as contradictions. In evidenceIds cite the two distinct observations you compared, and describe their agreement or conflict in the reason.',
+  'C5.claim-support': 'Pass only when material product claims are supported or appropriately qualified by relevant product evidence. Fail when support is missing, incomplete, contradicted, or the evidence is insufficient to assess the claims. Distinguish specific claims from ordinary descriptive facts. Cite the material claim first and a separate supporting, qualifying, or contradicting observation second when available. Repetition of a claim is not support.',
+};
+
+const ambiguousProductUi = /\brole\s*=\s*["']?dialog\b|bopis|store[-_ ]?pickup|pickup[-_ ]?availability|quick[-_ ]?(?:add|buy)|wishlist|store[-_ ]?locator|\b(?:id|class|role)\s*=\s*(?:"[^"]*&#|'[^']*&#|[^\s>]*&#)/i;
+
+function namedProductDetails(productHtml, name, renderedHtml) {
+  const source = productHtml.sourceObservation;
+  // The source observation lacks ancestry for these UI markers. Keep the
+  // primary-region quotes only when a supplemental section might include one.
+  if (!source?.complete || source.regions !== 1 || ambiguousProductUi.test(renderedHtml)) return [];
+  const normalized = value => value.toLowerCase().replace(/\s+/g, ' ').trim();
+  const labels = new Set([normalized(name), normalized(name.split(/\s+[|–—-]\s+/)[0])]);
+  const ordinal = item => Number(/^html:element:(\d+)$/.exec(item.location)?.[1]);
+  const headings = productHtml.headings ?? [];
+  const sections = (source.headings ?? []).filter(heading => heading.level > 1 && labels.has(normalized(heading.text)
+    .replace(/ (?:product description|product details|product specifications|specifications)$/, '')) &&
+    / (?:description|details|specifications)$/i.test(heading.text));
+  if (sections.length !== 1) return [];
+  const start = ordinal(sections[0]);
+  const end = Math.min(start + 80, ...headings.map(ordinal).filter(value => value > start));
+  return (source.blocks ?? []).filter(block => ordinal(block) > start && ordinal(block) < end);
+}
+
+export async function prepareKeyedAudit(auditId, input, derived, { legacy = false } = {}) {
   const { snapshot, extracted, source } = input;
   const bundle = await prepareAssessmentSources(snapshot, extracted);
   if (!bundle.coverage.preparedHtml || !bundle.coverage.complete || !derived) throw fail('invalid_prepared_input');
@@ -200,15 +240,51 @@ export async function prepareKeyedAudit(auditId, input, derived) {
 
   }
 
-  const questions = Object.entries(policies).map(([id, passKinds]) => ({
-    id, passRule: questionRules[id] ?? rubricChecks.get(id).full, passKinds,
-    eligibleEvidenceIds: evidence.filter(item => passKinds.includes(item.kind) ||
-      (id === 'C1.configuration' && item.kind === 'observed_option')).slice(0, 8).map(item => item.id),
-  }));
+  if (!legacy && primaryName) {
+    // Use the primary product region and a uniquely named description section
+    // from the complete source observation. Keep exact prepared quotations.
+    const baseCount = evidence.length;
+    const primaryFacts = scoped.filter(item => /^(?:p|li|dt|dd)$/.test(item.tag));
+    const namedFacts = namedProductDetails(derived.productHtml, primaryName, snapshot.browser.renderedHtml);
+    const productFacts = [...primaryFacts.slice(0, 6), ...namedFacts, ...primaryFacts.slice(6)];
+    for (const item of productFacts) {
+      if (evidence.length - baseCount >= 24) break;
+      if (item.text.length <= 500 &&
+          !/\b(?:returns?|shipping|reviews?|find a store|pickup)\b/i.test(item.text)) {
+        add('product_fact', item.text);
+      }
+    }
+  }
+  const newPolicies = { ...policies,
+    'C2.essential': ['product_fact'], 'C2.supporting': ['product_fact'],
+    'C4.limitations': ['product_fact'], 'C5.consistency': ['product_fact'],
+    'C5.claim-support': ['product_fact'] };
   const categoryEvidenceIds = evidence.filter(item => item.kind === 'heading').map(item => item.id);
-  const fixture = { capture: { auditId, sha256: source.preparedHash }, sources: productSources, evidence, questions,
-    ...(categoryEvidenceIds.length ? { categoryEvidenceIds } : {}) };
-  const benchmark = prepareBinaryBenchmark(fixture);
+  const factIds = evidence.filter(item => item.kind === 'product_fact').map(item => item.id);
+  function makeFixture(factLimit) {
+    const questions = Object.entries(legacy ? policies : newPolicies).map(([id, passKinds]) => ({
+      id, passRule: (!legacy && contentRules[id]) || questionRules[id] || rubricChecks.get(id).full, passKinds,
+      eligibleEvidenceIds: !legacy && contentRules[id]
+        ? [...categoryEvidenceIds, ...factIds.slice(0, factLimit)]
+        : evidence.filter(item => passKinds.includes(item.kind) ||
+          (id === 'C1.configuration' && item.kind === 'observed_option')).slice(0, 8).map(item => item.id),
+    }));
+    const selected = new Set(questions.flatMap(question => question.eligibleEvidenceIds));
+    return { ...(!legacy ? { requestVersion: 3 } : {}), capture: { auditId, sha256: source.preparedHash },
+      sources: productSources, evidence: legacy ? evidence : evidence.filter(item => selected.has(item.id)), questions,
+      ...(categoryEvidenceIds.length ? { categoryEvidenceIds } : {}) };
+  }
+  let limit = factIds.length;
+  let fixture = makeFixture(limit), benchmark;
+  for (;;) {
+    try { benchmark = prepareBinaryBenchmark(fixture); break; }
+    catch (error) {
+      if (legacy || !(error instanceof RangeError) || error.message !== 'request_limit' || !limit) throw error;
+      // Reduce only the additional facts. Existing questions retain their evidence.
+      limit = Math.floor(limit / 2);
+      fixture = makeFixture(limit);
+    }
+  }
   const inputDigest = await digest(JSON.stringify([source.preparedHash, benchmark.body, benchmark.questions]));
   return { input, bundle, fixture, benchmark, inputDigest };
 }
@@ -245,7 +321,7 @@ async function storedAssessment(prepared, store, output) {
 
 async function retainedOutput(prepared, store) {
   const saved = await store.read(attempt(prepared));
-  if (!saved || saved.prepared_hash !== prepared.fixture.capture.sha256 || saved.response_schema_version !== 2 ||
+  if (!saved || saved.prepared_hash !== prepared.fixture.capture.sha256 || saved.response_schema_version !== prepared.benchmark.responseSchemaVersion ||
       !['received', 'complete', 'incomplete'].includes(saved.status) || !saved.response_body_base64 || saved.response_truncated ||
       !['response_received', 'model_output_invalid'].includes(saved.outcome) ||
       !(saved.http_status >= 200 && saved.http_status < 300)) return null;
@@ -275,19 +351,28 @@ async function retainedOutput(prepared, store) {
   } catch { return null; }
 }
 
+async function prepareForExistingAttempt(db, auditId, input, derived) {
+  const prefix = attemptPrefix(auditId);
+  const saved = await db.prepare(`SELECT response_schema_version FROM model_attempts
+    WHERE attempt_id>=?1 AND attempt_id<?2 AND prepared_hash=?3 ORDER BY created_at DESC LIMIT 1`)
+    .bind(prefix + '-', prefix + '.', input.source.preparedHash).first();
+  return prepareKeyedAudit(auditId, input, derived, { legacy: saved?.response_schema_version === 2 });
+}
+
 export async function recoverKeyedAuditAssessment({ db, auditId, input, derived }) {
-  const prepared = await prepareKeyedAudit(auditId, input, derived);
+  const prepared = await prepareForExistingAttempt(db, auditId, input, derived);
   const store = createGraniteResponseStore(db);
   const output = await retainedOutput(prepared, store);
   return output ? storedAssessment(prepared, store, output) : null;
 }
 
 export async function runKeyedPreparedAudit({ env, auditId, input, derived, jobs, grant, allowance, now, fetch }) {
-  const prepared = await prepareKeyedAudit(auditId, input, derived);
+  const db = env.AUDIT_DB;
+  const existing = await jobs.checkpointRead(grant, checkpoint);
+  const prepared = existing ? await prepareForExistingAttempt(db, auditId, input, derived) : await prepareKeyedAudit(auditId, input, derived);
   const fixture = prepared.fixture;
   const expected = prepared.inputDigest;
-  const store = createGraniteResponseStore(env.AUDIT_DB);
-  const existing = await jobs.checkpointRead(grant, checkpoint);
+  const store = createGraniteResponseStore(db);
   if (existing) {
     if (existing.inputDigest !== expected) throw fail('checkpoint_input_mismatch');
     if (existing.status === 'completed') return storedAssessment(prepared, store, existing.output);

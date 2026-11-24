@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "granite-content-checks",
+  "sourceDigest": "d6013036f3741d177cf653179fc551d41f72bb57b0367d138930a785281c803d",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/content_checks_final_exit",
+  "exportSha256": "b535cf926357d616665c50eabd8b30130e6d8baebb154f73e2d94df98df7b869",
+  "interruptionPoint": "Two local queued audits were stopped after raw model capture but before normalizing question rows. One export used the previous deployed 13-question request, the other used the new 15-question request. The export hash covers the two handoff state files in that order.",
+  "observedContinuation": "A fresh Terra agent ran both exported fixtures. Each passed, publishing its 13 or 15 stored answers with zero new model or domain requests.",
+  "limitations": "The continuation uses a synthetic capture and local SQLite storage. A separate offline workerd replay used the retained Bear Butt capture, with simulated inference and domain responses."
+}
