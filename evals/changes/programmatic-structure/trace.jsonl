@@ -1,5 +1,5 @@
-{"timestamp":"2026-11-24T00:56:22.730Z","tool":"npm","action":"npm run check","durationMs":14346,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
-{"timestamp":"2026-11-24T00:56:37.077Z","tool":"npm","action":"npm test","durationMs":8823,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
-{"timestamp":"2026-11-24T00:56:45.901Z","tool":"npm","action":"npm run test:exit","durationMs":426,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
-{"timestamp":"2026-11-24T00:56:46.327Z","tool":"npm","action":"npm run test:granite-keyed-queue","durationMs":396,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
-{"timestamp":"2026-11-24T00:56:46.724Z","tool":"npm","action":"npm run test:component-publication","durationMs":550,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:15:21.068Z","tool":"npm","action":"npm run check","durationMs":14655,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:15:35.724Z","tool":"npm","action":"npm test","durationMs":8690,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:15:44.414Z","tool":"npm","action":"npm run test:exit","durationMs":401,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:15:44.815Z","tool":"npm","action":"npm run test:granite-keyed-queue","durationMs":387,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
+{"timestamp":"2026-11-24T01:15:45.202Z","tool":"npm","action":"npm run test:component-publication","durationMs":540,"exitCode":0,"authorized":true,"realEvidence":true,"sideEffects":["local-test-artifacts"]}
