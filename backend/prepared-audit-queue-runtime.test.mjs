@@ -47,7 +47,7 @@ test('queued audit progresses through durable model checkpoints without an open 
       return Response.json({success:true,result:{response:JSON.stringify(output.response),usage:{prompt_tokens:100,completion_tokens:100,neurons:5}}});
     };
     const env={AUDIT_DB:db,AUDIT_USAGE_READ_TOKEN:'fixture',AUDIT_SNAPSHOTS:{},AUDIT_BROWSER:{},AUDIT_QUEUE_MODE:'enabled',AUDIT_QUEUE:{send:async body=>messages.push(structuredClone(body))},AUDIT_AI_PROVIDER:'granite',AUDIT_AI_GATEWAY_TOKEN:'fixture',AUDIT_RUBRIC_RELEASE:OPEN_RUBRIC_RELEASE_ID,AUDIT_CONTENT_RELEASE:CONTENT_FACTS_RELEASE_ID,AUDIT_PIPELINE_RELEASE:PIPELINE_VERSION};
-    const runtime=createAuditQueueRuntime(env,{now,allowance,queueAllowance:{reserve:async()=>({accepted:true,duplicate:false})},workflow,snapshots,
+    const runtime=createAuditQueueRuntime(env,{now,allowance,queueAllowance:{reserve:async()=>({accepted:true,duplicate:false})},workflow,snapshots,inspectDomain:async()=>({}),
       derive:input=>derivePreparedObservations(input,{HTMLRewriter:HtmlTestRewriter}),
       assess:options=>runPreparedAudit({...options,fetch:fetchImpl})});
     const policyVersion=preparedAssessmentPolicy('granite');
