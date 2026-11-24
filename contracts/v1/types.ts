@@ -1,3 +1,5 @@
+import type { AuditProgress } from '../progress.mjs'
+
 // The backend owns this proposed wire contract. Keep frontend view models separate.
 export type AssessmentStatus = 'pending' | 'complete' | 'incomplete' | 'unable_to_assess'
 export type CheckStatus = 'measured' | 'not_measured' | 'not_applicable'
@@ -92,6 +94,7 @@ export interface Assessment {
   id: string
   status: AssessmentStatus
   statusUrl: string
+  progress?: AuditProgress
   submittedUrl: string
   assessedUrl: string | null
   createdAt: string

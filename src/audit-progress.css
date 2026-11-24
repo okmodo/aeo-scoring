@@ -1,0 +1,31 @@
+.audit-progress { width: min(680px, calc(100vw - 40px)); max-width: none; max-height: calc(100dvh - 40px); margin: auto; padding: 0; overflow-y: auto; border: 1px solid #d6d7e3; border-radius: 10px; background: #fff; color: #081334; box-shadow: 0 24px 80px #08133440; }
+.audit-progress::backdrop { background: #08133480; backdrop-filter: blur(2px); }
+.audit-progress-card { padding: clamp(24px, 4vw, 36px); }
+.audit-progress-eyebrow { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+.audit-progress h1 { margin: 20px 0 12px; font-size: clamp(30px, 4vw, 40px); line-height: 1.1; letter-spacing: -.04em; }
+.audit-progress p { color: #5b6173; line-height: 1.6; }
+.audit-progress-spinner { width: 18px; height: 18px; border: 2px solid #dedfeb; border-top-color: #081334; border-radius: 50%; animation: audit-spin 1s linear infinite; }
+.audit-progress-track { overflow: hidden; height: 6px; margin: 20px 0; background: #eeedff; border-radius: 8px; }
+.audit-progress-track span { display: block; width: 35%; height: 100%; background: #081334; border-radius: inherit; animation: audit-travel 2s ease-in-out infinite alternate; }
+.audit-progress-steps { list-style: none; padding: 0; margin: 0; }
+.audit-progress-steps li { display: flex; align-items: flex-start; gap: 16px; padding: 12px 0; border-bottom: 1px solid #eeedf3; }
+.audit-progress-steps li:last-child { border-bottom: 0; }
+.audit-progress-number { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border: 1px solid #d6d7e3; border-radius: 50%; background: #f0efff; font-size: 14px; font-weight: 700; }
+.audit-progress-steps h2 { margin: 2px 0 4px; font-size: 18px; line-height: 1.4; }
+.audit-progress-steps p { margin: 0; font-size: 14px; }
+.audit-progress .audit-progress-note { font-size: 13px; margin: 20px 0 0; }
+.audit-progress-cancel { display: inline-block; margin-top: 24px; padding: 12px 18px; color: #081334; background: #f0efff; border: 1px solid #d6d7e3; border-radius: 4px; cursor: pointer; font: inherit; }
+.audit-progress-cancel:hover { background: #e4e2ff; }
+.audit-progress-cancel:focus-visible { outline: 2px solid #081334; outline-offset: 4px; }
+.audit-completion { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 20px; padding: 16px max(24px, calc((100% - 1200px)/2)); background: #eeedff; color: #081334; font-size: 14px; line-height: 1.5; }
+.audit-completion span { flex: 1 1 250px; }
+.audit-completion-failed { background: #f5e3db; }
+@keyframes audit-spin { to { transform: rotate(360deg); } }
+@keyframes audit-travel { from { transform: translateX(-100%); } to { transform: translateX(285%); } }
+@media (max-width: 480px) { .audit-progress { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } .audit-progress-card { padding: 24px 20px; } }
+@media (prefers-reduced-motion: reduce) { .audit-progress-spinner, .audit-progress-track span { animation: none; } .audit-progress-track span { width: 100%; opacity: .35; } }
+.audit-progress-steps .audit-stage-status { margin-top: 4px; font-weight: 700; color: #505a72; }
+.audit-progress-steps .stage-running .audit-progress-number, .audit-progress-steps .stage-active .audit-progress-number { background: #081334; color: white; }
+.audit-progress-steps .stage-completed .audit-progress-number { background: #d8efdf; }
+.audit-progress-steps .stage-skipped .audit-progress-number { background: #f4ecd8; }
+.audit-progress-steps .stage-failed .audit-progress-number { background: #f5dcd8; }

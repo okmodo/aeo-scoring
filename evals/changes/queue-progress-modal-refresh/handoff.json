@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "task": "Show durable queue progress in the audit modal and deploy to the local review container.",
+  "state": "Implemented on codex/queue-progress-modal-refresh, based on d93ed547 (the queue and rubric v3 engine integration branch). Existing Docker review at http://127.0.0.1:4382 uses a loopback fixture service on port 4383.",
+  "decisions": [
+    "Use authenticated audit status polling and fixed public progress fields projected from the queue, validated capture, preparation readiness, and report assembly and publication state.",
+    "Complete Page download only after a usable capture. Complete Score Card Building after durable check staging or report publication. A published complete or incomplete report closes the modal.",
+    "Retain the current grouped report from main and the engine's existing verified earned-score semantics and component findings.",
+    "Use a new plan and integration branch. Preserve the earlier modal PR and backend history."
+  ],
+  "constraints": [
+    "Keep production credentials, Worker and Pages deployments, scoring logic, allowance reservations, and the 1000 ms CPU cap intact.",
+    "Use fictional page and model responses in local review. The browser bridge routes audit calls to local nginx, which proxies to the real queue code with an offline SQLite adapter.",
+    "The fixture illustrates an incomplete rubric v3 report with earned points. Complete publication and verified exclusions are covered by existing frozen report and engine tests."
+  ],
+  "completed": [
+    "Terra agents implemented the queue, frontend, and offline integration tests. The new plan was committed before changes.",
+    "Observed Page download, AI Review, and Score Card Building active in the local browser. Data extraction was attributed to durable readiness and advanced between polls. A published partial report closed the modal and displayed its 24 tests in seven groups with an earned score.",
+    "Verified local password rejection and unlock. Progress joins and markers stay inside existing request reservations.",
+    "Independent review verified the separation between durable scoring and report publication. Prior audit coverage, model timeout and queue policy remain in place."
+  ],
+  "remaining": [
+    "Hosted CI and an independent review of the final PR are required before any authorized merge. Public deployment requires separate authorization."
+  ],
+  "resumeCommands": [
+    "npm run evaluate -- --change queue-progress-modal-refresh --base origin/main",
+    "npm run evaluate -- --change queue-progress-modal-refresh --base origin/codex/terra-gateway-payload",
+    "npm run ci:gate -- origin/codex/terra-gateway-payload",
+    "npm run build",
+    "node scripts/local-progress-container.mjs dist /private/tmp/aeo-business-report-container/site",
+    "node scripts/local-progress-review.mjs"
+  ],
+  "evidenceLimitations": [
+    "Evaluator traces cover named local commands. Browser, Docker, and agent observations are summarized separately. No token or cost telemetry was available.",
+    "Local dependencies replace the capture and model providers with fixtures. Production end-to-end latency and model quality were not measured."
+  ]
+}

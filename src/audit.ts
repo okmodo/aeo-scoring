@@ -53,7 +53,11 @@ async function response(res: Response): Promise<Assessment> {
   const assessment = body as Assessment;
   if (assessment.version !== '1' || !['pending', 'complete', 'incomplete', 'unable_to_assess'].includes(assessment.status)) throw new Error('The service returned an invalid response.');
   auditStatusUrl(assessment.statusUrl);
-  return assessment;
+  const normalized = { ...assessment };
+  const progress = validatedProgress(assessment.progress, assessment.id);
+  if (progress) normalized.progress = progress;
+  else delete normalized.progress;
+  return normalized;
 }
 
 // Keep polling until the report is terminal, even after all checks have completed.
@@ -62,9 +66,9 @@ export async function pollAudit(initial: Assessment, password: string, signal: A
   let attempt = 0;
   while (next.status === 'pending') {
     await wait(pollDelay(attempt++), signal);
-    next = await getAudit(next.statusUrl, password, signal);
+    const update = await getAudit(next.statusUrl, password, signal);
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-    onUpdate(next);
+    if (acceptAuditUpdate(next, update)) { next = update; onUpdate(next); }
   }
   return next;
 }
@@ -76,4 +80,30 @@ function waitForPoll(delay: number, signal: AbortSignal): Promise<void> {
     const timer = setTimeout(() => { signal.removeEventListener('abort', onAbort); resolve(); }, delay);
     signal.addEventListener('abort', onAbort, { once: true });
   });
+}
+
+// Treat optional malformed progress as unavailable; the report remains usable.
+export function validatedProgress(value: unknown, auditId: string): Assessment['progress'] {
+  if (!value || typeof value !== 'object') return undefined;
+  const progress = value as Record<string, unknown>;
+  if (progress.version !== '1' || progress.auditId !== auditId || !Number.isSafeInteger(progress.revision) || (progress.revision as number) < 0 || !Array.isArray(progress.events) || progress.events.length > 16) return undefined;
+  const seen = new Set<number>();
+  for (const event of progress.events) {
+    if (!event || typeof event !== 'object' || !Number.isSafeInteger(event.sequence) || event.sequence < 1 || event.sequence > 16 || seen.has(event.sequence) || !['retrieval', 'preparation', 'assessment', 'scoring'].includes(event.stage) || !['running', 'completed', 'failed', 'skipped'].includes(event.status)) return undefined;
+    seen.add(event.sequence);
+  }
+  return value as Assessment['progress'];
+}
+
+// Ignore out-of-order responses and responses for another audit. Legacy servers
+// have no revision, so their updates remain usable without fabricated progress.
+export function acceptAuditUpdate(previous: Assessment, next: Assessment): boolean {
+  if (next.id !== previous.id || next.statusUrl !== previous.statusUrl) return false;
+  if (previous.status !== 'pending') return false;
+  // A terminal response is authoritative even if progress did not advance.
+  if (next.status !== 'pending') return true;
+  const oldProgress = validatedProgress(previous.progress, previous.id);
+  const newProgress = validatedProgress(next.progress, next.id);
+  if (oldProgress && (!newProgress || newProgress.revision <= oldProgress.revision)) return false;
+  return true;
 }
