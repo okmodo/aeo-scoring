@@ -1,12 +1,13 @@
 // Internal input/job/cache policy; no public report contract change.
 export const PREPARED_ASSESSMENT_POLICY = 'prepared-assessment-v3';
+export const KEYED_GRANITE_ASSESSMENT_POLICY = 'prepared-assessment-granite-keyed-v1';
 
 export function keyedGraniteEnabled(env) {
   return env.AUDIT_QUEUE_MODE === 'enabled' && env.AUDIT_AI_PROVIDER === 'granite' && env.AUDIT_GRANITE_KEYED === 'enabled';
 }
 
 export function preparedAssessmentPolicy(provider, keyed = false) {
-  if (provider === 'granite' && keyed) return 'prepared-assessment-granite-keyed-v1';
+  if (provider === 'granite' && keyed) return KEYED_GRANITE_ASSESSMENT_POLICY;
   return provider === 'granite' ? 'prepared-assessment-granite-v2' : PREPARED_ASSESSMENT_POLICY;
 }
 

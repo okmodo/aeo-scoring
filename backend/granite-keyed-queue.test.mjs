@@ -40,7 +40,7 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, missingAnswer = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, missingAnswer = false, oldCache = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
   if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
@@ -174,6 +174,12 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   let submitted = previous?.submitted;
   let assessMessage = previous?.assessMessage;
   if (!previous) {
+    if (oldCache) {
+      const material = 'audit-v1:rubric-3.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-0:calibrated-0:pipeline-retained-ai-1:open-rubric-off:retrieval-browser-content-v3:assessment-prepared-assessment-granite-keyed-v1:queue-v1:';
+      sql.prepare(`INSERT INTO audits (id,url,cache_key,status,created_at,expires_at,completed_at,cache_until,report_json)
+        VALUES ('8b1fb85d-af64-4d45-b1e3-78191ec55b59',?,?,'incomplete',?,?,?,?,'{"score":{"total":2}}')`)
+        .run(url, await hash(encoder.encode(material + url)), time-2000,time+86400000,time-1000,time+3600000);
+    }
     const response = await handle(new Request('https://worker/api/v1/audits', { method: 'POST',
       headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) }), options);
     assert.equal(response.status, 202);
@@ -273,6 +279,18 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   time += 1000;
   assert.equal(await deliver(finalizeMessage), 'ack');
   assert.deepEqual(await reportRequest(), audit);
+  if (oldCache) {
+    const cached = await handle(new Request('https://worker/api/v1/audits', { method:'POST',
+      headers:{'content-type':'application/json'},body:JSON.stringify({url}) }), options);
+    assert.equal(cached.status,200);
+    const body = await cached.json();
+    assert.equal(body.cache.hit,true);
+    assert.equal(body.id,submitted.id);
+    const historical = await handle(new Request('https://worker/api/v1/audits/8b1fb85d-af64-4d45-b1e3-78191ec55b59'),options);
+    assert.equal(historical.status,200);
+    assert.equal((await historical.json()).report.score.total,2);
+  }
+
   assert.equal(messages.length, 0);
   if (browserExport) writeFileSync(browserExport, JSON.stringify({ submitted, staged, audit }), { mode: 0o600 });
   assert.equal(audit.status, 'incomplete');
@@ -461,6 +479,7 @@ if (durableExit === 'export') {
   });
 
   test('queue publishes saved Granite answers, including without citations, via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
+  test('a legacy cached score does not suppress a new audit and the new report is reusable', async t => keyedScenario(t, {oldCache:true}));
   test('a missing Granite answer leaves the other D1 scores intact', async t => keyedScenario(t, { missingAnswer: true }));
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));

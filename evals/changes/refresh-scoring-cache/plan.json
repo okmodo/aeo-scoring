@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "refresh-scoring-cache",
+  "task": "Prevent new keyed Granite submissions from reusing reports graded by the former evidence validator.",
+  "scope": ["backend/service.mjs","backend/prepared-assessment-policy.mjs","backend/granite-keyed-queue.test.mjs","evals/changes/refresh-scoring-cache/**"],
+  "nonGoals": ["No deployment, parser or frontend change, D1 migration, cache duration or usage policy change, or change to the existing assessment job identity."],
+  "outcomes": [{"id":"O1","description":"A cached legacy report does not prevent a fresh audit on the new scoring path; reports already built by the new path continue to use the normal cache.","verification":"automated","evidence":"Seed old cache key in D1, verify new queue dispatch, old report remains readable, and a subsequent submission reuses the new report."}],
+  "process": [{"id":"P1","description":"Verify in an isolated worktree and obtain independent review before release.","verification":"human","evidence":"Separate plan, evaluation, review and PR."}],
+  "styleEfficiency": [{"id":"E1","description":"Extend the existing cache fingerprint only for the affected policy.","verification":"human","evidence":"Scoped diff."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue"],
+  "exitTest": {"required":false,"reason":"The fix changes only cache lookup identity. It leaves jobs, queue checkpoints and resume behavior unchanged."}
+}
