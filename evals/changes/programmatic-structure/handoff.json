@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "task": "Score five Product JSON-LD and three domain-resource report checks independently of Granite.",
+  "state": "Implemented in codex/programmatic-structure, stacked on the parser rollback a24b641. Production was left untouched.",
+  "decisions": [
+    "Reuse the existing prepared R2 reader and derived product observations. No parser, preparer, capture workflow, prepared artifact, or schema migration changes.",
+    "Run bounded same-origin robots.txt, sitemap, and llms.txt checks through the existing public egress and inspector before Granite. Support observations do not control audit admission or page retrieval.",
+    "Keep measured and unmeasured findings in the durable prepared assessment checkpoint and publish them through the existing audit_check_results table and report outbox."
+  ],
+  "constraints": ["Keep the 1,000 ms Worker CPU cap, 60-second model timeout, and current usage limits. Do not deploy, merge, or modify frontend or unrelated services."],
+  "completed": [
+    "Independent Terra implementation and review. Review defects fixed and reverified with ProductGroup, unavailable provider, retry exhaustion, and interrupted checkpoint regressions.",
+    "A fresh Terra agent resumed a synthetic audit from exported checkpoint and database files, checked the final published findings against D1, and verified zero further model or resource requests.",
+    "Local native workerd replay used the unmodified, hash-verified retained Faherty drawstring-short R2 input and observations from four direct public support requests. With a simulated Granite failure, 39 D1 component rows matched the API report, which published an earned score of 10/100. Product markup (3/3), product identity (5/5), and search crawler access (1 point) earned points from the new checks. The existing title component earned 1 point."
+  ],
+  "remaining": [
+    "The replay does not establish Cloudflare production CPU timing. No live inference, Browser API, or production audit was started.",
+    "The bounded domain inspection did not establish all AI crawler dispositions, sitemap usability or exact inclusion, or llms.txt identity or link quality. The retained product capture did not establish same-variant offer, identifier, or optional-claim evidence."
+  ],
+  "resumeCommands": [
+    "node --test backend/prepared-product-structure.test.mjs backend/browser-support.test.mjs backend/granite-keyed-queue.test.mjs",
+    "npm run evaluate -- --change programmatic-structure --base origin/main",
+    "npm run evaluate -- --change programmatic-structure --base origin/codex/rollback-parser-preparation",
+    "npm run ci:gate -- origin/codex/rollback-parser-preparation"
+  ]
+}

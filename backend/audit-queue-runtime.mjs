@@ -13,6 +13,9 @@ import {runPreparedAudit} from './prepared-assessment-consumer.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
 import {restoreRubricAssessment} from './ai-rubric-assessment.mjs';
 import {scoreAudit} from './scoring.mjs';
+import {scorePreparedProductStructure} from './prepared-product-structure.mjs';
+import {readStructureFindings} from './prepared-structure-checkpoint.mjs';
+import {scorePreparedDomainStructure} from './browser-support.mjs';
 import {createAuditResultStore} from './audit-check-results.mjs';
 
 export const AUDIT_QUEUE_NAME = 'aeo-audit-checkpoints';
@@ -23,7 +26,7 @@ const publicErrors = new Set(['retrieval_failed','retrieval_timeout','response_t
 const unavailable = () => ({accepted:false,reason:'invalid_evidence'});
 
 export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowance,queueAllowance:givenQueueAllowance,
-  workflow:givenWorkflow,snapshots:givenSnapshots,prepare=runPreparation,assess=runPreparedAudit,derive=derivePreparedObservations}={}) {
+  workflow:givenWorkflow,snapshots:givenSnapshots,prepare=runPreparation,assess=runPreparedAudit,derive=derivePreparedObservations,inspectDomain=scorePreparedDomainStructure}={}) {
   const db = env?.AUDIT_DB;
   if(env?.AUDIT_QUEUE_MODE!=='enabled' || !db?.prepare || typeof env.AUDIT_QUEUE?.send!=='function') return {start:async()=>unavailable(),consume:async()=>{throw Error('audit_queue_disabled');}};
   const keyed = keyedGraniteEnabled(env);
@@ -84,7 +87,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
       throw Error('queue_result_sequence_mismatch');
     }
     if(retained?.prepared_state!=='ready') return {next:null,code:'assessment_timeout'};
-    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive,queueLease:{owner,sequence}});
+    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive,inspectDomain,queueLease:{owner,sequence}});
     if (await results.pending(auditId)) return {next:'assess'};
     if(result.status==='yield') return {next:'assess'};
     if(result.status==='completed') return {next:null};
@@ -106,10 +109,19 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
     if(hasUsableCapture) {
       const store = snapshots();
       const input = retained.prepared_state==='ready' ? await store.readPrepared(auditId).catch(()=>null) : null;
-      let derived, assessment;
+      let derived, assessment, programmaticStructure;
       if(input) {
-        derived = await derive(input,{keyed}).catch(()=>undefined);
-        if (keyed && derived) {
+        programmaticStructure = await readStructureFindings(db,auditId,input.source.preparedHash,now());
+        const hasSavedModelReply = keyed && await db.prepare(`SELECT 1 FROM model_attempts
+          WHERE audit_id=?1 AND prepared_hash=?2 AND response_body_base64 IS NOT NULL AND http_status BETWEEN 200 AND 299 LIMIT 1`)
+          .bind(auditId,input.source.preparedHash).first();
+        if (!programmaticStructure || hasSavedModelReply || retained.facts_state==='ready') {
+          derived = await derive(input,{keyed}).catch(()=>undefined);
+        }
+        if (!programmaticStructure && derived) {
+          programmaticStructure = {product:scorePreparedProductStructure(input.snapshot,derived)};
+        }
+        if (keyed && derived && hasSavedModelReply) {
           assessment = await recoverKeyedAuditAssessment({ db, auditId, input, derived }).catch(()=>undefined);
         } else if(retained.facts_state==='ready') {
           try {
@@ -119,7 +131,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
         }
       }
       report = input
-        ? scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:assessment})
+        ? scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:assessment})
         : scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});
       assessedUrl = input?.snapshot.url ?? audit.url;
       report.status = 'incomplete';

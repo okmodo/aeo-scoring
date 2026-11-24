@@ -10,6 +10,8 @@ import {runPreparedAssessmentStep} from './prepared-assessment-engine.mjs';
 import {createStore} from './store.mjs';
 import {createAuditResultStore} from './audit-check-results.mjs';
 import {createPipelineState,PIPELINE_VERSION} from './pipeline-state.mjs';
+import {scorePreparedProductStructure} from './prepared-product-structure.mjs';
+import {prepareStructureFindings,readStructureFindings} from './prepared-structure-checkpoint.mjs';
 import {scoreAudit} from './scoring.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
@@ -27,25 +29,25 @@ const safeCode=error=>/^[a-z][a-z0-9_]{0,63}$/.test(error?.code||'')?error.code:
 // Only this consumer performs AI work. Preparation readiness is never changed.
 // Dependencies are injectable for offline tests; production uses canonical guards.
 export async function runPreparedAudit({env,auditId,now=Date.now,allowance:givenAllowance,snapshots:givenSnapshots,jobs:givenJobs,
-  queueLease,modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations}={}) {
+  queueLease,modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations,inspectDomain}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
-  if (!provider) return {status:'skipped',code:'invalid_assessment_provider'};
+  if (!provider && !queueLease) return {status:'skipped',code:'invalid_assessment_provider'};
   const keyed=keyedGraniteEnabled(env);
   const policyVersion=preparedAssessmentPolicy(provider,keyed);
   const reservation='prepared-worker-'+crypto.randomUUID();
   const admitted=await allowance.reserve({id:reservation,costs:COSTS,now:now()}).catch(()=>null);
   if(!admitted?.accepted||admitted.duplicate!==false)return{status:'waiting',code:'usage_admission_denied'};
-  let grant,input,report,audit;const jobs=givenJobs??createPreparedAssessmentJobs(db,{now}),store=createStore(db,{policyVersion}),pipeline=createPipelineState({db,auditId,now});
+  let grant,input,report,audit,derived,programmaticStructure;const jobs=givenJobs??createPreparedAssessmentJobs(db,{now}),store=createStore(db,{policyVersion}),pipeline=createPipelineState({db,auditId,now});
   const snapshots=givenSnapshots??createSnapshotStore({db,bucket:env.AUDIT_SNAPSHOTS,allowance:createR2AllowanceGuard(db,config),now});
   const record=async(stage,status,code)=>{const items=pipeline.summary().stages;if(!items.some(x=>x.stage===stage&&x.code===code)&&items.length<11)await pipeline.record(stage,status,code);};
   const persist=async(kind,artifact)=>{try{await snapshots.saveAssessment({auditId,kind,artifact});}catch(error){if(error.code!=='snapshot_exists')throw error;const stored=await snapshots.readAssessment(auditId,kind);if(JSON.stringify(stored)!==JSON.stringify(artifact))throw Object.assign(Error('Conflicting retained assessment'),{code:'assessment_artifact_conflict'});}};
   const publish=async(code,complete=false)=>{
     await jobs.assertLease(grant);
     if(!report){
-      const derived=input ? await derive(input).catch(()=>null) : null;
-      report=input ? scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true}) : scorePage({url:audit.url,status:200,contentType:'text/html'},empty(),{requireAiAssessment:true});
+      if (input && derived === undefined) derived = await derive(input, {keyed}).catch(()=>null);
+      report=input ? scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true}) : scorePage({url:audit.url,status:200,contentType:'text/html'},empty(),{requireAiAssessment:true});
     }
     if(!complete){report.status='incomplete';report.score=null;report.coverage.limitations.push('Prepared assessment did not finish ('+code+'); unresolved checks remain unmeasured.');await record('content','failed',code);}
     await record('scoring','completed',report.status==='complete'?'report_complete':'report_incomplete');
@@ -81,14 +83,31 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     input=await snapshots.readPrepared(auditId);
     if(input.source?.preparedHash!==grant.preparedHash)throw Object.assign(Error('Prepared input changed'),{code:'prepared_hash_changed'});
     await jobs.assertLease(grant);
-    if(grant.terminalOnly){await publish('job_retry_exhausted');await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});return{status:'failed',code:'job_retry_exhausted'};}
+    if (grant.terminalOnly) {
+      if (queueLease) {
+        programmaticStructure = await readStructureFindings(db,auditId,grant.preparedHash,now());
+        if (programmaticStructure) derived = null;
+        else {
+          derived = await derive(input,{keyed}).catch(()=>null);
+          programmaticStructure = {product:scorePreparedProductStructure(input.snapshot,derived)};
+        }
+      }
+      await publish('job_retry_exhausted');
+      await jobs.release(grant,{state:'failed',code:'job_retry_exhausted'});
+      return {status:'failed',code:'job_retry_exhausted'};
+    }
+    if (queueLease) {
+      derived = await derive(input, {keyed}).catch(() => null);
+      programmaticStructure = await prepareStructureFindings({input,derived,jobs,grant,inspectDomain});
+    }
+    if (!provider) throw Object.assign(Error('Invalid assessment provider'),{code:'invalid_assessment_provider'});
     if (keyed) {
       if (!activated(env)) throw Object.assign(new Error('Keyed assessment is disabled'), {code:'assessment_unavailable'});
       await record('content','running','facts_preparing');
-      const derived=await derive(input,{keyed:true});
+      if (derived === undefined) derived = await derive(input,{keyed:true});
       const assessment=await runKeyedPreparedAudit({env,auditId,input,derived,jobs,grant,allowance,now,fetch:fetchImpl});
       report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,
-        deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:assessment});
+        deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:assessment});
       await record('content','completed','judgments_validated');
       await publish('assessment_completed',true);
       await jobs.release(grant,{state:'complete',code:'assessment_completed'});
@@ -106,8 +125,8 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     }
     if(result.profile)await persist('profile',result.profile);
     await persist('facts',result.replayArtifact);
-    const derived=await derive(input).catch(()=>null);
-    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,requireAiAssessment:true,aiAssessment:result.assessment});
+    if (derived === undefined) derived = await derive(input).catch(()=>null);
+    report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:result.assessment});
     await record('snapshot','completed','assessment_retained');await record('content','completed','judgments_validated');
     await publish('assessment_completed',true);
     await jobs.release(grant,{state:'complete',code:'assessment_completed'});
