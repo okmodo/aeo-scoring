@@ -1,4 +1,3 @@
-import {restorePreparedObservations} from './prepared-observations.mjs';
 // R2 objects are private bindings. D1 owns their lifecycle and association to audits.
 export const SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 export const MAX_HTML_BYTES = 1024 * 1024;
@@ -142,9 +141,8 @@ export function createSnapshotStore({ db, bucket, allowance, now = Date.now }) {
         const empty = () => ({productHtml:null,jsonLd:[],coverage:{html:false,usable:false,jsonLdTruncated:true}});
         if (time(now) >= record.expires_at) throw fail('snapshot_expired');
         const extracted = empty();
-        const {initialExtracted,initialAvailable,support} = restorePreparedObservations(prepared);
-        const browser = {version:'browser-content-v3',captureType:'content-api',initialExtracted,coverage:{complete:false,initialAvailable,initialLimited:false,renderedLimited:false},renderedHtml:prepared.html};
-        return {snapshot:{...base,...support,preprocessing:p,rawHtml:html,browser},rawHtml:html,extracted,prepared,source:{preparedHash:record.prepared_hash,objectKey:`${record.object_prefix}/prepared`,sha256:record.prepared_hash,bytes:record.prepared_size,expiresAt:record.expires_at}};
+        const browser = {version:'browser-content-v3',captureType:'content-api',initialExtracted:empty(),coverage:{complete:false,initialAvailable:false,initialLimited:false,renderedLimited:false},renderedHtml:prepared.html};
+        return {snapshot:{...base,preprocessing:p,rawHtml:html,browser},rawHtml:html,extracted,prepared,source:{preparedHash:record.prepared_hash,objectKey:`${record.object_prefix}/prepared`,sha256:record.prepared_hash,bytes:record.prepared_size,expiresAt:record.expires_at}};
       });
     },
     async saveAssessment({ auditId, artifact, kind }) {

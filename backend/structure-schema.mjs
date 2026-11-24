@@ -155,9 +155,9 @@ export function inspectProductJsonLdPresence(snapshot, extracted) {
   return unknown('JSON-LD inspection did not establish whether product markup is present.');
 }
 
-export function inspectRevisedProductSchema(snapshot, extracted) {
+export function inspectRevisedProductSchema(snapshot, extracted, { prepared = false } = {}) {
   const html = extracted?.productHtml, source = snapshot?.url;
-  const bounded = Boolean(html?.complete && !snapshot?.htmlLimited && !snapshot?.browser?.coverage?.initialLimited && snapshot?.browser?.coverage?.initialAvailable !== false && extracted?.coverage?.jsonLdTruncated === false);
+  const bounded = Boolean(html?.complete && !snapshot?.htmlLimited && extracted?.coverage?.jsonLdTruncated === false);
   const result = { complete: bounded, product: null, findings: {}, ambiguous: false, malformed: false };
   const finding = (fraction, excerpt) => ({ status: 'measured', fraction, url: source, location: 'inspected structured product markup', excerpt });
   const products = [], groups = [];
@@ -190,11 +190,25 @@ export function inspectRevisedProductSchema(snapshot, extracted) {
   }
   result.complete = bounded && !unsupported && !result.malformed;
   const recognized = products.length + groups.length > 0;
-  if (recognized && (bounded && !unsupported && !unknownProperties || result.malformed || badValues)) result.findings['S2.syntax'] = finding(result.malformed || badValues ? 0.5 : 1, result.malformed || badValues ? `Observed ${result.malformed ? 'malformed JSON-LD' : 'invalid values'}${invalidValues.length ? `: ${invalidValues.join('; ')}` : ''}.` : 'Recognized structured markup parses with supported value formats.');
+  const scriptsComplete = extracted?.coverage?.html === true && extracted?.coverage?.jsonLdTruncated === false && !snapshot?.htmlLimited && !unsupported;
+  if (recognized && (bounded && !unsupported && !unknownProperties || prepared && scriptsComplete || result.malformed || badValues)) result.findings['S2.syntax'] = finding(result.malformed || badValues ? 0.5 : 1, result.malformed || badValues ? `Observed ${result.malformed ? 'malformed JSON-LD' : 'invalid values'}${invalidValues.length ? `: ${invalidValues.join('; ')}` : ''}.` : 'Recognized structured markup parses; inspected supported values have valid formats.');
   else if (result.malformed) result.findings['S2.syntax'] = finding(0, 'Observed JSON-LD could not be parsed.');
   else if (!recognized && result.complete) result.findings['S2.syntax'] = finding(0, observed ? 'No recognized product type was found in inspected markup.' : 'No structured product markup was found.');
-  if (!result.complete) return result;
   const heading = typeof html?.identity === 'string' ? html.identity : html?.identity?.mainH1 ?? html?.headings?.find(h => h.level === 1)?.text;
+  // A page-scoped ProductGroup can be established by its own URL even when
+  // the product text inventory is incomplete. Do not select a variant or infer
+  // missing offers and identifiers from the group alone.
+  if (prepared && scriptsComplete && !result.malformed) {
+    const matchingGroups = groups.filter(g => text(g.url) && sameUrl(g.url, source));
+    if (groups.length === 1 && matchingGroups.length === 1 && !products.length) {
+      const group = matchingGroups[0];
+      result.group = group;
+      result.findings['S2.entity'] = finding(1, `A ProductGroup identifies the audited page: ${evidenceValue(group.url)}.`);
+      result.findings['S2.variants'] = variantResult(group, null, html, finding, source);
+      return result;
+    }
+  }
+  if (!result.complete) return result;
   const candidates = [...products];
   for (const group of groups) if (Array.isArray(group.hasVariant) && group.hasVariant.length <= 8) candidates.push(...group.hasVariant.filter(v => obj(v) && type(v, 'Product')));
   const matches = candidates.filter(p => text(p.url) ? sameUrl(p.url, source) : text(heading) && norm(p.name) === norm(heading));

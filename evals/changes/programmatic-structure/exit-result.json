@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "changeId": "programmatic-structure",
+  "sourceDigest": "a10f5b17423a389a257d24a0d2dbf54c60656295c1e92d562b70901937841e2e",
+  "kind": "fresh-agent",
+  "priorConversationProvided": false,
+  "status": "passed",
+  "agentId": "/root/pr75_exit",
+  "exportSha256": "01dea0a00d81b7fe65e304a6471c58c550d1dd40c0462007a869eaa9b4e42f5c",
+  "interruptionPoint": "Stopped a synthetic queue after D1 committed the programmatic structure checkpoint and raw model reply, before grading answers or publishing the report. The fresh Terra agent received the exported handoff and referenced local files only.",
+  "observedContinuation": "The agent ran the handoff command, which passed its one test. Seven specified programmatic components carried measured outcomes and evidence. The reported components matched D1, and no new provider submissions or resource requests were made.",
+  "limitations": "The redelivery proof uses a synthetic capture, a local SQLite-backed D1 adapter, and simulated resource and model responses. It provides no production timing or usage measurements."
+}

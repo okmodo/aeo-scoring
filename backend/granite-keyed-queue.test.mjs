@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { createAuditQueueRuntime, AUDIT_QUEUE_NAME } from './audit-queue-runtime.mjs';
+import { createAuditQueueRuntime, AUDIT_QUEUE_NAME, AUDIT_DEAD_QUEUE_NAME } from './audit-queue-runtime.mjs';
 import { AUDIT_QUEUE_HORIZON_MS } from './audit-queue.mjs';
 import { GRANITE_MODEL_CONFIG } from './granite-provider.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
+import { scorePreparedDomainStructure } from './browser-support.mjs';
 import { createAuditService } from './service.mjs';
 import { createStore } from './store.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
@@ -28,7 +29,7 @@ import { PIPELINE_VERSION } from './pipeline-state.mjs';
 import { keyedGraniteEnabled, preparedAssessmentPolicy } from './prepared-assessment-policy.mjs';
 
 const url = 'https://example.com/solar-kettle';
-const html = `<!doctype html><html><head><title>Solar kettle</title><link rel="canonical" href="${url}">
+const html = `<!doctype html><html><head><title>Solar kettle</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Solar kettle"}</script></head><body><main>
 <article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2>
 <p>This insulated solar kettle warms six cups of water during outdoor trips.<span class="bopis">Store text excluded from keyed evidence.</span></p>
@@ -38,15 +39,18 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false, withInitialSupport = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
   if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
   if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
   const db = { prepare(query) {
     return { bind(...params) {
-      if (interrupt && query.startsWith('UPDATE model_attempts SET results_digest'))
+      if ((interrupt || exhaustRetries) && query.startsWith('UPDATE model_attempts SET results_digest'))
         throw Object.assign(new Error('Suspended after raw D1 capture'), { code: 'job_lease_lost' });
+      if (interruptStructure && query.startsWith("UPDATE prepared_assessment_checkpoints SET status='completed'") &&
+          params[3] === 'programmatic-structure-v1')
+        throw Object.assign(new Error('Suspended before saving the structure results'), { code: 'job_lease_lost' });
       const statement = sql.prepare(query);
       const args = params.length && /\?\d+/.test(query)
         ? [Object.fromEntries(params.map((value, index) => [String(index + 1), value]))] : params;
@@ -68,6 +72,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   } };
   let time = previous ? previous.time + 121000 : Date.UTC(2026, 10, 20);
   let submissions = 0;
+  let domainRequests = 0;
   let sendFailures = 0;
   const now = () => time;
   const allowance = { reserve: async () => ({ accepted: true, duplicate: false }), settle: async () => ({ accepted: true }) };
@@ -77,16 +82,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     get: async key => { const value = objects.get(key); return value && { size: value.length, body: new Response(value).body }; },
     delete: async key => objects.delete(key),
   } });
-  const inspected = [];
-  const egress = withInitialSupport ? {async fetch(target, options) {
-    assert.equal(options.redirect, 'manual');
-    assert.equal(options.method, 'GET');
-    inspected.push(target);
-    if (target === url) return new Response(html, {headers:{'content-type':'text/html'}});
-    if (target === new URL('/robots.txt',url).href) return new Response('User-agent: *\nAllow: /');
-    return new Response(null,{status:404});
-  }} : undefined;
-  const workflow = createBrowserContentWorkflow({ db, snapshots, egress, HTMLRewriter:HtmlTestRewriter, guard: {
+  const workflow = createBrowserContentWorkflow({ db, snapshots, guard: {
     ...allowance, start: allowance.reserve, cancelUnstarted: async () => {},
   }, now, binding: { quickAction: async () => retrievalFailure ? new Response(null, {status: 502}) :
     Response.json({ success: true, result: html, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
@@ -98,6 +94,8 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   } });
   const fetch = async (_url, request) => {
     if (previous) assert.fail('Continuation attempted another provider request');
+    assert.equal(sql.prepare(`SELECT status FROM prepared_assessment_checkpoints
+      WHERE checkpoint_key='programmatic-structure-v1'`).get().status, 'completed');
     if (request.method === 'GET') return Response.json({ success: true, result: { id: 'default', workers_ai_billing_mode: 'postpaid' } });
     submissions++;
     const body = JSON.parse(request.body), wire = body.response_format.json_schema;
@@ -128,13 +126,27 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
       if (failFinalizationSend && body.kind === 'finalize_report' && sendFailures++ === 0) throw Error('fixture send failure');
       messages.push(structuredClone(body));
     } },
-    AUDIT_AI_PROVIDER: 'granite', AUDIT_GRANITE_KEYED: 'enabled', AUDIT_AI_GATEWAY_TOKEN: 'fixture',
+    AUDIT_AI_PROVIDER: invalidProvider ? 'unavailable' : 'granite', AUDIT_GRANITE_KEYED: 'enabled', AUDIT_AI_GATEWAY_TOKEN: 'fixture',
     AUDIT_RUBRIC_RELEASE: OPEN_RUBRIC_RELEASE_ID, AUDIT_CONTENT_RELEASE: CONTENT_FACTS_RELEASE_ID, AUDIT_PIPELINE_RELEASE: PIPELINE_VERSION,
   };
   const jobs = createPreparedAssessmentJobs(db, { now });
 
   const runtime = createAuditQueueRuntime(env, { now, allowance, queueAllowance: allowance, workflow, snapshots,
     derive: (input, options) => derivePreparedObservations(input, { ...options, HTMLRewriter: HtmlTestRewriter }),
+    inspectDomain: value => scorePreparedDomainStructure(value, { fetcher: async (target, request) => {
+      assert.ok(!previous, 'Continuation must reuse the previous resource results');
+      assert.equal(request.redirect, 'manual');
+      domainRequests++;
+      const files = {
+        '/robots.txt': 'User-agent: *\nDisallow: /private',
+        '/sitemap.xml': `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${url}</loc></url></urlset>`,
+        '/llms.txt': '# Example Outfitters\n\nWe sell solar kettles and related outdoor equipment.\n\n[Product](' + url + ')',
+      };
+      const body = files[new URL(target).pathname];
+      assert.ok(body, 'Unexpected domain request');
+      const headers = { 'content-type': new URL(target).pathname.endsWith('.xml') ? 'application/xml' : 'text/plain' };
+      return new Response(body, { headers });
+    } }),
     assess: options => runPreparedAudit({ ...options, jobs, fetch }),
   });
   const policyVersion = preparedAssessmentPolicy('granite', keyedGraniteEnabled(env));
@@ -144,9 +156,9 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     pipelineDb: db, enqueueAudit: auditId => runtime.start(auditId),
   });
   const options = { address: '192.0.2.1', defer: () => assert.fail('Queue work must be detached from the request') };
-  const deliver = async body => {
+  const deliver = async (body, queue = AUDIT_QUEUE_NAME) => {
     let decision;
-    await runtime.consume({ queue: AUDIT_QUEUE_NAME, messages: [{ body, ack() { decision = 'ack'; }, retry() { decision = 'retry'; } }] });
+    await runtime.consume({ queue, messages: [{ body, ack() { decision = 'ack'; }, retry() { decision = 'retry'; } }] });
     return decision;
   };
   let submitted = previous?.submitted;
@@ -173,17 +185,36 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     assert.equal(await deliver(messages.shift()), 'ack');
     assessMessage = messages.shift();
   }
-  const decision = previous?.finalizeMessage ? null : await deliver(assessMessage);
+  let decision = previous?.finalizeMessage ? null : await deliver(assessMessage);
   const diagnostics = () => JSON.stringify({queue:sql.prepare("SELECT state,code FROM audit_queue_jobs").get(),prepared:sql.prepare("SELECT state,code FROM prepared_assessment_jobs").get(),attempt:sql.prepare("SELECT status,outcome FROM model_attempts").get()});
   if (interrupt) {
     assert.equal(decision, 'retry', diagnostics());
     assert.equal(submissions, 1);
     assert.equal(sql.prepare('SELECT status FROM model_attempts').get().status, 'received');
-    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'started');
+    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints WHERE checkpoint_key=\'granite-keyed\'').get().status, 'started');
     assert.equal(sql.prepare('SELECT status FROM audits').get().status, 'pending');
     const state = { time, submitted, assessMessage, objects: [...objects].map(([key, value]) => [key, Buffer.from(value).toString('base64')]) };
     if (exported) writeFileSync(exported.path, JSON.stringify({ ...state, database: exported.database }), { flag: 'wx', mode: 0o600 });
     return state;
+  }
+  if (interruptStructure) {
+    assert.equal(decision, 'retry', diagnostics());
+    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'started');
+    time += 121000;
+    assert.equal(await deliver(assessMessage, AUDIT_DEAD_QUEUE_NAME), 'ack');
+    const report = JSON.parse(sql.prepare('SELECT report_json FROM audits').get().report_json);
+    const checks = report.criteria.flatMap(group => group.subchecks).flatMap(row => row.components);
+    assert.equal(checks.find(check => check.id === 'S2.syntax').points, 2);
+    assert.equal(checks.find(check => check.id === 'S5.search').status, 'not_measured');
+    assert.equal(submissions, 0);
+    assert.equal(domainRequests, 3);
+    return;
+  }
+  if (exhaustRetries) {
+    assert.equal(decision, 'retry', diagnostics());
+    sql.prepare("UPDATE prepared_assessment_jobs SET attempts=5").run();
+    time += 121000;
+    decision = await deliver(assessMessage);
   }
   const reportRequest = async () => {
     const response = await handle(new Request('https://worker' + submitted.statusUrl), options);
@@ -199,7 +230,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     }
     assert.equal(await deliver(assessMessage), 'ack');
   }
-  assert.equal(submissions, previous ? 0 : 1, diagnostics());
+  assert.equal(submissions, previous || invalidProvider ? 0 : 1, diagnostics());
   const finalizeMessage = previous?.finalizeMessage ?? messages.shift();
   assert.equal(finalizeMessage.kind, 'finalize_report');
   assert.equal(finalizeMessage.rubricVersion, '3.0.0');
@@ -242,14 +273,27 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     assert.deepEqual(results.get(component.id), component);
     if (component.status === 'measured') earned[group.pillar] += component.points;
   }
+  assert.equal(domainRequests, previous ? 0 : 3);
+  for (const id of ['S5.search', 'S5.ai-retrieval', 'S6.usable', 'S6.inclusion', 'S7.identity', 'S7.links', 'S2.syntax']) {
+    const finding = results.get(id);
+    assert.equal(finding.status, 'measured', `${id}: ${finding.reason}`);
+    assert.ok(finding.evidenceIds.length, id);
+  }
   assert.deepEqual(audit.report.score, {...earned, total: earned.structure + earned.content});
 
   assert.equal(audit.report.rubricVersion, '3.0.0');
   assert.equal(audit.report.coverage.total, 24);
+  if (invalidProvider || exhaustRetries) {
+    const code = invalidProvider ? 'invalid_assessment_provider' : 'job_retry_exhausted';
+    assert.ok(audit.report.coverage.pipeline.stages.some(stage => stage.stage === 'content' &&
+      stage.status === 'failed' && stage.code === code));
+    assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM model_attempts").get().n, invalidProvider ? 0 : 1);
+    return;
+  }
   if (providerFailure || providerTimeout) {
     const code = providerTimeout ? 'model_timeout' : 'model_provider_failure';
     assert.equal(sql.prepare('SELECT outcome FROM model_attempts').get().outcome, code);
-    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints').get().status, 'uncertain');
+    assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints WHERE checkpoint_key=\'granite-keyed\'').get().status, 'uncertain');
     assert.ok(audit.report.coverage.pipeline.stages.some(stage => stage.stage === 'content' &&
       stage.status === 'failed' && stage.code === code));
     return;
@@ -261,22 +305,14 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   const check = id => checks.find(item => item.id === id);
   const component = id => checks.flatMap(item => item.components).find(item => item.id === id);
   assert.equal(component('C1.explanation').points, 4);
-  if (withInitialSupport) {
-    assert.equal(inspected.filter(target=>target===url).length,1);
-    assert.ok(inspected.includes(new URL('/robots.txt',url).href));
-    assert.equal(component('S1.delivery').points,4);
-    assert.equal(component('S5.search').points,1);
-    assert.equal(evidence.get(component('S1.delivery').evidenceIds[0]).method,'raw');
-  }
-
   assert.equal(component('C3.availability').status, 'not_measured');
   assert.equal(check('C1.essential-specs').status, 'not_measured');
   const markup = check('S2.product-markup');
-  assert.equal(markup.earnedPoints, withInitialSupport ? 3 : 1);
-  assert.equal(markup.points, withInitialSupport ? 3 : null);
-  assert.equal(markup.fraction, withInitialSupport ? 1 : null);
+  assert.equal(markup.earnedPoints, 3);
+  assert.equal(markup.points, 3);
+  assert.equal(markup.fraction, 1);
   assert.deepEqual(markup.components.map(({ id, status }) => [id, status]),
-    [['S2.json-ld', 'measured'], ['S2.syntax', withInitialSupport ? 'measured' : 'not_measured']]);
+    [['S2.json-ld', 'measured'], ['S2.syntax', 'measured']]);
   assert.equal(evidence.get(component('S2.json-ld').evidenceIds[0]).method, 'rendered');
   assert.ok(audit.report.fixes.every(fix => fix.checkIds.every(id => check(id))));
   assert.ok(checks.every(row => row.evidenceIds.every(id => evidence.has(id))));
@@ -397,11 +433,13 @@ if (durableExit === 'export') {
   });
 
   test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
-  test('queued preparation passes initial HTML and supporting evidence to D1 scoring', async t => keyedScenario(t, { withInitialSupport: true }));
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
   test('a model timeout keeps measured programmatic points in the published report', async t => keyedScenario(t, { providerTimeout: true }));
+  test('an unsupported provider still publishes the programmatic findings', async t => keyedScenario(t, { invalidProvider: true }));
+  test('assessment retry exhaustion publishes the saved programmatic findings', async t => keyedScenario(t, { exhaustRetries: true }));
+  test('terminal delivery recovers product findings without another resource inspection', async t => keyedScenario(t, { interruptStructure: true }));
   test('a retrieval failure publishes no report or score', async t => keyedScenario(t, { retrievalFailure: true }));
   test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
   test('the singular apparel label retains composition and measured dimensions', async () => {

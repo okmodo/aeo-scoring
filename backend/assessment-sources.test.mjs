@@ -98,17 +98,6 @@ test('verified cleaned HTML is complete model input despite partial parser excer
   const sources=bundle.sources.filter(s=>s.scope==='product');
   assert.equal(sources.map(s=>s.text).join(''),html);assert.ok(sources.every(s=>s.kind==='html'&&s.preparedHtml===true&&s.origin==='rendered'));
   assert.ok(sources.at(-1).text.includes('LAST DECISIVE FACT'));
-  const browser = {...snapshot.browser,
-    initialExtracted: {coverage: {html: true}, jsonLd: [], productHtml: {blocks: [{text: 'AUXILIARY INITIAL OBSERVATION'}]}},
-    coverage: {...snapshot.browser.coverage, initialAvailable: true},
-  };
-  const withInitial = await prepareAssessmentSources({...snapshot, browser}, extracted);
-  assert.equal(withInitial.coverage.complete, true);
-  assert.equal(withInitial.coverage.initial, false);
-  assert.equal(withInitial.sources.filter(source => source.scope === 'product').map(source => source.text).join(''), html);
-  assert.ok(!withInitial.sources.some(source => source.text.includes('AUXILIARY INITIAL OBSERVATION')));
-  await assert.rejects(prepareAssessmentSources({...snapshot, browser: {...browser, initialExtracted: {}}}, extracted), /Invalid rendered-only/);
-
   assert.ok(!bundle.sources.some(s=>s.kind==='extracted'||s.kind==='text'));
   assert.equal((await prepareAssessmentSources(structuredClone(snapshot),structuredClone(extracted))).sourceDigest,bundle.sourceDigest);
   // Native HTML serialization may expand a small original document. Integrity

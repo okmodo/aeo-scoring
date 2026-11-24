@@ -50,7 +50,7 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAuditV2(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
 export function scoreAudit(snapshot, extracted, options = {}) { return presentRubricV3(scoreAuditVersion(snapshot, extracted, options, rubricV3)); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false, deterministicExtracted = null } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false, deterministicExtracted = null, programmaticStructure = null } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
   const current = rubric === rubricV3;
   // Browser retrieval supplies two observations from one navigation. Source
@@ -63,6 +63,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   // AI validation is bound to the untouched canonical input; local observations may
   // use a separately derived view of the same verified prepared page.
   const preparedDerived = isPreparedObservations(deterministicExtracted, snapshot);
+  const preparedStructureInput = current && Boolean(programmaticStructure?.product || programmaticStructure?.support) && snapshot?.preprocessing?.representation === 'cleaned_rendered_html' && snapshot.preprocessing.version === 'simplified-html-v1';
   extracted = preparedDerived ? deterministicExtracted : extracted;
   let categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
   const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
@@ -243,7 +244,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   }
   if (extracted?.productHtml || !legacy) {
     const hasHtml = Boolean(extracted?.productHtml);
-    const schema = hasHtml ? inspectProductSchema(snapshot, sourceExtracted) : {findings:{},product:null};
+    const schema = hasHtml && !(preparedStructureInput && programmaticStructure.product) ? inspectProductSchema(snapshot, sourceExtracted) : {findings:{},product:null};
     const content = !hasHtml ? {findings:{},facts:{},category,productName:null} : validatedFacts ? assessContentFacts(snapshot, extracted, validatedFacts) : assessContent(snapshot, extracted, { category, categoryProfile: profile, product: schema.product });
     if (!validatedFacts && semantic?.status === 'assessed' && semantic?.version === '1.0.0') content.findings = {...content.findings,...Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured'))};
     category = content.category;
@@ -251,8 +252,8 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     variant = content.variant || schema.variant || variant;
     currency = content.currency || currency;
     const semanticFindings = !validatedFacts && semantic?.version === '1.0.0' && semantic?.status === 'assessed' ? Object.fromEntries(Object.entries(semantic.findings).filter(([id,f])=>!f.validationFailed || content.findings[id]?.status !== 'measured')) : {};
+    const revisedSchema = legacy ? null : preparedStructureInput && programmaticStructure.product ? {findings:{}, product:null} : inspectRevisedProductSchema(snapshot, sourceExtracted);
     const structure = assessStructure(snapshot, extracted, { schema, content });
-    const revisedSchema = legacy ? null : inspectRevisedProductSchema(snapshot, sourceExtracted);
     if (!legacy && !productName && typeof revisedSchema.product?.name === 'string') productName = revisedSchema.product.name.trim().slice(0,160);
     if (!legacy && !hasHtml && revisedSchema.product) {
       for (const [id, finding] of Object.entries(scoreProductLabels(revisedSchema.product, extracted?.labelEvidence))) {
@@ -263,7 +264,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     const observations = { ...(legacy ? schema.findings : revisedSchema.findings),
       ...(legacy ? structure : Object.fromEntries(Object.entries(structure).filter(([id]) => !id.startsWith('S1.')))),
       ...(!legacy ? assessSourceAccessibility(snapshot, sourceExtracted) : {}),
-      ...content.findings, ...semanticFindings, ...((hasHtml || current) ? assessSupport(snapshot, extracted) : {}) };
+      ...content.findings, ...semanticFindings, ...(hasHtml ? assessSupport(snapshot, extracted) : {}) };
     if (current) {
       observations['C5.consistency'] = { status: 'not_measured', reason: 'A complete shopper-visible comparison inventory was not verified.' };
       observations['C5.claim-support'] = { status: 'not_measured', reason: 'A complete material claim inventory was not verified.' };
@@ -272,10 +273,16 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       const id = `C3.${kind}`;
       observations[id] = assessBinaryPolicy(kind, content.findings[id], { snapshot, extracted });
     }
-    if (Object.hasOwn(checks, 'S2.json-ld')) {
+    if (!(preparedStructureInput && programmaticStructure.product) && Object.hasOwn(checks, 'S2.json-ld')) {
       const presence = inspectProductJsonLdPresence(snapshot, extracted);
       if (presence) observations['S2.json-ld'] = presence;
     }
+    const localProduct = preparedStructureInput ? programmaticStructure.product : null;
+    const localSupport = preparedStructureInput ? programmaticStructure.support : null;
+    const productIds = ['S2.json-ld','S2.syntax','S2.entity','S2.variants','S2.offer','S2.identifiers','S3.identity','S3.price','S3.availability','S3.optional-claims'];
+    const supportIds = ['S5.search','S5.ai-retrieval','S6.usable','S6.inclusion','S7.identity','S7.links'];
+    if (localProduct) for (const id of productIds) if (localProduct[id]) observations[id] = localProduct[id];
+    if (localSupport) for (const id of supportIds) if (localSupport[id]) observations[id] = localSupport[id];
     const renderedProduct = extracted?.productHtml;
     if (current && snapshot?.retrievalMethod === 'browser' && !snapshot.htmlLimited && !snapshot.browser?.coverage?.renderedLimited &&
         renderedProduct?.complete === true && renderedProduct.visibility === 'computed' && renderedProduct.images?.length === 0) {
@@ -299,7 +306,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     for (const [id, finding] of Object.entries(observations)) {
       if (!Object.hasOwn(checks, id)) continue;
       const evidenceIds = [];
-      const methodFor = ref => ['browser','browser_api_content'].includes(snapshot?.retrievalMethod) &&
+      const methodFor = ref => localProduct && productIds.includes(id) ? 'rendered' : localSupport && supportIds.includes(id) ? 'raw' : ['browser','browser_api_content'].includes(snapshot?.retrievalMethod) &&
         !id.startsWith('S1.') && (!id.startsWith('S2.') || id === 'S2.json-ld') &&
         (!ref.url || ref.url === sourceUrl) &&
         (id === 'S2.json-ld' || !/json.?ld|application\/ld\+json|initial:/i.test(ref.location || '')) ? 'rendered' : 'raw';
@@ -316,6 +323,8 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
     }
+    const preparedStructureIds = preparedStructureInput ? [...productIds.filter(id => localProduct?.[id]), ...supportIds.filter(id => localSupport?.[id])] : [];
+    const preparedStructure = Object.fromEntries(preparedStructureIds.map(id => [id, checks[id]]));
     if (!legacy && requireAiAssessment && !aiValidated) {
       const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S4.title','S7.links','S8.guidance']);
       for (const id of Object.keys(checks)) {
@@ -323,7 +332,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
           ['S1.delivery','S1.readability','S1.scope','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.identity','S3.price','S3.availability','S3.optional-claims','S7.identity','S7.links','S8.context','S8.guidance'].includes(id);
         const establishedTechnical = !id.startsWith('C') && (checks[id].status === 'not_applicable' ||
           technicalFailures.has(id) && checks[id].status === 'measured');
-        const establishedLocal = current && (id.startsWith('S1.') || id.startsWith('S2.') || ['S7.identity', 'S7.links', 'C3.shipping', 'C3.returns'].includes(id));
+        const establishedLocal = current && ['C3.shipping', 'C3.returns'].includes(id);
         if (needsJudgment && !establishedTechnical && !establishedLocal) checks[id] = { status: 'not_measured', reason: 'The required AI assessment was not available.' };
       }
       category = null;
@@ -332,8 +341,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       category = 'open-rubric';
       categoryRegistry = { ...categories, categories: [...categories.categories.filter(c => c.id !== category), { id: category, label: aiAssessment.profile?.category ?? 'Unclassified', decisionSupport: (aiAssessment.profile?.slots ?? []).filter(slot => slot.group.startsWith('C4.')).map(slot => ({ id: slot.id, subcheckId: slot.group, applicability: slot.applicability, condition: slot.condition })) }] };
       const policyChecks = current ? { 'C3.shipping': checks['C3.shipping'], 'C3.returns': checks['C3.returns'] } : null;
-      const locallyOwned = current ? new Set(Object.keys(checks).filter(id => id.startsWith('S1.') || id.startsWith('S2.') || ['S7.identity', 'S7.links'].includes(id))) : new Set();
-      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence, locallyOwned });
+      applyRubricAssessment(checks, aiAssessment, { snapshot, extracted: canonicalExtracted, addEvidence });
       for (const [id, local] of Object.entries(policyChecks ?? {})) {
         const judged = checks[id];
         const binary = judged.status === 'measured' && [0, 1].includes(judged.fraction) && judged.evidenceIds?.length;
@@ -344,6 +352,9 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       if (current && preparedDerived) checks['S4.image-alternatives'] = { status: 'not_measured', reason: 'Serialized rendered HTML does not establish which images are informative or visible.' };
     }
+    // These checks are determined by the verified prepared extraction, including
+    // uncertainty; model judgments cannot fill gaps or replace observations.
+    Object.assign(checks, preparedStructure);
     if (current) enforceBinaryContent(checks);
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
@@ -415,7 +426,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
         ...((aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
-        ...(Object.hasOwn(checks, 'S2.json-ld') && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod) ? ['The JSON-LD presence check uses the captured rendered page. Other structured-data checks use the initial response.'] : []),
+        ...(Object.hasOwn(checks, 'S2.json-ld') && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod) ? [preparedStructureInput && programmaticStructure.product ? 'Structured-data checks use the verified prepared rendered page.' : 'The JSON-LD presence check uses the captured rendered page. Other structured-data checks use the initial response.'] : []),
         ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []),
         ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' && !current
           ? 'Source delivery and structured-data checks use the initial document response; content checks use the rendered product observation from the same browser visit.'
