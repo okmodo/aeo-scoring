@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "score-shipping-returns",
+  "task": "Score shipping and returns independently using prepared product data or eligible linked policies.",
+  "scope": ["backend/**","evals/changes/score-shipping-returns/**"],
+  "nonGoals": ["Keep the parser, frontend, production, rubric weights, D1 schema, Granite request and usage limits unchanged. Keep both checks binary."],
+  "outcomes": [{"id":"O1","description":"Publish measured binary policy results and evidence even if Granite is unavailable, while leaving unverified policies unmeasured.","verification":"automated","evidence":"D1 and queue integration, linked-resource safety cases, and native Bear Butt replay."}],
+  "process": [{"id":"P1","description":"Use Terra implementation and independent review with hosted CI before any release.","verification":"human","evidence":"Separately committed plan, evaluation and handoff."}],
+  "styleEfficiency": [{"id":"E1","description":"Reuse the prepared reader, bounded public egress, policy inspection, scoring rules and existing D1 publication.","verification":"human","evidence":"Scoped diff and review."}],
+  "commands": ["npm run check","npm test","npm run test:exit","npm run test:granite-keyed-queue","npm run test:component-publication"],
+  "exitTest": {"required":true,"reason":"New policy findings are stored at the queue checkpoint and must survive interruption without repeated external requests."}
+}

@@ -315,7 +315,7 @@ async function inspectGuides({ url, fetchBounded, signal }) {
   }
 }
 
-async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
+export async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter, kinds = ['shipping', 'returns'] }) {
   const result = { shipping: { state: 'unknown' }, returns: { state: 'unknown' } };
   const targets = new Map();
   for (const link of links || []) {
@@ -324,7 +324,7 @@ async function inspectPolicies({ url, links, fetchBounded, signal, Rewriter }) {
     if (target.origin !== url.origin || target.href === url.href || target.search) continue;
     const name = `${link.text} ${target.pathname}`.toLowerCase();
     for (const [kind, pattern] of [['shipping', /\b(?:shipping|delivery)\b/], ['returns', /\b(?:returns?|refunds?)\b/]]) {
-      if (pattern.test(name) && result[kind].state === 'unknown') {
+      if (kinds.includes(kind) && pattern.test(name) && result[kind].state === 'unknown') {
         result[kind] = { state: 'failed', url: target.href };
         if (!targets.has(target.href)) targets.set(target.href, []);
         targets.get(target.href).push(kind);

@@ -10,8 +10,7 @@ import {runPreparedAssessmentStep} from './prepared-assessment-engine.mjs';
 import {createStore} from './store.mjs';
 import {createAuditResultStore} from './audit-check-results.mjs';
 import {createPipelineState,PIPELINE_VERSION} from './pipeline-state.mjs';
-import {scorePreparedProductStructure} from './prepared-product-structure.mjs';
-import {prepareStructureFindings,readStructureFindings} from './prepared-structure-checkpoint.mjs';
+import {prepareStructureFindings,readStructureFindings,scorePreparedFindings} from './prepared-structure-checkpoint.mjs';
 import {scoreAudit} from './scoring.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
 import {OPEN_RUBRIC_RELEASE_ID} from './ai-rubric-assessment.mjs';
@@ -29,7 +28,7 @@ const safeCode=error=>/^[a-z][a-z0-9_]{0,63}$/.test(error?.code||'')?error.code:
 // Only this consumer performs AI work. Preparation readiness is never changed.
 // Dependencies are injectable for offline tests; production uses canonical guards.
 export async function runPreparedAudit({env,auditId,now=Date.now,allowance:givenAllowance,snapshots:givenSnapshots,jobs:givenJobs,
-  queueLease,modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations,inspectDomain}={}) {
+  queueLease,modelProvider,fetch:fetchImpl,engine=runPreparedAssessmentStep,scorePage=scoreAudit,derive=derivePreparedObservations,inspectDomain,inspectPolicies}={}) {
   if(!validId(auditId)||!env?.AUDIT_DB)return{status:'skipped',code:'invalid_audit'};
   const db=env.AUDIT_DB,config=scope(env),allowance=givenAllowance??createAnalyticsAllowanceGuard(db,config);
   const provider=configuredAssessmentProvider(env.AUDIT_AI_PROVIDER);
@@ -91,7 +90,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
         if (programmaticStructure) derived = null;
         else {
           derived = await derive(input,{keyed}).catch(()=>null);
-          programmaticStructure = {product:scorePreparedProductStructure(input.snapshot,derived)};
+          programmaticStructure = scorePreparedFindings(input.snapshot,derived);
         }
       }
       await publish('job_retry_exhausted');
@@ -100,7 +99,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
     }
     if (queueLease) {
       derived = await derive(input, {keyed}).catch(() => null);
-      programmaticStructure = await prepareStructureFindings({input,derived,jobs,grant,inspectDomain});
+      programmaticStructure = await prepareStructureFindings({input,derived,jobs,grant,inspectDomain,inspectPolicies});
     }
     if (!provider) throw Object.assign(Error('Invalid assessment provider'),{code:'invalid_assessment_provider'});
     if (keyed) {

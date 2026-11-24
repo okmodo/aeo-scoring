@@ -1,11 +1,54 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inspectBrowserSupport, scorePreparedDomainStructure } from './browser-support.mjs';
+import { inspectBrowserSupport, inspectPreparedPolicyLinks, scorePreparedDomainStructure } from './browser-support.mjs';
 import { HtmlTestRewriter } from './html-product-test-helper.mjs';
 import { assessSupport } from './support-assessment.mjs';
 
 const product='https://shop.example.com/products/item';
 const snapshot=()=>({url:product,extracted:{productHtml:{complete:true,discoveryLinks:[{url:'/shipping',text:'Shipping'},{url:'/returns',text:'Returns'},{url:'https://evil.example.net/shipping',text:'Shipping'}]}}});
+
+test('prepared policy inspection fetches only eligible linked unresolved policies', async()=>{
+  const calls=[];
+  const links=[{url:'https://evil.com/shipping',text:'Shipping'}, {url:'/products/item',text:'Shipping'}, {url:'/shipping?x=1',text:'Shipping'}, {url:'/shipping',text:'Shipping'}, {url:'/returns',text:'Returns'}];
+  const result=await inspectPreparedPolicyLinks('https://shop.com/products/item',links,{kinds:['returns'],HTMLRewriter:HtmlTestRewriter,fetcher:async(target,options)=>{
+    calls.push({target,options});
+    return new Response('<main><p>Returns are accepted for thirty days.</p></main>',{headers:{'content-type':'text/html'}});
+  }});
+  assert.equal(result.shipping.state,'unknown');
+  assert.equal(result.returns.state,'read');
+  assert.deepEqual(calls.map(c=>c.target),['https://shop.com/returns']);
+  assert.equal(calls[0].options.redirect,'manual');
+});
+
+test('prepared policy inspection rejects redirects and oversized bodies', async()=>{
+  const links=[{url:'/shipping',text:'Shipping'}, {url:'/returns',text:'Returns'}];
+  const calls=[];
+  const result=await inspectPreparedPolicyLinks('https://shop.com/products/item',links,{HTMLRewriter:HtmlTestRewriter,fetcher:async target=>{
+    calls.push(target);
+    return target.endsWith('/shipping') ? new Response(null,{status:302,headers:{location:'https://evil.com/shipping'}}) : new Response('x'.repeat(1024*1024+1),{headers:{'content-type':'text/html'}});
+  }});
+  assert.equal(result.shipping.state,'failed');
+  assert.equal(result.returns.state,'failed');
+  assert.equal(calls.length,2);
+  assert.ok(calls.every(url=>new URL(url).origin==='https://shop.com'));
+});
+
+test('prepared policy inspection ignores promotional and commerce navigation links', async()=>{
+  const calls=[];
+  const links=[
+    {url:'/collections/featured',text:'FREE SHIPPING OVER $50. CONT. US'},
+    {url:'/',text:'Shipping'}, {url:'/products/shipping',text:'Shipping'},
+    {url:'/cart',text:'Returns'}, {url:'/offers',text:'Free shipping on every order'},
+    {url:'/pages/shipping-policy',text:'Shipping Policy'}, {url:'/pages/returns',text:'Returns'},
+  ];
+  const result=await inspectPreparedPolicyLinks('https://shop.com/products/item',links,{HTMLRewriter:HtmlTestRewriter,fetcher:async target=>{
+    calls.push(target);
+    return new Response('<main><p>Shipping takes three days; returns accepted for thirty days.</p></main>',{headers:{'content-type':'text/html'}});
+  }});
+  assert.deepEqual(calls,['https://shop.com/pages/shipping-policy','https://shop.com/pages/returns']);
+  assert.equal(result.shipping.state,'read');
+  assert.equal(result.returns.state,'read');
+});
 test('same-session transport inspects supporting resources without fetching the product',async()=>{
   const calls=[];
   const fetchBounded=async url=>{
