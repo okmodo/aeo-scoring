@@ -33,9 +33,12 @@ const url = 'https://example.com/solar-kettle';
 const html = `<!doctype html><html><head><title>Solar kettle</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"Solar kettle"}</script></head><body><main>
 <article class="product-detail"><h1>Solar kettle</h1><h2>Description</h2>
-<p>This insulated solar kettle warms six cups of water during outdoor trips.<span class="bopis">Store text excluded from keyed evidence.</span></p>
+<p>This insulated solar kettle warms six cups of water during outdoor trips.<span hidden>Store text excluded from keyed evidence.</span></p>
 <h2>Details</h2><ul><li>Brand: Example Outfitters</li><li>Material: Steel</li><li>Care: Hand wash only.</li></ul>
-<aside><p>Recommended: other products</p></aside></article></main></body></html>`;
+<aside><p>Recommended: other products</p></aside></article>
+<section><h2>Solar kettle Product Description</h2><p>Capacity: 1.4 litres.</p><p>Stainless-steel body.</p>
+<div class="product-reviews"><p>Review-only claims must not be included.</p></div>
+<h3>Separate accessory</h3><p>Accessory-only specifications should not be included.</p></section></main></body></html>`;
 const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
@@ -107,9 +110,16 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     submissions++;
     const body = JSON.parse(request.body), wire = body.response_format.json_schema;
     const meta = JSON.parse(body.messages[0].content.split('\n\n').at(-1));
-    assert.equal(wire.properties.results.required.length, 13);
+    assert.equal(wire.properties.results.required.length, 15);
     assert.deepEqual(wire.properties.results.required, meta.questions.map(item => item.id));
-    assert.doesNotMatch(body.messages[0].content, /Recommended|Store text excluded/);
+    assert.ok(wire.properties.results.required.includes('C5.consistency'));
+    assert.ok(wire.properties.results.required.includes('C5.claim-support'));
+    assert.ok(encoder.encode(request.body).length <= GRANITE_MODEL_CONFIG.requestMaxBytes);
+    assert.doesNotMatch(body.messages[0].content, /Recommended|Store text excluded|Accessory-only specifications|Review-only claims/);
+    for (const id of ['C2.essential','C2.supporting','C4.limitations','C5.consistency','C5.claim-support']) {
+      const question = meta.questions.find(item => item.id === id);
+      assert.ok(meta.evidence.some(item => question.eligibleEvidenceIds.includes(item.id) && item.text === 'Capacity: 1.4 litres.'), id);
+    }
     const results = Object.fromEntries(meta.questions.map(question => {
       const evidenceIds = question.passKinds.flatMap(kind => {
         const hit = meta.evidence.find(item => item.kind === kind && question.eligibleEvidenceIds.includes(item.id));
@@ -119,7 +129,9 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     }));
     results['C3.availability'] = {answer:'fail',reason:'Granite could not confirm availability.',evidenceIds:[]};
     results['C2.essential'] = {answer:'pass',reason:'Granite accepted the product specifications.',evidenceIds:['unavailable-citation']};
-    if (missingAnswer) delete results['C1.configuration'];
+    results['C5.consistency'] = {answer:'pass',reason:'The capacity descriptions agree.',evidenceIds:[]};
+    results['C5.claim-support'] = {answer:'fail',reason:'The prepared evidence does not support the material claim.',evidenceIds:[]};
+    if (missingAnswer) delete results['C5.claim-support'];
     if (providerTimeout) {
       assert.equal(GRANITE_MODEL_CONFIG.timeoutMs, 60_000);
       setImmediate(() => t.mock.timers.tick(GRANITE_MODEL_CONFIG.timeoutMs));
@@ -175,7 +187,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   let assessMessage = previous?.assessMessage;
   if (!previous) {
     if (oldCache) {
-      const material = 'audit-v1:rubric-3.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-0:calibrated-0:pipeline-retained-ai-1:open-rubric-off:retrieval-browser-content-v3:assessment-prepared-assessment-granite-keyed-v1:queue-v1:';
+      const material = 'audit-v1:rubric-3.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-0:calibrated-0:pipeline-retained-ai-1:open-rubric-off:retrieval-browser-content-v3:assessment-prepared-assessment-granite-keyed-v1:queue-v1:direct-granite-answers-v1:';
       sql.prepare(`INSERT INTO audits (id,url,cache_key,status,created_at,expires_at,completed_at,cache_until,report_json)
         VALUES ('8b1fb85d-af64-4d45-b1e3-78191ec55b59',?,?,'incomplete',?,?,?,?,'{"score":{"total":2}}')`)
         .run(url, await hash(encoder.encode(material + url)), time-2000,time+86400000,time-1000,time+3600000);
@@ -366,7 +378,18 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   assert.ok(audit.report.evidence.some(item => item.excerpt.includes('warms six cups')));
   assert.doesNotMatch(JSON.stringify(audit), /response_body_base64|model_attempts|chatcmpl/);
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_attempts').get().n, 1);
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_question_results WHERE answer IS NOT NULL').get().n, missingAnswer ? 12 : 13);
+  const version = sql.prepare('SELECT response_schema_version FROM model_attempts').get().response_schema_version;
+  assert.equal(version, previous?.legacy ? 2 : 3);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_question_results WHERE answer IS NOT NULL').get().n, previous?.legacy ? 13 : missingAnswer ? 14 : 15);
+  if (!previous?.legacy) {
+    assert.equal(component('C5.consistency').points, 5);
+    assert.equal(component('C5.consistency').reason, 'The capacity descriptions agree.');
+    assert.equal(component('C5.claim-support').points, missingAnswer ? null : 0);
+    if (missingAnswer) assert.equal(component('C5.claim-support').status, 'not_measured');
+  } else {
+    assert.equal(component('C5.consistency').status, 'not_measured');
+    assert.equal(component('C5.claim-support').status, 'not_measured');
+  }
   t.diagnostic(`Verified queue report with ${checks.filter(check => check.status === 'measured').length} measured checks and ${submissions} model submissions in this process`);
 }
 
@@ -490,7 +513,7 @@ if (durableExit === 'export') {
   test('terminal delivery recovers product findings without another resource inspection', async t => keyedScenario(t, { interruptStructure: true }));
   test('a retrieval failure publishes no report or score', async t => keyedScenario(t, { retrievalFailure: true }));
   test('an interrupted attempt is durable and leaves the audit pending for redelivery', async t => keyedScenario(t, { interrupt: true }));
-  test('the singular apparel label retains composition and measured dimensions', async () => {
+  test('prepared apparel evidence retains composition and measured dimensions without an apparel-only rule', async () => {
     const page = '<main><article class="product-detail"><h1>Drawstring Short</h1><ul>' +
       '<li>Material: 98% cotton, 2% elastane</li><li>Fit: Relaxed Fit, Inseam 6 inches</li></ul></article></main>';
     const bytes = encoder.encode(page);
@@ -508,9 +531,34 @@ if (durableExit === 'export') {
     const derived = await extract({ body: page, htmlLimited: null }, { HTMLRewriter: HtmlTestRewriter, keyed: true });
     const { fixture } = await prepareKeyedAudit('synthetic', input, derived);
     const question = fixture.questions.find(item => item.id === 'C2.essential');
-    assert.deepEqual(question.passKinds, ['composition', 'fit_dimension']);
-    assert.deepEqual(question.eligibleEvidenceIds.map(id => fixture.evidence.find(item => item.id === id).kind),
-      ['composition', 'fit_dimension']);
+    assert.doesNotMatch(question.passRule,/apparel composition/i);
+    const quotes = question.eligibleEvidenceIds.map(id => fixture.evidence.find(item => item.id === id).quote);
+    assert.ok(quotes.some(quote => quote.includes('98% cotton')));
+    assert.ok(quotes.some(quote => quote.includes('Inseam 6 inches')));
+    const old = await prepareKeyedAudit('synthetic', input, derived, {legacy:true});
+    assert.equal(old.benchmark.responseSchemaVersion, 2);
+    assert.equal(old.fixture.questions.length, 13);
+    assert.deepEqual(old.fixture.questions.find(item => item.id === 'C2.essential').passKinds, ['composition', 'fit_dimension']);
+  });
+
+  test('unscoped dialog and pickup observations cannot enter the named details evidence', async () => {
+    for (const attributes of ['role="dialog"', 'class="bopis"', 'class="bo&#112;is"']) {
+      const page = `<main><article class="product-detail"><h1>Solar kettle</h1><p>Material: Stainless steel.</p></article>
+        <div ${attributes}><h2>Solar kettle Product Description</h2><p>Only three remain.</p></div></main>`;
+      const bytes = encoder.encode(page);
+      const preprocessing = {
+        version:'simplified-html-v1', representation:'cleaned_rendered_html', originalCapturePreserved:true,
+        sourceSha256:'a'.repeat(64), sourceObjectKey:'retained/' + 'a'.repeat(36) + '/' + 'b'.repeat(36) + '/html',
+        sourceBytes:bytes.length, outputBytes:bytes.length, outputSha256:await hash(bytes),
+      };
+      const input = { snapshot:{url, rawHtml:bytes, retrievalMethod:'browser_api_content', preprocessing,
+        browser:{initialExtracted:{},renderedHtml:page,coverage:{initialAvailable:false,renderedLimited:false}}},
+        extracted:{},source:{preparedHash:'c'.repeat(64)} };
+      const derived = await extract({body:page,htmlLimited:null},{HTMLRewriter:HtmlTestRewriter,keyed:true});
+      const {benchmark} = await prepareKeyedAudit('synthetic', input, derived);
+      assert.match(benchmark.body, /Material: Stainless steel/);
+      assert.doesNotMatch(benchmark.body, /Only three remain/);
+    }
   });
 
   test('prepared evidence preserves the head title and only cites an unambiguous selected primary control', async () => {

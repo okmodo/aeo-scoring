@@ -121,7 +121,8 @@ export function prepareBinaryBenchmark(fixture) {
   const body = JSON.stringify({ ...JSON.parse(baseBody), response_format: input.response_format });
   const requestBytes = byteLength(body);
   if (requestBytes > GRANITE_MODEL_CONFIG.requestMaxBytes) throw new RangeError('request_limit');
-  return { input, body, requestBytes, promptVersion: 'granite-binary-v2', responseSchemaVersion: 2, schemaBytes: requestBytes - byteLength(baseBody),
+  const version = fixture.requestVersion === 3 ? 3 : 2;
+  return { input, body, requestBytes, promptVersion: 'granite-binary-v' + version, responseSchemaVersion: version, schemaBytes: requestBytes - byteLength(baseBody),
     questions: preparedQuestions, evidenceById };
 }
 
