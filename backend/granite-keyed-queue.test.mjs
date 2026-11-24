@@ -8,6 +8,7 @@ import { GRANITE_MODEL_CONFIG } from './granite-provider.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
 import { scorePreparedDomainStructure } from './browser-support.mjs';
+import { buildLiveReportModel } from '../src/live-report/model.ts';
 import { createAuditService } from './service.mjs';
 import { createStore } from './store.mjs';
 import { createSnapshotStore } from './snapshot-store.mjs';
@@ -39,14 +40,20 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, missingAnswer = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
   if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
   if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
+  let oldDigestWritten = false;
   const db = { prepare(query) {
     return { bind(...params) {
-      if ((interrupt || exhaustRetries) && query.startsWith('UPDATE model_attempts SET results_digest'))
+      if (interrupt && query.startsWith('INSERT OR IGNORE INTO model_question_results')) {
+        sql.prepare("UPDATE model_attempts SET results_digest='old-validator-digest' WHERE status='received'").run();
+        oldDigestWritten = true;
+        throw Object.assign(new Error('Suspended after saving the old scoring digest'), { code: 'job_lease_lost' });
+      }
+      if ((exhaustRetries || oldDigestWritten) && query.startsWith('UPDATE model_attempts SET results_digest'))
         throw Object.assign(new Error('Suspended after raw D1 capture'), { code: 'job_lease_lost' });
       if (interruptStructure && query.startsWith("UPDATE prepared_assessment_checkpoints SET status='completed'") &&
           params[3] === 'programmatic-structure-v1')
@@ -110,6 +117,9 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
       });
       return [question.id, { answer: 'pass', reason: 'The product source supports the finding.', evidenceIds }];
     }));
+    results['C3.availability'] = {answer:'fail',reason:'Granite could not confirm availability.',evidenceIds:[]};
+    results['C2.essential'] = {answer:'pass',reason:'Granite accepted the product specifications.',evidenceIds:['unavailable-citation']};
+    if (missingAnswer) delete results['C1.configuration'];
     if (providerTimeout) {
       assert.equal(GRANITE_MODEL_CONFIG.timeoutMs, 60_000);
       setImmediate(() => t.mock.timers.tick(GRANITE_MODEL_CONFIG.timeoutMs));
@@ -191,6 +201,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     assert.equal(decision, 'retry', diagnostics());
     assert.equal(submissions, 1);
     assert.equal(sql.prepare('SELECT status FROM model_attempts').get().status, 'received');
+    assert.equal(sql.prepare('SELECT results_digest FROM model_attempts').get().results_digest, 'old-validator-digest');
     assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints WHERE checkpoint_key=\'granite-keyed\'').get().status, 'started');
     assert.equal(sql.prepare('SELECT status FROM audits').get().status, 'pending');
     const state = { time, submitted, assessMessage, objects: [...objects].map(([key, value]) => [key, Buffer.from(value).toString('base64')]) };
@@ -305,8 +316,25 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   const check = id => checks.find(item => item.id === id);
   const component = id => checks.flatMap(item => item.components).find(item => item.id === id);
   assert.equal(component('C1.explanation').points, 4);
-  assert.equal(component('C3.availability').status, 'not_measured');
-  assert.equal(check('C1.essential-specs').status, 'not_measured');
+  assert.equal(component('C3.availability').points, 0);
+  assert.equal(component('C3.availability').reason, 'Granite could not confirm availability.');
+  assert.equal(check('C1.essential-specs').points, 14);
+  assert.deepEqual(component('C2.essential').evidenceIds, []);
+  const frontend = buildLiveReportModel(audit);
+  assert.equal(frontend.checks.find(row => row.id === 'C1.essential-specs').components[0].reason,
+    'Granite accepted the product specifications.');
+  assert.equal(frontend.checks.find(row => row.id === 'C3.price-stock').components.find(item => item.id === 'C3.availability').reason,
+    'Granite could not confirm availability.');
+  assert.equal(component('C2.essential').reason, 'Granite accepted the product specifications.');
+  const storedModel = sql.prepare('SELECT question_id,answer,reason,points,validation_status FROM model_question_results ORDER BY question_id').all();
+  for (const row of storedModel) {
+    const reported = component(row.question_id);
+    assert.equal(reported.points, row.points);
+    if (row.answer) {
+      assert.equal(reported.reason, row.reason);
+      assert.equal(row.validation_status, 'recorded');
+    }
+  }
   const markup = check('S2.product-markup');
   assert.equal(markup.earnedPoints, 3);
   assert.equal(markup.points, 3);
@@ -320,7 +348,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   assert.ok(audit.report.evidence.some(item => item.excerpt.includes('warms six cups')));
   assert.doesNotMatch(JSON.stringify(audit), /response_body_base64|model_attempts|chatcmpl/);
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_attempts').get().n, 1);
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_question_results WHERE answer IS NOT NULL').get().n, 13);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM model_question_results WHERE answer IS NOT NULL').get().n, missingAnswer ? 12 : 13);
   t.diagnostic(`Verified queue report with ${checks.filter(check => check.status === 'measured').length} measured checks and ${submissions} model submissions in this process`);
 }
 
@@ -432,7 +460,8 @@ if (durableExit === 'export') {
     assert.equal(assessBinaryPolicy('shipping', null, missing).status, 'not_measured');
   });
 
-  test('queue publishes validated keyed findings via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
+  test('queue publishes saved Granite answers, including without citations, via the normal report API', async t => keyedScenario(t, { browserExport: process.env.AEO_DURABLE_BROWSER_EXPORT }));
+  test('a missing Granite answer leaves the other D1 scores intact', async t => keyedScenario(t, { missingAnswer: true }));
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));

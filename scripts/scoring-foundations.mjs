@@ -69,7 +69,7 @@ export function scoreReference(rubric, categories, input) {
       denominator += s.maxPoints;
       if (entry.status === 'not_measured') { incomplete=true; continue; }
       if (entry.status !== 'measured' || typeof entry.fraction !== 'number' || !Number.isFinite(entry.fraction) || entry.fraction < 0 || entry.fraction > 1) throw new Error(`Invalid check ${s.id}`);
-      if (entry.fraction < 1 && !entry.evidence) throw new Error(`Missing deduction evidence ${s.id}`);
+      if (entry.fraction < 1 && !entry.evidence && !(current && entry.modelJudgment === true)) throw new Error(`Missing deduction evidence ${s.id}`);
       if (current && ['C3.shipping','C3.returns'].includes(s.id) && ![0, 1].includes(entry.fraction)) throw new Error(`Invalid binary credit ${s.id}`);
       if (revised && /^(?:S1|S2)\./.test(s.id) && ![0, 0.5, 1].includes(entry.fraction)) throw new Error(`Invalid revised credit ${s.id}`);
       raw += s.maxPoints * entry.fraction;

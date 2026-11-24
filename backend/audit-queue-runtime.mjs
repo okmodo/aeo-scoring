@@ -146,7 +146,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
         await record('scoring','running','report_building');
       } catch { /* Publication remains authoritative. */ }
       report = input
-        ? scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:assessment})
+        ? scoreAudit(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:keyed ? null : assessment,graniteAssessment:keyed ? assessment : null})
         : scoreAudit({url:audit.url},{coverage:{html:false,usable:false}},{requireAiAssessment:true});
       assessedUrl = input?.snapshot.url ?? audit.url;
       report.status = 'incomplete';

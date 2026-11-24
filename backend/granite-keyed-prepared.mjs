@@ -1,8 +1,7 @@
 import rubric from '../config/rubric.v2.json' with { type: 'json' };
-import { prepareBinaryBenchmark, runBinaryBenchmark, scoreBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
+import { prepareBinaryBenchmark, runBinaryBenchmark } from '../scripts/granite-binary-harness.mjs';
 import { createGraniteResponseStore, retryModelWrite } from '../scripts/granite-response-store.mjs';
 import { prepareAssessmentSources } from './assessment-sources.mjs';
-import { validateRubricAssessment } from './ai-rubric-assessment.mjs';
 
 const encoder = new TextEncoder();
 const checkpoint = 'granite-keyed';
@@ -214,32 +213,34 @@ export async function prepareKeyedAudit(auditId, input, derived) {
   return { input, bundle, fixture, benchmark, inputDigest };
 }
 
-export function keyedAuditAssessment(prepared, output) {
-  const { input, bundle, fixture, benchmark } = prepared;
-  const measured = scoreBinaryBenchmark(benchmark, Array.isArray(output?.results) ? null : output);
-  const byId = new Map(fixture.evidence.map(item => [item.id, item]));
-  const category = output?.category;
-  const categoryId = category?.evidenceId;
-  const categoryRef = fixture.categoryEvidenceIds?.includes(categoryId) ? byId.get(categoryId) : null;
-  const slots = fixture.questions.filter(question => /^(?:C2|C4)\./.test(question.id)).map(question => {
-    const rule = rubricChecks.get(question.id);
-    return { id: question.id.toLowerCase().replace('.', '-'), group: question.id, label: question.id,
-      relevance: question.passRule, full: question.passRule, partial: rule.partial, zero: rule.zero,
-      missingExpectation: rule.full };
+function recordAnswers(benchmark, output) {
+  const results = Array.isArray(output?.results) ? null : output?.results;
+  const sentEvidence = new Set(benchmark.questions.flatMap(question => question.eligibleEvidenceIds));
+  const findings = benchmark.questions.map(({id, maxPoints}) => {
+    const result = results && Object.hasOwn(results, id) ? results[id] : null;
+    const answer = ['pass', 'fail'].includes(result?.answer) ? result.answer : null;
+    const reason = typeof result?.reason === 'string' ? [...result.reason].slice(0, 300).join('') : null;
+    const citations = Array.isArray(result?.evidenceIds) ? result.evidenceIds : [];
+    const evidenceIds = [...new Set(citations.filter(id => sentEvidence.has(id)))].slice(0, 2);
+    const evidence = evidenceIds.map(id => benchmark.evidenceById.get(id));
+    return {id, maxPoints, answer, reason, evidenceIds, evidence,
+      validation: answer ? 'recorded' : result ? 'invalid_answer' : 'missing_answer',
+      points: answer === 'pass' ? maxPoints : answer === 'fail' ? 0 : null};
   });
-  const profile = categoryRef && typeof category.label === 'string' && category.label.trim() && category.label.length <= 160
-    ? { category: category.label, evidence: [{ sourceId: categoryRef.sourceId, quote: categoryRef.quote }], slots, conditionReview: [] }
-    : null;
-  const slotIds = new Map(slots.map(slot => [slot.group, slot.id]));
-  const judgments = measured.findings.filter(finding => finding.status === 'measured' && finding.answer === 'pass').map(finding => ({
-    id: slotIds.get(finding.id) ?? finding.id, status: 'measured', fraction: 1, reason: finding.reason,
-    evidence: finding.evidence.map(({ sourceId, quote }) => ({ sourceId, quote })),
-  }));
-  // Compact rendered coverage cannot prove omissions, exclusions, stock for an
-  // unknown selection, or missing initial-source evidence.
-  return validateRubricAssessment(bundle, profile, { judgments, c5: { claims: [], comparisons: [] } }, {
-    snapshot: input.snapshot, extracted: input.extracted, inspections: [], supportInspections: [],
-  });
+  const measured = findings.filter(finding => finding.answer).length;
+  const earnedPoints = findings.reduce((sum, finding) => sum + (finding.points ?? 0), 0);
+  const unmeasured = findings.length - measured;
+  return {findings, measured, unmeasured, earnedPoints,
+    status: unmeasured ? 'incomplete' : 'complete', score: unmeasured ? null : earnedPoints};
+}
+
+async function storedAssessment(prepared, store, output) {
+  const rows = await store.readQuestions(attempt(prepared));
+  const keys = new Set(prepared.benchmark.questions.map(question => question.id));
+  const label = typeof output?.category?.label === 'string' ? output.category.label.trim().slice(0, 160) : null;
+  return {category: label || null, findings: rows.filter(row => keys.has(row.question_id)).map(row => ({
+    id: row.question_id, answer: row.answer, reason: row.reason, evidence: JSON.parse(row.evidence_json)
+  }))};
 }
 
 async function retainedOutput(prepared, store) {
@@ -257,16 +258,28 @@ async function retainedOutput(prepared, store) {
     const finish = result?.finish_reason ?? choice?.finish_reason;
     if (saved.outcome === 'model_output_invalid' && finish !== 'length') return null;
     const output = JSON.parse(result?.response ?? choice?.message?.content);
-    if (saved.status === 'received') await retryModelWrite(() => store.finish(saved.attempt_id,
-      scoreBinaryBenchmark(prepared.benchmark, output)));
+    if (saved.status === 'received') {
+      const report = recordAnswers(prepared.benchmark, output);
+      const finish = () => retryModelWrite(() => store.finish(saved.attempt_id, report));
+      try {
+        await finish();
+      } catch (error) {
+        // A previous Worker can stop after storing its old scoring digest.
+        // Keep the provider reply and replace only the unfinished projection.
+        if (error.message !== 'model_results_conflict' ||
+            !await store.resetUnfinishedResults(saved.attempt_id, saved.results_digest)) throw error;
+        await finish();
+      }
+    }
     return output;
   } catch { return null; }
 }
 
 export async function recoverKeyedAuditAssessment({ db, auditId, input, derived }) {
   const prepared = await prepareKeyedAudit(auditId, input, derived);
-  const output = await retainedOutput(prepared, createGraniteResponseStore(db));
-  return output ? keyedAuditAssessment(prepared, output) : null;
+  const store = createGraniteResponseStore(db);
+  const output = await retainedOutput(prepared, store);
+  return output ? storedAssessment(prepared, store, output) : null;
 }
 
 export async function runKeyedPreparedAudit({ env, auditId, input, derived, jobs, grant, allowance, now, fetch }) {
@@ -277,14 +290,14 @@ export async function runKeyedPreparedAudit({ env, auditId, input, derived, jobs
   const existing = await jobs.checkpointRead(grant, checkpoint);
   if (existing) {
     if (existing.inputDigest !== expected) throw fail('checkpoint_input_mismatch');
-    if (existing.status === 'completed') return keyedAuditAssessment(prepared, existing.output);
+    if (existing.status === 'completed') return storedAssessment(prepared, store, existing.output);
     const saved = await retainedOutput(prepared, store);
-    if (saved) return keyedAuditAssessment(prepared, saved);
+    if (saved) return storedAssessment(prepared, store, saved);
     throw fail(existing.code ?? 'model_usage_uncertain');
   }
   const started = await jobs.checkpointStart(grant, checkpoint, expected);
   if (started.status !== 'started' || !started.created) throw fail('model_usage_uncertain');
-  const result = await runBinaryBenchmark(fixture, { env, allowance, now, fetch, store, attemptId: attempt(prepared) });
+  const result = await runBinaryBenchmark(fixture, { env, allowance, now, fetch, store, attemptId: attempt(prepared), scoreAnswers: recordAnswers });
   const output = result.output;
   if (output == null) {
     const code = result.failure ?? 'model_output_invalid';
@@ -292,5 +305,5 @@ export async function runKeyedPreparedAudit({ env, auditId, input, derived, jobs
     throw fail(code);
   }
   await jobs.checkpointComplete(grant, checkpoint, output);
-  return keyedAuditAssessment(prepared, output);
+  return storedAssessment(prepared, store, output);
 }

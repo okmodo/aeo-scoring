@@ -111,7 +111,7 @@ export async function runPreparedAudit({env,auditId,now=Date.now,allowance:given
       await record('content','completed','judgments_validated');
       await record('scoring','running','report_building');
       report=scorePage(input.snapshot,input.extracted,{initialExtracted:input.snapshot.browser.initialExtracted,
-        deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,aiAssessment:assessment});
+        deterministicExtracted:derived,programmaticStructure,requireAiAssessment:true,graniteAssessment:assessment});
       await publish('assessment_completed',true);
       await jobs.release(grant,{state:'complete',code:'assessment_completed'});
       return {status:'completed',code:'assessment_completed',reportStatus:report.status};
