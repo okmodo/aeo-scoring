@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "changeId": "granite-content-checks",
+  "recordedAt": "2026-11-24T16:22:12.187Z",
+  "sourceCommit": "3157edb80b8149cec48a79090f8e68cb9edd63c8",
+  "sourceDigest": "d6013036f3741d177cf653179fc551d41f72bb57b0367d138930a785281c803d",
+  "traceCoverage": "evaluation-commands-only",
+  "traceLimitations": "Captured actual evaluation commands. Earlier development tool calls and permission judgment are not independently verified by this trace; review the development summary and PR.",
+  "agentMetrics": {
+    "tokens": null,
+    "costUSD": null,
+    "note": "The agent host did not expose reliable per-task token or cost telemetry. No model API is called by these checks."
+  },
+  "commands": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "durationMs": 15052,
+      "outputSha256": "8b287672f0b29aa1e0600ce1d6330565c2ac56faf2ae2ec24975681f00aae1e6"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "durationMs": 8558,
+      "outputSha256": "07becd9ed8ec5d2da1ef6e1db060cc0c32746c706d0393e17707cb55c5547007"
+    },
+    {
+      "command": "npm run test:exit",
+      "exitCode": 0,
+      "durationMs": 397,
+      "outputSha256": "68c5452f48dddc6d82b5394f7e36e86c8788b8699d1f4cddd97ed426ae37c0ca"
+    },
+    {
+      "command": "npm run test:granite-keyed-queue",
+      "exitCode": 0,
+      "durationMs": 463,
+      "outputSha256": "2ac201e5aa36da9d595ba546f5ec7baf674b13bfc85ab0eea1d231837f7df34a"
+    },
+    {
+      "command": "npm run test:component-publication",
+      "exitCode": 0,
+      "durationMs": 529,
+      "outputSha256": "98b054fe37ef81b159db6ef512b94f876aea5c8b2d0da27a40e09c42bc4e20f5"
+    }
+  ]
+}
