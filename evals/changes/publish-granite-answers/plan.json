@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "publish-granite-answers",
+  "task": "Publish the pass/fail judgments recorded in D1 without regrading Granite's answers.",
+  "scope": ["backend/**", "scripts/granite-binary-harness.mjs", "scripts/granite-response-store.mjs", "scripts/scoring-foundations.mjs", "evals/changes/publish-granite-answers/**"],
+  "nonGoals": ["Do not change the parser, the rubric questions or weights, frontend code, the API contract, usage limits, or production.", "Do not expose raw provider responses or change the unrelated assessment pipeline."],
+  "outcomes": [{"id":"O1","description":"Render recorded Granite passes and fails through the existing report API, preserving available reasons and citations.","verification":"automated","evidence":"Queue and D1 publication tests for unsupported citations, measured fails and missing answers."}],
+  "process": [{"id":"P1","description":"Keep work isolated, independently review, and verify through CI before any release.","verification":"human","evidence":"Separate plan commit, evidence, independent review and pull request."}],
+  "styleEfficiency": [{"id":"E1","description":"Use the existing D1 result tables and report display; remove judgment regrading from the active keyed path.","verification":"human","evidence":"Scoped source changes and replay."}],
+  "commands": ["npm run check", "npm test", "npm run test:exit", "npm run test:granite-keyed-queue", "npm run test:component-publication"],
+  "exitTest": {"required":true,"reason":"The queued resume path now projects stored question rows instead of regrading the response."}
+}
