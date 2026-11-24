@@ -50,7 +50,7 @@ const SCHEMA_CONTEXTS = new Set(['https://schema.org', 'https://schema.org/', 'h
 export function scoreAuditV1(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV1); }
 export function scoreAuditV2(snapshot, extracted, options = {}) { return scoreAuditVersion(snapshot, extracted, options, rubricV2); }
 export function scoreAudit(snapshot, extracted, options = {}) { return presentRubricV3(scoreAuditVersion(snapshot, extracted, options, rubricV3)); }
-function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, requireAiAssessment = false, deterministicExtracted = null, programmaticStructure = null } = {}, rubric) {
+function scoreAuditVersion(snapshot, extracted, { category = null, semantic = null, validatedFacts = null, categoryProfile = null, initialExtracted = null, aiAssessment = null, graniteAssessment = null, requireAiAssessment = false, deterministicExtracted = null, programmaticStructure = null } = {}, rubric) {
   const legacy = rubric.version === '1.0.0';
   const current = rubric === rubricV3;
   // Browser retrieval supplies two observations from one navigation. Source
@@ -352,10 +352,28 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       if (current && preparedDerived) checks['S4.image-alternatives'] = { status: 'not_measured', reason: 'Serialized rendered HTML does not establish which images are informative or visible.' };
     }
+    if (current) enforceBinaryContent(checks);
+    if (current && graniteAssessment) {
+      category = 'open-rubric';
+      categoryRegistry = { ...categories, categories: [...categories.categories, {
+        id: category, label: graniteAssessment.category ?? 'Unclassified', decisionSupport: []
+      }] };
+      for (const finding of graniteAssessment.findings) {
+        const {id, answer, reason} = finding;
+        if (!Object.hasOwn(checks,id)) continue;
+        if (!answer) {
+          if (checks[id].status !== 'measured') checks[id] = {status:'not_measured',reason:reason || 'Granite returned no answer for this check.'};
+          continue;
+        }
+        const evidenceIds = [...new Set(finding.evidence.map(ref =>
+          addEvidence(ref.url,ref.location,ref.quote,ref.method || 'rendered')))];
+        checks[id] = {status:'measured',fraction:answer === 'pass' ? 1 : 0,modelJudgment:true,
+          reason,evidence:evidenceIds[0],evidenceIds};
+      }
+    }
     // These checks are determined by the verified prepared extraction, including
     // uncertainty; model judgments cannot fill gaps or replace observations.
     Object.assign(checks, preparedStructure);
-    if (current) enforceBinaryContent(checks);
     const used = new Set(Object.values(checks).flatMap(c => c.evidenceIds || [c.evidence]).filter(Boolean));
     for (let i = evidence.length - 1; i >= 0; i--) if (!used.has(evidence[i].id)) evidence.splice(i, 1);
     fixes.length = 0;
@@ -403,7 +421,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       return { id: s.id, maxPoints: s.maxPoints, ...(extracted?.productHtml ? {availablePoints} : {}), status: check.status,
         fraction: check.fraction ?? null, points: check.status === 'measured' ? availablePoints * check.fraction : null,
         evidenceIds: check.evidenceIds || (check.evidence ? [check.evidence] : []),
-        reason: check.status === 'not_measured' ? (check.reason || 'Available evidence does not establish this check.') : check.status === 'not_applicable' ? check.justification : null };
+        reason: check.status === 'not_measured' ? (check.reason || 'Available evidence does not establish this check.') : check.status === 'not_applicable' ? check.justification : check.modelJudgment ? check.reason : null };
     })
   }));
   const allChecks = criteria.flatMap(c => c.subchecks);
@@ -419,13 +437,13 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
     productName, variant, market: null, currency,
     criteria, evidence, fixes,
-    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(aiValidated ? {assessment:{mode:'ai_rubric',version:aiAssessment.version,category:aiAssessment.profile?.category ?? null}} : validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
+    coverage: { ...(extracted?.productHtml ? {notApplicable:allChecks.filter(c=>c.status==='not_applicable').length} : {}), ...(current && graniteAssessment ? {assessment:{mode:'ai_rubric',version:'1',category:graniteAssessment.category}} : aiValidated ? {assessment:{mode:'ai_rubric',version:aiAssessment.version,category:aiAssessment.profile?.category ?? null}} : validatedFacts ? {assessment:{mode:'validated_facts',version:validatedFacts.version}} : {}), ...(semantic?.status === 'assessed' ? {semantic:{model:semantic.model,version:semantic.version}} : {}), measured: allChecks.filter(c => c.status === 'measured').length,
       notMeasured: allChecks.filter(c => c.status === 'not_measured').length,
       total: allChecks.length, category: categoryRegistry.categories.some(c => c.id === category) ? category : null,
       ...(profile ? {categoryAssessment:{version:'1',label:profile.label,profileId:profile.id,evidence:profile.evidence}} : {}),
       extraction: extracted?.coverage ?? null,
       limitations: [...(extracted?.limitations ?? []),
-        ...((aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
+        ...(current && graniteAssessment ? ['This report includes Granite judgments and any citations supplied with them.'] : (aiValidated || semantic?.status === 'assessed') ? ['Content includes model-assisted rubric judgments grounded in retrieved excerpts; claims are not independently verified.'] : []),
         ...(Object.hasOwn(checks, 'S2.json-ld') && ['browser', 'browser_api_content'].includes(snapshot?.retrievalMethod) ? [preparedStructureInput && programmaticStructure.product ? 'Structured-data checks use the verified prepared rendered page.' : 'The JSON-LD presence check uses the captured rendered page. Other structured-data checks use the initial response.'] : []),
         ...(snapshot?.htmlLimited ? [`HTML inspection stopped at the ${snapshot.htmlLimited === 'bytes' ? 'size' : 'time'} limit; later page evidence was not inspected.`] : []),
         ...(extracted?.productHtml ? [snapshot?.retrievalMethod === 'browser' && !current

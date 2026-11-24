@@ -176,7 +176,7 @@ export function scoreBinaryBenchmark(benchmark, output) {
     unmeasured: findings.length - measured, unexpected, findings };
 }
 
-export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now, store, onCapture, attemptId } = {}) {
+export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send = globalThis.fetch, now = Date.now, store, onCapture, attemptId, scoreAnswers = scoreBinaryBenchmark } = {}) {
   const benchmark = prepareBinaryBenchmark(fixture);
   if (!store) throw new Error('model_response_store_required');
   const config = GRANITE_MODEL_CONFIG;
@@ -301,7 +301,7 @@ export async function runBinaryBenchmark(fixture, { env, allowance, fetch: send 
     try { await onCapture?.({ attemptId: id, response, output: run.output }); }
     catch { run.localCaptureFailed = true; }
     await retryModelWrite(() => store.capture(id, response));
-    run.report = scoreBinaryBenchmark(benchmark, run.output);
+    run.report = scoreAnswers(benchmark, run.output);
     await retryModelWrite(() => store.finish(id, run.report));
   } finally {
     run.reservationSettled = (await allowance.settle({ id, now: now() }).catch(() => null))?.accepted === true;

@@ -26,6 +26,11 @@ export function createGraniteResponseStore(db) {
     },
 
     read: get,
+    async readQuestions(id) {
+      const { results } = await statement(`SELECT question_id,answer,reason,evidence_json
+        FROM model_question_results WHERE attempt_id=?1 ORDER BY question_id`, id).all();
+      return results;
+    },
 
     async capture(id, response) {
       const { outcome, httpStatus, modelElapsedMs, neurons, origin, bodyBase64, truncated } = response;
@@ -36,6 +41,18 @@ export function createGraniteResponseStore(db) {
         neurons=?5,response_origin=?6,response_body_base64=?7,response_truncated=?8,response_digest=?9
         WHERE attempt_id=?1 AND status='pending'`, id, ...values, digest).run();
       if ((await get(id))?.response_digest !== digest) throw new Error('model_response_conflict');
+    },
+
+    async resetUnfinishedResults(id, digest) {
+      if (!digest) return false;
+      const results = await db.batch([
+        statement(`DELETE FROM model_question_results WHERE attempt_id=?1 AND EXISTS (
+          SELECT 1 FROM model_attempts WHERE attempt_id=?1 AND status='received' AND results_digest=?2
+        )`, id, digest),
+        statement(`UPDATE model_attempts SET results_digest=NULL
+          WHERE attempt_id=?1 AND status='received' AND results_digest=?2`, id, digest),
+      ]);
+      return results[1].meta.changes === 1;
     },
 
     async finish(id, report) {

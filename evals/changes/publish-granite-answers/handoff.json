@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "task": "Project D1 Granite answers directly into the audit report.",
+  "state": "Implemented on codex/publish-granite-answers from the deployed backend release branch at 6c53609.",
+  "decisions": ["The active keyed Granite path records provider pass/fail answers without evidence regrading. A pass earns rubric credit, a fail earns zero, and an unanswered component remains unmeasured.", "Resolve available citation IDs for display without requiring them for credit. Only normalized question results and report fields reach the frontend.", "Resume a captured response from an unfinished old digest by replacing only its unfinished projection. Keep the raw response and existing completed reports."],
+  "constraints": ["No parser edits, rubric question changes, frontend changes, migration, model usage, or deployment. Programmatic findings and production limits stay in place."],
+  "completed": ["Local D1-backed queue and frontend model checks cover uncited pass and fail, omitted answers, exact stored reasons, provider outage, and programmatic scores."],
+  "remaining": ["The existing rubric question set is unchanged. This change does not add C5 questions or revise the category-specific prompt."],
+  "resumeCommands": ["npm run test:granite-keyed-queue", "npm run test:component-publication", "npm run evaluate -- --change publish-granite-answers --base origin/codex/terra-gateway-payload"]
+}
