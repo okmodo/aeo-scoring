@@ -7,7 +7,7 @@ import { AUDIT_QUEUE_HORIZON_MS } from './audit-queue.mjs';
 import { GRANITE_MODEL_CONFIG } from './granite-provider.mjs';
 import { runPreparedAudit } from './prepared-assessment-consumer.mjs';
 import { createPreparedAssessmentJobs } from './prepared-assessment-jobs.mjs';
-import { scorePreparedDomainStructure } from './browser-support.mjs';
+import { inspectPreparedPolicyLinks, scorePreparedDomainStructure } from './browser-support.mjs';
 import { buildLiveReportModel } from '../src/live-report/model.ts';
 import { createAuditService } from './service.mjs';
 import { createStore } from './store.mjs';
@@ -43,8 +43,13 @@ const encoder = new TextEncoder();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 
-async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, missingAnswer = false, oldCache = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
+async function keyedScenario(t, { interrupt = false, providerFailure = false, providerTimeout = false, invalidProvider = false, exhaustRetries = false, interruptStructure = false, missingAnswer = false, oldCache = false, policyFlow = false, retrievalFailure = false, exported, previous, finalizeExport, browserExport, failFinalizationSend = false, pastQueueHorizon = false } = {}) {
   if (providerTimeout) t.mock.timers.enable({apis:['setTimeout']});
+  policyFlow = previous?.policyFlow ?? policyFlow;
+  const page = policyFlow ? html.replace('</article>', `
+    <p>This product ships to the United States. Free shipping. Delivery takes 3 to 5 business days.</p>
+    <p><a href="/shipping">Shipping policy</a><a href="/returns">Returns policy</a></p>
+    </article>`) : html;
   const sql = new DatabaseSync(previous?.database ?? exported?.database ?? finalizeExport?.database ?? ':memory:');
   t.after(() => sql.close());
   if (!previous) sql.exec(readFileSync(new URL('./schema.sql', import.meta.url), 'utf8'));
@@ -83,6 +88,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   let time = previous ? previous.time + 121000 : Date.UTC(2026, 10, 20);
   let submissions = 0;
   let domainRequests = 0;
+  const policyRequests = [];
   let sendFailures = 0;
   const now = () => time;
   const allowance = { reserve: async () => ({ accepted: true, duplicate: false }), settle: async () => ({ accepted: true }) };
@@ -95,9 +101,9 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   const workflow = createBrowserContentWorkflow({ db, snapshots, guard: {
     ...allowance, start: allowance.reserve, cancelUnstarted: async () => {},
   }, now, binding: { quickAction: async () => retrievalFailure ? new Response(null, {status: 502}) :
-    Response.json({ success: true, result: html, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
+    Response.json({ success: true, result: page, meta: { finalUrl: url, status: 200 } }, { headers: { 'X-Browser-Ms-Used': '100' } }) },
   preprocess: async ({ rawHtml, sourceObjectKey, expiresAt }) => {
-    const bytes = encoder.encode(html);
+    const bytes = encoder.encode(page);
     return { html: bytes, preprocessing: { version: 'simplified-html-v1', representation: 'cleaned_rendered_html',
       originalCapturePreserved: true, sourceObjectKey, sourceSha256: await hash(rawHtml), sourceBytes: rawHtml.length,
       expiresAt, preparedAt: now(), outputBytes: bytes.length, outputSha256: await hash(bytes) } };
@@ -169,6 +175,20 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
       const headers = { 'content-type': new URL(target).pathname.endsWith('.xml') ? 'application/xml' : 'text/plain' };
       return new Response(body, { headers });
     } }),
+    inspectPolicies: (target, links, { kinds }) => {
+      assert.ok(!previous, 'Resumed queue must reuse saved policy evidence');
+      assert.ok(policyFlow, 'Unexpected policy inspection');
+      assert.deepEqual(kinds, ['returns']);
+      return inspectPreparedPolicyLinks(target, links, { kinds, HTMLRewriter:HtmlTestRewriter,
+        fetcher: async (url, request) => {
+          policyRequests.push(url);
+          assert.equal(url, 'https://example.com/returns');
+          assert.equal(request.redirect, 'manual');
+          return new Response('<main><p>All products: unused items may be returned within 30 days in original packaging.</p></main>',
+            {headers:{'content-type':'text/html'}});
+        }
+      });
+    },
     assess: options => runPreparedAudit({ ...options, jobs, fetch }),
   });
   const policyVersion = preparedAssessmentPolicy('granite', keyedGraniteEnabled(env));
@@ -187,7 +207,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
   let assessMessage = previous?.assessMessage;
   if (!previous) {
     if (oldCache) {
-      const material = 'audit-v1:rubric-3.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-0:calibrated-0:pipeline-retained-ai-1:open-rubric-off:retrieval-browser-content-v3:assessment-prepared-assessment-granite-keyed-v1:queue-v1:direct-granite-answers-v1:';
+      const material = 'audit-v1:rubric-3.0.0:categories-1.2:scoring-2.2.1:content-facts-1.0.0:ai-0:calibrated-0:pipeline-retained-ai-1:open-rubric-off:retrieval-browser-content-v3:assessment-prepared-assessment-granite-keyed-v1:queue-v1:granite-content-checks-v1:';
       sql.prepare(`INSERT INTO audits (id,url,cache_key,status,created_at,expires_at,completed_at,cache_until,report_json)
         VALUES ('8b1fb85d-af64-4d45-b1e3-78191ec55b59',?,?,'incomplete',?,?,?,?,'{"score":{"total":2}}')`)
         .run(url, await hash(encoder.encode(material + url)), time-2000,time+86400000,time-1000,time+3600000);
@@ -222,7 +242,7 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     assert.equal(sql.prepare('SELECT results_digest FROM model_attempts').get().results_digest, 'old-validator-digest');
     assert.equal(sql.prepare('SELECT status FROM prepared_assessment_checkpoints WHERE checkpoint_key=\'granite-keyed\'').get().status, 'started');
     assert.equal(sql.prepare('SELECT status FROM audits').get().status, 'pending');
-    const state = { time, submitted, assessMessage, objects: [...objects].map(([key, value]) => [key, Buffer.from(value).toString('base64')]) };
+    const state = { time, submitted, assessMessage, policyFlow, objects: [...objects].map(([key, value]) => [key, Buffer.from(value).toString('base64')]) };
     if (exported) writeFileSync(exported.path, JSON.stringify({ ...state, database: exported.database }), { flag: 'wx', mode: 0o600 });
     return state;
   }
@@ -315,6 +335,21 @@ async function keyedScenario(t, { interrupt = false, providerFailure = false, pr
     if (component.status === 'measured') earned[group.pillar] += component.points;
   }
   assert.equal(domainRequests, previous ? 0 : 3);
+  assert.deepEqual(policyRequests, policyFlow && !previous ? ['https://example.com/returns'] : []);
+  if (policyFlow) {
+    const evidence = new Map(audit.report.evidence.map(item => [item.id, item]));
+    for (const [id,points,evidenceUrl,method] of [
+      ['C3.shipping',3,url,'rendered'],
+      ['C3.returns',2,'https://example.com/returns','raw'],
+    ]) {
+      const stored = results.get(id);
+      assert.equal(stored.status,'measured',stored.reason);
+      assert.equal(stored.points,points);
+      assert.equal(stored.fraction,1);
+      assert.ok(stored.evidenceIds.some(id => evidence.get(id)?.url === evidenceUrl && evidence.get(id)?.method === method));
+    }
+  }
+
   for (const id of ['S5.search', 'S5.ai-retrieval', 'S6.usable', 'S6.inclusion', 'S7.identity', 'S7.links', 'S2.syntax']) {
     const finding = results.get(id);
     assert.equal(finding.status, 'measured', `${id}: ${finding.reason}`);
@@ -404,7 +439,7 @@ if (durableExit === 'export') {
     previous: JSON.parse(readFileSync(process.env.AEO_DURABLE_EXPORT, 'utf8')),
   }));
 } else if (exitStage === 'export') {
-  test('export interrupted keyed queue', async t => keyedScenario(t, { interrupt: true,
+  test('export interrupted keyed queue', async t => keyedScenario(t, { interrupt: true, policyFlow: true,
     exported: { database: process.env.AEO_KEYED_QUEUE_DB, path: process.env.AEO_KEYED_QUEUE_EXPORT } }));
 } else if (exitStage === 'resume') {
   test('resume keyed queue from export', async t => keyedScenario(t, {
@@ -506,6 +541,7 @@ if (durableExit === 'export') {
   test('a missing Granite answer leaves the other D1 scores intact', async t => keyedScenario(t, { missingAnswer: true }));
   test('finalization dispatch failure retries without another model request', async t => keyedScenario(t, { failFinalizationSend: true }));
   test('staged checks remain visible when finalization delivery crosses the queue horizon', async t => keyedScenario(t, { pastQueueHorizon: true }));
+  test('inline shipping and linked returns persist independently of Granite', async t => keyedScenario(t, { policyFlow:true, providerFailure:true }));
   test('a provider failure is retained and exposed as an incomplete assessment', async t => keyedScenario(t, { providerFailure: true }));
   test('a model timeout keeps measured programmatic points in the published report', async t => keyedScenario(t, { providerTimeout: true }));
   test('an unsupported provider still publishes the programmatic findings', async t => keyedScenario(t, { invalidProvider: true }));

@@ -13,8 +13,7 @@ import {runPreparedAudit} from './prepared-assessment-consumer.mjs';
 import {derivePreparedObservations} from './prepared-derived.mjs';
 import {restoreRubricAssessment} from './ai-rubric-assessment.mjs';
 import {scoreAudit} from './scoring.mjs';
-import {scorePreparedProductStructure} from './prepared-product-structure.mjs';
-import {readStructureFindings} from './prepared-structure-checkpoint.mjs';
+import {readStructureFindings,scorePreparedFindings} from './prepared-structure-checkpoint.mjs';
 import {scorePreparedDomainStructure} from './browser-support.mjs';
 import {createAuditResultStore} from './audit-check-results.mjs';
 
@@ -26,7 +25,7 @@ const publicErrors = new Set(['retrieval_failed','retrieval_timeout','response_t
 const unavailable = () => ({accepted:false,reason:'invalid_evidence'});
 
 export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowance,queueAllowance:givenQueueAllowance,
-  workflow:givenWorkflow,snapshots:givenSnapshots,prepare=runPreparation,assess=runPreparedAudit,derive=derivePreparedObservations,inspectDomain=scorePreparedDomainStructure}={}) {
+  workflow:givenWorkflow,snapshots:givenSnapshots,prepare=runPreparation,assess=runPreparedAudit,derive=derivePreparedObservations,inspectDomain=scorePreparedDomainStructure,inspectPolicies}={}) {
   const db = env?.AUDIT_DB;
   if(env?.AUDIT_QUEUE_MODE!=='enabled' || !db?.prepare || typeof env.AUDIT_QUEUE?.send!=='function') return {start:async()=>unavailable(),consume:async()=>{throw Error('audit_queue_disabled');}};
   const keyed = keyedGraniteEnabled(env);
@@ -92,7 +91,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
       throw Error('queue_result_sequence_mismatch');
     }
     if(retained?.prepared_state!=='ready') return {next:null,code:'assessment_timeout'};
-    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive,inspectDomain,queueLease:{owner,sequence}});
+    const result = await assess({env,auditId,now,allowance,snapshots:snapshots(),derive,inspectDomain,inspectPolicies,queueLease:{owner,sequence}});
     if (await results.pending(auditId)) return {next:'assess'};
     if(result.status==='yield') return {next:'assess'};
     if(result.status==='completed') return {next:null};
@@ -124,7 +123,7 @@ export function createAuditQueueRuntime(env, {now=Date.now,allowance:givenAllowa
           derived = await derive(input,{keyed}).catch(()=>undefined);
         }
         if (!programmaticStructure && derived) {
-          programmaticStructure = {product:scorePreparedProductStructure(input.snapshot,derived)};
+          programmaticStructure = scorePreparedFindings(input.snapshot,derived);
         }
         if (keyed && derived && hasSavedModelReply) {
           assessment = await recoverKeyedAuditAssessment({ db, auditId, input, derived }).catch(()=>undefined);

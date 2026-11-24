@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "task": "Score shipping and returns from prepared or applicable linked policy evidence.",
+  "state": "Implemented on codex/score-shipping-returns from backend release 9ddce65. No production changes.",
+  "decisions": [
+    "Score prepared observations before Granite. For unresolved checks inspect eligible links using existing same-origin public egress, manual redirect handling, and policy request, size and deadline bounds.",
+    "Keep zero and full points as the only measured outcomes. Preserve existing exclusions and include bounded citations for unmeasured results where relevant observations exist.",
+    "Save results in the existing checkpoint and D1 publication path. Advance only the queued report cache identity so earlier answers do not suppress a new policy audit."
+  ],
+  "constraints": ["No parser, frontend, D1 schema, usage limits, production, or Granite request changes."],
+  "completed": ["Local queue and D1 tests establish binary full credit with inline shipping and linked returns when Granite is unavailable. Policy unit tests cover absence, negation, conflicts, incomplete sources, and eligibility.", "The native local Bear Butt replay used the exact hash-verified retained artifact and the captured public response for /pages/returns. The promotional collection link was excluded. All 39 component rows matched the report; both policies remained unmeasured with cited partial evidence. No live inference."],
+  "remaining": ["The Bear Butt replay did not establish shipping coverage and cost or sufficiently clear and applicable returns conditions. The synthetic result does not measure production CPU or runtime."],
+  "resumeCommands": ["node --test backend/rubric-policy-prepared.test.mjs backend/browser-support.test.mjs backend/granite-keyed-queue.test.mjs","npm run evaluate -- --change score-shipping-returns --base origin/codex/terra-gateway-payload"]
+}

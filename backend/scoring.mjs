@@ -63,7 +63,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
   // AI validation is bound to the untouched canonical input; local observations may
   // use a separately derived view of the same verified prepared page.
   const preparedDerived = isPreparedObservations(deterministicExtracted, snapshot);
-  const preparedStructureInput = current && Boolean(programmaticStructure?.product || programmaticStructure?.support) && snapshot?.preprocessing?.representation === 'cleaned_rendered_html' && snapshot.preprocessing.version === 'simplified-html-v1';
+  const preparedStructureInput = current && Boolean(programmaticStructure?.product || programmaticStructure?.support || programmaticStructure?.policies) && snapshot?.preprocessing?.representation === 'cleaned_rendered_html' && snapshot.preprocessing.version === 'simplified-html-v1';
   extracted = preparedDerived ? deterministicExtracted : extracted;
   let categoryRegistry = profile ? { ...categories, categories: [...categories.categories.filter(c => c.id !== profile.id), profile] } : categories;
   const SUBCHECKS = rubric.criteria.flatMap(criterion => criterion.subchecks);
@@ -279,10 +279,13 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
     }
     const localProduct = preparedStructureInput ? programmaticStructure.product : null;
     const localSupport = preparedStructureInput ? programmaticStructure.support : null;
+    const localPolicies = preparedStructureInput ? programmaticStructure.policies : null;
+    const policyIds = ['C3.shipping', 'C3.returns'];
     const productIds = ['S2.json-ld','S2.syntax','S2.entity','S2.variants','S2.offer','S2.identifiers','S3.identity','S3.price','S3.availability','S3.optional-claims'];
     const supportIds = ['S5.search','S5.ai-retrieval','S6.usable','S6.inclusion','S7.identity','S7.links'];
     if (localProduct) for (const id of productIds) if (localProduct[id]) observations[id] = localProduct[id];
     if (localSupport) for (const id of supportIds) if (localSupport[id]) observations[id] = localSupport[id];
+    if (localPolicies) for (const id of policyIds) if (localPolicies[id]) observations[id] = localPolicies[id];
     const renderedProduct = extracted?.productHtml;
     if (current && snapshot?.retrievalMethod === 'browser' && !snapshot.htmlLimited && !snapshot.browser?.coverage?.renderedLimited &&
         renderedProduct?.complete === true && renderedProduct.visibility === 'computed' && renderedProduct.images?.length === 0) {
@@ -323,7 +326,7 @@ function scoreAuditVersion(snapshot, extracted, { category = null, semantic = nu
       }
       checks[id] = { ...finding, evidence: evidenceIds[0], evidenceIds: [...new Set(evidenceIds)] };
     }
-    const preparedStructureIds = preparedStructureInput ? [...productIds.filter(id => localProduct?.[id]), ...supportIds.filter(id => localSupport?.[id])] : [];
+    const preparedStructureIds = preparedStructureInput ? [...productIds.filter(id => localProduct?.[id]), ...supportIds.filter(id => localSupport?.[id]), ...policyIds.filter(id => localPolicies?.[id])] : [];
     const preparedStructure = Object.fromEntries(preparedStructureIds.map(id => [id, checks[id]]));
     if (!legacy && requireAiAssessment && !aiValidated) {
       const technicalFailures = new Set(['S1.delivery','S1.readability','S1.configuration','S1.supporting-access','S2.entity','S2.offer','S2.identifiers','S2.variants','S3.price','S3.availability','S4.title','S7.links','S8.guidance']);
